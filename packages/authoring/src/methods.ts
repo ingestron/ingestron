@@ -70,7 +70,7 @@ function usesOf(
   const { model } = resolved(project, environment);
   if (!model) return undefined;
   return model.tables.flatMap((table) =>
-    (["ingest", "transform", "store"] as const).flatMap((action) => {
+    (["ingest", "transform", "store", "serve"] as const).flatMap((action) => {
       const step = table[action];
       return step?.method === id
         ? [`\`${table.name}\` (${action}): chosen by ${chosenText(step.chosenBy)}`]
