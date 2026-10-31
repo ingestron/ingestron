@@ -1,0 +1,19 @@
+description: Keys are compared as text, so 1 and '1' are the same key and a duplicate.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    codes:
+      1: one
+      '1': uno
+expect:
+  diagnostics:
+    - { code: YAML_SYNTAX, file: a.pipeline.yaml, line: 6, column: 3 }

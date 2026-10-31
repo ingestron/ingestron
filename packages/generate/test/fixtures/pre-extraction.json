@@ -1,0 +1,9 @@
+{
+  "wanted": {
+    "jobs/example.yaml": "name: example\n"
+  },
+  "files": {
+    ".generated.json": "{\n  \"version\": 1,\n  \"files\": {\n    \"jobs/example.yaml\": \"sha256:15fcc3870625980bf58f15ba904736b4ffa1a84495a8f4f51d781e211016e743\"\n  }\n}\n",
+    "jobs/example.yaml": "name: example\n"
+  }
+}

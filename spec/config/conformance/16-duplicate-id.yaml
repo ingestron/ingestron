@@ -1,0 +1,20 @@
+description: Two documents of the same kind cannot share an id.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: orders
+  b.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: orders
+expect:
+  diagnostics:
+    - { code: DUPLICATE_ID, file: b.pipeline.yaml, line: 1, column: 1 }

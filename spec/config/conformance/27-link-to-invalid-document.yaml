@@ -1,0 +1,28 @@
+description: >-
+  A document that fails its schema is reported once. Links to it are not
+  also reported as broken, because the document exists.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Connection
+    schema: { type: object, required: [host] }
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+    links:
+      /source: Connection
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.yaml"]
+  erp.yaml: |
+    apiVersion: example.dev/v1
+    kind: Connection
+    id: erp
+  orders.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: orders
+    source: erp
+expect:
+  diagnostics:
+    - { code: SCHEMA, file: erp.yaml, line: 1, column: 1 }

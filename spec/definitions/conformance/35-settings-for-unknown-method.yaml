@@ -1,0 +1,60 @@
+description: Settings under a name that is not a method are refused where the name is written, with a fix renaming it to the near method.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    store:
+      settings:
+        steam: { cluster: auto }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    settings:
+      fles: { format: csv }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  diagnostics:
+    - { code: UNKNOWN_METHOD, file: standard.yaml, line: 7, fixes: ['Rename to "stream"'] }
+    - { code: UNKNOWN_METHOD, file: platform.yaml, line: 5, fixes: ['Rename to "files"'] }
+  fixed:
+    - diagnostic: 1
+      title: Rename to "files"
+      files:
+        platform.yaml: |
+          apiVersion: ingestron.io/v1
+          kind: Platform
+          id: lake
+          settings:
+            files: { format: csv }

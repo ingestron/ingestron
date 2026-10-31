@@ -1,0 +1,97 @@
+description: Problems with an obvious remedy carry fixes, and applying one changes only the text it edits.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Connection
+    schema: { type: object }
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    links: { /source: Connection }
+    schema:
+      type: object
+      additionalProperties: false
+      required: [schedule]
+      properties:
+        apiVersion: { type: string }
+        kind: { type: string }
+        id: { type: string }
+        source: { type: string }
+        schedule: { type: string, examples: [daily] }
+        mode: { enum: [append, upsert, merge] }
+        steps:
+          type: object
+          properties:
+            load:
+              type: object
+              additionalProperties: false
+              properties: { retries: { type: integer } }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: example.dev/v1
+    kind: Connection
+    id: shop
+  orders.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: orders
+    # how rows are written
+    mode: apend
+    steps: { load: { retires: 2 } }
+  returns.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: returns
+    schedule: daily
+    source: shops # the shop's system
+expect:
+  diagnostics:
+    - { code: SCHEMA, file: orders.yaml, line: 1, fixes: ['Add "schedule"'] }
+    - code: SCHEMA
+      file: orders.yaml
+      line: 5
+      fixes: ['Change to "append"', 'Change to "upsert"', 'Change to "merge"']
+    - { code: SCHEMA, file: orders.yaml, line: 6, fixes: ['Rename to "retries"'] }
+    - { code: BROKEN_LINK, file: returns.yaml, line: 5, fixes: ['Change to "shop"'] }
+  fixed:
+    - diagnostic: 0
+      title: Add "schedule"
+      files:
+        orders.yaml: |
+          apiVersion: example.dev/v1
+          kind: Pipeline
+          id: orders
+          # how rows are written
+          mode: apend
+          steps: { load: { retires: 2 } }
+          schedule: daily
+    - diagnostic: 1
+      title: Change to "append"
+      files:
+        orders.yaml: |
+          apiVersion: example.dev/v1
+          kind: Pipeline
+          id: orders
+          # how rows are written
+          mode: append
+          steps: { load: { retires: 2 } }
+    - diagnostic: 2
+      title: Rename to "retries"
+      files:
+        orders.yaml: |
+          apiVersion: example.dev/v1
+          kind: Pipeline
+          id: orders
+          # how rows are written
+          mode: apend
+          steps: { load: { retries: 2 } }
+    - diagnostic: 3
+      title: Change to "shop"
+      files:
+        returns.yaml: |
+          apiVersion: example.dev/v1
+          kind: Pipeline
+          id: returns
+          schedule: daily
+          source: shop # the shop's system

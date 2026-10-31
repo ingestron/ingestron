@@ -1,0 +1,3 @@
+# Used by `ingestron init --template salesforce`.
+title: Salesforce through Lakeflow Connect
+summary: Two Salesforce objects through a Unity Catalog connection, keyed and limited to the contract's fields.

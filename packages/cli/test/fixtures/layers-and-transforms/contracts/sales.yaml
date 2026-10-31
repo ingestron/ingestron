@@ -1,0 +1,14 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: sales.sales
+version: 1.0.0
+status: active
+schema:
+  - name: sales
+    logicalType: object
+    description: Point-of-sale lines.
+    properties:
+      - { name: sale_id, logicalType: string, required: true, primaryKey: true }
+      - { name: store_id, logicalType: string, required: true }
+      - { name: sold_at, logicalType: timestamp }
+      - { name: amount, logicalType: number, physicalType: "DECIMAL(18,2)" }

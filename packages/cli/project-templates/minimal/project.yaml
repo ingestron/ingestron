@@ -1,0 +1,11 @@
+# The smallest project: everything not written here comes from the pack's defaults.
+id: shop
+values:
+  landing: /Volumes/dev/landing/shop
+environments:
+  dev: {}
+imports:
+  - standard.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - contracts/*.yaml

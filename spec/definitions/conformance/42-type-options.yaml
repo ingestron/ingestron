@@ -1,0 +1,70 @@
+description: A column's logicalTypeOptions become row checks with the quality default's action; format stays documentation.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    quality: { default: drop }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - name: code
+            logicalType: string
+            logicalTypeOptions: { minLength: 2, maxLength: 8, pattern: "^[A-Z]+$", format: uuid }
+          - name: qty
+            logicalType: integer
+            logicalTypeOptions: { minimum: 0, exclusiveMaximum: 1000, multipleOf: 5 }
+          - name: placed
+            logicalType: date
+            logicalTypeOptions: { minimum: "2020-01-01" }
+          - name: lines
+            logicalType: array
+            logicalTypeOptions: { minItems: 1, maxItems: 50, uniqueItems: true }
+expect:
+  tables:
+    - expectations:
+        - { name: code_min_length, check: "`code` IS NULL OR length(`code`) >= 2", action: drop }
+        - { name: code_max_length, check: "`code` IS NULL OR length(`code`) <= 8", action: drop }
+        - { name: code_pattern, check: "`code` IS NULL OR `code` RLIKE '^[A-Z]+$'", action: drop }
+        - { name: qty_minimum, check: "`qty` IS NULL OR `qty` >= 0", action: drop }
+        - { name: qty_exclusive_maximum, check: "`qty` IS NULL OR `qty` < 1000", action: drop }
+        - { name: qty_multiple_of, check: "`qty` IS NULL OR `qty` % 5 = 0", action: drop }
+        - {
+            name: placed_minimum,
+            check: "`placed` IS NULL OR `placed` >= '2020-01-01'",
+            action: drop,
+          }
+        - { name: lines_min_items, check: "`lines` IS NULL OR size(`lines`) >= 1", action: drop }
+        - { name: lines_max_items, check: "`lines` IS NULL OR size(`lines`) <= 50", action: drop }
+        - {
+            name: lines_unique_items,
+            check: "`lines` IS NULL OR size(array_distinct(`lines`)) = size(`lines`)",
+            action: drop,
+          }

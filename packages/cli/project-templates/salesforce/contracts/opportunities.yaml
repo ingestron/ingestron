@@ -1,0 +1,14 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: crm.opportunities
+version: 1.0.0
+status: active
+schema:
+  - name: opportunities
+    logicalType: object
+    description: Salesforce opportunities.
+    properties:
+      - { name: Id, logicalType: string, required: true, primaryKey: true }
+      - { name: AccountId, logicalType: string }
+      - { name: Amount, logicalType: number }
+      - { name: StageName, logicalType: string }

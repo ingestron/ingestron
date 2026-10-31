@@ -1,0 +1,35 @@
+description: >-
+  A kind's schema may declare JSON Schema draft-07, 2019-09 or 2020-12 with
+  `$schema`; without it, 2020-12 applies. Each follows its own version's rules:
+  `dependentRequired` does not exist in draft-07, so it is ignored there, and
+  it is applied in 2019-09.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Old
+    schema:
+      $schema: http://json-schema.org/draft-07/schema#
+      type: object
+      dependentRequired: { a: [b] }
+  - apiVersion: example.dev/v1
+    kind: Newer
+    schema:
+      $schema: https://json-schema.org/draft/2019-09/schema
+      type: object
+      dependentRequired: { a: [b] }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.yaml"]
+  old.yaml: |
+    apiVersion: example.dev/v1
+    kind: Old
+    id: old
+    a: 1
+  newer.yaml: |
+    apiVersion: example.dev/v1
+    kind: Newer
+    id: newer
+    a: 1
+expect:
+  diagnostics:
+    - { code: SCHEMA, file: newer.yaml, line: 1, column: 1 }

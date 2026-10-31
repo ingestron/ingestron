@@ -1,0 +1,14 @@
+description: The alias limit applies to the manifest too, as a diagnostic.
+limits:
+  maxAliases: 2
+kinds: []
+files:
+  project.yaml: |
+    id: sales
+    values:
+      a: &a [1, 2]
+      b: [*a, *a, *a]
+    imports: ["*.pipeline.yaml"]
+expect:
+  diagnostics:
+    - { code: ALIAS_LIMIT, file: project.yaml }

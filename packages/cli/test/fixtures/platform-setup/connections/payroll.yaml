@@ -1,0 +1,7 @@
+apiVersion: ingestron.io/v1
+kind: Connection
+id: payroll
+connector: files
+connectivity: public
+settings:
+  path: /Volumes/landing/hr/payroll

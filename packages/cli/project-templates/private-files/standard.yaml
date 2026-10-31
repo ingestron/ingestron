@@ -1,0 +1,11 @@
+apiVersion: ingestron.io/v1
+kind: Standard
+id: stores
+packs: [databricks@1, adf@1] # Databricks first: it provides the defaults
+naming:
+  catalog: stores_{{ environment }}
+ingest:
+  settings:
+    adf-files: # the schedule; where it lands is the platform's
+      every: { frequency: Hour, interval: 1 }
+      start: 2026-10-01T00:00:00Z

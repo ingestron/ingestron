@@ -1,0 +1,7 @@
+apiVersion: ingestron.io/v1
+kind: Transform
+id: region_sales
+layer: gold
+inputs: [store_sales]
+code: ${file:region_sales.sql}
+contract: sales.region_sales

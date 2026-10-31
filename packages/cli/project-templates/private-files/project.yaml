@@ -1,0 +1,19 @@
+# Store exports on a file share inside the corporate network. ADF copies new
+# files through a self-hosted integration runtime into a landing folder as
+# they are; Databricks reads them there with Auto Loader.
+id: stores
+environments:
+  dev: {}
+  prod:
+    values:
+      landing: abfss://landing@storeslakeprod.dfs.core.windows.net/stores
+      key_vault: https://kv-stores-prod.vault.azure.net
+values:
+  landing: abfss://landing@storeslakedev.dfs.core.windows.net/stores
+  key_vault: https://kv-stores-dev.vault.azure.net
+imports:
+  - standard.yaml
+  - platform.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - contracts/*.yaml

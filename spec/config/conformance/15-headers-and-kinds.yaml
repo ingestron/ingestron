@@ -1,0 +1,22 @@
+description: Every document needs apiVersion, kind and id, and its kind must be registered.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.yaml"]
+  a.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+  b.yaml: |
+    apiVersion: example.dev/v1
+    kind: Report
+    id: b
+  c.yaml: ""
+expect:
+  diagnostics:
+    - { code: MISSING_HEADER, file: a.yaml }
+    - { code: UNKNOWN_KIND, file: b.yaml, line: 1, column: 1 }
+    - { code: MISSING_HEADER, file: c.yaml }

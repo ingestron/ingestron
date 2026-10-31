@@ -1,0 +1,10 @@
+# Used by `ingestron init --template private-sql-server`.
+title: Private SQL Server through Azure Data Factory
+summary: "Two packs: ADF copies a private SQL Server into landing storage and Databricks keeps the tables current."
+questions:
+  - value: landing
+    ask: "Landing folder for the copied files (abfss://…)"
+    default: abfss://landing@erplakedev.dfs.core.windows.net/erp
+  - value: key_vault
+    ask: "Key Vault holding the SQL login's password"
+    default: https://kv-erp-dev.vault.azure.net

@@ -1,0 +1,37 @@
+description: A ${…} that is not ours is an error with the escape as the fix, never a silent pass-through.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  orders.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: orders
+    job: "orders_${bundle.target}"
+    when: ${{ github.ref }}
+    spark: ${hiveconf:x}
+    open: "cost ${values.price"
+    note: ${value.price}
+expect:
+  diagnostics:
+    - code: UNKNOWN_REFERENCE
+      file: orders.pipeline.yaml
+      line: 4
+      column: 6
+      message: '"${bundle.target}" is not a reference.'
+      hint: 'A reference is ${values.<name>}, ${environment.<name>}, ${project.<name>}, ${file:<path>}, ${envvar:<name>} or ${secret:<name>}. To keep "${bundle.target}" as text, write "$${bundle.target}".'
+    - code: UNKNOWN_REFERENCE
+      line: 5
+      message: '"${{ github.ref }}" is not a reference.'
+      hint: 'A reference is ${values.<name>}, ${environment.<name>}, ${project.<name>}, ${file:<path>}, ${envvar:<name>} or ${secret:<name>}. To keep "${{ github.ref }}" as text, write "$${{ github.ref }}".'
+    - code: UNKNOWN_REFERENCE
+      line: 6
+    - code: UNCLOSED_REFERENCE
+      line: 7
+    - code: UNKNOWN_REFERENCE
+      line: 8
+      message: '"${value.price}" is not a reference. Did you mean "${values.price}"?'

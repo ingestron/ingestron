@@ -1,0 +1,27 @@
+description: A link to a document that could not be loaded reports only that document's own problem.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Connection
+    schema: { type: object }
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+    links:
+      /source: Connection
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.yaml"]
+  erp.yaml: |
+    apiVersion: example.dev/v2
+    kind: Connection
+    id: erp
+  orders.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: orders
+    source: erp
+expect:
+  diagnostics:
+    - code: UNKNOWN_KIND
+      file: erp.yaml

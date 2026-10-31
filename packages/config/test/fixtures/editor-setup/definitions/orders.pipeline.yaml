@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../schemas/pipeline.editor.json
+apiVersion: example.dev/v1
+kind: Pipeline
+id: orders
+table: raw_orders
+# An integer field also accepts a whole reference while editing.
+workers: ${values.workers}
+# A text field warns about an unescaped ${…} that is not ours.
+job_name: orders_$${bundle.target}

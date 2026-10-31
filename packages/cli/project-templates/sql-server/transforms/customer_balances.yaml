@@ -1,0 +1,6 @@
+apiVersion: ingestron.io/v1
+kind: Transform
+id: customer_balances
+inputs: [customers, invoices]
+code: ${file:customer_balances.sql}
+contract: erp.customer_balances

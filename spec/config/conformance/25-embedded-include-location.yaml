@@ -1,0 +1,22 @@
+description: An error in text that embeds a YAML include points at the text, not into the included file.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema:
+      type: object
+      properties:
+        label: { type: string, maxLength: 5 }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    label: "name ${file:name.yaml}"
+  name.yaml: |
+    orders
+expect:
+  diagnostics:
+    - { code: SCHEMA, file: a.pipeline.yaml, line: 4, column: 8 }

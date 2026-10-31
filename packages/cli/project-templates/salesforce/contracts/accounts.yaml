@@ -1,0 +1,13 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: crm.accounts
+version: 1.0.0
+status: active
+schema:
+  - name: accounts
+    logicalType: object
+    description: Salesforce accounts.
+    properties:
+      - { name: Id, logicalType: string, required: true, primaryKey: true }
+      - { name: Name, logicalType: string }
+      - { name: Industry, logicalType: string }

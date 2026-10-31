@@ -1,0 +1,7 @@
+# Used by `ingestron init --template minimal`.
+title: Minimal project
+summary: "Pack defaults only: an Auto Loader streaming table with schema hints and clustering."
+questions:
+  - value: landing
+    ask: "Where do the source files land?"
+    default: /Volumes/dev/landing/shop

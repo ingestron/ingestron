@@ -1,0 +1,15 @@
+description: >-
+  A file that exists but was never generated is someone else's; it is a
+  conflict unless it already has exactly the wanted content.
+disk:
+  README.md: "# Written by a person\n"
+  notes.txt: "same\n"
+wanted:
+  README.md: "# Generated\n"
+  notes.txt: "same\n"
+expect:
+  changes:
+    - { path: README.md, change: conflict, reason: NOT_GENERATED }
+    - { path: notes.txt, change: adopt }
+  clean: false
+  upToDate: false

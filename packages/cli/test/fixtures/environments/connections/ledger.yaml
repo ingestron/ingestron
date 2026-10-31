@@ -1,0 +1,7 @@
+apiVersion: ingestron.io/v1
+kind: Connection
+id: ledger
+connector: files
+connectivity: public
+settings:
+  path: ${values.landing}/ledger

@@ -1,0 +1,11 @@
+apiVersion: ingestron.io/v1
+kind: Platform
+id: lakehouse
+schedule:
+  cron: 0 15 * * * ?
+  timezone: Pacific/Auckland
+settings:
+  adf-copy: # shared infrastructure, referenced by name
+    landing: ${values.landing}
+    key_vault: ${values.key_vault}
+    integration_runtime: shir-erp

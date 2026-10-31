@@ -1,0 +1,35 @@
+description: References inside longer text produce a string; numbers and booleans are written as text.
+environment: dev
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    values:
+      workers: 4
+      enabled: true
+    environments:
+      dev: {}
+    imports: ["*.pipeline.yaml"]
+  orders.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: orders
+    table: raw_${environment.name}_orders
+    note: "${values.workers} workers, enabled=${values.enabled}"
+    workers: ${values.workers}
+    spaced: ${ values.workers }
+expect:
+  documents:
+    - kind: Pipeline
+      id: orders
+      value:
+        apiVersion: example.dev/v1
+        kind: Pipeline
+        id: orders
+        table: raw_dev_orders
+        note: "4 workers, enabled=true"
+        workers: 4
+        spaced: 4

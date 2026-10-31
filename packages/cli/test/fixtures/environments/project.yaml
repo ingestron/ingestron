@@ -1,0 +1,22 @@
+# One project, three environments. Values differ per environment; the
+# platform reads them, and names follow the environment.
+id: finance
+name: Finance ledger
+values:
+  host: https://adb-1000000000000001.1.azuredatabricks.net
+  landing: /Volumes/dev_landing/finance/files
+environments:
+  dev: {}
+  test:
+    values:
+      landing: /Volumes/test_landing/finance/files
+  prod:
+    values:
+      host: https://adb-2000000000000002.2.azuredatabricks.net
+      landing: /Volumes/prod_landing/finance/files
+imports:
+  - standard.yaml
+  - platform.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - contracts/*.yaml

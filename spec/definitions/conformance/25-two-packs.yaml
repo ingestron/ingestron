@@ -1,0 +1,55 @@
+description: A standard can use several packs. A pack's rule applies only when its method can read the source, so a private SQL Server skips the first pack's rule and gets the second pack's method; steps record their pack.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, bridge@1]
+    ingest:
+      settings:
+        bridge-copy: { landing: /landing }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: sqlserver
+    connectivity: private
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        description: One row per order.
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: total, logicalType: number, physicalType: "DECIMAL(18,2)" }
+expect:
+  tables:
+    - fullName: dev.bronze.orders
+      ingest:
+        method: bridge-copy
+        pack: bridge
+        chosenBy: { by: pack-rule, pack: bridge, when: { connectivity: private } }
+        settings:
+          landing: /landing
+      store:
+        method: stream
+        pack: test
+        chosenBy: { by: pack-default, pack: test }

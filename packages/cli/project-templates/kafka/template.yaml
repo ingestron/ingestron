@@ -1,0 +1,3 @@
+# Used by `ingestron init --template kafka`.
+title: Kafka through Lakeflow Connect
+summary: Two Kafka topics appended and parsed with the contract's column types.

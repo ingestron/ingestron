@@ -1,0 +1,73 @@
+description: Schema problems name fields as written in YAML, say what is wrong in words, and give the field's description and example as a hint.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        apiVersion: { type: string }
+        kind: { type: string }
+        id:
+          {
+            type: string,
+            pattern: "^[a-z][a-z0-9_]*$",
+            description: "Lowercase letters, digits and underscores, starting with a letter.",
+          }
+        mode: { enum: [append, upsert], description: How rows are written. }
+        fixed:
+          type: object
+          description: Settings no pipeline may change, by step.
+          examples: [{ load: { mode: append } }]
+        steps:
+          type: array
+          items:
+            type: object
+            required: [name]
+            properties:
+              name: { type: string, description: The step's name. }
+              retries: { type: integer }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  orders.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: my-orders
+    mode: replace
+    fixed:
+    steps:
+      - retries: two
+    step: 3
+expect:
+  diagnostics:
+    - code: SCHEMA
+      file: orders.pipeline.yaml
+      line: 3
+      message: 'id "my-orders" is not in the expected form.'
+      hint: "Lowercase letters, digits and underscores, starting with a letter."
+    - code: SCHEMA
+      file: orders.pipeline.yaml
+      line: 4
+      message: 'mode is "replace"; use one of: append, upsert.'
+      hint: How rows are written.
+    - code: SCHEMA
+      file: orders.pipeline.yaml
+      line: 5
+      message: "fixed is empty; it must be a mapping."
+      hint: "Settings no pipeline may change, by step.\nFor example:\n  fixed:\n    load:\n      mode: append"
+    - code: SCHEMA
+      file: orders.pipeline.yaml
+      line: 7
+      message: 'steps[0] needs "name".'
+      hint: "The step's name."
+    - code: SCHEMA
+      file: orders.pipeline.yaml
+      line: 7
+      message: 'steps[0].retries is "two"; it must be a whole number.'
+    - code: SCHEMA
+      file: orders.pipeline.yaml
+      line: 8
+      message: '"step" is not a field of the document. Did you mean "steps"?'
+      hint: "Fields: apiVersion, kind, id, mode, fixed, steps."

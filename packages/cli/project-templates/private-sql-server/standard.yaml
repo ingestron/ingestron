@@ -1,0 +1,17 @@
+apiVersion: ingestron.io/v1
+kind: Standard
+id: erp
+packs: [databricks@1, adf@1] # Databricks first: it provides the defaults
+naming:
+  catalog: erp_{{ environment }}
+ingest:
+  settings:
+    adf-copy: # the schedule; where it lands is the platform's
+      mode: incremental
+      watermark_column: modified_at
+      every: { frequency: Hour, interval: 1 }
+      start: 2026-10-01T00:00:00Z
+store:
+  settings:
+    # Each window's file holds the rows changed in it; keep the current version.
+    streaming-table: { mode: upsert, sequence_by: modified_at }

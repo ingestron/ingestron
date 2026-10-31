@@ -1,0 +1,108 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: Transform
+description: Builds one table from tables that flows or other transforms produce.
+type: object
+additionalProperties: false
+required: [apiVersion, kind, id, inputs, code, contract]
+properties:
+  apiVersion: { const: ingestron.io/v1, description: Always ingestron.io/v1. }
+  kind: { const: Transform, description: The document kind. }
+  id:
+    type: string
+    pattern: "^[a-z][a-z0-9_]*$"
+    description: Name of the table this transform produces.
+    examples:
+      - daily_sales
+  description:
+    {
+      type: string,
+      description: "What this document is for, in a sentence.",
+      examples: [Order totals per customer and day.],
+    }
+  layer:
+    {
+      type: string,
+      description: "Layer of the result. Default: the standard's second layer.",
+      examples: [silver],
+    }
+  inputs:
+    type: array
+    minItems: 1
+    uniqueItems: true
+    items: { type: string, pattern: "^[a-z][a-z0-9_]*$" }
+    description: Tables the code reads, by table name.
+  code:
+    type: string
+    description: >-
+      The code, usually `${file:name.sql}` or `${file:name.py}`. In SQL, write an input as `{{
+      tables.orders }}`; it becomes the input's full name. The method (`transform.uses`) says which
+      language it is.
+    examples:
+      - ${file:daily_sales.sql}
+  contract:
+    {
+      type: string,
+      description: Id of the DataContract (ODCS) for the result.,
+      examples: [shop.daily_sales],
+    }
+  expectations:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [name, check]
+      properties:
+        name:
+          {
+            type: string,
+            pattern: "^[a-z][a-z0-9_]*$",
+            description: "A name for the check: lowercase letters, digits and underscores.",
+            examples: [positive_total],
+          }
+        check:
+          {
+            type: string,
+            description: "A SQL condition every valid row meets, such as `total >= 0`.",
+            examples: [total >= 0],
+          }
+        action:
+          {
+            enum: [warn, drop, fail],
+            description: "What happens to rows that fail: warn, drop or fail. Default: the standard's.",
+            enumDescriptions:
+              [
+                Keep the row and record that it failed.,
+                Leave the row out of the table.,
+                Stop the update.,
+              ],
+          }
+    description: Your own checks on the table's rows.
+  transform: { $ref: "#/$defs/transform", description: How the code runs. }
+  store: { $ref: "#/$defs/store", description: How the result is kept. }
+$defs:
+  transform:
+    type: object
+    additionalProperties: false
+    properties:
+      uses:
+        type: string
+        pattern: ^[a-z][a-z0-9-]*$
+        description: The method for this step, instead of the standard's choice, such as pyspark.
+        examples:
+          - sql
+      with:
+        type: object
+        description: Settings for the method, over the standard's.
+  store:
+    type: object
+    additionalProperties: false
+    properties:
+      uses:
+        type: string
+        pattern: ^[a-z][a-z0-9-]*$
+        description: The method for this step, instead of the standard's choice, such as pyspark.
+        examples:
+          - materialised-view
+      with:
+        type: object
+        description: Settings for the method, over the standard's.

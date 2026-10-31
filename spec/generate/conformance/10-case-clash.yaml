@@ -1,0 +1,10 @@
+description: Two wanted paths that differ only in letter case clash on some file systems.
+disk: {}
+wanted:
+  jobs/Orders.yml: "a\n"
+  jobs/orders.yml: "b\n"
+expect:
+  problems:
+    - { code: BAD_PATH, path: jobs/orders.yml }
+  clean: false
+  upToDate: false

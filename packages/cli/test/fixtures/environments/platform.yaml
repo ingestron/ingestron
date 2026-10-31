@@ -1,0 +1,13 @@
+# dev and test share a workspace; prod has its own. The schedule is paused
+# outside production unless said otherwise.
+apiVersion: ingestron.io/v1
+kind: Platform
+id: lakehouse
+workspace:
+  host: ${values.host}
+  root_path: /Workspace/Shared/.bundle/finance/${environment.name}
+schedule:
+  cron: 0 30 6 * * ?
+  timezone: Pacific/Auckland
+tags:
+  environment: ${environment.name}

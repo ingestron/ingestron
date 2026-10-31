@@ -1,0 +1,11 @@
+# Bronze to silver to gold: SQL transforms that read each other, with
+# different settings for the gold layer.
+id: sales
+environments:
+  dev: {}
+imports:
+  - standard.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - transforms/*.yaml
+  - contracts/*.yaml

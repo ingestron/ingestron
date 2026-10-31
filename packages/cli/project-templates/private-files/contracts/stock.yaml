@@ -1,0 +1,14 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: stores.stock
+version: 1.0.0
+status: active
+schema:
+  - name: stock
+    logicalType: object
+    description: Stock on hand per store and product, exported every hour.
+    properties:
+      - { name: store_id, logicalType: integer, required: true }
+      - { name: product_id, logicalType: integer, required: true }
+      - { name: on_hand, logicalType: integer }
+      - { name: counted_at, logicalType: timestamp, required: true }

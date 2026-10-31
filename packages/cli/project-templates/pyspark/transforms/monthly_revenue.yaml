@@ -1,0 +1,10 @@
+apiVersion: ingestron.io/v1
+kind: Transform
+id: monthly_revenue
+inputs: [invoices]
+transform:
+  uses: pyspark
+code: ${file:monthly_revenue.py}
+contract: billing.monthly_revenue
+expectations:
+  - { name: revenue_not_negative, check: revenue >= 0, action: fail }

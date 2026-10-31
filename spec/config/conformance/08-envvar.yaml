@@ -1,0 +1,26 @@
+description: ${envvar:NAME} reads the host environment; a missing variable is an error.
+envvars:
+  SPARK_PROFILE: large
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    profile: ${envvar:SPARK_PROFILE}
+  b.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: b
+    token: ${envvar:NOT_SET}
+    bad: ${envvar:1BAD}
+expect:
+  diagnostics:
+    - { code: ENVVAR_MISSING, file: b.pipeline.yaml, line: 4 }
+    - { code: BAD_ARGUMENT, file: b.pipeline.yaml, line: 5 }

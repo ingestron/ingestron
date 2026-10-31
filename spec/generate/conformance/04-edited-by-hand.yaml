@@ -1,0 +1,14 @@
+description: >-
+  A generated file that was changed by hand is never overwritten; the plan
+  has a conflict and cannot be applied.
+disk:
+  jobs/orders.yml: "name: orders\n# tuned by hand\n"
+manifest:
+  jobs/orders.yml: "name: orders\n"
+wanted:
+  jobs/orders.yml: "name: orders\nmax_retries: 2\n"
+expect:
+  changes:
+    - { path: jobs/orders.yml, change: conflict, reason: EDITED }
+  clean: false
+  upToDate: false

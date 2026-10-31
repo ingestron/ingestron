@@ -1,0 +1,10 @@
+# Used by `ingestron init --template retail`.
+title: Retail
+summary: "A complete project: files into bronze, orders kept current from change records, and daily sales in silver."
+questions:
+  - value: host
+    ask: "Databricks workspace URL"
+    default: https://adb-1111111111111111.1.azuredatabricks.net
+  - value: storage
+    ask: "Storage account URL for the landing files"
+    default: abfss://landing@retaildev.dfs.core.windows.net

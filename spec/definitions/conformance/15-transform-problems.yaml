@@ -1,0 +1,112 @@
+description: Inputs must exist, must not form a cycle, and a table name has one producer.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        description: One row per order.
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: total, logicalType: number, physicalType: "DECIMAL(18,2)" }
+  a.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: a
+    inputs: [b]
+    code: "SELECT * FROM {{ tables.b }}"
+    contract: a
+  b.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: b
+    inputs: [a]
+    code: "SELECT * FROM {{ tables.a }}"
+    contract: b
+  c.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: c
+    inputs: [missing]
+    code: "SELECT * FROM {{ tables.missing }}"
+    contract: c
+  d.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: orders
+    inputs: [c]
+    code: "SELECT * FROM {{ tables.c }}"
+    contract: orders
+  a.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: a
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: a
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  b.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: b
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: b
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  c.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: c
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: c
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  diagnostics:
+    - code: UNKNOWN_INPUT
+      file: c.yaml
+      line: 4
+      column: 10
+    - code: DUPLICATE_TABLE
+      file: d.yaml
+      line: 3
+      column: 5
+    - code: INPUT_CYCLE
+      file: a.yaml

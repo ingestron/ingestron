@@ -1,0 +1,24 @@
+# A second data-only pack, for cases where a standard uses two packs.
+id: bridge
+version: 1
+defaults:
+  naming: { catalog: unused, schema: unused, table: unused, pipeline: unused, job: unused }
+  layers: [unused]
+  types: {}
+  quality: { required: fail, default: fail }
+rules:
+  ingest:
+    when:
+      - { connectivity: private, use: bridge-copy }
+methods:
+  bridge-copy:
+    action: ingest
+    description: Copies from a source the platform cannot reach into a landing folder.
+    connectors: [sqlserver]
+    connectivity: [private]
+    produces: files
+    settings:
+      type: object
+      additionalProperties: false
+      required: [landing]
+      properties: { landing: { type: string } }

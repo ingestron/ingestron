@@ -1,0 +1,10 @@
+apiVersion: ingestron.io/v1
+kind: Connection
+id: share
+description: The stores' export share, inside the corporate network only.
+connector: files
+connectivity: private
+settings:
+  path: '\\fs01\exports'
+  user: corp\ingest
+  password: ${secret:fs01-password} # a Key Vault secret name

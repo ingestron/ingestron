@@ -1,0 +1,13 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: web.page_views
+version: 1.0.0
+status: active
+schema:
+  - name: page_views
+    logicalType: object
+    description: One event per page view.
+    properties:
+      - { name: session_id, logicalType: string, required: true }
+      - { name: url, logicalType: string }
+      - { name: viewed_at, logicalType: timestamp }

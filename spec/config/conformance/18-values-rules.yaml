@@ -1,0 +1,18 @@
+description: Values cannot refer to other values, unknown values are reported, and environments must exist.
+environment: test
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    values:
+      catalog: main
+      table: ${values.catalog}_orders
+    imports: ["*.pipeline.yaml"]
+expect:
+  diagnostics:
+    - { code: UNKNOWN_ENVIRONMENT, file: project.yaml }
+    - { code: VALUES_SELF_REFERENCE, file: project.yaml, line: 4, column: 10 }
+    - { code: NO_MATCH, severity: warning, file: project.yaml }

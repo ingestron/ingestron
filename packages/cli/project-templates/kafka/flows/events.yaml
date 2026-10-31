@@ -1,0 +1,10 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: events
+source: events
+ingest:
+  # Keep append explicit when this flow is composed with a chosen ingestion method.
+  with: { starting_offset: earliest, mode: append }
+tables:
+  page_views: { object: web.page-views, contract: web.page_views }
+  purchases: { object: web.purchases, contract: web.purchases }

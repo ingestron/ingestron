@@ -1,0 +1,7 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: pos
+source: pos
+tables:
+  sales: { object: sales, contract: sales.sales }
+  stores: { object: stores, contract: sales.stores }

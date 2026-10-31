@@ -1,0 +1,14 @@
+description: A generated file that nobody edited is updated with the new content.
+disk:
+  jobs/orders.yml: "name: orders\n"
+manifest:
+  jobs/orders.yml: "name: orders\n"
+wanted:
+  jobs/orders.yml: "name: orders\nmax_retries: 2\n"
+expect:
+  changes:
+    - { path: jobs/orders.yml, change: update }
+  clean: true
+  upToDate: false
+  disk:
+    jobs/orders.yml: "name: orders\nmax_retries: 2\n"

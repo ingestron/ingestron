@@ -1,0 +1,13 @@
+description: A generated file deleted by hand is written again.
+disk: {}
+manifest:
+  jobs/orders.yml: "name: orders\n"
+wanted:
+  jobs/orders.yml: "name: orders\n"
+expect:
+  changes:
+    - { path: jobs/orders.yml, change: create }
+  clean: true
+  upToDate: false
+  disk:
+    jobs/orders.yml: "name: orders\n"

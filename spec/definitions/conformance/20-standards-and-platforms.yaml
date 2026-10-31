@@ -1,0 +1,57 @@
+description: A project needs exactly one standard for this pack and at most one platform.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@2]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        description: One row per order.
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: total, logicalType: number, physicalType: "DECIMAL(18,2)" }
+  p1.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: one
+  p2.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: two
+expect:
+  diagnostics:
+    - code: WRONG_PACK
+      file: standard.yaml
+      line: 4
+      column: 9
+    - code: MANY_PLATFORMS
+      file: p2.yaml
+      line: 1
+      column: 1

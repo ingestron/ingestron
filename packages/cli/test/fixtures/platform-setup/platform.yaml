@@ -1,0 +1,24 @@
+apiVersion: ingestron.io/v1
+kind: Platform
+id: hr-lakehouse
+workspace:
+  host: https://adb-3000000000000003.3.azuredatabricks.net
+run_as:
+  service_principal_name: 0b6c3d2e-0000-4000-8000-000000000007
+compute:
+  budget_policy_id: 4e1d0c5b-hr-budget
+tags:
+  cost_centre: "4410"
+  data_classification: confidential
+permissions:
+  - { group_name: hr-data-engineers, level: CAN_MANAGE }
+  - { group_name: hr-analysts, level: CAN_VIEW }
+schedule:
+  cron: 0 0 2 * * ?
+notifications:
+  on_failure: [hr-data@example.com]
+manage:
+  schemas: true # this project owns its schemas
+grants:
+  bronze:
+    - { principal: hr-data-engineers, privileges: [USE_SCHEMA, SELECT, MODIFY] }

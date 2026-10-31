@@ -1,0 +1,13 @@
+# A SQL Server database reached over private networking from the workspace,
+# ingested with Lakeflow Connect, then summarised by our own pipeline.
+id: erp
+environments:
+  dev: {}
+  prod: {}
+imports:
+  - standard.yaml
+  - platform.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - transforms/*.yaml
+  - contracts/*.yaml

@@ -1,0 +1,12 @@
+description: Generating the same content again changes nothing and is up to date.
+disk:
+  jobs/orders.yml: "name: orders\n"
+manifest:
+  jobs/orders.yml: "name: orders\n"
+wanted:
+  jobs/orders.yml: "name: orders\n"
+expect:
+  changes:
+    - { path: jobs/orders.yml, change: unchanged }
+  clean: true
+  upToDate: true

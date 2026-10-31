@@ -1,0 +1,8 @@
+apiVersion: ingestron.io/v1
+kind: Connection
+id: events
+description: Event Hubs namespace, used through its Kafka endpoint.
+connector: kafka
+connectivity: public
+settings:
+  uc_connection: web_events_kafka

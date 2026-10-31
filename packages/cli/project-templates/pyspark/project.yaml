@@ -1,0 +1,11 @@
+# A transform written in PySpark: the code is a function that receives a
+# DataFrame per input and returns the result.
+id: subscriptions
+environments:
+  dev: {}
+imports:
+  - standard.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - transforms/*.yaml
+  - contracts/*.yaml

@@ -1,0 +1,10 @@
+# Kafka topics streamed continuously with Lakeflow Connect (Beta), JSON
+# values parsed with the contract's types.
+id: clickstream
+environments:
+  dev: {}
+imports:
+  - standard.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - contracts/*.yaml

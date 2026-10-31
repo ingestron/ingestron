@@ -1,0 +1,3 @@
+# Used by `ingestron init --template sql-server`.
+title: SQL Server through Lakeflow Connect
+summary: A gateway and an ingestion pipeline for SQL Server, then the pipeline that reads the ingested tables.

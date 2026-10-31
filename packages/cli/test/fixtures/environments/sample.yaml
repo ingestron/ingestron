@@ -1,0 +1,4 @@
+# A guide: a small project that shows one idea; the docs embed it.
+title: Environments
+summary: dev, test and prod from one set of definitions, with values, mode and schedule per environment.
+order: 1

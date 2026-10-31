@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+.tmp/
+*.tsbuildinfo
+build/
+.ingestron/
+.DS_Store
+.release/
+# Copied in when a package is packed.
+packages/*/NOTICE

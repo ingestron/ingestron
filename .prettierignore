@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+**/dist/
+**/.tmp/
+packages/config/test/fixtures/editor-setup/schemas/
+.release/
+packages/*/api/

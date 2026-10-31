@@ -1,0 +1,6 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: ledger
+source: ledger
+tables:
+  journals: { object: journals, contract: finance.journals }

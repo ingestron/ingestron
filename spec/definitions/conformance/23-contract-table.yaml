@@ -1,0 +1,45 @@
+description: A contract with several schema entries must have one named like the table.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: other
+        logicalType: object
+      - name: another
+        logicalType: object
+        description: One row per order.
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: total, logicalType: number, physicalType: "DECIMAL(18,2)" }
+expect:
+  diagnostics:
+    - code: CONTRACT_TABLE
+      file: sales.yaml

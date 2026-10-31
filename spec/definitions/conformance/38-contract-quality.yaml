@@ -1,0 +1,50 @@
+description: Contract quality rules that hold for every row become expectations; rules that compare counts over all rows are warnings.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        quality:
+          - { metric: rowCount, mustBeGreaterThan: 0 }
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - name: unit
+            logicalType: string
+            quality:
+              - { metric: invalidValues, arguments: { validValues: [kg, "o'z"] }, mustBe: 0 }
+              - { name: unit_known, metric: missingValues, arguments: { missingValues: [null, "", N/A] }, mustBeLessThan: 1 }
+              - { metric: nullValues, mustBeLessThan: 5, unit: percent }
+              - { type: text, description: Units as the scale reports them. }
+expect:
+  diagnostics:
+    - { code: QUALITY_RULE_NOT_CHECKED, severity: warning, file: orders.odcs.yaml, line: 10 }
+    - { code: QUALITY_RULE_NOT_CHECKED, severity: warning, file: orders.odcs.yaml, line: 18 }
