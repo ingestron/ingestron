@@ -1,0 +1,14 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: erp.customers
+version: 1.0.0
+status: active
+schema:
+  - name: customers
+    logicalType: object
+    description: ERP customers.
+    properties:
+      - { name: customer_id, logicalType: integer, required: true, primaryKey: true }
+      - { name: name, logicalType: string }
+      - { name: country, logicalType: string }
+      - { name: modified_at, logicalType: timestamp, required: true }

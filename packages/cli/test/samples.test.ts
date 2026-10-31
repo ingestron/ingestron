@@ -22,6 +22,7 @@ describe("listSamples", () => {
       "environments",
       "layers-and-transforms",
       "platform-setup",
+      "landing-only",
     ]);
   });
 

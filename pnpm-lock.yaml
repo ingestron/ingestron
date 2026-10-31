@@ -34,8 +34,8 @@ importers:
         version: 2.9.1
     devDependencies:
       '@ingestron/pack-adf':
-        specifier: ^1.0.0
-        version: 1.0.0(@ingestron/definitions@packages+definitions)
+        specifier: ^1.1.0
+        version: 1.1.0(@ingestron/definitions@packages+definitions)
       '@microsoft/api-extractor':
         specifier: 7.59.4
         version: 7.59.4(@types/node@22.20.5)
@@ -70,8 +70,8 @@ importers:
         specifier: workspace:^
         version: link:../generate
       '@ingestron/pack-adf':
-        specifier: ^1.0.0
-        version: 1.0.0(@ingestron/definitions@packages+definitions)
+        specifier: ^1.1.0
+        version: 1.1.0(@ingestron/definitions@packages+definitions)
       '@ingestron/pack-databricks':
         specifier: ^1.0.0
         version: 1.0.0(@ingestron/definitions@packages+definitions)
@@ -458,11 +458,11 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
-  '@ingestron/pack-adf@1.0.0':
-    resolution: {integrity: sha512-DAT5oZYwZ31erj30h7+PW1CXuD46gAh+d2O4VXe4qptvNVpFL57iDd6N7XGo7gcE5oQ4eUIiMaXFvmZk15C/eA==}
+  '@ingestron/pack-adf@1.1.0':
+    resolution: {integrity: sha512-h0uxlhCONDVbiSTwHPJjON6N2SWtmln2xFQo322ChtlM/fVsrSwu505+XtBeRCnmQRjYG4FoUeAocmlRNNPbyQ==}
     engines: {node: '>=22.13.0'}
     peerDependencies:
-      '@ingestron/definitions': ^1.0.0
+      '@ingestron/definitions': ^1.1.0
 
   '@ingestron/pack-databricks@1.0.0':
     resolution: {integrity: sha512-tme1RFGPJg2HD38yIkawNtkQvNIKtSLM2Gd1XpSMq5ifmJwvQUeK6kBHBOP+3xPtLdTcFJqnAktgiqPwKbykFw==}
@@ -1668,7 +1668,7 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@ingestron/pack-adf@1.0.0(@ingestron/definitions@packages+definitions)':
+  '@ingestron/pack-adf@1.1.0(@ingestron/definitions@packages+definitions)':
     dependencies:
       '@ingestron/definitions': link:packages/definitions
 

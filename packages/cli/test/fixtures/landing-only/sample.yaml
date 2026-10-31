@@ -1,0 +1,4 @@
+# A guide: a small project that shows one idea; the docs embed it.
+title: Land files only
+summary: ADF copies each table into one file that reports read directly, with no store step.
+order: 7
