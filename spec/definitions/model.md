@@ -210,7 +210,8 @@ In that environment:
   settings come from the standard and platform under its name; the replaced
   method's are not used, the standard's `allowed` list does not apply to it,
   and a fix adding its missing settings writes them in the standard. Its
-  `chosenBy` is `{ by: runs-on, pack: <pack> }`. When the named pack has no
+  `chosenBy` is `{ by: runs-on, pack: <pack> }`, and it is `renamed` when the
+  replaced method renames, since the files hold that method's names. When the named pack has no
   such method, the step is `RUNS_ON`, an error at the flow's `source`.
 - A store or transform step whose method belongs to another pack is
   `RUNS_ON`, an error at the table: local runs need the table's store and
