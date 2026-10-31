@@ -32,7 +32,9 @@ export type DefinitionCode =
   | "CONTRACT_FIELD_UNUSED"
   | "QUALITY_RULE_NOT_CHECKED"
   | "CAPABILITY_OFF"
-  | "PLACEHOLDER_NOT_REPLACED";
+  | "PLACEHOLDER_NOT_REPLACED"
+  | "RUNS_ON"
+  | "RUNS_ON_SKIPPED";
 
 /** Where a value was written: a document and a JSON Pointer into it. */
 export interface Source {

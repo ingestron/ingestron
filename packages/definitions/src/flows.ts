@@ -6,6 +6,7 @@ import { contractFor, expectationsFor, expectationsNotChecked } from "./contract
 import { kinds, type ConnectionDoc, type FlowDoc } from "./documents.js";
 import type { ChosenBy, ResolvedTable } from "./model.js";
 import type { SettingsLayer } from "./settings.js";
+import { landedIngest, leftOut } from "./runs-on.js";
 import { serveStep } from "./serve.js";
 import { resolveStep, stepOf, type StepResult } from "./steps.js";
 import { renderTableName, type TableNamer } from "./tables.js";
@@ -53,6 +54,8 @@ function flowTable(
   const connection = context.project.get(kinds.connection, flow.value.source)?.value;
   if (!doc || !layer || !connection) return undefined;
   const facts = { connectivity: connection.connectivity, connector: connection.connector, layer };
+  const at = { document: flow, pointer: `/tables/${name}` };
+  if (leftOut(context, named(flow, "ingest"), facts, name, at)) return undefined;
   const steps = flowSteps(context, flow, name, facts);
   const contract = flowContract(context, flow, name, steps?.endsAtFiles !== undefined);
   const fullName = renderTableName(context, namer, {
@@ -136,13 +139,16 @@ function keepSteps(
   name: string,
   facts: Facts,
 ): FlowSteps | undefined {
-  const ingest = resolveStep(
-    context,
-    "ingest",
-    named(flow, "ingest"),
-    facts,
-    tableLayer(flow, name, "ingest"),
-  );
+  const local = landedIngest(context, named(flow, "ingest"), facts);
+  const ingest = local
+    ? local.step
+    : resolveStep(
+        context,
+        "ingest",
+        named(flow, "ingest"),
+        facts,
+        tableLayer(flow, name, "ingest"),
+      );
   if (ingest?.produces === "table") return afterTable(context, flow, ingest);
   const storeFacts = ingest ? { ...facts, input: ingest.produces } : facts;
   const none = endsAtFiles(context, named(flow, "store"), storeFacts);

@@ -85,6 +85,18 @@ export function endsAtFiles(
   return isAllowed(context, "store", named, pick) && located(pick.chosenBy);
 }
 
+/** The method something chooses for this action, without reporting anything. */
+export function peekMethod(
+  context: Context,
+  action: Action,
+  named: Named,
+  facts: Facts,
+): { id: string; method: Method } | undefined {
+  const pick = findPick(context, action, named, facts);
+  const method = pick && context.pack.methods[pick.id];
+  return method && { id: pick.id, method };
+}
+
 /** True when something chooses a method for this action; nothing is reported. */
 export function hasChoice(context: Context, action: Action, named: Named, facts: Facts): boolean {
   return findPick(context, action, named, facts) !== undefined;
@@ -230,7 +242,8 @@ function matches(rule: Rule | RuleDoc, facts: Facts): boolean {
 
 /** True when an ingest method reads this connector and connectivity. */
 export function canServe(method: Method | undefined, facts: Facts): boolean {
-  if (!method) return false;
+  // A method that reads landed files is chosen only by runs-on.
+  if (!method || method.reads === "landed") return false;
   const { connectors, connectivity } = method;
   if (connectors && !connectors.includes(facts.connector ?? "")) return false;
   return (

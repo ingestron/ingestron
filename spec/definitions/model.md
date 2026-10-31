@@ -194,6 +194,26 @@ a step that records an `output` (`HANDOVER`, at the table:
 `"<serve>" reads where "<step>" puts its data, and "<step>" does not say.`).
 `none` is not a serve choice (`UNKNOWN_METHOD`).
 
+**Runs on.** An environment MAY name `runs-on`, a pack (config specification,
+section 3). It MUST be one of the standard's packs (`UNKNOWN_PACK`, at the
+standard's `packs`). In that environment:
+
+- An ingest step whose method produces `files` and belongs to another pack is
+  replaced by the first method of the named pack with `reads: landed`, which
+  reads the files that method would have landed from the named pack's own
+  settings. Its settings come from the standard and platform under its name;
+  the replaced method's are not used. Its `chosenBy` is
+  `{ by: runs-on, pack: <pack> }`.
+- A store or transform step whose method belongs to another pack is
+  `RUNS_ON`, an error at the table: local runs need the table's store and
+  transforms to be the named pack's.
+- A table whose ingest produces `table` is left out of that environment's
+  model, with `RUNS_ON_SKIPPED`, a warning at the table; a transform that
+  reads a table left out is left out too, with the same warning.
+- A serve step whose method belongs to another pack is dropped.
+
+Environments without `runs-on` are unchanged.
+
 **Landed snapshot.** The default single file of a table that each load
 replaces is `<landing>/<object>/<object>.<extension>`. Packs that land or
 read whole tables use this path, so they agree without depending on each

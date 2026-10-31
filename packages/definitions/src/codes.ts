@@ -47,6 +47,16 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
     meaning: "The ingest method cannot reach a source with this connectivity.",
     fix: "Use a method that reaches it, such as a copy from a private network: the problem's fixes list them, including any from a pack the standard does not name yet.",
   },
+  RUNS_ON: {
+    meaning:
+      "In an environment that runs on a pack, a table's store or transform belongs to another pack, which cannot run there.",
+    fix: "Keep the table's store and transforms with the pack the environment runs on, or run the environment on the platform.",
+  },
+  RUNS_ON_SKIPPED: {
+    meaning:
+      "In an environment that runs on a pack, a table whose ingest lands no files is left out, with the transforms that read it.",
+    fix: "Nothing, if the table is not needed there; otherwise land its files with a method that does.",
+  },
   HANDOVER: {
     meaning:
       "The method cannot use what the previous action hands over, or a flow names a store after an ingest method that writes the table itself.",

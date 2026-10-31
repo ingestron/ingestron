@@ -6,6 +6,7 @@ import {
   type AnyDiagnostic,
   type FileSource,
 } from "@ingestron/config";
+import { checkRunsOn } from "./runs-on.js";
 import { checkGrants } from "./capabilities.js";
 import { checkContractFields } from "./contract-use.js";
 import { checkSettingsKeys } from "./settings-keys.js";
@@ -115,6 +116,7 @@ function resolveLoaded(
   checkDuplicateNames(context, tables, (table) => originOf(context, table));
   recordOutputs(context, tables);
   checkServeInputs(context, tables);
+  checkRunsOn(context, tables, (table) => originOf(context, table));
   runMethodChecks(context, tables);
   checkContractFields(context, new Set(tables.map((table) => table.contract.id)));
   // Project-wide checks only make sense once every table resolved.
