@@ -3,7 +3,7 @@
 // In the bundle, import.meta.url is dist/main.js, so "../schemas" and
 // "../templates" resolve to the copies at the package root.
 import { execFileSync } from "node:child_process";
-import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { build } from "esbuild";
@@ -18,6 +18,32 @@ const folders = [
   ["samples/starters", "project-templates"],
   ["samples/guides/adf-native-connectors", "project-recipes/adf"],
 ];
+
+/**
+ * Resolves `@ingestron/*` imports to the TypeScript source behind each package's
+ * export, so packing needs no earlier build and never bundles a stale `dist/`.
+ */
+function workspaceSource() {
+  const packages = new Map(
+    readdirSync(join(repository, "packages")).map((folder) => {
+      const dir = join(repository, "packages", folder);
+      const json = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
+      return [json.name, { dir, exports: json.exports ?? {} }];
+    }),
+  );
+  return {
+    name: "workspace-source",
+    setup(build) {
+      build.onResolve({ filter: /^@ingestron\// }, ({ path }) => {
+        const [, name, subpath = ""] = /^(@ingestron\/[^/]+)(\/.*)?$/.exec(path);
+        const target = packages.get(name)?.exports[`.${subpath}`]?.import;
+        if (!target) return undefined;
+        const source = target.replace(/^\.\/dist\/(.*)\.js$/, "src/$1.ts");
+        return { path: join(packages.get(name).dir, source) };
+      });
+    },
+  };
+}
 
 function manifest(version) {
   return {
@@ -65,6 +91,7 @@ export async function packCli({ outDir = join(repository, ".release") } = {}) {
       js: 'import { createRequire as __ingestronRequire } from "node:module";\nconst require = __ingestronRequire(import.meta.url);',
     },
     metafile: true,
+    plugins: [workspaceSource()],
     absWorkingDir: repository,
     logLevel: "warning",
   });
