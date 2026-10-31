@@ -16,8 +16,6 @@ Writes a set of generated files into a folder safely:
 It does not decide what to generate. You give it the wanted files, path →
 text, and it takes care of writing them.
 
-Other packages in this workspace depend on it with `"@ingestron/generate": "workspace:*"`.
-
 Requires Node 22.13 or later. No runtime dependencies: only Node's own `fs`,
 `path` and `crypto`.
 

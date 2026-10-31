@@ -1,5 +1,5 @@
-// Review findings: comments, nothing-written guarantees, binary files,
-// links in Git sources, git arguments, credentials and terminal input.
+// `ingestron init` edge cases: comments, writing nothing on failure, binary
+// files, links in Git sources, git arguments, credentials and terminal input.
 import { execFileSync } from "node:child_process";
 import {
   cpSync,

@@ -32,7 +32,7 @@ generated files are out of date.
 
 ## Learn more
 
-- Documentation: https://ingestron.com
+- Documentation: https://docs.ingestron.io
 - Source and issues: https://github.com/ingestron/ingestron
 
 ## Contact

@@ -52,7 +52,7 @@ function manifest(version) {
     description:
       "Declare data ingestion in reviewed YAML definitions and generate Databricks and Azure Data Factory files under your standards.",
     keywords: ["ingestion", "databricks", "azure-data-factory", "data-engineering", "yaml", "cli"],
-    homepage: "https://ingestron.com",
+    homepage: "https://docs.ingestron.io",
     repository: {
       type: "git",
       url: "git+https://github.com/ingestron/ingestron.git",

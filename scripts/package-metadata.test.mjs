@@ -36,3 +36,10 @@ test("every package ships the NOTICE, copied in when it is packed", () => {
     assert.match(json.scripts.prepack, /cp \.\.\/\.\.\/NOTICE NOTICE/, json.name);
   }
 });
+
+test("packages depend on each other by range, so a project keeps one copy of each", () => {
+  for (const { json } of packages)
+    for (const [name, range] of Object.entries(json.dependencies ?? {}))
+      if (name.startsWith("@ingestron/"))
+        assert.match(range, /^(?:workspace:)?\^/, `${json.name} → ${name}: ${range}`);
+});

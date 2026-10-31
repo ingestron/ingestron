@@ -3,8 +3,8 @@
 Version: 1 (draft). Status: implemented by `@ingestron/definitions`
 (TypeScript). Other implementations must pass the same
 [conformance cases](conformance/). Users should start with the package
-[README](../../packages/definitions/README.md); the reasoning is in
-[docs/design.md](../../docs/design.md).
+[README](../../packages/definitions/README.md) and the
+[documentation](https://docs.ingestron.io).
 
 The key words MUST, MUST NOT and MAY are used as in RFC 2119.
 
