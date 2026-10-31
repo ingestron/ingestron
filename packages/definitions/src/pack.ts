@@ -3,7 +3,7 @@ import type { JsonSchema } from "@ingestron/config";
 import type { ResolvedModel, ResolvedTable } from "./model.js";
 
 /** The steps a table goes through. */
-export type Action = "ingest" | "transform" | "store";
+export type Action = "ingest" | "transform" | "store" | "serve";
 
 /** What one action hands to the next. */
 export type Handover = "files" | "table" | "query";
@@ -48,6 +48,11 @@ export interface Method {
    * @example output: (table) => ({ location: `abfss://landing@acct.dfs.core.windows.net/${table.name}.parquet`, format: "parquet", loads: "replace" })
    */
   output?(table: ResolvedTable): StepOutput | undefined;
+  /**
+   * Serve methods: true when the method reads where the previous step's data
+   * lands, so that step must record an `output`.
+   */
+  needsOutput?: true;
 }
 
 /** Where a step's data ends up, for packs that read it. */

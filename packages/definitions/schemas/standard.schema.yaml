@@ -82,6 +82,11 @@ properties:
       $ref: "#/$defs/rules",
       description: "How tables are stored: method settings, rules, and allowed and fixed settings.",
     }
+  serve:
+    {
+      $ref: "#/$defs/rules",
+      description: "Where tables are made available after their last step: method settings, rules, and allowed and fixed settings. Nothing is served unless something chooses.",
+    }
 $defs:
   method: { type: string, pattern: "^[a-z][a-z0-9-]*$" }
   naming:

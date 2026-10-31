@@ -82,7 +82,7 @@ describe("completion", () => {
     const items = at("flows/shop.yaml", (text) =>
       text.replace("    object: orders\n", "    object: orders\n    |\n"),
     );
-    expect(labels(items)).toEqual(["ingest"]);
+    expect(labels(items)).toEqual(["ingest", "serve"]);
   });
 
   it("leaves out settings already written in the same mapping", () => {

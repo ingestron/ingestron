@@ -6,7 +6,7 @@ import type { Context } from "./context.js";
 import { isRecord } from "./merge.js";
 import type { Action } from "./pack.js";
 
-const actions: Action[] = ["ingest", "transform", "store"];
+const actions: Action[] = ["ingest", "transform", "store", "serve"];
 
 /** Reports each settings key, in the standard and the platform, that names no method. */
 export function checkSettingsKeys(context: Context): void {

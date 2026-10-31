@@ -125,7 +125,7 @@ function methodOwners(
   return owner;
 }
 
-const actions: Action[] = ["ingest", "transform", "store"];
+const actions: Action[] = ["ingest", "transform", "store", "serve"];
 
 /** One pack view: the first pack's defaults, every pack's rules in order, all methods. */
 function combine(packs: PackInfo[]): PackInfo {

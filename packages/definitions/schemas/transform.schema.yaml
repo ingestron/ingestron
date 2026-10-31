@@ -79,6 +79,8 @@ properties:
     description: Your own checks on the table's rows.
   transform: { $ref: "#/$defs/transform", description: How the code runs. }
   store: { $ref: "#/$defs/store", description: How the result is kept. }
+  serve:
+    { $ref: "#/$defs/serve", description: Where the result is made available after it is kept. }
 $defs:
   transform:
     type: object
@@ -103,6 +105,19 @@ $defs:
         description: The method for this step, instead of the standard's choice, such as pyspark.
         examples:
           - materialised-view
+      with:
+        type: object
+        description: Settings for the method, over the standard's.
+  serve:
+    type: object
+    additionalProperties: false
+    properties:
+      uses:
+        type: string
+        pattern: ^[a-z][a-z0-9-]*$
+        description: A serve method the standard allows, such as views over the data. Leave out to let the standard choose; nothing is served unless something chooses.
+        examples:
+          - synapse-serve
       with:
         type: object
         description: Settings for the method, over the standard's.
