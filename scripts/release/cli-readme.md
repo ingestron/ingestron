@@ -2,7 +2,8 @@
 
 Declare data ingestion in reviewed YAML definitions, under your organisation's
 standards, and generate the files your own platform runs: Databricks Asset
-Bundles and Lakeflow pipelines, and Azure Data Factory copies. Ingestron runs
+Bundles and Lakeflow pipelines, Azure Data Factory copies, and Azure Synapse
+serverless SQL views over the files they land. Ingestron runs
 locally, never connects to your sources or your cloud, and never overwrites a
 file someone edited by hand.
 
