@@ -29,4 +29,16 @@ describe("runs-on", () => {
   it("names a pack", () => {
     expect(load("{ runs-on: 3 }", "local").diagnostics.map(({ code }) => code)).toContain("SCHEMA");
   });
+
+  it("is not something references can read", () => {
+    const text = manifest("{ runs-on: duckdb }").replace(
+      "environments:",
+      'values: { engine: "${environment.runsOn}" }\nenvironments:',
+    );
+    const result = resolveProject(memoryFiles({ "project.yaml": text }), {
+      kinds: [],
+      environment: "local",
+    });
+    expect(result.diagnostics.map(({ code }) => code)).toContain("UNKNOWN_VALUE");
+  });
 });

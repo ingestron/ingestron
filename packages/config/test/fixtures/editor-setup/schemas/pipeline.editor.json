@@ -1,6 +1,11 @@
 {
   "type": "object",
-  "required": ["apiVersion", "kind", "id", "table"],
+  "required": [
+    "apiVersion",
+    "kind",
+    "id",
+    "table"
+  ],
   "properties": {
     "apiVersion": {
       "anyOf": [

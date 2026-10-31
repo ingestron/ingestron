@@ -9,6 +9,8 @@ import type { Action, Method } from "./pack.js";
 export interface SettingsUser {
   owner: DefinitionDocument;
   at: string;
+  /** Chosen by runs-on: settings belong in the standard, not the definition. */
+  runsOn?: true;
 }
 
 /** One method used by one flow or transform. */
@@ -46,7 +48,8 @@ interface Home {
 function homeOf(context: Context, use: MethodUse, key: string): Home {
   const { platform = [], standard = [] } = use.method.placement ?? {};
   if (platform.includes(key) && context.platform) return platformHome(context, use);
-  if (platform.includes(key) || standard.includes(key)) return standardHome(context, use);
+  if (platform.includes(key) || standard.includes(key) || use.user.runsOn)
+    return standardHome(context, use);
   const own = (use.user.owner.value as Record<string, { with?: unknown } | undefined>)[use.action];
   return { document: use.user.owner, pointer: `/${use.action}/with`, existing: own?.with };
 }

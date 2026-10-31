@@ -68,6 +68,7 @@ export function resolveProject(files: FileSource, options: LoadOptions): LoadRes
   const project = createProject(
     manifest.scope,
     loaded.map(({ document }) => document),
+    manifest.runsOn,
   );
   return { ok: true, project, diagnostics: uniqueDiagnostics(context.diagnostics) };
 }
