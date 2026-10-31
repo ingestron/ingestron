@@ -42,6 +42,7 @@ export type {
   RequestSection,
   PackInfo,
   Rule,
+  StepOutput,
 } from "./pack.js";
 export {
   loadDefinitions,
