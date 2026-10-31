@@ -75,6 +75,9 @@ importers:
       '@ingestron/pack-databricks':
         specifier: ^1.0.0
         version: 1.0.0(@ingestron/definitions@packages+definitions)
+      '@ingestron/pack-synapse':
+        specifier: ^1.0.1
+        version: 1.0.1(@ingestron/definitions@packages+definitions)
       yaml:
         specifier: 2.9.1
         version: 2.9.1
@@ -469,6 +472,12 @@ packages:
     engines: {node: '>=22.13.0'}
     peerDependencies:
       '@ingestron/definitions': ^1.0.0
+
+  '@ingestron/pack-synapse@1.0.1':
+    resolution: {integrity: sha512-+mXDuY1oOpZ5p8yrPCDXCp1dKuIInvC4k0Q+eHiBE46ltDVPJt70VwooicLKxbbR+ZzquZRpBft/xjqVXY/toQ==}
+    engines: {node: '>=22.13.0'}
+    peerDependencies:
+      '@ingestron/definitions': ^1.2.0
 
   '@jridgewell/resolve-uri@3.1.2':
     resolution: {integrity: sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw==}
@@ -1677,6 +1686,10 @@ snapshots:
       '@ingestron/definitions': link:packages/definitions
       liquidjs: 10.30.0
       yaml: 2.9.1
+
+  '@ingestron/pack-synapse@1.0.1(@ingestron/definitions@packages+definitions)':
+    dependencies:
+      '@ingestron/definitions': link:packages/definitions
 
   '@jridgewell/resolve-uri@3.1.2': {}
 

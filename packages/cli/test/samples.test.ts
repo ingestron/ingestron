@@ -23,6 +23,7 @@ describe("listSamples", () => {
       "layers-and-transforms",
       "platform-setup",
       "landing-only",
+      "synapse-views",
     ]);
   });
 

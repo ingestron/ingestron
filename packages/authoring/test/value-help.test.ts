@@ -45,12 +45,16 @@ describe("packs", () => {
 
   it("offers the packs not yet listed as items", () => {
     const text = `${head}packs: [databricks@1, ]`;
-    expect(suggest("standard.yaml", text, text.length - 1)).toEqual(["adf@1"]);
+    expect(suggest("standard.yaml", text, text.length - 1)).toEqual(["adf@1", "synapse@1"]);
   });
 
-  it("offers the pack lists as a value", () => {
-    expect(suggest("standard.yaml", `${head}packs:`)).toEqual(
-      expect.arrayContaining([" [databricks@1]", " [databricks@1, adf@1]"]),
-    );
+  it("offers each pack alone, then each storing pack with each landing pack", () => {
+    expect(suggest("standard.yaml", `${head}packs:`)).toEqual([
+      " [databricks@1]",
+      " [adf@1]",
+      " [synapse@1]",
+      " [databricks@1, adf@1]",
+      " [synapse@1, adf@1]",
+    ]);
   });
 });

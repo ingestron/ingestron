@@ -185,4 +185,25 @@ describe("references in project.yaml", () => {
     expect(labels).toContain("environment.name");
     expect(labels).not.toContain("values.");
   });
+
+  it("offers serve methods and their settings", () => {
+    const synapse = join(import.meta.dirname, "../../cli/test/fixtures/synapse-views");
+    const complete = (file: string, edit: (text: string) => string) => {
+      const marked = edit(readFileSync(join(synapse, file), "utf8"));
+      const offset = marked.indexOf("|");
+      const text = marked.replace("|", "");
+      const project = openProject(synapse, new Map([[join(synapse, file), text]]));
+      return completionsAt(project, file, text, offset, "dev");
+    };
+    const uses = complete("flows/erp.yaml", (text) =>
+      text.replace("source: erp\n", "source: erp\nserve:\n  uses: |\n"),
+    );
+    expect(labels(uses)).toEqual(["synapse-serve"]);
+    const settings = complete("standard.yaml", (text) =>
+      text.replace("ingest:\n", "serve:\n  settings:\n    synapse-serve:\n      |\ningest:\n"),
+    );
+    expect(labels(settings)).toEqual(
+      expect.arrayContaining(["csv", "data_source", "data_source_location"]),
+    );
+  });
 });

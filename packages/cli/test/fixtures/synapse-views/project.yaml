@@ -1,0 +1,22 @@
+# ADF copies the ERP's tables into storage, and Synapse serverless SQL shows
+# them to reports as views, with a transform as a view too: nothing runs after
+# a load, and nothing is stored but the files.
+id: sales
+environments:
+  dev: {}
+  prod:
+    values:
+      landing: abfss://landing@saleslakeprod.dfs.core.windows.net/erp
+      storage: abfss://landing@saleslakeprod.dfs.core.windows.net
+      key_vault: https://kv-sales-prod.vault.azure.net
+values:
+  landing: abfss://landing@saleslakedev.dfs.core.windows.net/erp
+  storage: abfss://landing@saleslakedev.dfs.core.windows.net
+  key_vault: https://kv-sales-dev.vault.azure.net
+imports:
+  - standard.yaml
+  - platform.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - transforms/*.yaml
+  - contracts/*.yaml

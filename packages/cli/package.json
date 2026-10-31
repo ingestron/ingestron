@@ -1,6 +1,6 @@
 {
   "name": "@ingestron/cli",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "ingestron plan | apply | check | schemas: generate platform assets from definitions.",
   "license": "Apache-2.0",
   "author": "IntentLabs <hello@ingestron.io>",
@@ -51,7 +51,8 @@
     "@ingestron/generate": "workspace:^",
     "@ingestron/pack-adf": "^1.1.0",
     "@ingestron/pack-databricks": "^1.0.0",
-    "yaml": "2.9.1"
+    "yaml": "2.9.1",
+    "@ingestron/pack-synapse": "^1.0.1"
   },
   "devDependencies": {
     "@microsoft/api-extractor": "7.59.4",
