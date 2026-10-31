@@ -1,0 +1,10 @@
+apiVersion: ingestron.io/v1
+kind: Transform
+id: customer_totals
+description: What each customer has been invoiced.
+inputs: [invoices]
+code: |
+  SELECT customer_id, sum(amount) AS total
+  FROM {{ tables.invoices }}
+  GROUP BY customer_id
+contract: erp.customer_totals

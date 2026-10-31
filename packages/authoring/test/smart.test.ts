@@ -70,7 +70,7 @@ describe("a new, empty file", () => {
   it("offers a Standard in an empty standard.yaml, with the available packs to choose from", () => {
     const [first] = at("standard.yaml", "|");
     expect(first?.label).toBe("Standard document");
-    expect(first?.snippet).toMatch(/packs: \[\$\{2\|databricks@1,adf@1,synapse@1\|\}\]/);
+    expect(first?.snippet).toMatch(/packs: \[\$\{2\|databricks@1,adf@1,synapse@1,duckdb@1\|\}\]/);
   });
 
   it("offers every kind outside the usual folders", () => {

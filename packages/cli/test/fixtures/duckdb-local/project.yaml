@@ -1,0 +1,21 @@
+# ADF copies the ERP's invoices into storage, and DuckDB loads them into a
+# table, runs a transform and publishes both as Parquet. The local environment
+# runs the same tables on a laptop, from a load's files in ./samples.
+id: sales
+environments:
+  dev: {}
+  local:
+    runs-on: duckdb # ADF's copies become duckdb-landed, reading ./samples
+    values:
+      published: ./published
+values:
+  landing: abfss://landing@salesdev.dfs.core.windows.net/erp
+  published: abfss://published@salesdev.dfs.core.windows.net
+  key_vault: https://kv-sales-dev.vault.azure.net
+imports:
+  - standard.yaml
+  - platform.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - transforms/*.yaml
+  - contracts/*.yaml

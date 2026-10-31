@@ -1,0 +1,12 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: erp.customer_totals
+version: 1.0.0
+status: active
+schema:
+  - name: customer_totals
+    logicalType: object
+    description: What each customer has been invoiced.
+    properties:
+      - { name: customer_id, logicalType: integer, primaryKey: true }
+      - { name: total, logicalType: number }

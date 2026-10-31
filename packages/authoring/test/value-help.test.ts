@@ -45,7 +45,11 @@ describe("packs", () => {
 
   it("offers the packs not yet listed as items", () => {
     const text = `${head}packs: [databricks@1, ]`;
-    expect(suggest("standard.yaml", text, text.length - 1)).toEqual(["adf@1", "synapse@1"]);
+    expect(suggest("standard.yaml", text, text.length - 1)).toEqual([
+      "adf@1",
+      "synapse@1",
+      "duckdb@1",
+    ]);
   });
 
   it("offers each pack alone, then each storing pack with each landing pack", () => {
@@ -53,8 +57,10 @@ describe("packs", () => {
       " [databricks@1]",
       " [adf@1]",
       " [synapse@1]",
+      " [duckdb@1]",
       " [databricks@1, adf@1]",
       " [synapse@1, adf@1]",
+      " [duckdb@1, adf@1]",
     ]);
   });
 });

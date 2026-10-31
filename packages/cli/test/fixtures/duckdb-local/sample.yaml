@@ -1,0 +1,4 @@
+# A guide: a small project that shows one idea; the docs embed it.
+title: Run locally with DuckDB
+summary: ADF lands the files and DuckDB builds the tables, and a local environment runs the same tables on a laptop from a load's files.
+order: 9

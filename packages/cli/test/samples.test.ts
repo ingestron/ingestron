@@ -11,7 +11,7 @@ describe("listSamples", () => {
   it("lists the starters in project-templates/, minimal first", () => {
     const starters = listSamples();
     expect(templatesFolder).toBe(join(import.meta.dirname, "../project-templates"));
-    expect(starters).toHaveLength(8);
+    expect(starters).toHaveLength(9);
     expect(starters[0]?.name).toBe("minimal");
     expect(starters.every((sample) => sample.kind === "starter")).toBe(true);
     expect(starters.every((sample) => sample.title && /\.$/.test(sample.summary))).toBe(true);
@@ -24,6 +24,7 @@ describe("listSamples", () => {
       "platform-setup",
       "landing-only",
       "synapse-views",
+      "duckdb-local",
     ]);
   });
 
