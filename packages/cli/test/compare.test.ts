@@ -2,7 +2,8 @@
 import { join } from "node:path";
 import { nodeFiles } from "@ingestron/config";
 import { describe, expect, it } from "vitest";
-import { compareEnvironments } from "../src/compare.js";
+import { compareEnvironments, tableFacts } from "../src/compare.js";
+import type { ResolvedTable } from "@ingestron/definitions";
 import { run } from "../src/index.js";
 
 const retail = join(import.meta.dirname, "../project-templates/retail");
@@ -43,5 +44,22 @@ describe("compareEnvironments for tables that end at the landed files", () => {
     expect(text).toContain(
       "- `lands at`: `abfss://landing@saleslakedev.dfs.core.windows.net/erp/erp.dbo.Customers/erp.dbo.Customers.parquet` → `abfss://landing@saleslakeprod.dfs.core.windows.net/erp/erp.dbo.Customers/erp.dbo.Customers.parquet`",
     );
+  });
+});
+
+describe("tableFacts", () => {
+  it("lists the serve step's method and settings", () => {
+    const step = (method: string) => ({ method, settings: { view: "orders" } });
+    const table = {
+      name: "orders",
+      fullName: { catalog: "dev", schema: "bronze", table: "orders" },
+      store: step("stream"),
+      serve: step("publish"),
+      expectations: [],
+    };
+    expect(tableFacts(table as unknown as ResolvedTable)).toMatchObject({
+      "serve.method": "publish",
+      "serve.settings.view": "orders",
+    });
   });
 });

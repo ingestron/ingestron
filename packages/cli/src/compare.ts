@@ -61,7 +61,8 @@ function sectionsOf(model: ResolvedModel): Record<string, Facts> {
   };
 }
 
-function tableFacts(table: ResolvedTable): Facts {
+/** One table's facts, flattened to dotted keys, for comparing environments. */
+export function tableFacts(table: ResolvedTable): Facts {
   const step = (found?: { method: string; settings: Record<string, unknown> }) =>
     found && { method: found.method, settings: found.settings };
   return {
@@ -79,6 +80,7 @@ function tableFacts(table: ResolvedTable): Facts {
       },
       transform: step(table.transform),
       store: step(table.store),
+      serve: step(table.serve),
     }),
     expectations: table.expectations.map((item) => `${item.name}: ${item.action}`),
   };

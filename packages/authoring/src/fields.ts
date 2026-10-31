@@ -221,7 +221,7 @@ function stripWith(text: string): string {
   if (!isObject(data)) return text;
   const tables = isObject(data.tables) ? Object.values(data.tables) : [];
   for (const owner of [data, ...tables].filter(isObject))
-    for (const action of ["ingest", "transform", "store"]) {
+    for (const action of ["ingest", "transform", "store", "serve"]) {
       const step = owner[action];
       if (isObject(step)) delete step.with;
     }
