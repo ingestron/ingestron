@@ -18,16 +18,16 @@ importers:
   packages/authoring:
     dependencies:
       '@ingestron/cli':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../cli
       '@ingestron/config':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config
       '@ingestron/definitions':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../definitions
       '@ingestron/generate':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../generate
       yaml:
         specifier: 2.9.1
@@ -61,13 +61,13 @@ importers:
   packages/cli:
     dependencies:
       '@ingestron/config':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config
       '@ingestron/definitions':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../definitions
       '@ingestron/generate':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../generate
       '@ingestron/pack-adf':
         specifier: ^1.0.0
@@ -156,7 +156,7 @@ importers:
   packages/definitions:
     dependencies:
       '@ingestron/config':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config
       ajv:
         specifier: 8.20.0

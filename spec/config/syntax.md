@@ -5,7 +5,7 @@ A Python implementation must pass the same [conformance cases](conformance/).
 
 This document is written for people **implementing** the syntax. People
 **using** it should start with the package
-[tutorial](../../packages/config/docs/tutorial.md).
+[README](../../packages/config/README.md).
 
 The key words MUST, MUST NOT and MAY are used as in RFC 2119.
 
@@ -209,8 +209,8 @@ the start of that string's value, including problems with values embedded in
 it. A schema problem points at where the failing value was written; for a
 whole-value `${file:…}` that is inside the included file. An implementation MUST report every
 problem it can find rather than stopping at the first. A load succeeds only
-when there are no errors. The full list of codes, with examples, is in the
-[diagnostics reference](../../packages/config/docs/reference/diagnostics.md).
+when there are no errors. Each code, with an example, is listed in the
+[problem reference](https://docs.ingestron.io/docs/reference/errors).
 
 ### 6.1 Fixes
 

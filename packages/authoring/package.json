@@ -40,10 +40,10 @@
     "prepack": "pnpm build && cp ../../NOTICE NOTICE"
   },
   "dependencies": {
-    "@ingestron/cli": "workspace:*",
-    "@ingestron/config": "workspace:*",
-    "@ingestron/definitions": "workspace:*",
-    "@ingestron/generate": "workspace:*",
+    "@ingestron/cli": "workspace:^",
+    "@ingestron/config": "workspace:^",
+    "@ingestron/definitions": "workspace:^",
+    "@ingestron/generate": "workspace:^",
     "yaml": "2.9.1"
   },
   "devDependencies": {
