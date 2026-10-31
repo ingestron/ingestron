@@ -39,8 +39,8 @@ function build(project: Project, environment: string | undefined): Files {
 
 /**
  * The generated files for one table: its SQL or Python file, the copy that
- * lands it, the Lakeflow Connect pipeline that ingests it as `physical`, and
- * the Synapse view named `physical`.
+ * lands it, the Lakeflow Connect pipeline that ingests it as `physical`, the
+ * Synapse view named `physical`, and DuckDB's `tables/<schema>.<physical>.sql`.
  */
 export function generatedForTable(
   files: Generated[],
@@ -52,7 +52,9 @@ export function generatedForTable(
       file.text.includes(`(table ${table})`) ||
       file.text.includes(`"copy_${table}"`) ||
       new RegExp(`^\\s*destination_table: ${physical}$`, "m").test(file.text) ||
-      file.text.includes(`.[${physical.replaceAll("]", "]]")}] AS\n`),
+      file.text.includes(`.[${physical.replaceAll("]", "]]")}] AS\n`) ||
+      (file.path.endsWith(`.${physical}.sql`) &&
+        /\/duckdb\/tables\/|^build\/[^/]+\/tables\//.test(file.path)),
   );
 }
 
