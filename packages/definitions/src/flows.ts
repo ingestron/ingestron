@@ -53,19 +53,7 @@ function flowTable(
   if (!doc || !layer || !connection) return undefined;
   const facts = { connectivity: connection.connectivity, connector: connection.connector, layer };
   const steps = flowSteps(context, flow, name, facts);
-  const atFiles = steps?.endsAtFiles !== undefined;
-  const contract = contractFor(
-    context,
-    name,
-    doc.contract,
-    { document: flow, pointer: `/tables/${name}/contract` },
-    atFiles,
-  );
-  if (atFiles)
-    expectationsNotChecked(context, doc.expectations ?? [], {
-      document: flow,
-      pointer: `/tables/${name}/expectations`,
-    });
+  const contract = flowContract(context, flow, name, steps?.endsAtFiles !== undefined);
   const fullName = renderTableName(context, namer, {
     layer,
     table: name,
@@ -80,15 +68,30 @@ function flowTable(
     origin: { kind: "Flow", id: flow.value.id, file: flow.file },
     contract,
     expectations: expectationsFor(context, contract, doc.expectations),
+    ...tableSteps(steps, connection, doc.object),
+  };
+}
+
+/** The resolved steps as the table records them. */
+function tableSteps(steps: FlowSteps, connection: ConnectionDoc, object: string) {
+  return {
     ingest: {
       ...stepOf(steps.ingest),
       connection: connectionOf(connection),
-      object: doc.object,
+      object,
       renamed: steps.ingest.renames,
     },
     ...(steps.store && { store: stepOf(steps.store) }),
     ...(steps.endsAtFiles && { endsAtFiles: steps.endsAtFiles }),
   };
+}
+
+/** The flow table's contract; a table that ends at the landed files checks nothing. */
+function flowContract(context: Context, flow: Flow, name: string, atFiles: boolean) {
+  const doc = flow.value.tables[name]!;
+  const at = (field: string) => ({ document: flow, pointer: `/tables/${name}/${field}` });
+  if (atFiles) expectationsNotChecked(context, doc.expectations ?? [], at("expectations"));
+  return contractFor(context, name, doc.contract, at("contract"), atFiles);
 }
 
 type FlowSteps = { ingest: StepResult; store?: StepResult; endsAtFiles?: ChosenBy };
