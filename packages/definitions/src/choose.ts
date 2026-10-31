@@ -85,6 +85,11 @@ export function endsAtFiles(
   return isAllowed(context, "store", named, pick) && located(pick.chosenBy);
 }
 
+/** True when something chooses a method for this action; nothing is reported. */
+export function hasChoice(context: Context, action: Action, named: Named, facts: Facts): boolean {
+  return findPick(context, action, named, facts) !== undefined;
+}
+
 /** A choice with the file and line where it was written. */
 export function located({ at, ...rest }: Choice["chosenBy"]): ChosenBy {
   const location = at?.document.locate(at.pointer);

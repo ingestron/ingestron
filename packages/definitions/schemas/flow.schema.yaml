@@ -51,12 +51,15 @@ properties:
           { $ref: "#/$defs/expectations", description: Your own checks on this table's rows. }
         ingest: { $ref: "#/$defs/with", description: Method settings for this table only. }
         store: { $ref: "#/$defs/with", description: Method settings for this table only. }
+        serve: { $ref: "#/$defs/with", description: Method settings for this table only. }
     examples:
       - orders:
           object: orders
           contract: shop.orders
   ingest: { $ref: "#/$defs/ingest", description: How data leaves the source. }
   store: { $ref: "#/$defs/store", description: How data is kept in the platform. }
+  serve:
+    { $ref: "#/$defs/serve", description: Where the data is made available after its last step. }
 $defs:
   with:
     type: object
@@ -120,6 +123,19 @@ $defs:
         examples:
           - streaming-table
           - none
+      with:
+        type: object
+        description: Method settings for every table of this flow.
+  serve:
+    type: object
+    additionalProperties: false
+    properties:
+      uses:
+        type: string
+        pattern: ^[a-z][a-z0-9-]*$
+        description: A serve method the standard allows, such as views over the data. Leave out to let the standard choose; nothing is served unless something chooses.
+        examples:
+          - synapse-serve
       with:
         type: object
         description: Method settings for every table of this flow.

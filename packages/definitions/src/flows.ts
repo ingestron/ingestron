@@ -6,6 +6,7 @@ import { contractFor, expectationsFor, expectationsNotChecked } from "./contract
 import { kinds, type ConnectionDoc, type FlowDoc } from "./documents.js";
 import type { ChosenBy, ResolvedTable } from "./model.js";
 import type { SettingsLayer } from "./settings.js";
+import { serveStep } from "./serve.js";
 import { resolveStep, stepOf, type StepResult } from "./steps.js";
 import { renderTableName, type TableNamer } from "./tables.js";
 
@@ -83,6 +84,7 @@ function tableSteps(steps: FlowSteps, connection: ConnectionDoc, object: string)
     },
     ...(steps.store && { store: stepOf(steps.store) }),
     ...(steps.endsAtFiles && { endsAtFiles: steps.endsAtFiles }),
+    ...(steps.serve && { serve: stepOf(steps.serve) }),
   };
 }
 
@@ -94,7 +96,12 @@ function flowContract(context: Context, flow: Flow, name: string, atFiles: boole
   return contractFor(context, name, doc.contract, at("contract"), atFiles);
 }
 
-type FlowSteps = { ingest: StepResult; store?: StepResult; endsAtFiles?: ChosenBy };
+type FlowSteps = {
+  ingest: StepResult;
+  store?: StepResult;
+  endsAtFiles?: ChosenBy;
+  serve?: StepResult;
+};
 
 /**
  * The ingest and store steps. The store method is checked even when ingest
@@ -103,6 +110,27 @@ type FlowSteps = { ingest: StepResult; store?: StepResult; endsAtFiles?: ChosenB
  * ends the flow at the files ingest lands.
  */
 function flowSteps(
+  context: Context,
+  flow: Flow,
+  name: string,
+  facts: Facts,
+): FlowSteps | undefined {
+  const steps = keepSteps(context, flow, name, facts);
+  if (!steps) return undefined;
+  const last = steps.store ?? steps.ingest;
+  const serve = serveStep(
+    context,
+    named(flow, "serve"),
+    facts,
+    last,
+    tableLayer(flow, name, "serve"),
+  );
+  if (serve === false) return undefined;
+  return serve ? { ...steps, serve } : steps;
+}
+
+/** The ingest and store steps, before any serve step. */
+function keepSteps(
   context: Context,
   flow: Flow,
   name: string,
@@ -139,9 +167,9 @@ function afterTable(context: Context, flow: Flow, ingest: StepResult): FlowSteps
 }
 
 /** The flow's choice for an action; a method nobody named is the source's, or the store's. */
-function named(flow: Flow, action: "ingest" | "store"): Named {
+function named(flow: Flow, action: "ingest" | "store" | "serve"): Named {
   const doc = flow.value[action];
-  return { owner: flow, doc, at: action === "store" && doc ? "/store" : "/source" };
+  return { owner: flow, doc, at: action !== "ingest" && doc ? `/${action}` : "/source" };
 }
 
 function reportStoreAfterTable(context: Context, flow: Flow, method: string): void {
@@ -154,7 +182,11 @@ function reportStoreAfterTable(context: Context, flow: Flow, method: string): vo
 }
 
 /** Settings written on the table itself, the last layer before `fixed`. */
-function tableLayer(flow: Flow, name: string, action: "ingest" | "store"): SettingsLayer[] {
+function tableLayer(
+  flow: Flow,
+  name: string,
+  action: "ingest" | "store" | "serve",
+): SettingsLayer[] {
   const value = flow.value.tables[name]?.[action]?.with;
   return value
     ? [

@@ -49,6 +49,7 @@ export interface StandardDoc {
   ingest?: RulesDoc;
   transform?: RulesDoc;
   store?: RulesDoc;
+  serve?: RulesDoc;
 }
 
 /** A `Platform` document; see platform.schema.yaml for every field. */
@@ -84,6 +85,7 @@ export interface FlowTableDoc {
   expectations?: ExpectationDoc[];
   ingest?: { with?: Record<string, unknown> };
   store?: { with?: Record<string, unknown> };
+  serve?: { with?: Record<string, unknown> };
 }
 
 /** A `Flow` document. */
@@ -94,6 +96,7 @@ export interface FlowDoc {
   tables: Record<string, FlowTableDoc>;
   ingest?: ActionDoc;
   store?: ActionDoc;
+  serve?: ActionDoc;
 }
 
 /** A `Transform` document. */
@@ -106,6 +109,7 @@ export interface TransformDoc {
   expectations?: ExpectationDoc[];
   transform?: ActionDoc;
   store?: ActionDoc;
+  serve?: ActionDoc;
 }
 
 /** The parts of an ODCS v3.1.0 contract that are used. */

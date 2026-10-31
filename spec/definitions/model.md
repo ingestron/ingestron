@@ -189,7 +189,7 @@ when the table ends at the landed files. Its facts are `layer` and `input`
 (what that step produces). When nothing chooses a serve method, the table has
 no serve step and nothing is reported. A serve method MUST accept what the
 last step produces (`HANDOVER`). A serve method with `needsOutput` MUST follow
-a step that records an `output` (`HANDOVER`, at the serve choice:
+a step that records an `output` (`HANDOVER`, at the table:
 `"<serve>" reads where "<step>" puts its data, and "<step>" does not say.`).
 `none` is not a serve choice (`UNKNOWN_METHOD`).
 

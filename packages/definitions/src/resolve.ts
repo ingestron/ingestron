@@ -114,6 +114,7 @@ function resolveLoaded(
   const tables = [...flows, ...transformTables(context, namer, flows)];
   checkDuplicateNames(context, tables, (table) => originOf(context, table));
   recordOutputs(context, tables);
+  checkServeInputs(context, tables);
   runMethodChecks(context, tables);
   checkContractFields(context, new Set(tables.map((table) => table.contract.id)));
   // Project-wide checks only make sense once every table resolved.
@@ -159,17 +160,33 @@ function runPackCheck(context: Context, model: ResolvedModel): void {
 /** Records where each step's data lands, when its method says (`output`). */
 function recordOutputs(context: Context, tables: ResolvedTable[]): void {
   for (const table of tables) {
-    for (const step of [table.ingest, table.transform, table.store]) {
+    for (const step of [table.ingest, table.transform, table.store, table.serve]) {
       const output = step && context.pack.methods[step.method]?.output?.(table);
       if (step && output) step.output = output;
     }
   }
 }
 
+/** A serve method that reads where the data lands needs a last step that says where (`HANDOVER`). */
+function checkServeInputs(context: Context, tables: ResolvedTable[]): void {
+  for (const table of tables) {
+    const serve = table.serve;
+    const last = table.store ?? table.ingest;
+    if (!serve || !last || last.output || !context.pack.methods[serve.method]?.needsOutput)
+      continue;
+    context.reporter.error(
+      "HANDOVER",
+      `"${serve.method}" reads where "${last.method}" puts its data, and "${last.method}" does not say.`,
+      originOf(context, table),
+      "Serve it with a method that does not need to know where its data lands.",
+    );
+  }
+}
+
 /** Runs each chosen method's own check on its table (`METHOD_CHECK`). */
 function runMethodChecks(context: Context, tables: ResolvedTable[]): void {
   for (const table of tables) {
-    for (const step of [table.ingest, table.transform, table.store]) {
+    for (const step of [table.ingest, table.transform, table.store, table.serve]) {
       const method = step && context.pack.methods[step.method];
       for (const message of method?.check?.(table) ?? []) {
         context.reporter.error(

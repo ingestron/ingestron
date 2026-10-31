@@ -7,6 +7,7 @@ import { contractFor, expectationsFor } from "./contract.js";
 import { kinds, type TransformDoc } from "./documents.js";
 import { flowTableNames } from "./flows.js";
 import type { ResolvedTable } from "./model.js";
+import { serveStep } from "./serve.js";
 import { resolveStep, stepOf } from "./steps.js";
 import { fullNameText, renderTableName, type TableNamer } from "./tables.js";
 
@@ -125,6 +126,7 @@ function transformTable(
       inputs,
     },
     store: stepOf(steps.store),
+    ...(steps.serve && { serve: stepOf(steps.serve) }),
   };
 }
 
@@ -147,7 +149,10 @@ function transformSteps(context: Context, doc: TransformDocument, layer: string)
           [],
           transform,
         );
-  return transform && store ? { transform, store } : undefined;
+  if (!transform || !store) return undefined;
+  const serve = serveStep(context, { owner: doc, doc: doc.value.serve }, { layer }, store);
+  if (serve === false) return undefined;
+  return serve ? { transform, store, serve } : { transform, store };
 }
 
 /** Every input is a table: one that ends at the landed files is not (`HANDOVER`). */

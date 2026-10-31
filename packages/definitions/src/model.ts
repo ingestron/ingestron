@@ -114,6 +114,8 @@ export interface ResolvedTable {
   store?: Step;
   /** Set when the flow ends at the files ingest lands: how `store: none` was chosen. */
   endsAtFiles?: ChosenBy;
+  /** Makes the table's data available elsewhere, after its last step. Absent unless chosen. */
+  serve?: Step;
 }
 
 /** A schedule after defaults. */
