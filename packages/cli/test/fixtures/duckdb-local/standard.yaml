@@ -1,0 +1,13 @@
+apiVersion: ingestron.io/v1
+kind: Standard
+id: sales
+packs: [duckdb@1, adf@1] # DuckDB first: it stores and transforms
+store:
+  settings:
+    duckdb-table: { mode: upsert } # each load's changes replace rows by key
+ingest:
+  settings:
+    adf-copy:
+      every: { frequency: Hour, interval: 24 }
+      start: 2026-10-01T00:00:00Z
+    duckdb-landed: { landing: ./samples } # where a load's files go locally

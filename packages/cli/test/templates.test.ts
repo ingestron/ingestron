@@ -15,6 +15,7 @@ function folderWith(text: string): string {
 describe("built-in templates", () => {
   it("are the starters, named by their folder", () => {
     expect(builtInTemplates().map((template) => template.name)).toEqual([
+      "duckdb",
       "kafka",
       "minimal",
       "private-files",

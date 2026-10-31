@@ -16,8 +16,8 @@ const names = ["project-templates", "test/fixtures"]
   .sort();
 
 describe("samples", () => {
-  it("has the eight starters and five fixtures", () => {
-    expect(names).toHaveLength(13);
+  it("has the nine starters and six fixtures", () => {
+    expect(names).toHaveLength(15);
   });
 
   for (const name of names) {

@@ -1,0 +1,3 @@
+# Used by `ingestron init --template duckdb`.
+title: DuckDB on a laptop
+summary: Sample orders loaded into a local DuckDB database, a SQL transform over them, and both tables published as Parquet.
