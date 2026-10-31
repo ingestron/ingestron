@@ -11,7 +11,7 @@ import { JsonSchema } from '@ingestron/config';
 import { KindDefinition } from '@ingestron/config';
 
 // @public
-export type Action = "ingest" | "transform" | "store";
+export type Action = "ingest" | "transform" | "store" | "serve";
 
 // @public
 export function anchorOf(parts: string[]): string;
@@ -240,6 +240,7 @@ export interface Method {
     defaults?: Record<string, unknown>;
     // (undocumented)
     description: string;
+    needsOutput?: true;
     output?(table: ResolvedTable): StepOutput | undefined;
     placement?: {
         platform?: string[];
@@ -444,6 +445,7 @@ export interface ResolvedTable {
         id: string;
         file: string;
     };
+    serve?: Step;
     store?: Step;
     transform?: Step & {
         code: string;
@@ -531,12 +533,12 @@ export interface TableCheck {
 
 // Warnings were encountered during analysis:
 //
-// src/documents.ts:152:19 - (ae-forgotten-export) The symbol "StandardDoc" needs to be exported by the entry point index.d.ts
-// src/documents.ts:152:19 - (ae-forgotten-export) The symbol "PlatformDoc" needs to be exported by the entry point index.d.ts
-// src/documents.ts:152:19 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
-// src/documents.ts:152:19 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
-// src/documents.ts:152:19 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
-// src/documents.ts:152:19 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
+// src/documents.ts:156:19 - (ae-forgotten-export) The symbol "StandardDoc" needs to be exported by the entry point index.d.ts
+// src/documents.ts:156:19 - (ae-forgotten-export) The symbol "PlatformDoc" needs to be exported by the entry point index.d.ts
+// src/documents.ts:156:19 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
+// src/documents.ts:156:19 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
+// src/documents.ts:156:19 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
+// src/documents.ts:156:19 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 
