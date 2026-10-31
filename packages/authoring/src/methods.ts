@@ -91,6 +91,7 @@ export function chosenText({ by, when, pack, file, line }: ChosenBy): string {
     "standard-default": "the standard's default",
     "pack-rule": `the ${pack} pack's rule for ${facts}`,
     "pack-default": `the ${pack} pack's default`,
+    "runs-on": `the environment, which runs on ${pack}`,
   };
   return `${words[by]}${where}`;
 }

@@ -150,3 +150,20 @@ describe("chosenText", () => {
     );
   });
 });
+
+describe("chosenText under runs-on", () => {
+  it("says the environment's runs-on chose the landed method", () => {
+    const table = {
+      ingest: {
+        method: "duckdb-landed",
+        pack: "duckdb",
+        settings: {},
+        origins: {},
+        chosenBy: { by: "runs-on" as const, pack: "duckdb" },
+      },
+    };
+    expect(chosenText(table as unknown as ResolvedTable)).toBe(
+      "ingest: duckdb-landed, chosen because the environment runs on duckdb",
+    );
+  });
+});
