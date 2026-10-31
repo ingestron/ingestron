@@ -1,10 +1,10 @@
 // Tables brought in by flows: ingest and store steps, contract, quality and names.
 import type { DefinitionDocument } from "@ingestron/config";
-import type { Facts, Named } from "./choose.js";
+import { endsAtFiles, NO_STORE, type Facts, type Named } from "./choose.js";
 import type { Context } from "./context.js";
 import { contractFor, expectationsFor } from "./contract.js";
 import { kinds, type ConnectionDoc, type FlowDoc } from "./documents.js";
-import type { ResolvedTable } from "./model.js";
+import type { ChosenBy, ResolvedTable } from "./model.js";
 import type { SettingsLayer } from "./settings.js";
 import { resolveStep, stepOf, type StepResult } from "./steps.js";
 import { renderTableName, type TableNamer } from "./tables.js";
@@ -78,20 +78,24 @@ function flowTable(
       renamed: steps.ingest.renames,
     },
     ...(steps.store && { store: stepOf(steps.store) }),
+    ...(steps.endsAtFiles && { endsAtFiles: steps.endsAtFiles }),
   };
 }
+
+type FlowSteps = { ingest: StepResult; store?: StepResult; endsAtFiles?: ChosenBy };
 
 /**
  * The ingest and store steps. The store method is checked even when ingest
  * failed, so every problem is found in one run. A method that already writes
- * the table has no store step, and naming one is an error.
+ * the table has no store step, and naming one is an error; `store: none`
+ * ends the flow at the files ingest lands.
  */
 function flowSteps(
   context: Context,
   flow: Flow,
   name: string,
   facts: Facts,
-): { ingest: StepResult; store?: StepResult } | undefined {
+): FlowSteps | undefined {
   const ingest = resolveStep(
     context,
     "ingest",
@@ -99,11 +103,10 @@ function flowSteps(
     facts,
     tableLayer(flow, name, "ingest"),
   );
-  if (ingest?.produces === "table") {
-    if (flow.value.store?.uses) reportStoreAfterTable(context, flow, ingest.method);
-    return flow.value.store?.uses ? undefined : { ingest };
-  }
+  if (ingest?.produces === "table") return afterTable(context, flow, ingest);
   const storeFacts = ingest ? { ...facts, input: ingest.produces } : facts;
+  const none = endsAtFiles(context, named(flow, "store"), storeFacts);
+  if (none !== undefined) return none && ingest ? { ingest, endsAtFiles: none } : undefined;
   const store = resolveStep(
     context,
     "store",
@@ -113,6 +116,14 @@ function flowSteps(
     ingest,
   );
   return ingest && store ? { ingest, store } : undefined;
+}
+
+/** An ingest that writes the table has no store step; a store method named for it is an error. */
+function afterTable(context: Context, flow: Flow, ingest: StepResult): FlowSteps | undefined {
+  const uses = flow.value.store?.uses;
+  if (uses === undefined || uses === NO_STORE) return { ingest };
+  reportStoreAfterTable(context, flow, ingest.method);
+  return undefined;
 }
 
 /** The flow's choice for an action; a method nobody named is the source's, or the store's. */

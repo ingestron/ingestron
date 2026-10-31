@@ -14,6 +14,13 @@ export interface Facts {
   layer: string;
 }
 
+/**
+ * The reserved store choice that ends a flow at the files ingest lands, with
+ * no store step (specification section 4).
+ * @example store: { uses: none }
+ */
+export const NO_STORE = "none";
+
 /** The chosen method, where the choice was written, and the matching rule's settings. */
 export interface Choice {
   id: string;
@@ -60,17 +67,40 @@ export function chooseMethod(
     );
     return undefined;
   }
+  return isAllowed(context, action, named, pick) ? { ...pick, method } : undefined;
+}
+
+/**
+ * How `none` was chosen when the table's store choice is `none`; false when
+ * the standard does not allow it (reported); undefined for any other choice.
+ */
+export function endsAtFiles(
+  context: Context,
+  named: Named,
+  facts: Facts,
+): ChosenBy | false | undefined {
+  const pick = findPick(context, "store", named, facts);
+  if (pick?.id !== NO_STORE) return undefined;
+  return isAllowed(context, "store", named, pick) && located(pick.chosenBy);
+}
+
+/** A choice with the file and line where it was written. */
+export function located({ at, ...rest }: Choice["chosenBy"]): ChosenBy {
+  const location = at?.document.locate(at.pointer);
+  return { ...rest, ...(location && { file: location.file, line: location.line }) };
+}
+
+/** A method the definition names must be in the standard's `allowed` list. */
+function isAllowed(context: Context, action: Action, named: Named, pick: Pick): boolean {
   const allowed = context.standard.value[action]?.allowed;
-  if (named.doc?.uses && allowed && !allowed.includes(pick.id)) {
-    report.error(
-      "METHOD_NOT_ALLOWED",
-      `The standard does not allow "${pick.id}" for ${action}.`,
-      pick.origin,
-      `Allowed: ${allowed.join(", ")}.`,
-    );
-    return undefined;
-  }
-  return { ...pick, method };
+  if (!named.doc?.uses || !allowed || allowed.includes(pick.id)) return true;
+  context.reporter.error(
+    "METHOD_NOT_ALLOWED",
+    `The standard does not allow "${pick.id}" for ${action}.`,
+    pick.origin,
+    `Allowed: ${allowed.join(", ")}.`,
+  );
+  return false;
 }
 
 type Pick = Omit<Choice, "method">;
@@ -119,16 +149,27 @@ const pickers: Picker[] = [
   },
 ];
 
+/**
+ * The first picker's choice. A standard's or pack's `none` counts only where
+ * ingest hands over files; elsewhere the next picker chooses.
+ */
+function findPick(context: Context, action: Action, named: Named, facts: Facts): Pick | undefined {
+  for (const picker of pickers) {
+    const pick = picker(context, action, named, facts);
+    const skipped = pick?.id === NO_STORE && pick.chosenBy.by !== "definition";
+    if (pick && !(skipped && facts.input !== "files")) return pick;
+  }
+  return undefined;
+}
+
 function pickMethod(
   context: Context,
   action: Action,
   named: Named,
   facts: Facts,
 ): Pick | undefined {
-  for (const picker of pickers) {
-    const pick = picker(context, action, named, facts);
-    if (pick) return pick;
-  }
+  const pick = findPick(context, action, named, facts);
+  if (pick) return pick;
   context.reporter.error(
     "UNKNOWN_METHOD",
     `Neither the standard nor the pack chooses a ${action} method.`,

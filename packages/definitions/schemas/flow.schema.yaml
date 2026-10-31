@@ -116,9 +116,10 @@ $defs:
       uses:
         type: string
         pattern: ^[a-z][a-z0-9-]*$
-        description: A method the standard allows. Leave out to let the standard choose.
+        description: A method the standard allows, or none to end the flow at the files ingest lands. Leave out to let the standard choose.
         examples:
           - streaming-table
+          - none
       with:
         type: object
         description: Method settings for every table of this flow.

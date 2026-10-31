@@ -1,5 +1,6 @@
 // Public API of @ingestron/definitions.
 export type { DefinitionCode } from "./diagnostics.js";
+export { NO_STORE } from "./choose.js";
 export { codeHelp } from "./codes.js";
 export { contractReads } from "./contract-notes.js";
 export { contractCommon, contractUseOf } from "./contract-use.js";

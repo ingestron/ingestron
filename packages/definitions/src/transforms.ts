@@ -1,5 +1,6 @@
 // Tables built by transforms, in dependency order (specification section 5).
 import type { DefinitionDocument } from "@ingestron/config";
+import { NO_STORE } from "./choose.js";
 import { codeWithValues } from "./code-values.js";
 import type { Context } from "./context.js";
 import { contractFor, expectationsFor } from "./contract.js";
@@ -134,15 +135,29 @@ function transformSteps(context: Context, doc: TransformDocument, layer: string)
     produces: "table",
   });
   const storeFacts = { layer, input: transform?.produces ?? "query" };
-  const store = resolveStep(
-    context,
-    "store",
-    { owner: doc, doc: doc.value.store },
-    storeFacts,
-    [],
-    transform,
-  );
+  const store =
+    doc.value.store?.uses === NO_STORE
+      ? refuseNoStore(context, doc)
+      : resolveStep(
+          context,
+          "store",
+          { owner: doc, doc: doc.value.store },
+          storeFacts,
+          [],
+          transform,
+        );
   return transform && store ? { transform, store } : undefined;
+}
+
+/** A transform's query needs a store step (`HANDOVER`). */
+function refuseNoStore(context: Context, doc: TransformDocument): undefined {
+  context.reporter.error(
+    "HANDOVER",
+    `A transform's query needs a store step, so its store cannot be "${NO_STORE}".`,
+    { document: doc, pointer: "/store/uses" },
+    "Name a store method, or leave store out to let the standard choose.",
+  );
+  return undefined;
 }
 
 /** Inputs are resolved before the transform, so the name is always there. */
