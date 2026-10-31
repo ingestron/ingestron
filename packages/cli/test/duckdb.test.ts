@@ -17,18 +17,25 @@ function session(cwd: string) {
   };
 }
 
-/** Runs SQL from `folder`, as the DuckDB command line would there, and returns the rows of `query`. */
+/**
+ * Runs SQL from `folder`, as the DuckDB command line would there, and returns
+ * the rows of `query`. The database is closed each time, so a second call sees
+ * only what the first wrote. process.chdir needs vitest's default forks pool.
+ */
 async function inFolder(folder: string, sql: string, query: string) {
   const previous = process.cwd();
   process.chdir(folder);
+  const instance = await DuckDBInstance.create("ingestron.duckdb");
   try {
-    const instance = await DuckDBInstance.create("ingestron.duckdb");
     const connection = await instance.connect();
-    if (sql) await connection.run(sql);
-    const rows = (await connection.runAndReadAll(query)).getRowObjectsJson();
-    connection.closeSync();
-    return rows;
+    try {
+      if (sql) await connection.run(sql);
+      return (await connection.runAndReadAll(query)).getRowObjectsJson();
+    } finally {
+      connection.closeSync();
+    }
   } finally {
+    instance.closeSync();
     process.chdir(previous);
   }
 }
@@ -81,7 +88,6 @@ describe("the duckdb-local fixture", () => {
         .replace("(dev)", "(local)"),
     );
     mkdirSync(join(project, "samples/erp.dbo.Invoices"), { recursive: true });
-    mkdirSync(join(project, "published"));
     await inFolder(
       project,
       "COPY (SELECT * FROM (VALUES (1, 10, 25.5), (2, 10, 4.5), (3, 20, 8.0)) t(invoice_id, customer_id, amount)) TO 'samples/erp.dbo.Invoices/load.parquet' (FORMAT parquet);",
