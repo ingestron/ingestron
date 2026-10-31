@@ -57,6 +57,11 @@ written once, such as on a flow shared by several tables, is reported once.
 
 A pack provides, as data: `defaults` (naming patterns, layers, types,
 quality actions), `rules` per action (`default` and `when`), and `methods`.
+The actions are `ingest`, `transform`, `store` and `serve`. A serve method
+`accepts` `table` and/or `files` and `produces` `table`; it makes a table's data
+available somewhere else, such as SQL views over its files. A method MAY set
+`needsOutput: true`: it reads the previous step's `output` (below).
+
 Each method has an `action`, the `connectors` it reads and the
 `connectivity` it supports (ingest), what it `accepts` (transform, store)
 and `produces` (`files`, `table` or `query`), `defaults`, a JSON Schema
@@ -176,6 +181,17 @@ flow, with fixes: `End this flow at the landed files` (sets the flow's
 standard's `store.default` to `none`), and `Add the "<pack>" pack` for each
 available pack the standard does not name that has a store method accepting
 `files`.
+
+`serve` is chosen like the other actions, from the flow's or transform's
+`serve.uses`, the standard's `serve` rules and default, then the packs' rules
+and default, for the table's last step: its store step, or its ingest step
+when the table ends at the landed files. Its facts are `layer` and `input`
+(what that step produces). When nothing chooses a serve method, the table has
+no serve step and nothing is reported. A serve method MUST accept what the
+last step produces (`HANDOVER`). A serve method with `needsOutput` MUST follow
+a step that records an `output` (`HANDOVER`, at the serve choice:
+`"<serve>" reads where "<step>" puts its data, and "<step>" does not say.`).
+`none` is not a serve choice (`UNKNOWN_METHOD`).
 
 **Landed snapshot.** The default single file of a table that each load
 replaces is `<landing>/<object>/<object>.<extension>`. Packs that land or
