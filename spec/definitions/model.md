@@ -185,8 +185,9 @@ available pack the standard does not name that has a store method accepting
 `serve` is chosen like the other actions, from the flow's or transform's
 `serve.uses`, the standard's `serve` rules and default, then the packs' rules
 and default, for the table's last step: its store step, or its ingest step
-when the table ends at the landed files. Its facts are `layer` and `input`
-(what that step produces). When nothing chooses a serve method, the table has
+when the table ends at the landed files. Its facts are the table's own, as
+for its other steps (a flow table's connection `connectivity` and `connector`,
+and `layer`), with `input` what that step produces. When nothing chooses a serve method, the table has
 no serve step and nothing is reported. A serve method MUST accept what the
 last step produces (`HANDOVER`). A serve method with `needsOutput` MUST follow
 a step that records an `output` (`HANDOVER`, at the table:
