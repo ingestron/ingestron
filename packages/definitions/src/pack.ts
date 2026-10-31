@@ -53,6 +53,11 @@ export interface Method {
    * lands, so that step must record an `output`.
    */
   needsOutput?: true;
+  /**
+   * Ingest methods: `landed` when the method reads the files another pack's
+   * method lands. It is chosen only in an environment that runs on its pack.
+   */
+  reads?: "landed";
 }
 
 /** Where a step's data ends up, for packs that read it. */

@@ -1,0 +1,47 @@
+# A second data-only pack, for runs-on: it reads landed files, stores and transforms.
+id: local
+version: 1
+defaults:
+  naming:
+    catalog: "{{ environment }}"
+    schema: "{{ layer }}"
+    table: "{{ table }}"
+    pipeline: "{{ project }}"
+    job: "{{ project }}_refresh"
+  layers: [bronze, silver, gold]
+  types:
+    {
+      string: STRING,
+      integer: BIGINT,
+      number: DOUBLE,
+      boolean: BOOLEAN,
+      date: DATE,
+      timestamp: TIMESTAMP,
+    }
+  quality: { required: warn, default: warn }
+rules:
+  store: { default: local-table }
+  transform: { default: local-sql }
+methods:
+  local-landed:
+    action: ingest
+    description: Reads the files another method landed, from a local folder.
+    reads: landed
+    produces: files
+    settings:
+      type: object
+      additionalProperties: false
+      required: [landing]
+      properties: { landing: { type: string } }
+  local-table:
+    action: store
+    description: Keeps the table locally.
+    accepts: [files, query]
+    produces: table
+    settings: { type: object }
+  local-sql:
+    action: transform
+    description: Runs the transform locally.
+    accepts: [table]
+    produces: query
+    settings: { type: object }

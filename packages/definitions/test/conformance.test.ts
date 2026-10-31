@@ -21,7 +21,7 @@ interface Case {
 }
 
 const folder = join(import.meta.dirname, "../../../spec/definitions/conformance");
-const packs = ["pack.yaml", "pack-bridge.yaml"].map(
+const packs = ["pack.yaml", "pack-bridge.yaml", "pack-local.yaml"].map(
   (file) => parse(readFileSync(join(folder, file), "utf8")) as PackInfo,
 );
 

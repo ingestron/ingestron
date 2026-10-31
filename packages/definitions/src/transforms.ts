@@ -28,6 +28,7 @@ export function transformTables(
   while (pending.length > 0) {
     const blocked = pending.filter((doc) => doc.value.inputs.some((input) => failed.has(input)));
     blocked.forEach((doc) => failed.add(doc.value.id));
+    blocked.forEach((doc) => leaveOutReader(context, doc));
     const ready = pending.filter(
       (doc) => !blocked.includes(doc) && doc.value.inputs.every((input) => resolved.has(input)),
     );
@@ -173,6 +174,18 @@ function readsTables(
     );
   });
   return tables;
+}
+
+/** A transform reading a table left out by runs-on is left out too, with the same warning. */
+function leaveOutReader(context: Context, doc: TransformDocument): void {
+  const input = doc.value.inputs.find((name) => context.skipped.has(name));
+  if (!input) return;
+  context.skipped.add(doc.value.id);
+  context.reporter.warning(
+    "RUNS_ON_SKIPPED",
+    `"${doc.value.id}" reads "${input}", which is left out of ${context.environment}, so it is left out too.`,
+    { document: doc, pointer: "/inputs" },
+  );
 }
 
 /** A transform's query needs a store step (`HANDOVER`). */
