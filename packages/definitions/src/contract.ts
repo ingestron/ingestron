@@ -21,8 +21,7 @@ export function contractFor(
 ): Contract | undefined {
   const document = context.project.get(kinds.contract, id);
   const entries = document?.value.schema ?? [];
-  const named = entries.findIndex((candidate) => candidate.name === table);
-  const index = named >= 0 ? named : entries.length === 1 ? 0 : -1;
+  const index = entryIndex(entries, table);
   const entry = entries[index];
   if (!entry) {
     const names = entries.map((candidate) => candidate.name).join(", ") || "none";
@@ -43,6 +42,12 @@ export function contractFor(
     ...checksOf(context, entry, { document: document!, pointer: `/schema/${index}` }, atFiles),
     tags: (entry.tags ?? []).map(String),
   };
+}
+
+/** The entry named like the table, else the only entry; -1 when there is none. */
+function entryIndex(entries: Entry[], table: string): number {
+  const named = entries.findIndex((candidate) => candidate.name === table);
+  return named >= 0 ? named : entries.length === 1 ? 0 : -1;
 }
 
 /** Checks of each row, and checks over all rows, from the object's rules. */
