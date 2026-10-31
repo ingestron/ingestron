@@ -130,4 +130,21 @@ describe("runs-on", () => {
     );
     expect(codes(local({}, strict))).toEqual([]);
   });
+
+  it("reads the landed files under the names the replaced method wrote", () => {
+    const renaming = packs.map((pack) =>
+      pack.id !== "test"
+        ? pack
+        : {
+            ...pack,
+            methods: { ...pack.methods, files: { ...pack.methods.files!, renames: true as const } },
+          },
+    );
+    const result = local({}, renaming);
+    expect(codes(result)).toEqual([]);
+    expect((result.model as ResolvedModel).tables[0]?.ingest).toMatchObject({
+      method: "local-landed",
+      renamed: true,
+    });
+  });
 });
