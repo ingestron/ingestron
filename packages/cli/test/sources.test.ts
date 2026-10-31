@@ -71,7 +71,9 @@ describe("templateSource", () => {
       );
       expect(readdirSync(own)).toEqual([]);
     } finally {
-      process.env.TMPDIR = saved;
+      // Assigning undefined would set the text "undefined"; delete it instead.
+      if (saved === undefined) delete process.env.TMPDIR;
+      else process.env.TMPDIR = saved;
     }
   });
 
