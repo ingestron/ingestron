@@ -137,11 +137,38 @@ const metrics: Record<string, Metric> = {
   },
 };
 
+/** On a table that ends at the landed files nothing checks rows: each rule but text warns. */
+export function notCheckedAtFiles(context: Context, entry: Entry, at: Source): void {
+  const warn = (rule: Rule, pointer: string) => {
+    if (rule.type === "text") return;
+    context.reporter.warning(
+      "QUALITY_RULE_NOT_CHECKED",
+      `${labelOf(rule)} rule is not checked: ${AT_FILES}`,
+      { ...at, pointer },
+      "Add a store step to have it checked.",
+    );
+  };
+  rulesOf(entry.quality).forEach((rule, index) => warn(rule, `${at.pointer}/quality/${index}`));
+  (entry.properties ?? []).forEach((property, column) =>
+    rulesOf(property.quality).forEach((rule, index) =>
+      warn(rule, `${at.pointer}/properties/${column}/quality/${index}`),
+    ),
+  );
+}
+
+/** Why nothing checks a table that ends at the landed files. */
+export const AT_FILES = "the table ends at the landed files, and nothing checks them.";
+
+function labelOf(rule: Rule): string {
+  return typeof rule.metric === "string"
+    ? `"${rule.metric}"`
+    : `A ${String(rule.type ?? "library")}`;
+}
+
 /** Warns at a rule that is not checked: over all rows only with checks on; another engine's never. */
 function notChecked(context: Context, rule: Rule, at: Source, countable: boolean): void {
   if (rule.type === "text") return;
-  const what =
-    typeof rule.metric === "string" ? `"${rule.metric}"` : `A ${String(rule.type ?? "library")}`;
+  const what = labelOf(rule);
   if (!countable) {
     const why =
       rule.type === "custom"

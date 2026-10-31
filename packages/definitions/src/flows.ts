@@ -2,7 +2,7 @@
 import type { DefinitionDocument } from "@ingestron/config";
 import { endsAtFiles, NO_STORE, type Facts, type Named } from "./choose.js";
 import type { Context } from "./context.js";
-import { contractFor, expectationsFor } from "./contract.js";
+import { contractFor, expectationsFor, expectationsNotChecked } from "./contract.js";
 import { kinds, type ConnectionDoc, type FlowDoc } from "./documents.js";
 import type { ChosenBy, ResolvedTable } from "./model.js";
 import type { SettingsLayer } from "./settings.js";
@@ -53,10 +53,19 @@ function flowTable(
   if (!doc || !layer || !connection) return undefined;
   const facts = { connectivity: connection.connectivity, connector: connection.connector, layer };
   const steps = flowSteps(context, flow, name, facts);
-  const contract = contractFor(context, name, doc.contract, {
-    document: flow,
-    pointer: `/tables/${name}/contract`,
-  });
+  const atFiles = steps?.endsAtFiles !== undefined;
+  const contract = contractFor(
+    context,
+    name,
+    doc.contract,
+    { document: flow, pointer: `/tables/${name}/contract` },
+    atFiles,
+  );
+  if (atFiles)
+    expectationsNotChecked(context, doc.expectations ?? [], {
+      document: flow,
+      pointer: `/tables/${name}/expectations`,
+    });
   const fullName = renderTableName(context, namer, {
     layer,
     table: name,
