@@ -40,6 +40,22 @@ describe("generated files", () => {
     ]);
   });
 
+  it("include a DuckDB table's own SQL, in the cloud and the local environment", () => {
+    const local = join(import.meta.dirname, "../../cli/test/fixtures/duckdb-local");
+    const project = openProject(local, new Map());
+    const cloud = generatedFiles(project, "dev");
+    if (!Array.isArray(cloud)) throw new Error(cloud.problems);
+    expect(generatedForTable(cloud, "invoices").map((file) => file.path)).toEqual([
+      "build/dev/adf/pipeline/pl_sales_erp.json",
+      "build/dev/duckdb/tables/bronze.invoices.sql",
+    ]);
+    const onLaptop = generatedFiles(project, "local");
+    if (!Array.isArray(onLaptop)) throw new Error(onLaptop.problems);
+    expect(generatedForTable(onLaptop, "customer_totals").map((file) => file.path)).toEqual([
+      "build/local/duckdb/tables/silver.customer_totals.sql",
+    ]);
+  });
+
   it("say what is wrong when the project has problems", () => {
     const retail = join(templates, "retail");
     const broken = openProject(

@@ -50,12 +50,13 @@ function manifest(version) {
     name: "ingestron",
     version,
     description:
-      "Declare data ingestion in reviewed YAML definitions and generate Databricks, Azure Data Factory and Synapse serverless SQL files under your standards.",
+      "Declare data ingestion in reviewed YAML definitions and generate Databricks, Azure Data Factory, Synapse serverless SQL and DuckDB files under your standards.",
     keywords: [
       "ingestion",
       "databricks",
       "azure-data-factory",
       "azure-synapse",
+      "duckdb",
       "data-engineering",
       "yaml",
       "cli",
