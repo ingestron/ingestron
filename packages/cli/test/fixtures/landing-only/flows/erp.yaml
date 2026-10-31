@@ -1,0 +1,7 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: erp
+source: erp
+tables:
+  customers: { object: erp.dbo.Customers, contract: erp.customers }
+  invoices: { object: erp.dbo.Invoices, contract: erp.invoices }

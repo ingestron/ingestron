@@ -1,0 +1,15 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: erp.invoices
+version: 1.0.0
+status: active
+schema:
+  - name: invoices
+    logicalType: object
+    description: ERP invoices.
+    properties:
+      - { name: invoice_id, logicalType: integer, required: true, primaryKey: true }
+      - { name: customer_id, logicalType: integer, required: true }
+      - { name: amount, logicalType: number, physicalType: "DECIMAL(18,2)" }
+      - { name: status, logicalType: string }
+      - { name: updated_at, logicalType: timestamp, required: true }
