@@ -46,9 +46,9 @@
     "prepack": "pnpm build && cp ../../NOTICE NOTICE"
   },
   "dependencies": {
-    "@ingestron/config": "workspace:*",
-    "@ingestron/definitions": "workspace:*",
-    "@ingestron/generate": "workspace:*",
+    "@ingestron/config": "workspace:^",
+    "@ingestron/definitions": "workspace:^",
+    "@ingestron/generate": "workspace:^",
     "@ingestron/pack-adf": "^1.0.0",
     "@ingestron/pack-databricks": "^1.0.0",
     "yaml": "2.9.1"

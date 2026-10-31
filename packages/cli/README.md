@@ -28,12 +28,11 @@ const code = run(["check"], {
 process.exitCode = code;
 ```
 
-## Checks over every example
+## Checking generated bundles
 
-| Script                                     | Checks                                                                                          |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| `pnpm check:bundle <schema.json>`          | Generated Databricks YAML against `databricks bundle schema` of the CLI you deploy with         |
-| `PYTHON_LIQUID=<python> pnpm check:parity` | Every SQL file renders the same with python-liquid, so a Python version can share the templates |
+`pnpm check:bundle <schema.json>` checks the Databricks YAML generated for every
+project template and test fixture against the output of `databricks bundle
+schema`, from the Databricks CLI you deploy with.
 
 ## Documentation
 
