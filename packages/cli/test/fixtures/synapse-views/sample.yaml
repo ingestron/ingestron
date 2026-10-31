@@ -1,0 +1,4 @@
+# A guide: a small project that shows one idea; the docs embed it.
+title: Serve files as SQL
+summary: ADF lands each table as a file, and Synapse serverless SQL shows the files and a transform to reports as views.
+order: 8

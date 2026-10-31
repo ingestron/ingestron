@@ -9,6 +9,7 @@ import { stringify } from "yaml";
 import type { Suggestion } from "./completion.js";
 import type { Place } from "./context.js";
 import type { Project } from "./project.js";
+import { packIds, packLists } from "./pack-lists.js";
 import { standardPacks } from "./smart.js";
 
 /** The suggestions for `field`'s value at `place`, the likely one first. */
@@ -58,21 +59,6 @@ function listAt(place: Place): unknown[] {
     place.data,
   );
   return Array.isArray(value) ? value : [];
-}
-
-/** Every pack as `<id>@<version>`, the first pack of a standard first. */
-function packIds(): string[] {
-  return packs.map((pack) => `${pack.id}@${pack.version}`);
-}
-
-/** A standard's packs: each pack alone, then all of them, the first giving the defaults. */
-function packLists(): Suggestion[] {
-  const ids = packIds();
-  return [...ids.map((id) => [id]), ...(ids.length > 1 ? [ids] : [])].map((list, index) => ({
-    label: `[${list.join(", ")}]`,
-    kind: "value" as const,
-    ...(index === 0 && { preselect: true }),
-  }));
 }
 
 /** Inside { } or [ ]: the default in flow style, or an empty mapping or list to fill. */
