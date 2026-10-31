@@ -166,6 +166,7 @@ const choosers: Record<ChosenBy["by"], string> = {
   "standard-default": "chosen by the standard's default",
   "pack-rule": "chosen by the pack's rule",
   "pack-default": "chosen by the pack's default",
+  "runs-on": "chosen because the environment runs on",
 };
 
 /** How each step's method was chosen, one line per step. */
@@ -185,12 +186,13 @@ export function chosenText(table: ResolvedTable): string {
 }
 
 /** What chose a method, with the rule's facts and where it is written. */
-function chooser({ by, when, file, line }: ChosenBy): string {
+function chooser({ by, when, file, line, pack }: ChosenBy): string {
   const facts = when
     ? ` when ${Object.entries(when)
         .map(([key, value]) => `${key}: ${String(value)}`)
         .join(", ")}`
     : "";
   const where = file ? ` (${file}${line ? `:${line}` : ""})` : "";
-  return `${choosers[by]}${facts}${where}`;
+  const runsOn = by === "runs-on" && pack ? ` ${pack}` : "";
+  return `${choosers[by]}${runsOn}${facts}${where}`;
 }
