@@ -113,6 +113,7 @@ function resolveLoaded(
   const flows = flowTables(context, namer);
   const tables = [...flows, ...transformTables(context, namer, flows)];
   checkDuplicateNames(context, tables, (table) => originOf(context, table));
+  recordOutputs(context, tables);
   runMethodChecks(context, tables);
   checkContractFields(context, new Set(tables.map((table) => table.contract.id)));
   // Project-wide checks only make sense once every table resolved.
@@ -153,6 +154,16 @@ function runPackCheck(context: Context, model: ResolvedModel): void {
   const at = context.platform && { document: context.platform, pointer: "" };
   for (const message of context.packs.flatMap((pack) => pack.check?.(model) ?? []))
     context.reporter.error("PACK_CHECK", `${message}.`, at);
+}
+
+/** Records where each step's data lands, when its method says (`output`). */
+function recordOutputs(context: Context, tables: ResolvedTable[]): void {
+  for (const table of tables) {
+    for (const step of [table.ingest, table.transform, table.store]) {
+      const output = step && context.pack.methods[step.method]?.output?.(table);
+      if (step && output) step.output = output;
+    }
+  }
 }
 
 /** Runs each chosen method's own check on its table (`METHOD_CHECK`). */

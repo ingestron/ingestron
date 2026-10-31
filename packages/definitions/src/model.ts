@@ -1,6 +1,7 @@
 // The resolved model: everything a pack needs, with every choice made,
 // every name built and every setting merged. Packs only read it.
 
+import type { StepOutput } from "./pack.js";
 import type { TableCheck } from "./table-checks.js";
 
 /** A step's chosen method, the pack it belongs to, and its final settings. */
@@ -12,6 +13,8 @@ export interface Step {
   origins: Record<string, Origin>;
   /** How the method was chosen (specification section 4). */
   chosenBy: ChosenBy;
+  /** Where the step's data lands, when its method says (specification section 2). */
+  output?: StepOutput;
 }
 
 /** How a step's method was chosen, and where that was written. */

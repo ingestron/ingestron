@@ -42,6 +42,21 @@ export interface Method {
   placement?: { platform?: string[]; standard?: string[] };
   /** Checks that need the whole table, such as keys for change data. Returns messages. */
   check?(table: ResolvedTable): string[];
+  /**
+   * Where this method's data lands for a table, when other packs can read it
+   * there; recorded as the step's `output`.
+   * @example output: (table) => ({ location: `abfss://landing@acct.dfs.core.windows.net/${table.name}.parquet`, format: "parquet", loads: "replace" })
+   */
+  output?(table: ResolvedTable): StepOutput | undefined;
+}
+
+/** Where a step's data ends up, for packs that read it. */
+export interface StepOutput {
+  /** A URL or path: one file, or a pattern with `*` (one level) or `**` (any depth). */
+  location: string;
+  format: "parquet" | "json" | "csv" | "delta";
+  /** `replace`: each run replaces what is there; `add`: each run adds files. */
+  loads: "replace" | "add";
 }
 
 /** Name patterns (Liquid). */
