@@ -52,7 +52,7 @@ function scope(
   const model =
     resolved(project, environment).model ??
     resolved(openProject(project.folder, new Map()), environment).model;
-  const step = action as "ingest" | "transform" | "store";
+  const step = action as "ingest" | "transform" | "store" | "serve";
   const names = (model?.tables ?? [])
     .filter((table) => table[step]?.method === method)
     .map((table) => table.name);

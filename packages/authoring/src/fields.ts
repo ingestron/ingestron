@@ -47,7 +47,7 @@ function standardSettings(
   place: Place,
   [action = "", group = "", method, ...rest]: string[],
 ): SettingsAt | undefined {
-  const standard = place.kind === "Standard" && /^(ingest|transform|store)$/.test(action);
+  const standard = place.kind === "Standard" && /^(ingest|transform|store|serve)$/.test(action);
   return standard && /^(settings|fixed)$/.test(group) && method ? { method, rest } : undefined;
 }
 
@@ -177,7 +177,7 @@ function methodOfTable(
   environment: string | undefined,
 ): string | undefined {
   const name = path[0] === "tables" ? path[1] : undefined;
-  const action = (name ? path[2] : path[0]) as "ingest" | "transform" | "store";
+  const action = (name ? path[2] : path[0]) as "ingest" | "transform" | "store" | "serve";
   const methodIn = (candidate: Project) =>
     resolved(candidate, environment).model?.tables.find(
       (item) => item.origin.file === file && (!name || item.name === name),
