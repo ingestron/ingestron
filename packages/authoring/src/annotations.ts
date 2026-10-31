@@ -1,7 +1,7 @@
 // What a line resolves to, shown beside it: a variable's value, a table's full
 // name with the methods that build it, and the files generated from it.
 import { resolveProject, type DefinitionDocument } from "@ingestron/config";
-import { kinds, type ChosenBy, type ResolvedTable } from "@ingestron/definitions";
+import { kinds, NO_STORE, type ChosenBy, type ResolvedTable } from "@ingestron/definitions";
 import { generatedFiles, generatedForTable } from "./preview.js";
 import { resolved, type Project } from "./project.js";
 import { resolveText } from "./references.js";
@@ -170,17 +170,21 @@ const choosers: Record<ChosenBy["by"], string> = {
 /** How each step's method was chosen, one line per step. */
 function chosen(table: ResolvedTable): string {
   const steps = { ingest: table.ingest, transform: table.transform, store: table.store };
-  return Object.entries(steps)
-    .flatMap(([action, step]) => {
-      if (!step) return [];
-      const { by, when, file, line } = step.chosenBy;
-      const facts = when
-        ? ` when ${Object.entries(when)
-            .map(([key, value]) => `${key}: ${String(value)}`)
-            .join(", ")}`
-        : "";
-      const where = file ? ` (${file}${line ? `:${line}` : ""})` : "";
-      return [`${action}: ${step.method}, ${choosers[by]}${facts}${where}`];
-    })
-    .join("\n");
+  const lines = Object.entries(steps).flatMap(([action, step]) =>
+    step ? [`${action}: ${step.method}, ${chooser(step.chosenBy)}`] : [],
+  );
+  if (table.endsAtFiles)
+    lines.push(`store: ${NO_STORE}, ends at the landed files, ${chooser(table.endsAtFiles)}`);
+  return lines.join("\n");
+}
+
+/** What chose a method, with the rule's facts and where it is written. */
+function chooser({ by, when, file, line }: ChosenBy): string {
+  const facts = when
+    ? ` when ${Object.entries(when)
+        .map(([key, value]) => `${key}: ${String(value)}`)
+        .join(", ")}`
+    : "";
+  const where = file ? ` (${file}${line ? `:${line}` : ""})` : "";
+  return `${choosers[by]}${facts}${where}`;
 }
