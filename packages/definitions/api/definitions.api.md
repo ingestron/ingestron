@@ -273,6 +273,9 @@ export interface Naming {
 }
 
 // @public
+export const NO_STORE = "none";
+
+// @public
 export interface Origin {
     file?: string;
     // (undocumented)
@@ -415,6 +418,7 @@ export interface ResolvedPlatform {
 export interface ResolvedTable {
     // (undocumented)
     contract: Contract;
+    endsAtFiles?: ChosenBy;
     // (undocumented)
     expectations: Expectation[];
     // (undocumented)
