@@ -19,7 +19,8 @@ export interface Step {
 
 /** How a step's method was chosen, and where that was written. */
 export interface ChosenBy {
-  by: "definition" | "standard-rule" | "standard-default" | "pack-rule" | "pack-default";
+  by:
+    "definition" | "standard-rule" | "standard-default" | "pack-rule" | "pack-default" | "runs-on";
   /** A rule's facts, such as `{ connectivity: private }`. */
   when?: Record<string, unknown>;
   /** The pack whose rule or default chose it. */

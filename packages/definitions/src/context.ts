@@ -19,6 +19,10 @@ export interface Context {
   owner: Map<string, string>;
   /** The selected environment, or `default`. */
   environment: string;
+  /** The pack the environment runs on, when it names one the standard lists. */
+  runsOn?: PackInfo;
+  /** Tables left out because the environment runs on a pack and they land no files. */
+  skipped: Set<string>;
   standard: DefinitionDocument<StandardDoc>;
   platform?: DefinitionDocument<PlatformDoc>;
   reporter: Reporter;
@@ -47,6 +51,8 @@ export function createContext(
     pack: combine(packs),
     owner,
     environment,
+    ...runsOnPack(project, standard, packs, available, reporter),
+    skipped: new Set<string>(),
     standard,
     platform: platforms[0],
     reporter,
@@ -147,4 +153,34 @@ function combine(packs: PackInfo[]): PackInfo {
     rules,
     methods,
   };
+}
+
+/** The pack the selected environment runs on; one the standard does not list is `UNKNOWN_PACK`. */
+function runsOnPack(
+  project: Project,
+  standard: DefinitionDocument<StandardDoc>,
+  packs: PackInfo[],
+  available: PackInfo[],
+  reporter: Reporter,
+): { runsOn?: PackInfo } {
+  const id = project.runsOn;
+  if (!id) return {};
+  const pack = packs.find((candidate) => candidate.id === id);
+  if (pack) return { runsOn: pack };
+  const add = available.find((candidate) => candidate.id === id);
+  reporter.error(
+    "UNKNOWN_PACK",
+    `Environment "${project.environment}" runs on "${id}", which the standard's packs do not list.`,
+    { document: standard, pointer: "/packs" },
+    add ? `Add ${id}@${add.version} to the standard's packs.` : "Name one of the standard's packs.",
+    add
+      ? [
+          {
+            title: `Add the "${id}" pack`,
+            edits: [{ file: standard.file, pointer: "/packs/-", set: `${id}@${add.version}` }],
+          },
+        ]
+      : [],
+  );
+  return {};
 }

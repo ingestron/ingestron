@@ -1,6 +1,6 @@
 // The serve step: after a table's last step, and only when something chooses
 // one (specification section 4).
-import { hasChoice, type Facts, type Named } from "./choose.js";
+import { hasChoice, peekMethod, type Facts, type Named } from "./choose.js";
 import type { Context } from "./context.js";
 import type { SettingsLayer } from "./settings.js";
 import { resolveStep, type StepResult } from "./steps.js";
@@ -17,6 +17,9 @@ export function serveStep(
   layers: SettingsLayer[] = [],
 ): StepResult | false | undefined {
   const serveFacts = { ...facts, input: last.produces };
-  if (!hasChoice(context, "serve", named, serveFacts)) return undefined;
+  const pick = peekMethod(context, "serve", named, serveFacts);
+  if (!pick && !hasChoice(context, "serve", named, serveFacts)) return undefined;
+  // Where the environment runs on a pack, another pack's serve step is dropped.
+  if (pick && context.runsOn && context.owner.get(pick.id) !== context.runsOn.id) return undefined;
   return resolveStep(context, "serve", named, serveFacts, layers, last) ?? false;
 }

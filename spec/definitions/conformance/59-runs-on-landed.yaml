@@ -1,0 +1,53 @@
+description: "In an environment that runs on a pack, files ingest is replaced by its landed method."
+environment: local
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, local: { runs-on: local } }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [local@1, test@1]
+    ingest:
+      settings:
+        local-landed: { landing: ./samples }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        description: One row per order.
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: total, logicalType: number }
+
+expect:
+  tables:
+    - name: orders
+      ingest:
+        {
+          method: local-landed,
+          settings: { landing: ./samples },
+          chosenBy: { by: runs-on, pack: local },
+        }
+      store: { method: local-table }
