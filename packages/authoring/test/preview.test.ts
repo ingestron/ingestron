@@ -27,6 +27,19 @@ describe("generated files", () => {
     ]);
   });
 
+  it("include the Synapse view of a table and of a transform", () => {
+    const synapse = join(import.meta.dirname, "../../cli/test/fixtures/synapse-views");
+    const files = generatedFiles(openProject(synapse, new Map()), "dev");
+    if (!Array.isArray(files)) throw new Error(files.problems);
+    expect(generatedForTable(files, "invoices").map((file) => file.path)).toEqual([
+      "build/dev/adf/pipeline/pl_sales_erp.json",
+      "build/dev/synapse/views.sql",
+    ]);
+    expect(generatedForTable(files, "customer_totals").map((file) => file.path)).toEqual([
+      "build/dev/synapse/views.sql",
+    ]);
+  });
+
   it("say what is wrong when the project has problems", () => {
     const retail = join(templates, "retail");
     const broken = openProject(
