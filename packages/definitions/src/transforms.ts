@@ -108,6 +108,7 @@ function transformTable(
   const fullName = renderTableName(context, namer, { layer, table: value.id });
   const code = codeWithValues(context, doc, value.code);
   if (!steps || !contract || !fullName || code === undefined) return undefined;
+  if (!readsTables(context, doc, resolved)) return undefined;
   const inputs = Object.fromEntries(
     value.inputs.map((input) => [input, inputName(resolved, input)]),
   );
@@ -147,6 +148,26 @@ function transformSteps(context: Context, doc: TransformDocument, layer: string)
           transform,
         );
   return transform && store ? { transform, store } : undefined;
+}
+
+/** Every input is a table: one that ends at the landed files is not (`HANDOVER`). */
+function readsTables(
+  context: Context,
+  doc: TransformDocument,
+  resolved: Map<string, ResolvedTable>,
+): boolean {
+  let tables = true;
+  doc.value.inputs.forEach((input, index) => {
+    if (!resolved.get(input)?.endsAtFiles) return;
+    tables = false;
+    context.reporter.error(
+      "HANDOVER",
+      `"${input}" ends at the landed files, so there is no table to read.`,
+      { document: doc, pointer: `/inputs/${index}` },
+      "Give its flow a store step.",
+    );
+  });
+  return tables;
 }
 
 /** A transform's query needs a store step (`HANDOVER`). */
