@@ -39,7 +39,8 @@ function build(project: Project, environment: string | undefined): Files {
 
 /**
  * The generated files for one table: its SQL or Python file, the copy that
- * lands it, and the Lakeflow Connect pipeline that ingests it as `physical`.
+ * lands it, the Lakeflow Connect pipeline that ingests it as `physical`, and
+ * the Synapse view named `physical`.
  */
 export function generatedForTable(
   files: Generated[],
@@ -50,7 +51,8 @@ export function generatedForTable(
     (file) =>
       file.text.includes(`(table ${table})`) ||
       file.text.includes(`"copy_${table}"`) ||
-      new RegExp(`^\\s*destination_table: ${physical}$`, "m").test(file.text),
+      new RegExp(`^\\s*destination_table: ${physical}$`, "m").test(file.text) ||
+      file.text.includes(`.[${physical.replaceAll("]", "]]")}] AS\n`),
   );
 }
 
