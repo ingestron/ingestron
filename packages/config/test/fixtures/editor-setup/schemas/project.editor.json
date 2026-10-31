@@ -1,10 +1,7 @@
 {
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "id",
-    "imports"
-  ],
+  "required": ["id", "imports"],
   "properties": {
     "id": {
       "type": "string",

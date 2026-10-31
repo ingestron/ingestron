@@ -168,6 +168,7 @@ export interface Project {
     id: string;
     // (undocumented)
     name?: string;
+    runsOn?: string;
     values: unknown;
 }
 

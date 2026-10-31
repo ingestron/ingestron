@@ -8,6 +8,8 @@ export interface Project {
   name?: string;
   /** The selected environment's name, if one was selected. */
   environment?: string;
+  /** The pack the selected environment runs on (its `runs-on`), if it names one. */
+  runsOn?: string;
   /** Project values after the environment's values were merged in. */
   values: unknown;
   /** Every document, in file path order. */
@@ -30,6 +32,7 @@ export function createProject(scope: Scope, documents: readonly DefinitionDocume
     id: scope.project.id,
     name: scope.project.name,
     environment: scope.environment?.name,
+    ...(scope.environment?.runsOn && { runsOn: scope.environment.runsOn }),
     values: scope.values,
     documents,
     all,
