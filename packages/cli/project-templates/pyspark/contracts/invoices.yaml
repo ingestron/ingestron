@@ -1,0 +1,16 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: billing.invoices
+version: 1.0.0
+status: active
+schema:
+  - name: invoices
+    logicalType: object
+    description: Invoices from the billing system.
+    properties:
+      - { name: invoice_id, logicalType: string, required: true, primaryKey: true }
+      - { name: customer_id, logicalType: string, required: true }
+      - { name: plan, logicalType: string }
+      - { name: amount, logicalType: number, physicalType: "DECIMAL(18,2)" }
+      - { name: status, logicalType: string }
+      - { name: issued_at, logicalType: timestamp }

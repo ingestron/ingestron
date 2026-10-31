@@ -1,0 +1,3 @@
+# Used by `ingestron init --template pyspark`.
+title: PySpark transform
+summary: A PySpark transform wrapped as a materialised view.

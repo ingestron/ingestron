@@ -1,0 +1,8 @@
+apiVersion: ingestron.io/v1
+kind: Connection
+id: erp
+description: The ERP's SQL Server, reachable from the workspace through ExpressRoute.
+connector: sqlserver
+connectivity: workspace
+settings:
+  uc_connection: erp_sqlserver_${environment.name} # created by an administrator beforehand

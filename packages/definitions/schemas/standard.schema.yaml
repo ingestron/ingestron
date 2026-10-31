@@ -1,0 +1,211 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: Standard
+description: >-
+  How things are done, shared by many projects: methods per action, naming, layers, quality and
+  types. Anything left out uses the pack's defaults.
+type: object
+additionalProperties: false
+required: [apiVersion, kind, id, packs]
+properties:
+  apiVersion: { const: ingestron.io/v1, description: Always ingestron.io/v1. }
+  kind: { const: Standard, description: The document kind. }
+  id:
+    {
+      type: string,
+      pattern: "^[a-z][a-z0-9_-]*$",
+      description: "The standard's id: lowercase letters, digits, underscores and hyphens.",
+      examples: [acme],
+    }
+  description:
+    {
+      type: string,
+      description: "What this document is for, in a sentence.",
+      examples: [How Acme builds its sales data products.],
+    }
+  packs:
+    type: array
+    minItems: 1
+    uniqueItems: true
+    items: { type: string, pattern: "^[a-z][a-z0-9-]*@[0-9]+$" }
+    description: >-
+      The packs to use, each with its major version, such as `[databricks@1, adf@1]`. The first
+      provides the defaults.
+  naming:
+    {
+      $ref: "#/$defs/naming",
+      description: "Name patterns for catalogs, schemas, tables, pipelines and jobs.",
+    }
+  layers:
+    type: array
+    minItems: 1
+    uniqueItems: true
+    items: { type: string, pattern: "^[a-z][a-z0-9_]*$" }
+    description: "Layers in order. Flow tables land in the first, transforms in the second. Default:
+      bronze, silver, gold."
+  types:
+    type: object
+    description:
+      "Platform type for each contract `logicalType`, such as `number: DECIMAL(38,6)`. Used
+      when a column has no `physicalType`."
+    additionalProperties: { type: string }
+  quality:
+    type: object
+    additionalProperties: false
+    properties:
+      required:
+        enum: [warn, drop, fail]
+        description: "Action for rows missing a contract `required` column. Default: warn."
+        enumDescriptions:
+          - Keep the row and record that it failed.
+          - Leave the row out of the table.
+          - Stop the update.
+      default:
+        enum: [warn, drop, fail]
+        description: "Action for expectations that name none. Default: warn."
+        enumDescriptions:
+          - Keep the row and record that it failed.
+          - Leave the row out of the table.
+          - Stop the update.
+    description: "What happens to rows that fail a check: required columns and your own expectations."
+  ingest:
+    {
+      $ref: "#/$defs/rules",
+      description: "How tables are ingested: method settings, rules, and allowed and fixed settings.",
+    }
+  transform:
+    {
+      $ref: "#/$defs/rules",
+      description: "How transforms run: method settings, rules, and allowed and fixed settings.",
+    }
+  store:
+    {
+      $ref: "#/$defs/rules",
+      description: "How tables are stored: method settings, rules, and allowed and fixed settings.",
+    }
+$defs:
+  method: { type: string, pattern: "^[a-z][a-z0-9-]*$" }
+  naming:
+    type: object
+    additionalProperties: false
+    description: Name patterns (Liquid) with the variables project, environment, layer, table, flow and source.
+    properties:
+      catalog:
+        {
+          type: string,
+          description: "Name pattern for the catalog. Default: `{{ environment }}`.",
+          examples: ["acme_{{ environment }}"],
+        }
+      schema:
+        {
+          type: string,
+          description: "Name pattern for the schema. Default: `{{ layer }}`.",
+          examples: ["{{ environment }}_{{ layer }}"],
+        }
+      table:
+        {
+          type: string,
+          description: "Name pattern for the table. Default: `{{ table }}`.",
+          examples: ["{% if source %}{{ source }}_{% endif %}{{ table }}"],
+        }
+      pipeline:
+        {
+          type: string,
+          description: "Name pattern for the pipeline. Default: `{{ project }}`.",
+          examples: ["{{ project }}_{{ environment }}"],
+        }
+      job:
+        {
+          type: string,
+          description: "Name pattern for the refresh job. Default: `{{ project }}_refresh`.",
+          examples: ["{{ project }}_daily"],
+        }
+  rules:
+    type: object
+    additionalProperties: false
+    properties:
+      default:
+        $ref: "#/$defs/method"
+        description: Replaces the pack's default method for this action.
+        examples:
+          - materialised-view
+      allowed:
+        type: array
+        items: { $ref: "#/$defs/method" }
+        description: "Methods a flow or transform may name. Default: all of the pack's methods for this action."
+        examples:
+          - - streaming-table
+            - materialised-view
+      when:
+        type: array
+        description:
+          Checked in order, before the pack's own rules; the first whose facts all match chooses
+          the method.
+        items:
+          type: object
+          additionalProperties: false
+          required: [use]
+          minProperties: 2
+          properties:
+            connectivity:
+              {
+                enum: [public, workspace, private],
+                description: "Matches the connection's connectivity: public, workspace or private.",
+                enumDescriptions: [
+                    The data platform reaches the source directly.,
+                    "The platform reaches it over private networking, such as ExpressRoute or a
+                    peered network.",
+                    The platform cannot reach it; something inside the source's network must bring
+                    the data.,
+                  ],
+              }
+            connector:
+              {
+                type: string,
+                description: "Matches the connection's connector, such as files or sqlserver.",
+                examples: [sqlserver],
+              }
+            input:
+              {
+                enum: [files, table, query],
+                description: "Matches what the previous action hands over: files, table or query.",
+                enumDescriptions:
+                  [
+                    "Files in storage, such as those an ingest method lands.",
+                    "A table, such as one a managed connector writes, or a transform's inputs.",
+                    "A query, such as a transform's SQL, for the store method to keep.",
+                  ],
+              }
+            layer:
+              {
+                type: string,
+                description: "Matches the table's layer, such as gold.",
+                examples: [gold],
+              }
+            use:
+              {
+                $ref: "#/$defs/method",
+                description: "The method to use when this rule matches, such as materialised-view.",
+                examples: [materialised-view],
+              }
+            with: { type: object, description: Settings for this case. }
+        examples:
+          - - connector: sqlserver
+              use: lakeflow-connect
+            - layer: gold
+              use: materialised-view
+      settings:
+        type: object
+        description: Settings per method, over the pack's defaults.
+        additionalProperties: { type: object }
+        examples:
+          - files:
+              format: csv
+              options:
+                header: true
+      fixed:
+        type: object
+        description: Settings per method that nothing may change.
+        additionalProperties: { type: object }
+        examples:
+          - streaming-table:
+              cluster_by: auto

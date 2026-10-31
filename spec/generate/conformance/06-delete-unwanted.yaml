@@ -1,0 +1,21 @@
+description: >-
+  A generated file that is no longer wanted is deleted when unedited, and
+  dropped from the manifest when it is already gone.
+disk:
+  jobs/orders.yml: "name: orders\n"
+  jobs/old.yml: "name: old\n"
+manifest:
+  jobs/orders.yml: "name: orders\n"
+  jobs/old.yml: "name: old\n"
+  jobs/gone.yml: "name: gone\n"
+wanted:
+  jobs/orders.yml: "name: orders\n"
+expect:
+  changes:
+    - { path: jobs/gone.yml, change: forget }
+    - { path: jobs/old.yml, change: delete }
+    - { path: jobs/orders.yml, change: unchanged }
+  clean: true
+  upToDate: false
+  disk:
+    jobs/orders.yml: "name: orders\n"

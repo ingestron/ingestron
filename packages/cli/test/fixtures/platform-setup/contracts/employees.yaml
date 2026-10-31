@@ -1,0 +1,13 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: hr.employees
+version: 1.0.0
+status: active
+schema:
+  - name: employees
+    logicalType: object
+    description: Employees, one row per person.
+    properties:
+      - { name: employee_id, logicalType: string, required: true, primaryKey: true }
+      - { name: department, logicalType: string }
+      - { name: started_on, logicalType: date }

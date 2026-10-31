@@ -1,0 +1,14 @@
+description: With no manifest and an empty folder, every wanted file is created.
+disk: {}
+wanted:
+  bundle.yml: "bundle: { name: retail }\n"
+  jobs/orders.yml: "name: orders\n"
+expect:
+  changes:
+    - { path: bundle.yml, change: create }
+    - { path: jobs/orders.yml, change: create }
+  clean: true
+  upToDate: false
+  disk:
+    bundle.yml: "bundle: { name: retail }\n"
+    jobs/orders.yml: "name: orders\n"

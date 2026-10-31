@@ -1,0 +1,33 @@
+description: A link must name an existing document of the target kind.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Connection
+    schema: { type: object }
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+    links:
+      /source: Connection
+      /steps/*/after: Pipeline
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.yaml"]
+  erp.yaml: |
+    apiVersion: example.dev/v1
+    kind: Connection
+    id: erp
+  orders.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: orders
+    source: erp
+    steps:
+      - after: customers
+expect:
+  diagnostics:
+    - code: BROKEN_LINK
+      file: orders.yaml
+      line: 6
+      column: 12
+      message: '"customers" is not the id of a Pipeline document.'

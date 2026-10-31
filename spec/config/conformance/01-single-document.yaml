@@ -1,0 +1,28 @@
+description: A manifest and one document with no references load unchanged.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema:
+      type: object
+      required: [apiVersion, kind, id, table]
+      properties:
+        table: { type: string }
+files:
+  project.yaml: |
+    id: sales
+    imports:
+      - "*.pipeline.yaml"
+  orders.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: orders
+    table: raw_orders
+expect:
+  documents:
+    - kind: Pipeline
+      id: orders
+      value:
+        apiVersion: example.dev/v1
+        kind: Pipeline
+        id: orders
+        table: raw_orders

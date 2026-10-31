@@ -1,0 +1,13 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: web.purchases
+version: 1.0.0
+status: active
+schema:
+  - name: purchases
+    logicalType: object
+    description: One event per purchase.
+    properties:
+      - { name: order_id, logicalType: string, required: true }
+      - { name: amount, logicalType: number, physicalType: "DECIMAL(18,2)" }
+      - { name: purchased_at, logicalType: timestamp }

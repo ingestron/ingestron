@@ -1,0 +1,23 @@
+description: A file reference cannot leave the project folder, and a missing file is reported.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    up: ${file:../secrets.yaml}
+    absolute: ${file:/etc/passwd}
+    remote: ${file:https://example.com/x.yaml}
+    missing: ${file:nowhere.yaml}
+expect:
+  diagnostics:
+    - { code: PATH_OUTSIDE_PROJECT, line: 4 }
+    - { code: PATH_OUTSIDE_PROJECT, line: 5 }
+    - { code: PATH_OUTSIDE_PROJECT, line: 6 }
+    - { code: MISSING_FILE, line: 7 }

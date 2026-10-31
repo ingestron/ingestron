@@ -1,0 +1,9 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: stores
+source: share
+ingest:
+  with: { format: csv, options: { header: true } } # the files' own format
+tables:
+  sales: { object: sales, contract: stores.sales }
+  stock: { object: stock, contract: stores.stock }

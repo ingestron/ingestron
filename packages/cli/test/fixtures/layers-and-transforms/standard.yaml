@@ -1,0 +1,10 @@
+apiVersion: ingestron.io/v1
+kind: Standard
+id: sales
+packs: [databricks@1]
+store:
+  when:
+    # Gold tables are small and read whole: no clustering, longer retention.
+    - layer: gold
+      use: materialised-view
+      with: { cluster_by: none, properties: { delta.logRetentionDuration: "interval 90 days" } }

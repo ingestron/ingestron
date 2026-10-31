@@ -1,0 +1,35 @@
+description: A schema error points at the file and line the bad value came from, even through an include.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            type: object
+            required: [name]
+            properties:
+              name: { type: string }
+              nullable: { type: boolean }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  orders.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: orders
+    columns: ${file:columns.yaml}
+  columns.yaml: |
+    - name: order_id
+    - name: amount
+      nullable: "yes"
+expect:
+  diagnostics:
+    - code: SCHEMA
+      file: columns.yaml
+      line: 3
+      column: 13
+      message: 'columns[1].nullable is "yes"; it must be true or false.'

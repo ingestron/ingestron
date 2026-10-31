@@ -1,0 +1,102 @@
+// Reads the parts of a table's ODCS contract that generation uses (section 6).
+import { ruleChecks } from "./quality-rules.js";
+import type { Context } from "./context.js";
+import type { Source } from "./diagnostics.js";
+import { kinds, type ContractDoc, type ExpectationDoc } from "./documents.js";
+import type { Column, Contract, Expectation } from "./model.js";
+
+type Entry = NonNullable<ContractDoc["schema"]>[number];
+
+/** The table's contract, or undefined after reporting. `at` is the table's contract field. */
+export function contractFor(
+  context: Context,
+  table: string,
+  id: string,
+  at: Source,
+): Contract | undefined {
+  const document = context.project.get(kinds.contract, id);
+  const entries = document?.value.schema ?? [];
+  const named = entries.findIndex((candidate) => candidate.name === table);
+  const index = named >= 0 ? named : entries.length === 1 ? 0 : -1;
+  const entry = entries[index];
+  if (!entry) {
+    const names = entries.map((candidate) => candidate.name).join(", ") || "none";
+    context.reporter.error(
+      "CONTRACT_TABLE",
+      `Contract "${id}" has no schema entry named "${table}".`,
+      at,
+      `Its entries: ${names}.`,
+    );
+    return undefined;
+  }
+  const columns = (entry.properties ?? []).map((property) => columnOf(context, property));
+  return {
+    id,
+    ...(entry.description && { description: entry.description }),
+    columns,
+    primaryKey: primaryKeyOf(entry),
+    ...checksOf(context, entry, { document: document!, pointer: `/schema/${index}` }),
+    tags: (entry.tags ?? []).map(String),
+  };
+}
+
+/** Checks of each row, and checks over all rows, from the object's rules. */
+function checksOf(context: Context, entry: Entry, at: Source) {
+  const { rows, table } = ruleChecks(context, entry, at);
+  return { checks: rows, tableChecks: table };
+}
+
+function columnOf(context: Context, property: NonNullable<Entry["properties"]>[number]): Column {
+  const types = { ...context.pack.defaults.types, ...context.standard.value.types };
+  const type =
+    property.physicalType ?? (property.logicalType ? types[property.logicalType] : undefined);
+  return {
+    name: property.name,
+    ...(type && { type }),
+    ...(property.logicalType && { logicalType: property.logicalType }),
+    ...(property.physicalName && { physicalName: property.physicalName }),
+    ...(property.tags?.length && { tags: property.tags.map(String) }),
+    ...(property.classification && { classification: property.classification }),
+    nullable: property.required !== true,
+    ...(property.description && { description: property.description }),
+  };
+}
+
+function primaryKeyOf(entry: Entry): string[] {
+  return (entry.properties ?? [])
+    .filter((property) => property.primaryKey === true)
+    .sort((a, b) => (a.primaryKeyPosition ?? 0) - (b.primaryKeyPosition ?? 0))
+    .map((property) => property.name);
+}
+
+/** Not-null checks for required columns, then the table's own checks, with actions filled in. */
+export function expectationsFor(
+  context: Context,
+  contract: Contract,
+  own: ExpectationDoc[] = [],
+): Expectation[] {
+  const quality = { ...context.pack.defaults.quality, ...context.standard.value.quality };
+  const required = contract.columns
+    .filter((column) => !column.nullable)
+    .map((column) => ({
+      name: `${column.name}_not_null`,
+      check: `\`${column.name}\` IS NOT NULL`,
+      action: quality.required,
+      from: "contract" as const,
+    }));
+  const rules = contract.checks.map((item) => ({
+    ...item,
+    action: quality.default,
+    from: "contract" as const,
+  }));
+  return [
+    ...required,
+    ...rules,
+    ...own.map((item) => ({
+      name: item.name,
+      check: item.check,
+      action: item.action ?? quality.default,
+      from: "definition" as const,
+    })),
+  ];
+}

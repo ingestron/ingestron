@@ -1,0 +1,25 @@
+description: A non-YAML file is inserted as text and its contents are never interpolated.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  orders.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: orders
+    query: ${file:orders.sql}
+  orders.sql: |
+    SELECT * FROM ${source_table} WHERE d = '{{ run_date }}'
+expect:
+  documents:
+    - kind: Pipeline
+      id: orders
+      value:
+        apiVersion: example.dev/v1
+        kind: Pipeline
+        id: orders
+        query: "SELECT * FROM ${source_table} WHERE d = '{{ run_date }}'\n"

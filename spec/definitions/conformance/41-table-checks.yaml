@@ -1,0 +1,97 @@
+description: With checks turned on, rules over all rows become table checks, and a unique column is one; their action is the quality default, drop warning.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    quality: { default: drop }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    manage: { checks: true, tags: true }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        tags: [sales, "domain:retail"]
+        quality:
+          - { metric: rowCount, mustBeGreaterThan: 0 }
+          - { name: unique_keys, metric: duplicateValues, arguments: { properties: [id, region] }, mustBe: 0 }
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true, unique: true }
+          - name: email
+            logicalType: string
+            classification: restricted
+            tags: [pii]
+            quality:
+              - { metric: nullValues, mustBeLessThan: 5, unit: percent }
+expect:
+  tables:
+    - contract:
+        tags: [sales, "domain:retail"]
+        columns:
+          - { name: id }
+          - { name: email, tags: [pii], classification: restricted }
+        tableChecks:
+          - {
+              name: orders_rowcount,
+              metric: rowCount,
+              columns: [],
+              operator: mustBeGreaterThan,
+              value: 0,
+              unit: rows,
+              action: warn,
+            }
+          - {
+              name: unique_keys,
+              metric: duplicateValues,
+              columns: [id, region],
+              operator: mustBe,
+              value: 0,
+              unit: rows,
+              action: warn,
+            }
+          - {
+              name: id_unique,
+              metric: duplicateValues,
+              columns: [id],
+              operator: mustBe,
+              value: 0,
+              unit: rows,
+              action: warn,
+            }
+          - {
+              name: email_nullvalues,
+              metric: nullValues,
+              columns: [email],
+              operator: mustBeLessThan,
+              value: 5,
+              unit: percent,
+              action: warn,
+            }

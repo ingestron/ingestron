@@ -1,0 +1,46 @@
+description: A oneOf, anyOf or if failure caused by a more specific one is not reported; alone, it says the value matches none of the allowed forms.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema:
+      type: object
+      properties:
+        apiVersion: { type: string }
+        kind: { type: string }
+        id: { type: string }
+        checks:
+          type: array
+          items:
+            type: object
+            allOf:
+              - if: { properties: { type: { const: sql } }, required: [type] }
+                then: { required: [query] }
+            oneOf:
+              - { properties: { mustBe: { type: number } }, required: [mustBe] }
+              - { properties: { mustBeLessThan: { type: number } }, required: [mustBeLessThan] }
+        tags:
+          anyOf: [{ type: string }, { type: array }]
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  orders.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: orders
+    checks:
+      -
+      - { type: sql, mustBe: 0 }
+    tags: 3
+expect:
+  diagnostics:
+    - code: SCHEMA
+      line: 5
+      message: "checks[0] is empty; it must be a mapping."
+    - code: SCHEMA
+      line: 6
+      message: 'checks[1] needs "query".'
+    - code: SCHEMA
+      line: 7
+      message: "tags does not match any of the forms allowed here."
+      hint: "It may be text or a list."

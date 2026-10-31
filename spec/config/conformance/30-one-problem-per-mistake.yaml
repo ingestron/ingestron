@@ -1,0 +1,29 @@
+description: A missing required field is one problem, not also "too few fields".
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema:
+      type: object
+      properties:
+        rules:
+          type: array
+          items:
+            type: object
+            minProperties: 2
+            required: [use]
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  orders.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: orders
+    rules:
+      - connector: files
+expect:
+  diagnostics:
+    - code: SCHEMA
+      file: orders.pipeline.yaml
+      line: 5
+      message: 'rules[0] needs "use".'

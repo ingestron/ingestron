@@ -1,0 +1,21 @@
+description: Finite numbers are embedded as decimal text; infinity and not-a-number cannot be embedded.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    values:
+      ratio: 0.5
+      big: .inf
+    imports: ["*.pipeline.yaml"]
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    ok: "ratio ${values.ratio}"
+    bad: "size ${values.big}"
+expect:
+  diagnostics:
+    - { code: NOT_TEXT, file: a.pipeline.yaml, line: 5 }

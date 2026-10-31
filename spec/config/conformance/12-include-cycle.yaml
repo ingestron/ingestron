@@ -1,0 +1,21 @@
+description: Files that include each other are reported as a cycle.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    settings: ${file:one.yaml}
+  one.yaml: |
+    next: ${file:two.yaml}
+  two.yaml: |
+    next: ${file:one.yaml}
+expect:
+  diagnostics:
+    - { code: INCLUDE_CYCLE, file: two.yaml, line: 1, column: 7 }

@@ -1,0 +1,23 @@
+description: YAML syntax errors, duplicate keys and unsafe keys are reported with locations.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    id: again
+  b.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: b
+    __proto__: { polluted: true }
+expect:
+  diagnostics:
+    - { code: YAML_SYNTAX, file: a.pipeline.yaml, line: 4 }
+    - { code: UNSAFE_KEY, file: b.pipeline.yaml, line: 4, column: 1 }

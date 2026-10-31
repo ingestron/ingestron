@@ -1,0 +1,25 @@
+description: The total number of file includes per load is limited, so a few small files cannot expand without bound.
+limits:
+  maxIncludes: 3
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    parts:
+      - ${file:part.yaml}
+      - ${file:part.yaml}
+      - ${file:part.yaml}
+      - ${file:part.yaml}
+  part.yaml: |
+    x: 1
+expect:
+  diagnostics:
+    - { code: INCLUDE_LIMIT, file: a.pipeline.yaml, line: 8, column: 5 }

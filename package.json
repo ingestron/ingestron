@@ -1,0 +1,26 @@
+{
+  "name": "@ingestron/workspace",
+  "version": "0.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "packageManager": "pnpm@10.15.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "validate": "pnpm format:check && pnpm secrets:check && pnpm licences:check && node --test scripts/*.test.mjs scripts/release/*.test.mjs && pnpm -r validate",
+    "ingestron": "node packages/cli/dist/main.js",
+    "secrets:check": "node scripts/scan-secrets.mjs",
+    "licences:check": "node scripts/check-licences.mjs",
+    "dco:check": "node scripts/check-dco.mjs",
+    "release:cli": "node scripts/release/pack-cli.mjs",
+    "api": "pnpm -r api"
+  },
+  "devDependencies": {
+    "prettier": "3.9.10",
+    "esbuild": "0.28.2"
+  }
+}

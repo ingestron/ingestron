@@ -1,0 +1,17 @@
+{
+  "routes": [
+    { "connector": "files", "connectivity": "public", "via": ["databricks", "adf"] },
+    { "connector": "sqlserver", "connectivity": "private", "via": ["adf"] },
+    { "connector": "sqlserver", "connectivity": "workspace", "via": ["databricks", "adf"] },
+    { "connector": "postgresql", "connectivity": "private", "via": ["adf"] },
+    { "connector": "salesforce", "connectivity": "public", "via": ["databricks", "adf"] },
+    { "connector": "kafka", "connectivity": "public", "via": ["databricks"] },
+    { "connector": "kafka", "connectivity": "private", "via": [] }
+  ],
+  "invalid": [
+    ["--connector", "missing", "--yes"],
+    ["--connector", "postgresql", "--via", "databricks", "--yes"],
+    ["--connector", "kafka", "--connectivity", "private", "--yes"],
+    ["--connector", "files", "--template", "minimal", "--yes"]
+  ]
+}

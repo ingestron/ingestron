@@ -1,0 +1,9 @@
+# Salesforce objects ingested with Lakeflow Connect; no gateway is needed.
+id: crm
+environments:
+  dev: {}
+imports:
+  - standard.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - contracts/*.yaml

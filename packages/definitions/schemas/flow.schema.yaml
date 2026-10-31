@@ -1,0 +1,124 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: Flow
+description: >-
+  Brings tables from one connection into the platform. The standard chooses how, unless `ingest` or
+  `store` names a method.
+type: object
+additionalProperties: false
+required: [apiVersion, kind, id, source, tables]
+properties:
+  apiVersion: { const: ingestron.io/v1, description: Always ingestron.io/v1. }
+  kind: { const: Flow, description: The document kind. }
+  id:
+    {
+      type: string,
+      pattern: "^[a-z][a-z0-9_]*$",
+      description: "The flow's id: lowercase letters, digits and underscores.",
+      examples: [shop],
+    }
+  description:
+    {
+      type: string,
+      description: "What this document is for, in a sentence.",
+      examples: [Orders and customers from the web shop.],
+    }
+  source: { type: string, description: Id of the Connection to read from., examples: [shop] }
+  layer:
+    {
+      type: string,
+      description: "Layer the tables land in. Default: the standard's first layer.",
+      examples: [bronze],
+    }
+  tables:
+    type: object
+    minProperties: 1
+    description: The tables to bring in, by table name.
+    propertyNames: { pattern: "^[a-z][a-z0-9_]*$" }
+    additionalProperties:
+      type: object
+      additionalProperties: false
+      required: [object, contract]
+      properties:
+        object:
+          { type: string, description: The table or file path at the source., examples: [orders] }
+        contract:
+          {
+            type: string,
+            description: Id of the DataContract (ODCS) for this table.,
+            examples: [shop.orders],
+          }
+        expectations:
+          { $ref: "#/$defs/expectations", description: Your own checks on this table's rows. }
+        ingest: { $ref: "#/$defs/with", description: Method settings for this table only. }
+        store: { $ref: "#/$defs/with", description: Method settings for this table only. }
+    examples:
+      - orders:
+          object: orders
+          contract: shop.orders
+  ingest: { $ref: "#/$defs/ingest", description: How data leaves the source. }
+  store: { $ref: "#/$defs/store", description: How data is kept in the platform. }
+$defs:
+  with:
+    type: object
+    additionalProperties: false
+    properties:
+      with:
+        {
+          type: object,
+          description: "Settings for the chosen method, over the standard's.",
+          examples: [{ format: csv, options: { header: true } }],
+        }
+  expectations:
+    type: array
+    description: Data quality checks on each row.
+    items:
+      type: object
+      additionalProperties: false
+      required: [name, check]
+      properties:
+        name:
+          {
+            type: string,
+            pattern: "^[a-z][a-z0-9_]*$",
+            description: "A name for the check: lowercase letters, digits and underscores.",
+            examples: [positive_total],
+          }
+        check:
+          {
+            type: string,
+            description: "A SQL condition every valid row meets, such as `total >= 0`.",
+            examples: [total >= 0],
+          }
+        action:
+          enum: [warn, drop, fail]
+          description: "What happens to a row that fails. Default: the standard's `quality.default`."
+          enumDescriptions:
+            - Keep the row and record that it failed.
+            - Leave the row out of the table.
+            - Stop the update.
+  ingest:
+    type: object
+    additionalProperties: false
+    properties:
+      uses:
+        type: string
+        pattern: ^[a-z][a-z0-9-]*$
+        description: A method the standard allows. Leave out to let the standard choose.
+        examples:
+          - files
+      with:
+        type: object
+        description: Method settings for every table of this flow.
+  store:
+    type: object
+    additionalProperties: false
+    properties:
+      uses:
+        type: string
+        pattern: ^[a-z][a-z0-9-]*$
+        description: A method the standard allows. Leave out to let the standard choose.
+        examples:
+          - streaming-table
+      with:
+        type: object
+        description: Method settings for every table of this flow.

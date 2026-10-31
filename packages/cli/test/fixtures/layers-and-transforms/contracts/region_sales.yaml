@@ -1,0 +1,13 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: sales.region_sales
+version: 1.0.0
+status: active
+schema:
+  - name: region_sales
+    logicalType: object
+    description: Sales per region and day.
+    properties:
+      - { name: region, logicalType: string }
+      - { name: day, logicalType: date, required: true }
+      - { name: amount, logicalType: number, physicalType: "DECIMAL(18,2)" }
