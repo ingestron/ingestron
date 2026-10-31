@@ -2,9 +2,10 @@
 import type { DefinitionDocument } from "@ingestron/config";
 import type { Context } from "./context.js";
 import type { Source } from "./diagnostics.js";
-import type { ActionDoc, RuleDoc } from "./documents.js";
+import { kinds, type ActionDoc, type RuleDoc } from "./documents.js";
 import type { ChosenBy } from "./model.js";
 import type { Action, Handover, Method, Rule } from "./pack.js";
+import { storeFixes } from "./store-fixes.js";
 
 /** Facts that `when` rules can match. */
 export interface Facts {
@@ -170,6 +171,16 @@ function pickMethod(
 ): Pick | undefined {
   const pick = findPick(context, action, named, facts);
   if (pick) return pick;
+  if (action === "store" && named.owner.kind === kinds.flow.kind) {
+    context.reporter.error(
+      "UNKNOWN_METHOD",
+      "Nothing chooses a store method, so nothing keeps the files ingest lands.",
+      { document: named.owner, pointer: "" },
+      "Add a store pack, or end the flow at the landed files with store: none.",
+      storeFixes(context, named),
+    );
+    return undefined;
+  }
   context.reporter.error(
     "UNKNOWN_METHOD",
     `Neither the standard nor the pack chooses a ${action} method.`,

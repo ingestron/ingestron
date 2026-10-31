@@ -95,3 +95,50 @@ describe("store: none", () => {
     expect(tables.find((table) => table.name === "daily")?.store?.method).toBe("view");
   });
 });
+
+describe("no store chosen", () => {
+  const landing: PackInfo = {
+    ...pack,
+    id: "landing",
+    rules: { ingest: { default: "land" } },
+    methods: {
+      land: {
+        action: "ingest",
+        description: "Lands files.",
+        connectors: ["files"],
+        produces: "files",
+        settings: { type: "object" },
+      },
+    },
+  };
+
+  it("offers to end the flow at the landed files, or to add a store pack, when nothing chooses a store", () => {
+    const files = {
+      ...base,
+      "standard.yaml": base["standard.yaml"]!.replace("test@1", "landing@1"),
+      "sales.yaml": base["sales.yaml"]!.replace("store: { uses: none }\n", ""),
+    };
+    const result = resolveDefinitions(memoryFiles(files), {
+      packs: [landing, pack],
+      environment: "dev",
+    });
+    expect(result.diagnostics).toHaveLength(1);
+    const [problem] = result.diagnostics;
+    expect(problem).toMatchObject({
+      code: "UNKNOWN_METHOD",
+      message: "Nothing chooses a store method, so nothing keeps the files ingest lands.",
+      hint: "Add a store pack, or end the flow at the landed files with store: none.",
+    });
+    expect(problem!.fixes?.map((fix) => [fix.title, fix.edits])).toEqual([
+      [
+        "End this flow at the landed files",
+        [{ file: "sales.yaml", pointer: "/store/uses", set: "none" }],
+      ],
+      [
+        "End every flow at the landed files",
+        [{ file: "standard.yaml", pointer: "/store/default", set: "none" }],
+      ],
+      ['Add the "test" pack', [{ file: "standard.yaml", pointer: "/packs/-", set: "test@1" }]],
+    ]);
+  });
+});

@@ -153,7 +153,9 @@ list like a method (`METHOD_NOT_ALLOWED`). When ingest produces `files` and
 the store choice is `none`, the table has no store step: it ends at the
 files ingest lands, and records `endsAtFiles`, how `none` was chosen, in the
 same shape as a step's `chosenBy`. When ingest produces `table`, `none`
-changes nothing. A transform's store choice MUST NOT be `none` (`HANDOVER`):
+changes nothing. A `none` from a standard's or pack's rule or default counts
+only where ingest hands over `files`; elsewhere, such as for a transform,
+the next choice in this order applies. A transform's store choice MUST NOT be `none` (`HANDOVER`):
 a transform's query needs a store step.
 
 When nothing chooses a store method, the problem is `UNKNOWN_METHOD` at the
