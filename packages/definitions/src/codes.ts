@@ -49,8 +49,8 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
   },
   RUNS_ON: {
     meaning:
-      "In an environment that runs on a pack, a table's store or transform belongs to another pack, which cannot run there.",
-    fix: "Keep the table's store and transforms with the pack the environment runs on, or run the environment on the platform.",
+      "In an environment that runs on a pack, a table's store or transform belongs to another pack, or the pack has no method that reads landed files.",
+    fix: "Keep the table's store and transforms with the pack the environment runs on, or remove runs-on from the environment.",
   },
   RUNS_ON_SKIPPED: {
     meaning:

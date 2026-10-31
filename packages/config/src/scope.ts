@@ -10,8 +10,8 @@ import type { Expression } from "./references.js";
 export interface Scope {
   /** Merged project values; `undefined` while the values themselves are resolved. */
   values?: unknown;
-  /** The selected environment, when there is one, and the pack it runs on. */
-  environment?: { name: string; runsOn?: string };
+  /** The selected environment, when there is one. */
+  environment?: { name: string };
   /** Fields copied from the manifest. */
   project: { id: string; name?: string };
 }

@@ -50,4 +50,84 @@ describe("runs-on", () => {
     expect(result.diagnostics).toEqual([]);
     expect((result.model as ResolvedModel).tables[0]?.ingest?.method).toBe("managed");
   });
+
+  const landed = (
+    parse(readFileSync(join(conformance, "59-runs-on-landed.yaml"), "utf8")) as {
+      files: Record<string, string>;
+    }
+  ).files;
+  const local = (changes: Record<string, string>, available = packs) =>
+    resolveDefinitions(memoryFiles({ ...landed, ...changes }), {
+      packs: available,
+      environment: "local",
+    });
+  const codes = (result: ReturnType<typeof local>) => result.diagnostics.map(({ code }) => code);
+
+  it("puts the landed method's missing settings in the standard, where they apply", () => {
+    const standard = landed["standard.yaml"]!.replace(
+      "ingest:\n  settings:\n    local-landed: { landing: ./samples }\n",
+      "",
+    );
+    const [problem] = local({ "standard.yaml": standard }).diagnostics;
+    expect(problem?.code).toBe("BAD_SETTING");
+    expect(problem?.fixes?.[0]?.edits).toEqual([
+      { file: "standard.yaml", pointer: "/ingest/settings/local-landed", set: { landing: null } },
+    ]);
+  });
+
+  it("runs the landed method even when the standard's allowed list leaves it out", () => {
+    const standard = landed["standard.yaml"]!.replace("ingest:\n", "ingest:\n  allowed: [files]\n");
+    expect(codes(local({ "standard.yaml": standard }))).toEqual([]);
+  });
+
+  it("keeps the pack's own ingest that writes a table", () => {
+    const flow = landed["sales.yaml"]!.replace(
+      "source: shop\n",
+      "source: shop\ningest: { uses: local-direct }\n",
+    );
+    const shop = landed["shop.yaml"]!.replace("connector: files", "connector: sqlserver");
+    const direct = packs.map((pack) =>
+      pack.id !== "local"
+        ? pack
+        : {
+            ...pack,
+            methods: {
+              ...pack.methods,
+              "local-direct": {
+                action: "ingest" as const,
+                description: "Reads a database directly into a table.",
+                connectors: ["sqlserver"],
+                produces: "table" as const,
+                settings: { type: "object" },
+              },
+            },
+          },
+    );
+    const result = local({ "sales.yaml": flow, "shop.yaml": shop }, direct);
+    expect(codes(result)).toEqual([]);
+    expect((result.model as ResolvedModel).tables[0]?.ingest?.method).toBe("local-direct");
+  });
+
+  it("reports a method of the wrong action as it would anywhere", () => {
+    const flow = landed["sales.yaml"]!.replace(
+      "source: shop\n",
+      "source: shop\ningest: { uses: stream }\n",
+    );
+    expect(codes(local({ "sales.yaml": flow }))).toEqual(["WRONG_ACTION"]);
+  });
+
+  it("does not check the connectors of the landed method that replaces an ingest", () => {
+    const strict = packs.map((pack) =>
+      pack.id !== "local"
+        ? pack
+        : {
+            ...pack,
+            methods: {
+              ...pack.methods,
+              "local-landed": { ...pack.methods["local-landed"]!, connectors: ["parquet"] },
+            },
+          },
+    );
+    expect(codes(local({}, strict))).toEqual([]);
+  });
 });

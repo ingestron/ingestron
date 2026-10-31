@@ -5,6 +5,7 @@ import type { Source } from "./diagnostics.js";
 import { kinds, type ActionDoc, type RuleDoc } from "./documents.js";
 import type { ChosenBy } from "./model.js";
 import type { Action, Handover, Method, Rule } from "./pack.js";
+import { canServe } from "./can-serve.js";
 import { storeFixes } from "./store-fixes.js";
 
 /** Facts that `when` rules can match. */
@@ -38,6 +39,8 @@ export interface Named {
   doc?: ActionDoc;
   /** Where a problem with a method nobody named is reported, such as a flow's `/source`. */
   at?: string;
+  /** Chosen by the environment's runs-on, not written by the definition. */
+  runsOn?: true;
 }
 
 /** Chooses and checks the method; reports and returns undefined when it cannot be used. */
@@ -111,7 +114,7 @@ export function located({ at, ...rest }: Choice["chosenBy"]): ChosenBy {
 /** A method the definition names must be in the standard's `allowed` list. */
 function isAllowed(context: Context, action: Action, named: Named, pick: Pick): boolean {
   const allowed = context.standard.value[action]?.allowed;
-  if (!named.doc?.uses || !allowed || allowed.includes(pick.id)) return true;
+  if (!named.doc?.uses || named.runsOn || !allowed || allowed.includes(pick.id)) return true;
   context.reporter.error(
     "METHOD_NOT_ALLOWED",
     `The standard does not allow "${pick.id}" for ${action}.`,
@@ -233,20 +236,11 @@ function fromRule(rule: Rule | RuleDoc, at?: Source): Omit<Pick, "chosenBy"> {
   return { id: rule.use, ...(origin && { origin }), ...(ruleWith && { ruleWith }) };
 }
 
+export { canServe } from "./can-serve.js";
+
 /** A rule matches when every fact it names equals the table's. */
 function matches(rule: Rule | RuleDoc, facts: Facts): boolean {
   return Object.entries(rule).every(
     ([key, value]) => key === "use" || key === "with" || facts[key as keyof Facts] === value,
-  );
-}
-
-/** True when an ingest method reads this connector and connectivity. */
-export function canServe(method: Method | undefined, facts: Facts): boolean {
-  // A method that reads landed files is chosen only by runs-on.
-  if (!method || method.reads === "landed") return false;
-  const { connectors, connectivity } = method;
-  if (connectors && !connectors.includes(facts.connector ?? "")) return false;
-  return (
-    !connectivity || facts.connectivity === undefined || connectivity.includes(facts.connectivity)
   );
 }

@@ -15,6 +15,7 @@ import { createReporter, type Source } from "./diagnostics.js";
 import { kinds } from "./documents.js";
 import { flowTables } from "./flows.js";
 import { placeholderWarnings } from "./placeholders.js";
+import { runsOnProblems } from "./runs-on-pack.js";
 import type { ResolvedModel, ResolvedTable } from "./model.js";
 import { renderName } from "./naming.js";
 import type { PackInfo } from "./pack.js";
@@ -55,7 +56,10 @@ export function resolveDefinitions(files: FileSource, options: ResolveOptions): 
   return withPlaceholders(
     files,
     loaded.ok
-      ? resolveLoaded(loaded.project, options.packs, loaded.diagnostics)
+      ? resolveLoaded(loaded.project, options.packs, [
+          ...loaded.diagnostics,
+          ...runsOnProblems(files, loaded.project, options.packs),
+        ])
       : { ok: false, diagnostics: loaded.diagnostics },
     documentFiles(files, loaded.project?.documents),
   );
@@ -93,7 +97,10 @@ export function loadDefinitions(folder: string, options: ResolveOptions): Resolv
   return withPlaceholders(
     nodeFiles(folder),
     loaded.ok
-      ? resolveLoaded(loaded.project, options.packs, loaded.diagnostics)
+      ? resolveLoaded(loaded.project, options.packs, [
+          ...loaded.diagnostics,
+          ...runsOnProblems(nodeFiles(folder), loaded.project, options.packs),
+        ])
       : { ok: false, diagnostics: loaded.diagnostics },
     documentFiles(nodeFiles(folder), loaded.project?.documents),
   );

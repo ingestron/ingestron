@@ -40,4 +40,4 @@ files:
 
 expect:
   diagnostics:
-    - { code: UNKNOWN_PACK, severity: error, file: standard.yaml }
+    - { code: UNKNOWN_PACK, severity: error, file: project.yaml, line: 2 }
