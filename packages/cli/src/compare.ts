@@ -65,7 +65,9 @@ function tableFacts(table: ResolvedTable): Facts {
   const step = (found?: { method: string; settings: Record<string, unknown> }) =>
     found && { method: found.method, settings: found.settings };
   return {
-    "full name": Object.values(table.fullName).join("."),
+    ...(table.endsAtFiles
+      ? { "lands at": table.ingest?.output?.location ?? "the landed files" }
+      : { "full name": Object.values(table.fullName).join(".") }),
     ...flat({
       ingest: table.ingest && {
         ...step(table.ingest),

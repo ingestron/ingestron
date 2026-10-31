@@ -49,4 +49,10 @@ describe("schedules", () => {
     expect(output).toMatch(/## Schedules\n\n- Job `[^`]+`: `[^`]+` \([^)]+\), runs\./);
     expect(output).toMatch(/- Data Factory trigger `tr_[^`]+`: every [\w ]+, started\./);
   });
+
+  it("says nothing about a bundle when only ADF runs, with no data platform pack", () => {
+    const { code, output } = ingestron("test/fixtures/landing-only", "request", "--env", "dev");
+    expect(code).toBe(0);
+    expect(output).not.toContain("bundle");
+  });
 });

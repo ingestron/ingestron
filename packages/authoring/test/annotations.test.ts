@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { annotationsIn, generatedLenses } from "../src/annotations.js";
+import { hoverAt } from "../src/hover.js";
 import { openProject } from "../src/project.js";
 
 const retail = join(import.meta.dirname, "../../cli/project-templates/retail");
@@ -90,6 +91,27 @@ describe("annotationsIn", () => {
     expect(orders?.tooltip).toMatch(
       /store: none, ends at the landed files, written in the definition \(flows\/orders\.yaml:\d+\)/,
     );
+  });
+});
+
+describe("annotationsIn for tables that end at the landed files", () => {
+  const landing = join(import.meta.dirname, "../../cli/test/fixtures/landing-only");
+  const file =
+    "abfss://landing@saleslakedev.dfs.core.windows.net/erp/erp.dbo.Customers/erp.dbo.Customers.parquet";
+
+  it("shows where the files land, not a table that is never created", () => {
+    const project = openProject(landing, new Map());
+    const text = readFileSync(join(landing, "flows/erp.yaml"), "utf8");
+    const found = annotationsIn(project, "flows/erp.yaml", text, "dev");
+    const line = text.split("\n").findIndex((item) => item.startsWith("  customers:"));
+    expect(found.find((item) => item.line === line)?.label).toBe(`→ ${file}`);
+  });
+
+  it("names the landed files in the table's hover too", () => {
+    const project = openProject(landing, new Map());
+    const text = readFileSync(join(landing, "flows/erp.yaml"), "utf8");
+    const shown = hoverAt(project, "flows/erp.yaml", text, text.indexOf("customers:") + 2, "dev");
+    expect(shown).toContain(`**\`customers\`** → \`${file}\``);
   });
 });
 

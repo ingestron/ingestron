@@ -34,3 +34,14 @@ describe("compareEnvironments", () => {
     expect(output).toBe(text);
   });
 });
+
+describe("compareEnvironments for tables that end at the landed files", () => {
+  it("compares where the files land, not a table that is never created", () => {
+    const landing = join(import.meta.dirname, "fixtures/landing-only");
+    const text = compareEnvironments(nodeFiles(landing), "dev", "prod");
+    expect(text).not.toContain("full name");
+    expect(text).toContain(
+      "- `lands at`: `abfss://landing@saleslakedev.dfs.core.windows.net/erp/erp.dbo.Customers/erp.dbo.Customers.parquet` → `abfss://landing@saleslakeprod.dfs.core.windows.net/erp/erp.dbo.Customers/erp.dbo.Customers.parquet`",
+    );
+  });
+});

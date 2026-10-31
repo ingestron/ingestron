@@ -55,8 +55,13 @@ export function platformRequest(files: FileSource, environment: string | undefin
     .concat("\n");
 }
 
-function identity(model: ResolvedModel): string {
+/** Who the generated pipelines and jobs run as; nothing when no data platform pack runs them. */
+function identity(model: ResolvedModel): string | undefined {
   const { run_as: runAs, workspace } = model.platform;
+  const platform = model.tables.some((table) =>
+    [table.ingest, table.transform, table.store].some((step) => step?.pack === "databricks"),
+  );
+  if (!runAs && !platform) return undefined;
   const who = runAs ? `\`${Object.values(runAs)[0]}\`` : "the identity that deploys the bundle";
   return `Pipelines and jobs run as ${who}${workspace.host ? ` in ${workspace.host}` : ""}.`;
 }

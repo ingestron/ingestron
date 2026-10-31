@@ -10,6 +10,7 @@ import { methodAt, methodInfo } from "./methods.js";
 import { resolved, type Project } from "./project.js";
 import { schemaFor, schemasAt } from "./schema.js";
 import { spotAt, type Spot } from "./yaml.js";
+import { targetOf } from "./target.js";
 
 const actions = ["ingest", "transform", "store"] as const;
 
@@ -143,7 +144,10 @@ function explainTable(
     const step = table[action];
     return step ? [stepText(action, step, table)] : [];
   });
-  return [`**\`${name}\`** → \`${catalog}\`.\`${schema}\`.\`${tableName}\``, ...steps].join("\n\n");
+  const target = table.endsAtFiles
+    ? `\`${targetOf(table)}\``
+    : `\`${catalog}\`.\`${schema}\`.\`${tableName}\``;
+  return [`**\`${name}\`** → ${target}`, ...steps].join("\n\n");
 }
 
 /** A step's method, then the settings something chose, then the pack's defaults on one line. */

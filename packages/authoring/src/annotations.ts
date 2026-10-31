@@ -2,6 +2,7 @@
 // name with the methods that build it, and the files generated from it.
 import { resolveProject, type DefinitionDocument } from "@ingestron/config";
 import { kinds, NO_STORE, type ChosenBy, type ResolvedTable } from "@ingestron/definitions";
+import { targetOf } from "./target.js";
 import { generatedFiles, generatedForTable } from "./preview.js";
 import { resolved, type Project } from "./project.js";
 import { resolveText } from "./references.js";
@@ -35,7 +36,7 @@ export function annotationsIn(
     ...variables(project, file, text, environment),
     ...tablesIn(project, file, text, environment).map(({ line, table }) => ({
       line,
-      label: `→ ${Object.values(table.fullName).join(".")}`,
+      label: `→ ${targetOf(table)}`,
       tooltip: chosen(table),
     })),
   ];
