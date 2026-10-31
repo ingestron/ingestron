@@ -4,7 +4,7 @@ Reads Ingestron definitions (YAML) and resolves them, for one environment,
 into a **model** that a pack turns into platform assets. It makes every
 choice the standard leaves to it, so packs only build files:
 
-- which method each table uses for ingest, transform and store;
+- which method each table uses for ingest, transform, store and serve;
 - each method's settings, merged from the pack's smart defaults, the
   organisation's standard, the project's platform and the definitions;
 - every name (catalog, schema, table, pipeline, job) from naming patterns;
