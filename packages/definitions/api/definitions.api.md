@@ -240,6 +240,7 @@ export interface Method {
     defaults?: Record<string, unknown>;
     // (undocumented)
     description: string;
+    output?(table: ResolvedTable): StepOutput | undefined;
     placement?: {
         platform?: string[];
         standard?: string[];
@@ -499,10 +500,19 @@ export interface Step {
     // (undocumented)
     method: string;
     origins: Record<string, Origin>;
+    output?: StepOutput;
     // (undocumented)
     pack: string;
     // (undocumented)
     settings: Record<string, unknown>;
+}
+
+// @public
+export interface StepOutput {
+    // (undocumented)
+    format: "parquet" | "json" | "csv" | "delta";
+    loads: "replace" | "add";
+    location: string;
 }
 
 // @public

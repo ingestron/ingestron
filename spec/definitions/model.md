@@ -64,6 +64,15 @@ for its `settings`, and optionally `placement`: which settings belong in the
 platform (`platform`, such as shared infrastructure) or the standard
 (`standard`, such as a schedule); the others belong in the definitions.
 
+A method MAY describe its **output** for a table: where the step's data
+lands (`location`, one file or a pattern with `*` for one level and `**` for
+any depth), its `format` (`parquet`, `json`, `csv` or `delta`), and whether
+each run replaces it or adds files (`loads`: `replace` or `add`). The
+resolved step records it as `output`; a method that describes none leaves
+`output` absent. Packs read another pack's output from the resolved model, so
+they need not depend on each other. Implementations describe it in code, so
+the data-only conformance pack has no cases for it.
+
 With several packs, the **first** pack in the standard's list provides the
 defaults; the rules' `when` lists are joined in list order, and an action's
 pack default is the first pack's that has one. Each resolved step records
