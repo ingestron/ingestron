@@ -1,0 +1,8 @@
+apiVersion: ingestron.io/v1
+kind: Platform
+id: azure
+settings:
+  adf-copy: # shared infrastructure, referenced by name
+    landing: ${values.landing}
+    key_vault: ${values.key_vault}
+    integration_runtime: shir-erp
