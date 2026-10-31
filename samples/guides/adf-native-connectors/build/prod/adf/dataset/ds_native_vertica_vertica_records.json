@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_vertica_vertica_records",
+	"properties": {
+		"type": "VerticaTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_vertica",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

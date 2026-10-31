@@ -1,0 +1,59 @@
+---
+title: CLI
+description: The ingestron command's commands, options, output and exit codes.
+---
+
+<CliCommands />
+
+## Output
+
+Each environment is written to its own folder under `--out`, such as
+`build/dev/`. When a standard uses several packs, each pack writes to a
+folder inside it, such as `build/dev/databricks/`. See
+[Generated files](/docs/concepts/generated-files).
+
+## Exit codes
+
+| Code | Means                                                                         |
+| ---- | ----------------------------------------------------------------------------- |
+| `0`  | Success.                                                                      |
+| `1`  | Problems in the definitions, or output that is not up to date or in conflict. |
+| `2`  | A mistake in the command, such as an unknown option.                          |
+
+## Project builder API
+
+The CLI package exposes the catalogue and composed questions used by VS Code.
+`projectSources()` returns source IDs, titles and categories.
+`projectRoutes(connector, connectivity?)` returns compatible routes, methods,
+reachability and maturity. `projectRecipe(connector, via, connectivity)`
+returns a `ProjectRecipe` containing the selected definition files and a
+`Template` with configuration questions. It reads the packaged recipes but
+writes no project files. Use `run` to apply answers, validate and create it:
+
+```ts
+import { projectSources, projectRoutes, projectRecipe, run } from "@ingestron/cli";
+
+const source = projectSources().find((item) => item.id === "postgresql")!;
+const route = projectRoutes(source.id, "private")[0]!;
+const recipe = projectRecipe(source.id, route.via, "private");
+console.log(recipe.template.questions);
+const code = run(
+  [
+    "init",
+    "sales",
+    "--connector",
+    source.id,
+    "--via",
+    route.via,
+    "--connectivity",
+    "private",
+    "--yes",
+  ],
+  { cwd: process.cwd(), write: (text) => process.stdout.write(text) },
+);
+process.exitCode = code;
+```
+
+The exported `ProjectSource`, `ProjectRoute` and `ProjectRecipe` types describe
+these plain objects. The catalogue comes from installed pack metadata; a
+selected standard is checked during creation, before writing any files.

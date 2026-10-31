@@ -1,0 +1,102 @@
+---
+title: ADF runtime and scheduling
+description: Configure where ADF runs, where copies land and when each window runs.
+---
+
+Use the connection for source credentials, the platform for shared infrastructure,
+and the standard for shared ingestion defaults. Table-specific extraction choices
+belong in the flow. These files are resolved together before generation.
+
+<FlowDiagram
+  title="Where a setting belongs"
+  steps={[
+    { title: "Connection", detail: "Source endpoint and authentication" },
+    { title: "Platform", detail: "Runtime, landing storage and Key Vault" },
+    { title: "Standard and flow", detail: "Shared schedule and table-specific reading choices" },
+  ]}
+/>
+
+## Prepare access
+
+Use an existing integration runtime that can reach the source. Keep credentials
+in Key Vault and give the factory access to the required secrets and landing
+storage. The connection describes the source; it does not create accounts,
+network access or the runtime. Check the vendor prerequisites linked from each
+connection page for permissions, drivers, versions and authentication setup.
+
+## Configure shared infrastructure
+
+The example configures `adf-table`. Use the method selected by your flow:
+`adf-copy` for SQL-family tables, `adf-table` for native full selections, or
+`adf-files` for file copies. The shared settings below have the same meaning
+across all three methods.
+
+<Example name="connection-first-adf" file="platform.yaml" />
+
+`integration_runtime` names an existing ADF runtime; `runtime_kind` describes
+its kind. A self-hosted runtime runs on infrastructure you manage and needs the
+source's drivers and network access. An Azure runtime uses Azure's managed
+integration runtime. Generation checks the definitions, not the deployed runtime.
+
+The default `runtime_kind` is `self-hosted`. Set it to `azure` when required by
+the source. Windows SQL authentication, File System and HDFS require self-hosted;
+other source-specific requirements appear in the connection's ingestion chapter.
+
+The factory identity needs access to Key Vault and landing storage. Microsoft
+365 uses the configured application for landing storage. Provision these
+permissions before running the generated resources.
+
+<SettingsSections
+  pack="adf"
+  method="adf-copy"
+  include={["integration_runtime", "runtime_kind", "landing", "key_vault"]}
+/>
+
+## Define the time windows
+
+A tumbling window trigger divides time into consecutive, non-overlapping windows.
+`start` is the first window's start in UTC. `every` defines each window's length.
+For full selections, every window copies the selection again. For SQL incremental
+copies, the window bounds filter the watermark column. File copies in `new` mode
+use the window to select changed files.
+
+<Example name="connection-first-adf" file="standard.yaml" />
+
+<SettingsSections pack="adf" method="adf-copy" include={["every", "start"]} />
+
+## Retry and pause
+
+A retry repeats a failed window; it does not advance that window's bounds.
+`paused` controls whether the generated trigger is stopped. Development triggers
+are normally stopped. Check the generated trigger before deploying, especially
+when `start` is in the past.
+
+<SettingsSections pack="adf" method="adf-copy" include={["retries", "paused"]} />
+
+ADF and Databricks run on their own schedules. Deploying their generated files
+does not combine them into one orchestrated run.
+
+## Respect shared resources
+
+SQL-family tables in one connection and source database share their runtime,
+encryption, schedule, retries and paused state. File tables in one connection
+share runtime and scheduling. Give tables that need independent shared settings
+separate connections. Table-specific watermarks do not make independent triggers.
+
+Native full-copy sources generate table pipelines. Their shared linked-service
+and dataset names still need compatible definitions; generation rejects
+conflicting shared resources.
+
+## Set policy and resource names
+
+[Configure the standard](/docs/how-to/configure-a-standard) for allowed methods,
+defaults and fixed settings. Fixed settings cannot be overridden by a flow.
+
+[Name ADF resources](/docs/how-to/name-adf-resources) explains every naming role,
+the default names and per-environment values. Naming an existing integration
+runtime does not create or rename that runtime.
+
+## Check the generated files
+
+Follow [Generate and inspect](/docs/how-to/adf-native-connectors#generate-and-inspect)
+to review the linked services, datasets, pipelines and triggers before deployment.

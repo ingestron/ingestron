@@ -1,0 +1,5 @@
+id: sales
+values:
+  key_type: bigint
+imports:
+  - "pipelines/*.pipeline.yaml"

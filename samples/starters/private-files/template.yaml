@@ -1,0 +1,10 @@
+# Used by `ingestron init --template private-files`.
+title: Private file share through Azure Data Factory
+summary: "Two packs: ADF copies new files from a private share into landing storage and Databricks reads them."
+questions:
+  - value: landing
+    ask: "Landing folder for the copied files (abfss://…)"
+    default: abfss://landing@storeslakedev.dfs.core.windows.net/stores
+  - value: key_vault
+    ask: "Key Vault holding the share account's password"
+    default: https://kv-stores-dev.vault.azure.net

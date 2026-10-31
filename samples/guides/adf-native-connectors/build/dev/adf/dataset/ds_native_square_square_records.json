@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_square_square_records",
+	"properties": {
+		"type": "SquareObject",
+		"linkedServiceName": {
+			"referenceName": "ls_native_square",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"tableName": "orders"
+		}
+	}
+}

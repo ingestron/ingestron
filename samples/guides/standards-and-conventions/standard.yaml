@@ -1,0 +1,23 @@
+apiVersion: ingestron.io/v1
+kind: Standard
+id: acme
+description: Acme's data platform conventions.
+packs: [databricks@1]
+naming:
+  catalog: acme
+  schema: "{{ environment }}_{{ layer }}"
+  table: "{% if source %}{{ source }}__{% endif %}{{ table }}"
+  pipeline: "{{ project }}_{{ environment }}"
+layers: [raw, curated, published]
+types:
+  number: DECIMAL(38,6)
+ingest:
+  settings:
+    files: { schema_evolution: rescue }
+store:
+  allowed: [streaming-table]
+  settings:
+    streaming-table:
+      properties: { delta.enableChangeDataFeed: "true", acme.owner: data-platform }
+  fixed:
+    streaming-table: { cluster_by: auto }

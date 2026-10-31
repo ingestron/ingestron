@@ -1,0 +1,27 @@
+---
+title: Connection and access
+description: Configure Salesforce access from Databricks.
+---
+
+## What you need
+
+A Unity Catalog connection to Salesforce, created by an administrator. Name
+it in the connection's `uc_connection`.
+
+## Connection example
+
+<Example name="salesforce" file="connections/salesforce.yaml" />
+
+## Connection fields
+
+<ConnectorSettings
+  id="salesforce"
+  pack="databricks"
+  sample="salesforce"
+  file="connections/salesforce.yaml"
+/>
+
+## Continue to ingestion
+
+[Choose objects and reading options](/docs/connectors/salesforce/databricks-ingestion).
+[Download the complete example](/docs/connectors/salesforce/examples) to use its project, standard and contracts together.

@@ -1,0 +1,29 @@
+---
+title: Draft a contract from a sample file
+description: Start a contract from a CSV or JSON sample's column names and types, then review it.
+---
+
+When a source sends files, start its contract from a sample instead of typing
+every column:
+
+```sh
+ingestron contract exports/orders.csv --name shop.orders
+```
+
+In VS Code, right-click the file in the Explorer and choose
+**Ingestron: Draft contract from sample**, or run it from the Command Palette
+with the file open.
+
+Ingestron reads the header and up to 1,000 rows of a CSV file (comma,
+semicolon or tab separated) or a JSON file (an array of objects, or one
+object per line), and writes `contracts/<name>.yaml` with each column's name
+and the narrowest logical type every value fits: `integer`, `number`,
+`boolean`, `date`, `timestamp`, `array`, `object`, else `string`. A value
+with a leading zero, such as the code `00123`, stays a `string`, because as a
+number it would lose its zeros. It never
+overwrites a contract, and the draft holds no values from the sample.
+
+A sample cannot prove which columns are keys or always present, so the draft
+is `status: draft` with neither. Review the types, then add `primaryKey`,
+`required` and descriptions, and link it from a flow table with `contract`.
+See [Definitions](/docs/concepts/definitions).

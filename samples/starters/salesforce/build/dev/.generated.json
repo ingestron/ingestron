@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "files": {
+    "databricks.yml": "sha256:098c3b8e715bcb9262c4a2fa16a8c53e64cb86a9dd54251671bd412831812a4b",
+    "resources/crm_salesforce_ingestion.pipeline.yml": "sha256:d84b3d95457431d7d810aca66d8d30d384e07cde0923e2c35692353778366a5d"
+  }
+}

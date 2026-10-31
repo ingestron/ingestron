@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "files": {
+    "databricks.yml": "sha256:195f58d8ca2226570bcda2ae597e7e46feb1a36a975f34105dfac508196a5d4f",
+    "resources/finance.pipeline.yml": "sha256:5a5e4af969a3b3a4f7ba551016e11d51b8043c6bb071d40ad6f6f7420ba1589f",
+    "resources/finance_refresh.job.yml": "sha256:32e1aa8f3bc605fa20324006c10f1efa913be21f7f2bd6ec9184ba557cf52d71",
+    "src/finance/bronze/journals.sql": "sha256:9cec4ce643763f59259fa49c25cbf869d304838ff9108d3c9692d53cc80cc316"
+  }
+}

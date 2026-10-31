@@ -1,0 +1,38 @@
+---
+title: CLI
+description: Use the ingestron command on your computer and in CI.
+---
+
+The `ingestron` command reads a project folder and writes each environment's
+files. [Install](/docs/start/install) it first.
+
+Create a project with `ingestron init`; see
+[Create a project from a connection](/docs/how-to/start-from-a-template). Then the
+everyday loop:
+
+```sh
+ingestron plan     # see what would change
+ingestron apply    # write it
+```
+
+Useful options:
+
+- `--env dev` limits the work to one environment; repeat it for more.
+- `--definitions <folder>` reads a project that is not the current folder.
+- `--out <folder>` writes somewhere other than `build`.
+- `--no-diff` lists changed files without their line differences.
+
+Relative `--definitions` and `--out` paths are resolved from your current folder.
+Changing `--definitions` does not move the output folder. When running outside the
+project, set both paths; otherwise run the command from the folder containing
+`project.yaml`.
+
+In CI, run `ingestron check`; see
+[Check generated files in CI](/docs/how-to/check-in-ci).
+
+For checks while you type in VS Code, run `ingestron schemas` in the project
+folder. It writes schemas for the
+[YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml)
+and prints the setting to add.
+
+Every command and option: [Reference: CLI](/docs/reference/cli).

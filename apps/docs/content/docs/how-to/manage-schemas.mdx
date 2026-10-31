@@ -1,0 +1,20 @@
+---
+title: Let the bundle create the schemas
+description: Create the project's schemas, with grants, when no shared infrastructure owns them.
+---
+
+This guide applies to schemas managed by a generated Databricks bundle.
+
+By default Ingestron assumes schemas already exist, created by your platform
+team. When this project owns its schemas, say so in the platform and give
+grants per layer:
+
+<Example name="platform-setup" file="platform.yaml" />
+
+The bundle then creates each schema the tables use, with the layer's grants,
+and the pipelines refer to them so Databricks creates the schemas first:
+
+<Example name="platform-setup" file="build/prod/resources/schemas.yml" />
+
+Only set `manage.schemas` when no other project uses the schemas: deploying
+the bundle can change them, and `databricks bundle destroy` deletes them.

@@ -1,0 +1,62 @@
+---
+title: Definitions and their relationships
+description: What each Ingestron document owns, and how the documents form one project.
+---
+
+A project is a folder of YAML definitions. `project.yaml` identifies the project,
+selects environments and lists the files to load. A definition only participates
+when an `imports` pattern includes it.
+
+<FlowDiagram
+  title="A flow connects source data to its contract"
+  steps={[
+    { title: "Connection", detail: "Where the source is and how to access it" },
+    { title: "Flow", detail: "Which source objects become project tables" },
+    { title: "Data contract", detail: "Expected columns, types and keys" },
+  ]}
+/>
+
+The standard supplies policy across those tables. Packs resolve the required
+actions and generate platform resources. A transform can read project tables
+to produce another table when the selected packs support it.
+
+## What each file owns
+
+| Document       | Responsibility                                                                 |
+| -------------- | ------------------------------------------------------------------------------ |
+| `project.yaml` | Project ID, imports, shared values and environment overrides                   |
+| `Standard`     | Packs, allowed methods, defaults, naming and fixed policy                      |
+| `Platform`     | Shared infrastructure and operational configuration supported by the packs     |
+| `Connection`   | Source connector, reachability and access settings                             |
+| `Flow`         | Source objects, destination table definitions and ingestion choices            |
+| `DataContract` | Expected columns, logical types, keys and other supported contract information |
+| `Transform`    | Declared input tables and code that produces another table                     |
+
+A project needs exactly one Standard and may have one Platform. It does not need
+one Platform document per provider: method settings share that document under
+their method IDs. Capabilities still depend on the selected packs.
+
+## Link definitions by ID
+
+A flow's `source` names a Connection ID. Each table's `contract` names its data
+contract; `object` identifies the source object. These are different identities.
+A transform's `inputs` names tables produced by the project.
+
+<Example name="minimal" file="flows/orders.yaml" />
+
+Here `shop` is the source connection, `orders` is the project table, and
+`shop.orders` is its contract. Contracts use Open Data Contract Standard v3.1.0.
+The [document reference](/docs/reference/documents) lists supported fields, and
+pack references explain which contract capabilities affect their output.
+
+## Keep reusable values out of individual definitions
+
+Read values from `project.yaml` with `${values.…}` and name credentials with
+`${secret:…}` where the connector accepts secret references. See
+[YAML references and placeholders](/docs/concepts/yaml-references) for the syntax,
+file includes and escaping rules.
+
+If you are following Start here, continue with [Install a tool](/docs/start/install),
+then [Generate your first project](/docs/start/first-project). For a deeper
+explanation of method selection, read
+[Standards, packs and methods](/docs/concepts/standards-and-packs).

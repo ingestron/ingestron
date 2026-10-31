@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_sap_bw_open_hub_sap_bw_open_hub_records",
+	"properties": {
+		"type": "SapOpenHubTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_sap_bw_open_hub",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"openHubDestinationName": "orders"
+		}
+	}
+}

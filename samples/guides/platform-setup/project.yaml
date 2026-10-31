@@ -1,0 +1,12 @@
+# Everything a platform team may set up for a project: identity,
+# permissions, tags, budget, notifications, and schemas with grants.
+id: hr
+environments:
+  dev: {}
+  prod: {}
+imports:
+  - standard.yaml
+  - platform.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - contracts/*.yaml

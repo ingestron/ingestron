@@ -1,0 +1,69 @@
+{
+	"name": "pl_native_microsoft_365",
+	"properties": {
+		"parameters": {
+			"windowStart": {
+				"type": "string"
+			},
+			"windowEnd": {
+				"type": "string"
+			}
+		},
+		"activities": [
+			{
+				"name": "copy_microsoft_365_records",
+				"type": "Copy",
+				"inputs": [
+					{
+						"referenceName": "ds_native_microsoft_365_microsoft_365_records",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_native_office_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": "native/microsoft-365/BasicDataSet_v0.Message_v1"
+						}
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "Office365Source",
+						"outputColumns": [
+							{
+								"name": "invoice_id"
+							},
+							{
+								"name": "amount"
+							},
+							{
+								"name": "modified_at"
+							}
+						],
+						"dateFilterColumn": "CreatedDateTime",
+						"startTime": {
+							"value": "@pipeline().parameters.windowStart",
+							"type": "Expression"
+						},
+						"endTime": {
+							"value": "@pipeline().parameters.windowEnd",
+							"type": "Expression"
+						}
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings",
+							"filePattern": "setOfObjects"
+						}
+					}
+				}
+			}
+		]
+	}
+}

@@ -1,0 +1,37 @@
+---
+title: Connection and access
+description: Configure Azure Cosmos DB for MongoDB credentials and network access for Azure Data Factory.
+---
+
+## Prepare access
+
+Prepare [source access, runtime and credentials](/docs/how-to/adf-runtime#prepare-access),
+then check this source's vendor prerequisites for permissions, drivers, versions
+and authentication setup.
+
+[Read the Azure Cosmos DB for MongoDB vendor prerequisites](https://learn.microsoft.com/en-us/azure/data-factory/connector-azure-cosmos-db-mongodb-api).
+
+## Configure the connection
+
+The example uses synthetic values. Replace the endpoint and account details with
+your source's values. A secret reference such as `${secret:source-password}`
+names a secret; it never contains the password itself. `id` is the name a flow
+uses in `source`, and `connector` selects the source type.
+
+<Example name="adf-native-connectors" file="connections/azure-cosmos-db-mongodb.yaml" />
+
+## Connection fields
+
+<ConnectorSettings
+  id="azure-cosmos-db-mongodb"
+  pack="adf"
+  sample="adf-native-connectors"
+  file="connections/azure-cosmos-db-mongodb.yaml"
+/>
+
+## Continue to ingestion
+
+[Choose the objects and reading options](/docs/connectors/azure-cosmos-db-mongodb/adf-ingestion), then
+[configure runtime and scheduling](/docs/how-to/adf-runtime).
+
+[Download the complete projects and see their files](/docs/connectors/azure-cosmos-db-mongodb/examples).

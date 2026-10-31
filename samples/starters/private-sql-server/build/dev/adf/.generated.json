@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "files": {
+    "dataset/ds_erp_erp_erp.json": "sha256:675ac41ade4301f01e43e56c2978b12d2066426245f2264c609ef3891c1230d7",
+    "dataset/ds_erp_landing.json": "sha256:77dae437005c128d0911373c7615c2cb490f428f5826cd0951a1f0a66a6dfa39",
+    "linkedService/ls_erp_erp_erp.json": "sha256:296fad363de39e9fe0901f59edca630faade176bde32aa094f41ac3424193705",
+    "linkedService/ls_erp_keyvault.json": "sha256:f4fe16a5745fca4fcab76033550236e9f65d24848127b31ad310e03b4823f65b",
+    "linkedService/ls_erp_landing.json": "sha256:4aef45db25cf999cc548e2d46b4951e7413c56b43fe791038524f878406e2c19",
+    "pipeline/pl_erp_erp.json": "sha256:fd035f6e769503a18df4516cd317ce264eb1cc95fa0b36da8652c2e317352bf2",
+    "trigger/tr_erp_erp.json": "sha256:931fa4003a61e5efd159822fd30bf965be6a072b4984204d2a819282e757fbca"
+  }
+}

@@ -1,0 +1,53 @@
+---
+title: Ask the platform team for what the project needs
+description: One request per environment with the grants, switches and shared infrastructure the project expects.
+---
+
+Some features need someone who administers the data platform: grants for the
+identity pipelines run as, tag policies, and shared storage and runtimes.
+Write the request from the definitions, so it matches what will be deployed:
+
+```sh
+ingestron request --env prod > platform-request.md
+```
+
+In VS Code, **Ingestron: Prepare platform request** opens the same text for
+the environment in the status bar, unsaved, to review and send.
+
+The request has:
+
+- the identity pipelines and jobs run as, and the workspace;
+- each `manage` switch the platform turns on, what it does and what it needs
+  on the platform, from the pack's
+  [platform prerequisites](/docs/reference/packs/databricks#platform-prerequisites);
+- features the definitions use while their switch is off, such as a
+  contract's `unique: true` without `manage.checks`;
+- the shared infrastructure the methods expect, from the platform's
+  `settings`, with this environment's values; secrets are never shown;
+- what must exist before deploying: the catalogs and schemas the tables go
+  in, the folders the pipeline reads, the compute, and the workspace when
+  none is set. Ingestron lists these from the definitions; it has not
+  checked that they exist;
+- each schedule and whether it is paused: the refresh job and, with Azure
+  Data Factory, each trigger;
+- the generated `prerequisites.sql`, to review and run once.
+
+Even the smallest project, with no platform document, gets a request:
+
+```text
+## Must exist before deploying
+
+Ingestron has not checked these; the generated files expect them.
+
+- Catalog `dev`, which the deploying identity can use.
+- Schema `dev.bronze`, in which it can create tables and views.
+- Files at `/Volumes/dev/landing/shop`, which the pipeline can read.
+- Serverless compute for pipelines and jobs, turned on in the workspace.
+- No workspace host is set, so `databricks bundle deploy` uses the workspace of the Databricks CLI profile that runs it.
+
+## Schedules
+
+- No schedule: the pipelines run only when someone starts them.
+```
+
+Nothing is sent anywhere: send the request the way your team takes requests.

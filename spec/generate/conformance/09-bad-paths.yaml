@@ -1,0 +1,22 @@
+description: Wanted paths must stay inside the output folder and be portable.
+disk: {}
+wanted:
+  ../outside.yml: "x\n"
+  /etc/hosts: "x\n"
+  a//b.yml: "x\n"
+  a\b.yml: "x\n"
+  .generated.json: "{}\n"
+  .git/config: "x\n"
+  C:/x.yml: "x\n"
+  ok.yml: "x\n"
+expect:
+  problems:
+    - { code: BAD_PATH, path: ../outside.yml }
+    - { code: BAD_PATH, path: .generated.json }
+    - { code: BAD_PATH, path: .git/config }
+    - { code: BAD_PATH, path: /etc/hosts }
+    - { code: BAD_PATH, path: "C:/x.yml" }
+    - { code: BAD_PATH, path: a//b.yml }
+    - { code: BAD_PATH, path: a\b.yml }
+  clean: false
+  upToDate: false

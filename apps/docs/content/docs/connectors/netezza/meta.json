@@ -1,0 +1,12 @@
+{
+  "title": "Netezza",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/netezza)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

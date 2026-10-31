@@ -1,0 +1,6 @@
+apiVersion: ingestron.io/v1
+kind: Transform
+id: store_sales
+inputs: [sales, stores]
+code: ${file:store_sales.sql}
+contract: sales.store_sales

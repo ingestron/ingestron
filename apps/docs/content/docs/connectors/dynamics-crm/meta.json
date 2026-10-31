@@ -1,0 +1,12 @@
+{
+  "title": "Dynamics CRM",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/dynamics-crm)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

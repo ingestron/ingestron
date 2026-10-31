@@ -1,0 +1,12 @@
+{
+  "title": "MongoDB Atlas",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/mongodb-atlas)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

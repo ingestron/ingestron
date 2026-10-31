@@ -1,0 +1,79 @@
+{
+	"name": "pl_native_mariadb",
+	"properties": {
+		"parameters": {
+			"windowStart": {
+				"type": "string"
+			},
+			"windowEnd": {
+				"type": "string"
+			}
+		},
+		"activities": [
+			{
+				"name": "copy_mariadb_records",
+				"type": "Copy",
+				"inputs": [
+					{
+						"referenceName": "ds_native_mariadb_mariadb_records",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_native_parquet",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": "native/mariadb/orders",
+							"file": "@{concat(formatDateTime(pipeline().parameters.windowStart, 'yyyyMMddHHmmss'), '_', pipeline().RunId, '.parquet')}"
+						}
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "MariaDBSource",
+						"query": "SELECT * FROM orders"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "invoice_id"
+								},
+								"sink": {
+									"name": "invoice_id"
+								}
+							},
+							{
+								"source": {
+									"name": "amount"
+								},
+								"sink": {
+									"name": "amount"
+								}
+							},
+							{
+								"source": {
+									"name": "modified_at"
+								},
+								"sink": {
+									"name": "modified_at"
+								}
+							}
+						]
+					}
+				}
+			}
+		]
+	}
+}

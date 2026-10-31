@@ -1,0 +1,24 @@
+{
+	"name": "ds_native_azure_files",
+	"properties": {
+		"type": "Binary",
+		"linkedServiceName": {
+			"referenceName": "ls_native_azure_files",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"folder": {
+				"type": "string"
+			}
+		},
+		"typeProperties": {
+			"location": {
+				"type": "AzureFileStorageLocation",
+				"folderPath": {
+					"value": "@dataset().folder",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

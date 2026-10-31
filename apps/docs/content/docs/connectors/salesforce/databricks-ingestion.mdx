@@ -1,0 +1,31 @@
+---
+title: Ingestion
+description: Choose Salesforce objects and table behaviour in Databricks.
+---
+
+## Select the source objects
+
+The flow's `source` names the connection. Each table links an `object` to its
+contract; the contract describes the source columns and keys.
+
+<Example name="salesforce" file="flows/salesforce.yaml" />
+
+## What you get
+
+One ingestion pipeline for the connection, writing every table of its
+flows. SaaS sources need no gateway.
+
+## Choices
+
+- `mode`: `upsert` (the default) keeps the current row per key, `history`
+  keeps every version, `append` adds every change.
+- `columns`: `contract` (the default) takes only the contract's fields.
+
+<SettingsSections pack="databricks" method="lakeflow-connect" connector="salesforce" />
+
+Lakeflow Connect writes the table itself, so put checks on a transform that
+reads it.
+
+## Complete examples
+
+[Download projects and inspect their files](/docs/connectors/salesforce/examples).

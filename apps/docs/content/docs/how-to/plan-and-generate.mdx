@@ -1,0 +1,86 @@
+---
+title: Plan, generate and review
+description: Validate definitions, inspect proposed file changes and write the reviewed output.
+---
+
+Run this workflow after creating or changing a project. Work from the folder
+containing `project.yaml`, with your definitions and standard saved. The selected
+packs determine which files appear; the workflow is the same across routes.
+
+## 1. Inspect the plan
+
+<ToolSteps>
+<Tool name="CLI">
+
+```sh
+ingestron plan --env dev
+```
+
+Omit `--env` to plan every declared environment. Add `--no-diff` for the file list
+without line-by-line differences.
+
+</Tool>
+<Tool name="VS Code">
+
+Select the environment in the status bar, save the definitions and run
+**Ingestron: Plan**. Inspect the output panel and resolve any Problems entries.
+
+</Tool>
+</ToolSteps>
+
+The plan lists the output folder and proposed creates, updates and deletions.
+It validates definition links, method compatibility, required settings and
+standard policy before writing anything. A diagnostic includes the file and
+location to fix. A conflict means a generated file was changed by hand.
+
+Review unexpected deletions and names as well as new files. Generation checks
+configuration; it does not test source credentials, networks or cloud permissions.
+
+## 2. Generate the files
+
+<ToolSteps>
+<Tool name="CLI">
+
+```sh
+ingestron apply --env dev
+```
+
+</Tool>
+<Tool name="VS Code">
+
+Run **Ingestron: Apply** for the selected environment. Read the result in the
+output panel; do not assume every output succeeded if a problem is reported.
+
+</Tool>
+</ToolSteps>
+
+Apply writes the planned output and reports what it applied. It does not deploy
+resources or move source data. If a generated file has a manual edit, move the
+change into the definitions or restore that file before generating again.
+See [generated-file ownership](/docs/concepts/generated-files) for recovery rules.
+
+## 3. Review and commit
+
+Inspect the definition changes alongside the generated diff. Check the source
+objects, names, secret references, target locations and schedules relevant to
+your packs. Commit both definitions and generated output so reviewers can see
+the platform effect.
+
+Use [CI checking](/docs/how-to/check-in-ci) to detect drift without rewriting files.
+When ready to deploy, follow the selected pack's instructions. Applying Ingestron
+definitions and deploying platform resources are separate actions.
+
+<DocLinks
+  items={[
+    {
+      title: "Platform capabilities and deployment",
+      href: "/docs/reference/packs",
+      description: "Find the generated format and platform-specific procedures.",
+    },
+    {
+      title: "Troubleshoot a problem",
+      href: "/docs/troubleshooting",
+      description: "Resolve diagnostics, conflicts and unexpected output.",
+    },
+  ]}
+/>

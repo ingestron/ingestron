@@ -1,0 +1,15 @@
+{
+	"name": "ls_native_azure_databricks_delta",
+	"properties": {
+		"type": "AzureDatabricksDeltaLake",
+		"typeProperties": {
+			"domain": "https://source.example.test",
+			"clusterId": "synthetic-cluster_id",
+			"workspaceResourceId": "synthetic-workspace_resource_id"
+		},
+		"connectVia": {
+			"referenceName": "synthetic-azure-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

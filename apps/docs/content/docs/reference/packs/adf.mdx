@@ -1,0 +1,127 @@
+---
+title: Azure Data Factory pack
+description: The native ingestion methods, with their settings and defaults.
+---
+
+`adf@1` copies tables and files from supported native sources into
+landing storage, where the Databricks pack reads them. Use it with the Databricks
+pack: `packs: [databricks@1, adf@1]`. The settings below come from the pack
+itself.
+
+For a task walkthrough, use [Configure native ADF ingestion](/docs/how-to/adf-native-connectors),
+[Configure the project standard](/docs/how-to/configure-a-standard) or
+[Name ADF resources](/docs/how-to/name-adf-resources). The reference below
+keeps the method and setting anchors used by editor help.
+
+After generation and review, [publish the ADF resources](/docs/how-to/publish-adf)
+through the factory's deployment process. Generation itself does not publish.
+
+<PackMethods pack="adf" />
+
+## Contract fields
+
+What this pack does with each field of a table's contract. When a contract
+writes a field that no pack of the standard uses yet, Ingestron warns at that
+field with the reason below; **Elsewhere** fields are handled by another pack
+or step and never warn.
+
+<ContractUseTable pack="adf" />
+
+## Native configuration sources
+
+<details>
+<summary>Official source references and access date</summary>
+
+The native properties and current connector versions were checked against these
+Microsoft references on **28 October 2026**. Connection fields and method settings
+are rendered from pack metadata; see [configure native ingestion](/docs/how-to/adf-native-connectors).
+
+- [ADF naming rules](https://learn.microsoft.com/en-us/azure/data-factory/naming-rules)
+- [Source control and publishing](https://learn.microsoft.com/en-us/azure/data-factory/source-control)
+- [ADF resource limits](https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/resource-name-rules#microsoftdatafactory)
+- [PostgreSQL](https://learn.microsoft.com/en-us/azure/data-factory/connector-postgresql)
+- [Azure Database for PostgreSQL](https://learn.microsoft.com/en-us/azure/data-factory/connector-azure-database-for-postgresql)
+- [MySQL](https://learn.microsoft.com/en-us/azure/data-factory/connector-mysql)
+- [Azure Database for MySQL](https://learn.microsoft.com/en-us/azure/data-factory/connector-azure-database-for-mysql)
+- [MariaDB](https://learn.microsoft.com/en-us/azure/data-factory/connector-mariadb)
+- [Oracle](https://learn.microsoft.com/en-us/azure/data-factory/connector-oracle)
+- [Amazon RDS for Oracle](https://learn.microsoft.com/en-us/azure/data-factory/connector-amazon-rds-for-oracle)
+- [DB2](https://learn.microsoft.com/en-us/azure/data-factory/connector-db2)
+- [Informix](https://learn.microsoft.com/en-us/azure/data-factory/connector-informix)
+- [Microsoft Access](https://learn.microsoft.com/en-us/azure/data-factory/connector-microsoft-access)
+- [Sybase](https://learn.microsoft.com/en-us/azure/data-factory/connector-sybase)
+- [Teradata](https://learn.microsoft.com/en-us/azure/data-factory/connector-teradata)
+- [Netezza](https://learn.microsoft.com/en-us/azure/data-factory/connector-netezza)
+- [Amazon Redshift](https://learn.microsoft.com/en-us/azure/data-factory/connector-amazon-redshift)
+- [Google BigQuery](https://learn.microsoft.com/en-us/azure/data-factory/connector-google-bigquery)
+- [Greenplum](https://learn.microsoft.com/en-us/azure/data-factory/connector-greenplum)
+- [Hive](https://learn.microsoft.com/en-us/azure/data-factory/connector-hive)
+- [Apache Impala](https://learn.microsoft.com/en-us/azure/data-factory/connector-impala)
+- [Presto](https://learn.microsoft.com/en-us/azure/data-factory/connector-presto)
+- [Spark](https://learn.microsoft.com/en-us/azure/data-factory/connector-spark)
+- [Vertica](https://learn.microsoft.com/en-us/azure/data-factory/connector-vertica)
+- [HubSpot](https://learn.microsoft.com/en-us/azure/data-factory/connector-hubspot)
+- [Jira](https://learn.microsoft.com/en-us/azure/data-factory/connector-jira)
+- [QuickBooks Online](https://learn.microsoft.com/en-us/azure/data-factory/connector-quickbooks)
+- [Shopify](https://learn.microsoft.com/en-us/azure/data-factory/connector-shopify)
+- [Square](https://learn.microsoft.com/en-us/azure/data-factory/connector-square)
+- [Xero](https://learn.microsoft.com/en-us/azure/data-factory/connector-xero)
+- [Google Ads](https://learn.microsoft.com/en-us/azure/data-factory/connector-google-adwords)
+- [Dataverse](https://learn.microsoft.com/en-us/azure/data-factory/connector-dynamics-crm-office-365)
+- [Dynamics 365](https://learn.microsoft.com/en-us/azure/data-factory/connector-dynamics-crm-office-365)
+- [Dynamics CRM](https://learn.microsoft.com/en-us/azure/data-factory/connector-dynamics-crm-office-365)
+- [Dynamics AX](https://learn.microsoft.com/en-us/azure/data-factory/connector-dynamics-ax)
+- [Salesforce](https://learn.microsoft.com/en-us/azure/data-factory/connector-salesforce)
+- [Salesforce Service Cloud](https://learn.microsoft.com/en-us/azure/data-factory/connector-salesforce-service-cloud)
+- [ServiceNow](https://learn.microsoft.com/en-us/azure/data-factory/connector-servicenow)
+- [SharePoint Online List](https://learn.microsoft.com/en-us/azure/data-factory/connector-sharepoint-online-list)
+- [SAP Business Warehouse Open Hub](https://learn.microsoft.com/en-us/azure/data-factory/connector-sap-business-warehouse-open-hub)
+- [SAP Business Warehouse via MDX](https://learn.microsoft.com/en-us/azure/data-factory/connector-sap-business-warehouse)
+- [SAP HANA](https://learn.microsoft.com/en-us/azure/data-factory/connector-sap-hana)
+- [SAP Table](https://learn.microsoft.com/en-us/azure/data-factory/connector-sap-table)
+- [SAP Cloud for Customer](https://learn.microsoft.com/en-us/azure/data-factory/connector-sap-cloud-for-customer)
+- [SAP ECC](https://learn.microsoft.com/en-us/azure/data-factory/connector-sap-ecc)
+- [REST](https://learn.microsoft.com/en-us/azure/data-factory/connector-rest)
+- [ODBC](https://learn.microsoft.com/en-us/azure/data-factory/connector-odbc)
+- [OData](https://learn.microsoft.com/en-us/azure/data-factory/connector-odata)
+- [Azure Data Explorer](https://learn.microsoft.com/en-us/azure/data-factory/connector-azure-data-explorer)
+- [Azure Table Storage](https://learn.microsoft.com/en-us/azure/data-factory/connector-azure-table-storage)
+- [Azure Cosmos DB for NoSQL](https://learn.microsoft.com/en-us/azure/data-factory/connector-azure-cosmos-db)
+- [Azure Cosmos DB for MongoDB](https://learn.microsoft.com/en-us/azure/data-factory/connector-azure-cosmos-db-mongodb-api)
+- [MongoDB](https://learn.microsoft.com/en-us/azure/data-factory/connector-mongodb)
+- [MongoDB Atlas](https://learn.microsoft.com/en-us/azure/data-factory/connector-mongodb-atlas)
+- [Cassandra](https://learn.microsoft.com/en-us/azure/data-factory/connector-cassandra)
+- [Microsoft Fabric Lakehouse](https://learn.microsoft.com/en-us/azure/data-factory/connector-microsoft-fabric-lakehouse)
+- [Microsoft Fabric Warehouse](https://learn.microsoft.com/en-us/azure/data-factory/connector-microsoft-fabric-warehouse)
+- [Web table](https://learn.microsoft.com/en-us/azure/data-factory/connector-web-table)
+- [Snowflake](https://learn.microsoft.com/en-us/azure/data-factory/connector-snowflake)
+- [Azure Databricks Delta Lake](https://learn.microsoft.com/en-us/azure/data-factory/connector-azure-databricks-delta-lake)
+- [Microsoft 365](https://learn.microsoft.com/en-us/azure/data-factory/connector-office-365)
+- [HTTP](https://learn.microsoft.com/en-us/azure/data-factory/connector-http)
+- [Azure Blob Storage](https://learn.microsoft.com/en-us/azure/data-factory/connector-azure-blob-storage)
+- [Azure Data Lake Storage Gen2](https://learn.microsoft.com/en-us/azure/data-factory/connector-azure-data-lake-storage)
+- [Azure Files](https://learn.microsoft.com/en-us/azure/data-factory/connector-azure-file-storage)
+- [Amazon S3](https://learn.microsoft.com/en-us/azure/data-factory/connector-amazon-simple-storage-service)
+- [Amazon S3 Compatible Storage](https://learn.microsoft.com/en-us/azure/data-factory/connector-amazon-s3-compatible-storage)
+- [FTP](https://learn.microsoft.com/en-us/azure/data-factory/connector-ftp)
+- [SFTP](https://learn.microsoft.com/en-us/azure/data-factory/connector-sftp)
+- [Google Cloud Storage](https://learn.microsoft.com/en-us/azure/data-factory/connector-google-cloud-storage)
+- [HDFS](https://learn.microsoft.com/en-us/azure/data-factory/connector-hdfs)
+- [Oracle Cloud Storage](https://learn.microsoft.com/en-us/azure/data-factory/connector-oracle-cloud-storage)
+- [SQL Server](https://learn.microsoft.com/en-us/azure/data-factory/connector-sql-server)
+- [Azure SQL Database](https://learn.microsoft.com/en-us/azure/data-factory/connector-azure-sql-database)
+- [Azure SQL Managed Instance](https://learn.microsoft.com/en-us/azure/data-factory/connector-azure-sql-managed-instance)
+- [Azure Synapse Analytics](https://learn.microsoft.com/en-us/azure/data-factory/connector-azure-sql-data-warehouse)
+- [Amazon RDS for SQL Server](https://learn.microsoft.com/en-us/azure/data-factory/connector-amazon-rds-for-sql-server)
+- [File System](https://learn.microsoft.com/en-us/azure/data-factory/connector-file-system)
+
+[Connector overview](https://learn.microsoft.com/en-us/azure/data-factory/connector-overview) and
+[connector lifecycle](https://learn.microsoft.com/en-us/azure/data-factory/connector-lifecycle-overview)
+were checked on the same date. Preview-only, removed and sink-only entries are
+not registered as native ingestion sources.
+
+[Cosmos DB for PostgreSQL](https://learn.microsoft.com/en-us/azure/cosmos-db/postgresql/howto-ingest-azure-data-factory)
+uses the Azure PostgreSQL native connector. The source alias and retirement
+guidance were checked on 28 October 2026.
+
+</details>

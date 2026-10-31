@@ -1,0 +1,12 @@
+{
+  "title": "Shopify",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/shopify)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

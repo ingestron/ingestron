@@ -1,0 +1,35 @@
+---
+title: Connectivity
+description: Declare how a source can be reached so Ingestron can check compatible ingestion methods.
+---
+
+A connection declares reachability with `connectivity`. Methods declare which
+values they support. Ingestron uses that information to validate or select a
+method; it does not create network routes or test the connection.
+
+| Value       | Meaning in the current connector catalogue                                  |
+| ----------- | --------------------------------------------------------------------------- |
+| `public`    | The source is reachable through a public endpoint                           |
+| `workspace` | The source is reachable from the workspace used by the ingestion method     |
+| `private`   | The source requires an ingestion runtime with access to its private network |
+
+Reachability describes the source's access path. It is separate from the pack
+that will store the data and from the editor or command you use to generate files.
+The connector's access page gives the precise runtime and authentication requirements.
+
+## Select a compatible route
+
+The connection-first builder offers routes that support both the connector and
+its reachability. A standard can further limit methods. Explicitly selecting a
+method that cannot read the source produces a diagnostic.
+
+For example, SQL Server with `workspace` connectivity can use direct Lakeflow
+Connect or ADF copying in the current catalogue. With `private` connectivity,
+its supported route uses ADF. ADF is also available for supported public sources;
+it is not exclusively a private-network option.
+
+<Example name="private-sql-server" file="connections/erp.yaml" />
+
+When no method is explicit, [standard and pack rules](/docs/concepts/standards-and-packs#how-a-method-is-chosen)
+can choose one by connectivity. Check [supported combinations](/docs/start/choose-a-route)
+and the [connection catalogue](/docs/connectors) before configuring source access.

@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_azure_cosmos_db_nosql_azure_cosmos_db_nosql_records",
+	"properties": {
+		"type": "CosmosDbSqlApiCollection",
+		"linkedServiceName": {
+			"referenceName": "ls_native_azure_cosmos_db_nosql",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"collectionName": "orders"
+		}
+	}
+}

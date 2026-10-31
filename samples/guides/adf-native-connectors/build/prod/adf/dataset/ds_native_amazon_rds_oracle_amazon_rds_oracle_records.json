@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_amazon_rds_oracle_amazon_rds_oracle_records",
+	"properties": {
+		"type": "AmazonRdsForOracleTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_amazon_rds_oracle",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

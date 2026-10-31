@@ -1,0 +1,12 @@
+{
+  "title": "Google Ads",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/google-ads)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

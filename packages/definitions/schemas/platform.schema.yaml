@@ -1,0 +1,260 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: Platform
+description: >-
+  Where this project's assets go. Usually differs per environment through `${values.…}`. Optional:
+  without it, the pack's defaults apply.
+type: object
+additionalProperties: false
+required: [apiVersion, kind, id]
+properties:
+  apiVersion: { const: ingestron.io/v1, description: Always ingestron.io/v1. }
+  kind: { const: Platform, description: The document kind. }
+  id:
+    {
+      type: string,
+      pattern: "^[a-z][a-z0-9_-]*$",
+      description: "The platform's id: lowercase letters, digits, underscores and hyphens.",
+      examples: [lakehouse],
+    }
+  description:
+    {
+      type: string,
+      description: "What this document is for, in a sentence.",
+      examples: [Where the sales project's assets go.],
+    }
+  workspace:
+    type: object
+    additionalProperties: false
+    properties:
+      host:
+        {
+          type: string,
+          description: "Workspace URL. Leave out to use the deploying user's profile.",
+          examples: [https://adb-1111111111111111.1.azuredatabricks.net],
+        }
+      root_path:
+        {
+          type: string,
+          description: Folder in the workspace for deployed files.,
+          examples: [/Workspace/Shared/.bundle/sales],
+        }
+    description: The Databricks workspace host and root path.
+  mode:
+    enum: [development, production]
+    description: "Default: production for environments named prod or production, otherwise development."
+    enumDescriptions:
+      - "A copy for development: names carry the deploying user and schedules are paused."
+      - The shared resources, as they run in production.
+  run_as:
+    type: object
+    additionalProperties: false
+    minProperties: 1
+    maxProperties: 1
+    properties:
+      service_principal_name:
+        {
+          type: string,
+          description: Application id of the service principal the pipelines and jobs run as.,
+          examples: [7f3c2a10-0000-4000-8000-000000000001],
+        }
+      user_name:
+        {
+          type: string,
+          description: The user the pipelines and jobs run as.,
+          examples: [ingest@example.com],
+        }
+    description: The identity the pipelines and jobs run as.
+  compute:
+    type: object
+    additionalProperties: false
+    properties:
+      serverless: { type: boolean, description: "Default: true." }
+      budget_policy_id:
+        {
+          type: string,
+          description: Serverless budget policy that pipelines are charged to.,
+          examples: [5b1e3f2a-0000-4000-8000-000000000002],
+        }
+      channel:
+        {
+          enum: [CURRENT, PREVIEW],
+          description: "Lakeflow pipeline channel: CURRENT or PREVIEW.",
+          enumDescriptions:
+            [
+              "The current Lakeflow runtime, for production.",
+              "The next runtime, to try upcoming changes; some connectors need it.",
+            ],
+        }
+    description: Serverless or classic compute, budget policy and channel.
+  settings:
+    type: object
+    additionalProperties: { type: object }
+    description: >-
+      Method settings for this platform, by method, over the standard's: where shared infrastructure
+      such as landing storage is, usually through `${values.…}`.
+    examples: [{ adf-files: { landing: "${values.landing}", key_vault: "${values.key_vault}" } }]
+  naming:
+    type: object
+    additionalProperties: false
+    description: Name patterns for this project, over the standard's.
+    properties:
+      catalog:
+        {
+          type: string,
+          description: "Name pattern for the catalog. Default: `the standard's`.",
+          examples: ["sales_{{ environment }}"],
+        }
+      schema:
+        {
+          type: string,
+          description: "Name pattern for the schema. Default: `the standard's`.",
+          examples: ["{{ layer }}"],
+        }
+      table:
+        {
+          type: string,
+          description: "Name pattern for the table. Default: `the standard's`.",
+          examples: ["{{ table }}"],
+        }
+      pipeline:
+        {
+          type: string,
+          description: "Name pattern for the pipeline. Default: `the standard's`.",
+          examples: ["{{ project }}"],
+        }
+      job:
+        {
+          type: string,
+          description: "Name pattern for the refresh job. Default: `the standard's`.",
+          examples: ["{{ project }}_refresh"],
+        }
+  tags:
+    {
+      type: object,
+      additionalProperties: { type: string },
+      description: Tags added to pipelines and jobs.,
+    }
+  permissions:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [level]
+      minProperties: 2
+      maxProperties: 2
+      properties:
+        level:
+          {
+            enum: [CAN_VIEW, CAN_RUN, CAN_MANAGE],
+            description: "CAN_VIEW, CAN_RUN or CAN_MANAGE.",
+            enumDescriptions:
+              [
+                See the pipelines and jobs and their runs.,
+                Also start and stop runs.,
+                "Also change and delete them, and their permissions.",
+              ],
+          }
+        group_name:
+          {
+            type: string,
+            description: "A group, or use user_name or service_principal_name instead.",
+            examples: [data-engineers],
+          }
+        user_name:
+          {
+            type: string,
+            description: "A user, or use group_name or service_principal_name instead.",
+            examples: [ana@example.com],
+          }
+        service_principal_name:
+          {
+            type: string,
+            description: "A service principal's application id, or use group_name or user_name instead.",
+            examples: [7f3c2a10-0000-4000-8000-000000000001],
+          }
+    description: Who can view, run or manage the bundle's resources.
+    examples:
+      - - group_name: data-engineers
+          level: CAN_MANAGE
+        - group_name: analysts
+          level: CAN_VIEW
+  schedule:
+    type: object
+    additionalProperties: false
+    required: [cron]
+    properties:
+      cron:
+        {
+          type: string,
+          description: "Quartz cron expression, such as `0 0 6 * * ?`.",
+          examples: [0 0 5 * * ?],
+        }
+      timezone: { type: string, description: "Default: UTC.", examples: [Pacific/Auckland] }
+      paused: { type: boolean, description: "Default: paused outside production." }
+    description: When the refresh job runs (Quartz cron), its time zone, and whether it is paused.
+    examples:
+      - cron: 0 0 5 * * ?
+        timezone: Pacific/Auckland
+  notifications:
+    type: object
+    additionalProperties: false
+    properties:
+      on_failure:
+        {
+          type: array,
+          items: { type: string },
+          description: Email addresses told when a pipeline or job fails.,
+          examples: [[data-team@example.com]],
+        }
+    description: Who is emailed when an update fails.
+  manage:
+    type: object
+    additionalProperties: false
+    properties:
+      schemas:
+        type: boolean
+        description:
+          "Create the schemas (with grants) in the bundle. Default: false, because schemas are
+          often shared infrastructure."
+      tags:
+        type: boolean
+        description:
+          "Apply the contracts' tags and classification to tables and columns as Unity Catalog tags,
+          after each refresh. Default: false."
+      comments:
+        type: boolean
+        description: "Apply the contracts' column descriptions as column comments, after each refresh. Default: false."
+      checks:
+        type: boolean
+        description:
+          "Run the contracts' rules that compare counts over all rows, such as row counts and
+          duplicates, after each refresh. Default: false."
+    description: Shared resources and metadata this bundle manages. Each needs privileges on the platform.
+  grants:
+    type: object
+    description: Grants per layer, used when `manage.schemas` is true.
+    additionalProperties:
+      type: array
+      items:
+        type: object
+        additionalProperties: false
+        required: [principal, privileges]
+        properties:
+          principal:
+            {
+              type: string,
+              description: "The user, group or service principal given the privileges.",
+              examples: [data-engineers],
+            }
+          privileges:
+            {
+              type: array,
+              items: { type: string },
+              description: "Unity Catalog privileges, such as USE_SCHEMA, SELECT and MODIFY.",
+            }
+    examples:
+      - bronze:
+          - principal: data-engineers
+            privileges:
+              - USE_SCHEMA
+              - SELECT

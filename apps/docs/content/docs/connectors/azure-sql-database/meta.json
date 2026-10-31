@@ -1,0 +1,12 @@
+{
+  "title": "Azure SQL Database",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/azure-sql-database)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

@@ -1,0 +1,12 @@
+{
+  "title": "Microsoft Access",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/microsoft-access)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

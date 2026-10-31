@@ -1,0 +1,9 @@
+# Shared column lists. References inside an included file are resolved too.
+orders:
+  - name: order_id
+    type: ${values.key_type}
+  - name: amount
+    type: decimal(18,2)
+customers:
+  - name: customer_id
+    type: ${values.key_type}

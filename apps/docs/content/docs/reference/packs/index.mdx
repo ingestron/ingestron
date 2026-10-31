@@ -1,0 +1,54 @@
+---
+title: Platforms, packs and methods
+description: Check the capabilities available today and the combinations that can complete a project.
+---
+
+Ingestron's common model is definitions, standards, environments and generated
+files. Packs implement platform-specific methods for ingestion, transformation
+or storage. A standard can select several packs when their methods are compatible.
+Tools are separate interfaces to that model.
+
+## Available packs
+
+| Pack                                                            | Responsibilities                                         | Generated output                                                   |
+| --------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------ |
+| [Databricks](/docs/reference/packs/databricks) (`databricks@1`) | Supported direct ingestion, transforms and storage       | Bundles, pipelines, SQL or Python files, and jobs where configured |
+| [Azure Data Factory](/docs/reference/packs/adf) (`adf@1`)       | Native copying from supported sources to landing storage | Linked services, datasets, pipelines and triggers                  |
+
+Exact methods, defaults and settings are rendered from the packs on their pages.
+Connector-specific access and ingestion requirements are in [Connections](/docs/connectors).
+
+## Supported combinations today
+
+| Project route                         | Required packs                            | Result                                                                     |
+| ------------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------- |
+| Direct ingestion into Databricks      | Databricks                                | Tables produced by the supported direct ingestion and storage methods      |
+| ADF ingestion with Databricks storage | Databricks + ADF                          | ADF lands files; Databricks reads those files into tables                  |
+| ADF-only                              | Not supported as a complete project route | The ADF pack has no store method and the builder does not offer this route |
+| ADF with another destination          | No such destination pack is bundled today | A compatible implemented store method would be required                    |
+
+This is the current capability boundary, not a definition of Ingestron as a
+Databricks-only product. Do not assume an unlisted provider or arbitrary pack
+combination works. The current command and editor use their bundled packs;
+adding a name to `packs` does not install a provider plugin.
+
+## Decide which capabilities you need
+
+Start from the source and the intended result. Check connector support and
+reachability, then the methods that ingest and store the result. Add transforms
+only when needed and supported. Your standard may further restrict those choices.
+
+<DocLinks
+  items={[
+    {
+      title: "Choose platforms and an ingestion route",
+      href: "/docs/start/choose-a-route",
+      description: "Compare the supported combinations before creating a project.",
+    },
+    {
+      title: "Understand standards and packs",
+      href: "/docs/concepts/standards-and-packs",
+      description: "How methods are selected and checked for compatibility.",
+    },
+  ]}
+/>

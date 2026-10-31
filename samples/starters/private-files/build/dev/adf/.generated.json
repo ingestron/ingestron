@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "files": {
+    "dataset/ds_stores_landing_files.json": "sha256:61ceff0d058134aa67ea68237b8c0f209ef239004c6596e231f73d3fd546abb7",
+    "dataset/ds_stores_share.json": "sha256:b1d1c54d439a8ead6db1fb8a32c2a2535d4444877dbfc596edce598049ec0243",
+    "linkedService/ls_stores_keyvault.json": "sha256:b03464826fa06b8f2d734115cd0165d649254a5c445f12f0922fe82a4be5b38d",
+    "linkedService/ls_stores_landing.json": "sha256:6fdfa41aeb625d83982a1512dd19f633dc55bca4712fe7d5098e50a01c24a7a3",
+    "linkedService/ls_stores_share.json": "sha256:851327f21a2b27523b37eccc53415b17eb808ae75d4fe7e1a8f92d54e6a998fd",
+    "pipeline/pl_stores_share.json": "sha256:ed1f5e09f80edc2a1151e322f81bd15dc42fa7c2a047f8ab259be26273fd5708",
+    "trigger/tr_stores_share.json": "sha256:a8be4fa2fc3973ab34297b892d9705d544c3f7a3c63d6e51df333ad82a78cd43"
+  }
+}

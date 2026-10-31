@@ -1,0 +1,10 @@
+# Data quality: required columns from the contract and your own checks,
+# each with warn, drop or fail.
+id: iot
+environments:
+  dev: {}
+imports:
+  - standard.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - contracts/*.yaml

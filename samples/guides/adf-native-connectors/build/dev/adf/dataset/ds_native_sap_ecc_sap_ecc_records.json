@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_sap_ecc_sap_ecc_records",
+	"properties": {
+		"type": "SapEccResource",
+		"linkedServiceName": {
+			"referenceName": "ls_native_sap_ecc",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"path": "orders"
+		}
+	}
+}

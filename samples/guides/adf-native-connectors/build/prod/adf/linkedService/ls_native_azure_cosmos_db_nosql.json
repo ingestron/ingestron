@@ -1,0 +1,14 @@
+{
+	"name": "ls_native_azure_cosmos_db_nosql",
+	"properties": {
+		"type": "CosmosDb",
+		"typeProperties": {
+			"accountEndpoint": "https://source.example.test",
+			"database": "sales"
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

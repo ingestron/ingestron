@@ -1,0 +1,14 @@
+{
+	"name": "ls_native_web_table",
+	"properties": {
+		"type": "Web",
+		"typeProperties": {
+			"authenticationType": "Anonymous",
+			"url": "https://source.example.test"
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

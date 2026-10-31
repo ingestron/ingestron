@@ -1,0 +1,5 @@
+{
+  "title": "Reference",
+  "pages": ["index", "documents", "packs", "errors", "templates", "cli", "versions"],
+  "defaultOpen": false
+}

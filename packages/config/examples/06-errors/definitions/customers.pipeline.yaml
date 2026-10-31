@@ -1,0 +1,5 @@
+apiVersion: example.dev/v1
+kind: Pipeline
+id: customers
+catalog: ${values.catalog}
+workers: "four"

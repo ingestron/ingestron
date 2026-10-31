@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_google_bigquery_google_bigquery_records",
+	"properties": {
+		"type": "GoogleBigQueryV2Object",
+		"linkedServiceName": {
+			"referenceName": "ls_native_google_bigquery",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"dataset": "sales",
+			"table": "orders"
+		}
+	}
+}

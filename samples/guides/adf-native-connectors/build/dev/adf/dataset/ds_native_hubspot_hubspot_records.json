@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_hubspot_hubspot_records",
+	"properties": {
+		"type": "HubspotObject",
+		"linkedServiceName": {
+			"referenceName": "ls_native_hubspot",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"tableName": "orders"
+		}
+	}
+}

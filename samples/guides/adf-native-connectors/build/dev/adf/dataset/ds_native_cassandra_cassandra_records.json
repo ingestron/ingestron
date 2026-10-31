@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_cassandra_cassandra_records",
+	"properties": {
+		"type": "CassandraTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_cassandra",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"keyspace": "sales",
+			"tableName": "orders"
+		}
+	}
+}

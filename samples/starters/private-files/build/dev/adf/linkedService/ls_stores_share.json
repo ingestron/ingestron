@@ -1,0 +1,22 @@
+{
+	"name": "ls_stores_share",
+	"properties": {
+		"type": "FileServer",
+		"typeProperties": {
+			"host": "\\\\fs01\\exports",
+			"userId": "corp\\ingest",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_stores_keyvault",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "fs01-password"
+			}
+		},
+		"connectVia": {
+			"referenceName": "shir-stores",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

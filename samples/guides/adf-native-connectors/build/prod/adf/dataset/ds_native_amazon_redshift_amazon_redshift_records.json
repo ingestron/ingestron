@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_amazon_redshift_amazon_redshift_records",
+	"properties": {
+		"type": "AmazonRedshiftTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_amazon_redshift",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

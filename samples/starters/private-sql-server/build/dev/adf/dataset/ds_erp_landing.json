@@ -1,0 +1,33 @@
+{
+	"name": "ds_erp_landing",
+	"properties": {
+		"type": "Parquet",
+		"linkedServiceName": {
+			"referenceName": "ls_erp_landing",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"folder": {
+				"type": "string"
+			},
+			"file": {
+				"type": "string"
+			}
+		},
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileSystem": "landing",
+				"folderPath": {
+					"value": "@dataset().folder",
+					"type": "Expression"
+				},
+				"fileName": {
+					"value": "@dataset().file",
+					"type": "Expression"
+				}
+			},
+			"compressionCodec": "snappy"
+		}
+	}
+}

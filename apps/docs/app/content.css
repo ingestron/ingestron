@@ -1,0 +1,161 @@
+/* Compact references retain complete prose and anchors without oversized rows. */
+.prose :where(p, ul, ol) {
+  margin-block: 0.7em;
+}
+.prose :where(li) {
+  margin-block: 0.2em;
+}
+.prose :where(li > p) {
+  margin-block: 0.35em;
+}
+.setting-sections section {
+  min-width: 0;
+  margin: 0;
+  padding-block: 0.8rem;
+  border-bottom: 1px solid var(--color-fd-border);
+  scroll-margin-top: 6rem;
+}
+.setting-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.8rem;
+}
+.prose .setting-heading h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.setting-sections section :where(p, ul) {
+  margin-block: 0.35rem;
+}
+.setting-sections section > div {
+  margin-top: 0.35rem;
+}
+.setting-meta {
+  color: var(--color-fd-muted-foreground);
+  font-size: 0.85rem;
+}
+.setting-sections > ul,
+.chapter-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  list-style: none;
+  padding: 0;
+}
+.connector-routes section,
+.example-download {
+  border: 1px solid var(--color-fd-border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-block: 0.75rem;
+  min-width: 0;
+}
+.prose .connector-routes h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+.connector-summary {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  gap: 0.3rem 0.8rem;
+  font-size: 0.9rem;
+}
+.connector-summary dt {
+  margin: 0;
+  font-weight: 500;
+  color: var(--color-fd-muted-foreground);
+}
+.prose .connector-summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.chapter-links {
+  margin-top: 0.85rem;
+  font-size: 0.9rem;
+}
+.example-download p {
+  margin-block: 0.4rem;
+}
+.download-button {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.45rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.35rem;
+  background: var(--color-fd-primary);
+  color: var(--color-fd-background);
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.download-filename {
+  display: inline-block;
+  margin: 0.4rem 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--color-fd-muted-foreground);
+  overflow-wrap: anywhere;
+}
+.related-setup {
+  border-top: 1px solid var(--color-fd-border);
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  font-size: 0.85rem;
+}
+.related-setup p {
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+.related-setup ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.related-setup li {
+  margin-block: 0.4rem;
+}
+.related-setup a {
+  color: var(--color-fd-muted-foreground);
+}
+.related-setup a:hover {
+  color: var(--color-fd-primary);
+  text-decoration: underline;
+}
+.related-setup-mobile {
+  display: none;
+}
+@media (max-width: 1279px) {
+  .related-setup-mobile {
+    display: block;
+  }
+}
+@media (max-width: 480px) {
+  .connector-summary {
+    grid-template-columns: 6rem minmax(0, 1fr);
+  }
+}
+.prose .source-list {
+  list-style: none;
+  padding: 0;
+}
+.source-list li {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) 2fr;
+  gap: 0.25rem 1rem;
+  padding-block: 0.5rem;
+  border-bottom: 1px solid var(--color-fd-border);
+}
+.source-list span {
+  font-size: 0.85rem;
+  color: var(--color-fd-muted-foreground);
+}
+@media (max-width: 480px) {
+  .source-list li {
+    grid-template-columns: 1fr;
+  }
+}
+
+.prose > h2:first-child,
+.prose > span[id] + h2 {
+  margin-top: 0.5rem;
+}

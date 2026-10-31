@@ -1,0 +1,12 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: sales.stores
+version: 1.0.0
+status: active
+schema:
+  - name: stores
+    logicalType: object
+    description: Stores and their regions.
+    properties:
+      - { name: store_id, logicalType: string, required: true, primaryKey: true }
+      - { name: region, logicalType: string }

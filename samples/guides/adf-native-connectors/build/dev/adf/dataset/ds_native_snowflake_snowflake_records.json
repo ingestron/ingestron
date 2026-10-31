@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_snowflake_snowflake_records",
+	"properties": {
+		"type": "SnowflakeV2Table",
+		"linkedServiceName": {
+			"referenceName": "ls_native_snowflake",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

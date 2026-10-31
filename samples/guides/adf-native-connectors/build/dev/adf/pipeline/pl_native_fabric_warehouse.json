@@ -1,0 +1,78 @@
+{
+	"name": "pl_native_fabric_warehouse",
+	"properties": {
+		"parameters": {
+			"windowStart": {
+				"type": "string"
+			},
+			"windowEnd": {
+				"type": "string"
+			}
+		},
+		"activities": [
+			{
+				"name": "copy_fabric_warehouse_records",
+				"type": "Copy",
+				"inputs": [
+					{
+						"referenceName": "ds_native_fabric_warehouse_fabric_warehouse_records",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_native_parquet",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": "native/fabric-warehouse/sales.orders",
+							"file": "@{concat(formatDateTime(pipeline().parameters.windowStart, 'yyyyMMddHHmmss'), '_', pipeline().RunId, '.parquet')}"
+						}
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "WarehouseSource"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "invoice_id"
+								},
+								"sink": {
+									"name": "invoice_id"
+								}
+							},
+							{
+								"source": {
+									"name": "amount"
+								},
+								"sink": {
+									"name": "amount"
+								}
+							},
+							{
+								"source": {
+									"name": "modified_at"
+								},
+								"sink": {
+									"name": "modified_at"
+								}
+							}
+						]
+					}
+				}
+			}
+		]
+	}
+}

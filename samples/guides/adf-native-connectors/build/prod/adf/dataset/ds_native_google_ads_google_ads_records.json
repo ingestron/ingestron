@@ -1,0 +1,11 @@
+{
+	"name": "ds_native_google_ads_google_ads_records",
+	"properties": {
+		"type": "GoogleAdWordsObject",
+		"linkedServiceName": {
+			"referenceName": "ls_native_google_ads",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {}
+	}
+}

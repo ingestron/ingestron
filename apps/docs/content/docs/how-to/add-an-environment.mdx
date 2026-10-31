@@ -1,0 +1,51 @@
+---
+title: Add an environment
+description: Generate another environment, such as test, from the same definitions.
+---
+
+1. Add it to `environments` in `project.yaml`, with the values that differ:
+
+<Example name="environments" file="project.yaml" />
+
+2. Read those values in the definitions with `${values.…}`, and use
+   `${environment.name}` where the environment's name belongs:
+
+<Example name="environments" file="platform.yaml" />
+
+3. Generate it:
+
+<ToolSteps>
+<Tool name="CLI">
+
+```sh
+ingestron plan --env test
+ingestron apply --env test
+```
+
+</Tool>
+<Tool name="VS Code">
+
+Click the environment in the status bar, or run **Ingestron: Select environment**, and choose `test`. Then run **Ingestron: Plan** then **Ingestron: Apply** from the Command Palette (⇧⌘P on macOS, Ctrl+Shift+P elsewhere). The output is in the Ingestron output panel. Problems show in the Problems panel as you type, before you plan.
+
+![The environment picker lists dev and prod.](/images/vscode/environment.png)
+
+</Tool>
+</ToolSteps>
+
+The new environment gets its own folder, `build/test/`. An environment named
+`prod` or `production` resolves to production mode in the current Platform model; every other one in
+development mode. These modes affect the generated resources, not deployment by
+Ingestron. See [Environments and platform](/docs/concepts/environments-and-platform).
+
+## Check what differs
+
+Before deploying, see what the new environment changes compared with one you
+know, after every value and default is resolved: the platform, the names, and
+each table's methods and settings. Secrets are never shown.
+
+```sh
+ingestron compare --env dev --env test
+```
+
+In VS Code, run **Ingestron: Compare environments**. With more than two
+environments it asks which two.

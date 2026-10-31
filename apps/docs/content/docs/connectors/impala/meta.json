@@ -1,0 +1,12 @@
+{
+  "title": "Apache Impala",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/impala)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

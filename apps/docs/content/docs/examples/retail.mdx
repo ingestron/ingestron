@@ -1,0 +1,106 @@
+---
+title: Tables and transforms
+description: Bring web shop files into bronze, keep orders current, check quality, and build daily sales in silver for dev and prod.
+---
+
+In this worked example you read a complete Databricks project, generate it for two
+environments, and break it once on purpose to see how Ingestron reports a
+problem. It builds on [Build your first project](/docs/start/first-project).
+
+<ExampleDownload name="retail" /> and unzip it; run the commands from its folder.
+
+The download includes the generated `build/` folder, so you can read it
+without running anything. Delete it, so you generate it yourself:
+
+```sh
+rm -rf build
+```
+
+## 1. The organisation's standard
+
+<Example name="retail" file="standard.yaml" />
+
+Every catalog is named `<environment>_sales`, rows missing a required value
+are dropped, and every streaming table is clustered automatically, which no
+project can change because it is `fixed`.
+
+## 2. Two environments
+
+<Example name="retail" file="project.yaml" />
+
+`dev` and `prod` use different workspaces and storage accounts. The rest of
+the definitions read these values, so nothing else changes between them.
+
+## 3. Where things go
+
+<Example name="retail" file="platform.yaml" />
+
+The pipelines run as a service principal, engineers can manage them and
+analysts can view them. The refresh job runs at 5 am Auckland time, paused in
+`dev`, and failures are emailed.
+
+## 4. The tables
+
+<Example name="retail" file="flows/shop.yaml" />
+
+`orders` arrives as change records, so it is kept current by key
+([Keep a table current](/docs/how-to/keep-a-table-current)) and checked for
+negative totals. `customers` arrives as CSV with a header.
+
+<Example name="retail" file="transforms/daily_sales.yaml" />
+
+`daily_sales` reads both tables and lands in `silver`.
+
+## 5. Generate
+
+<ToolSteps>
+<Tool name="CLI">
+
+```sh
+ingestron plan --env dev --no-diff
+```
+
+```text
+dev → build/dev
+create    databricks.yml
+create    resources/retail.pipeline.yml
+create    resources/retail_refresh.job.yml
+create    src/retail/bronze/customers.sql
+create    src/retail/bronze/orders.sql
+create    src/retail/silver/daily_sales.sql
+
+6 files: 6 create. Ready to apply.
+```
+
+</Tool>
+<Tool name="VS Code">
+
+Run **Ingestron: Plan** from the Command Palette (⇧⌘P on macOS, Ctrl+Shift+P elsewhere). The output is in the Ingestron output panel. Problems show in the Problems panel as you type, before you plan.
+
+</Tool>
+</ToolSteps>
+
+Run `ingestron apply` to write both environments. Compare
+`build/dev/databricks.yml` with `build/prod/databricks.yml`: the workspace
+and the mode differ, and the prod job's schedule is not paused.
+
+## 6. Break it on purpose
+
+Change the transform's `id` to `orders` in `transforms/daily_sales.yaml` and
+plan again:
+
+```text
+dev: the definitions have problems
+transforms/daily_sales.yaml:3:5  error  DUPLICATE_TABLE
+  Another flow or transform already produces a table named "orders".
+```
+
+Transforms refer to tables by name, so each name has one producer. Change
+the `id` back to `daily_sales`; nothing was written while the problem
+existed.
+
+## Next
+
+- Deploy it: [Deploy the bundle](/docs/how-to/deploy-the-bundle).
+- Make the standard your organisation's:
+  [Organisation standards](/docs/examples/organisation-standards).

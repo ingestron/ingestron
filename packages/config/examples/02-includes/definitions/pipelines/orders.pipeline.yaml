@@ -1,0 +1,7 @@
+apiVersion: example.dev/v1
+kind: Pipeline
+id: orders
+# A YAML include keeps its type: this becomes a list.
+columns: ${file:../shared/columns.yaml#/orders}
+# Any other file is inserted as text and never interpolated.
+query: ${file:../sql/orders.sql}

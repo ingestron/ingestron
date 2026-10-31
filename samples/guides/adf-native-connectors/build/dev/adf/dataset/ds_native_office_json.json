@@ -1,0 +1,25 @@
+{
+	"name": "ds_native_office_json",
+	"properties": {
+		"type": "Json",
+		"linkedServiceName": {
+			"referenceName": "ls_native_office_landing",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"folder": {
+				"type": "string"
+			}
+		},
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileSystem": "landing",
+				"folderPath": {
+					"value": "@dataset().folder",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

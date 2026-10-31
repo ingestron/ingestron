@@ -1,0 +1,16 @@
+{
+	"name": "ls_native_fabric_warehouse",
+	"properties": {
+		"type": "Warehouse",
+		"typeProperties": {
+			"authenticationType": "SystemAssignedManagedIdentity",
+			"workspaceId": "synthetic-workspace_id",
+			"artifactId": "synthetic-artifact_id",
+			"endpoint": "source.example.test"
+		},
+		"connectVia": {
+			"referenceName": "synthetic-azure-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

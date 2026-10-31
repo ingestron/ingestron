@@ -1,0 +1,5 @@
+id: sales
+values:
+  catalog: main
+imports:
+  - "*.pipeline.yaml"

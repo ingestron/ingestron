@@ -1,0 +1,21 @@
+{
+	"name": "ls_native_azure_files",
+	"properties": {
+		"type": "AzureFileStorage",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-connection-string"
+			},
+			"fileShare": "synthetic-share"
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

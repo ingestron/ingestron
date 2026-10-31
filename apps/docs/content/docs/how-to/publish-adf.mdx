@@ -1,0 +1,38 @@
+---
+title: Publish ADF resources
+description: Review generated copy resources and publish them through your factory's Git workflow.
+---
+
+Use this after [planning and generating](/docs/how-to/plan-and-generate) a project
+with the ADF pack. In the current combined route, its output is under
+`build/<environment>/adf/`. Ingestron generates files; it does not publish the
+factory or provision the runtime, source access, Key Vault or landing storage.
+
+## Review the generated resources
+
+Inspect the `linkedService`, `dataset`, `pipeline` and `trigger` directories.
+Confirm names, credential references, landing paths, schedules and paused state
+for the intended environment. Prepare the [shared infrastructure](/docs/how-to/adf-runtime)
+and the connector-specific access requirements before running the pipelines.
+
+Keep generation ownership files in the Ingestron output folder; the ADF resource
+JSON is the content to bring into the factory's configured Git root.
+
+## Use the factory's publishing workflow
+
+Bring the reviewed resources into a feature branch of the factory repository,
+then review and merge them into its collaboration branch. In ADF, publish from
+that collaboration branch. Committing to Git alone does not update the live
+factory. Publishing includes the factory's changes, so review the complete
+pending set with the factory owner.
+
+Follow Microsoft's [source-control and publishing instructions](https://learn.microsoft.com/en-us/azure/data-factory/source-control#publish-code-changes)
+for the factory's configured Git integration and permissions. For an automated
+release pipeline, use the organisation's established ADF deployment process.
+
+## Deploy downstream resources separately
+
+For the current ADF-to-Databricks route, the Databricks bundle is a separate
+output under `build/<environment>/databricks/`. Follow
+[Deploy the Databricks bundle](/docs/how-to/deploy-the-bundle) for that output.
+Publishing the factory does not deploy or schedule the downstream bundle.

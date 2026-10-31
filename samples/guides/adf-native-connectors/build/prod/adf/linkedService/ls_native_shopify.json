@@ -1,0 +1,22 @@
+{
+	"name": "ls_native_shopify",
+	"properties": {
+		"type": "Shopify",
+		"version": "2.0",
+		"typeProperties": {
+			"host": "source.example.test",
+			"accessToken": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-access-token"
+			}
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

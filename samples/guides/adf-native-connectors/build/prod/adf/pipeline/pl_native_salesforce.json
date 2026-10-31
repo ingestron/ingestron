@@ -1,0 +1,79 @@
+{
+	"name": "pl_native_salesforce",
+	"properties": {
+		"parameters": {
+			"windowStart": {
+				"type": "string"
+			},
+			"windowEnd": {
+				"type": "string"
+			}
+		},
+		"activities": [
+			{
+				"name": "copy_salesforce_records",
+				"type": "Copy",
+				"inputs": [
+					{
+						"referenceName": "ds_native_salesforce_salesforce_records",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_native_parquet",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": "native/salesforce/Account",
+							"file": "@{concat(formatDateTime(pipeline().parameters.windowStart, 'yyyyMMddHHmmss'), '_', pipeline().RunId, '.parquet')}"
+						}
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "SalesforceV2Source",
+						"query": "SELECT Id, Name, SystemModstamp FROM Account WHERE Name != null"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "Id"
+								},
+								"sink": {
+									"name": "Id"
+								}
+							},
+							{
+								"source": {
+									"name": "Name"
+								},
+								"sink": {
+									"name": "Name"
+								}
+							},
+							{
+								"source": {
+									"name": "SystemModstamp"
+								},
+								"sink": {
+									"name": "SystemModstamp"
+								}
+							}
+						]
+					}
+				}
+			}
+		]
+	}
+}

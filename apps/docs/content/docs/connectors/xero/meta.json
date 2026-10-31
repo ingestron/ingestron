@@ -1,0 +1,12 @@
+{
+  "title": "Xero",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/xero)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

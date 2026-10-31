@@ -1,0 +1,20 @@
+{
+	"name": "ls_native_db2",
+	"properties": {
+		"type": "Db2",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-connection-string"
+			}
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

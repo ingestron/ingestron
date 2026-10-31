@@ -1,0 +1,12 @@
+{
+  "title": "Azure SQL Managed Instance",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/azure-sql-managed-instance)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

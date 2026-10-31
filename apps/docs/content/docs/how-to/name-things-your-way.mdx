@@ -1,0 +1,33 @@
+---
+title: Name Databricks resources
+description: Set your organisation's catalog, schema, table and pipeline names.
+---
+
+For Databricks, write the patterns in the standard's `naming`. For ADF
+linked services, datasets, pipelines, triggers and activities, follow
+[Name ADF resources](/docs/how-to/name-adf-resources). This one uses one catalog,
+a schema per environment and layer, and source-prefixed table names:
+
+<Example name="standards-and-conventions" file="standard.yaml" />
+
+Plan to see the names before anything is written:
+
+<ToolSteps>
+<Tool name="CLI">
+
+```sh
+ingestron plan --no-diff
+```
+
+</Tool>
+<Tool name="VS Code">
+
+Run **Ingestron: Plan** from the Command Palette (⇧⌘P on macOS, Ctrl+Shift+P elsewhere). The output is in the Ingestron output panel. Problems show in the Problems panel as you type, before you plan.
+
+![The Ingestron output panel after Ingestron: Plan: three files to create in build/dev, ready to apply.](/images/vscode/plan.png)
+
+</Tool>
+</ToolSteps>
+
+The variables, the rules for valid names and more examples are in
+[Naming](/docs/concepts/naming).

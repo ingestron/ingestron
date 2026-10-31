@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ingestron-docs",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-08-13",
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": {
+    "enabled": false,
+  },
+  "routes": [{ "pattern": "docs.ingestron.io", "custom_domain": true }],
+  "assets": {
+    "directory": "out",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+  },
+}

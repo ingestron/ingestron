@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_azure_cosmos_db_mongodb_azure_cosmos_db_mongodb_records",
+	"properties": {
+		"type": "CosmosDbMongoDbApiCollection",
+		"linkedServiceName": {
+			"referenceName": "ls_native_azure_cosmos_db_mongodb",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"collectionName": "orders"
+		}
+	}
+}

@@ -1,0 +1,4 @@
+id: sales
+imports:
+  - "connections/*.yaml"
+  - "pipelines/*.yaml"

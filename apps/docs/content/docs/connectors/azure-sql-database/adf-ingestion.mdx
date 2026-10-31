@@ -1,0 +1,59 @@
+---
+title: Ingestion
+description: Choose what Azure SQL Database reads, its extraction options and destination behaviour.
+---
+
+## Select the source objects
+
+The connection's `id` is the flow's `source`. Each entry under `tables` names a
+destination table and links its source `object` to a contract. The contract lists
+the columns and keys you expect. Replace the synthetic object and contract with
+yours before deploying.
+
+<Example name="adf-native-connectors" file="flows/azure-sql-database.yaml" />
+
+## Full copies and incremental windows
+
+`mode: full` copies the whole table each time window. `mode: incremental` copies
+rows whose `watermark_column` falls within that window. Choose a column that
+records when a row changes, such as `modified_at`; an integer identity is not a
+time-window watermark.
+
+<FlowDiagram
+  title="An incremental window"
+  steps={[
+    { title: "Window start", detail: "Inclusive: watermark ≥ start" },
+    { title: "Rows in the window", detail: "Only matching rows are copied" },
+    { title: "Window end", detail: "Exclusive: watermark < end" },
+  ]}
+/>
+
+The watermark is configured in the flow's `ingest.with`, or as a default in the
+standard's `ingest.settings.adf-copy`. It is not a contract property. Each table
+can override the default with its own `mode` and `watermark_column`; the contract
+describes the columns and keys of that table.
+
+The filter is always the trigger window's inclusive start and exclusive end.
+Ingestron does not track the greatest value seen in an earlier run. A change
+outside the selected window is not copied by that window. Arbitrary SQL queries,
+extra WHERE criteria and per-table window schedules are not supported by
+`adf-copy`.
+
+<SettingsSections pack="adf" method="adf-copy" connector="azure-sql-database" />
+
+## Keep the destination current
+
+ADF writes Parquet into landing storage. Databricks reads those files into a
+streaming table. The store's `sequence_by` controls which version wins when
+keeping the latest row; it is separate from the extraction watermark. With
+append storage, repeated full copies add repeated rows. Choose
+[upsert or history](/docs/how-to/keep-a-table-current) when appropriate.
+A row missing from a later copy does not tell the store to delete it.
+
+All tables of one connection and source database share runtime, encryption,
+schedule, retry and paused settings. Those values must agree even when the
+tables use different watermarks. ADF and Databricks run on separate schedules.
+
+## Complete examples
+
+[Download projects and inspect their files](/docs/connectors/azure-sql-database/examples).

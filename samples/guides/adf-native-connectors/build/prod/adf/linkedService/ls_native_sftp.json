@@ -1,0 +1,25 @@
+{
+	"name": "ls_native_sftp",
+	"properties": {
+		"type": "Sftp",
+		"typeProperties": {
+			"authenticationType": "Basic",
+			"skipHostKeyValidation": false,
+			"host": "source.example.test",
+			"userName": "reader",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-password"
+			},
+			"hostKeyFingerprint": "synthetic-host_key"
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

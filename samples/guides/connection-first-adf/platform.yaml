@@ -1,0 +1,12 @@
+apiVersion: ingestron.io/v1
+kind: Platform
+id: native
+settings:
+  adf-table:
+    landing: ${values.landing}
+    key_vault: ${values.key_vault}
+    integration_runtime: ${values.integration_runtime}
+    resource_names:
+      key_vault_linked_service: ls_${project.id}_secrets
+      landing_linked_service: ls_${project.id}_lake
+      landing_dataset: ds_${project.id}_parquet

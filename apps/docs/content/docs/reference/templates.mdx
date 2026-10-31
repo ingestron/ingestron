@@ -1,0 +1,35 @@
+---
+title: Templates
+description: The template.yaml fields and the built-in templates.
+---
+
+Prepared templates are an explicit CLI option, useful for organisation
+layouts or several connections. The default workflow is
+[connection-first creation](/docs/how-to/start-from-a-template).
+
+A template is a project folder with a `template.yaml`. See
+[Share a template](/docs/how-to/share-a-template) to make one and
+[Create a project from a connection](/docs/how-to/start-from-a-template) to use one.
+
+## `template.yaml`
+
+| Field       | Required | Meaning                                                                  |
+| ----------- | -------- | ------------------------------------------------------------------------ |
+| `title`     | yes      | The template's human-readable title                                      |
+| `summary`   | yes      | One sentence on what the template sets up                                |
+| `questions` | no       | What `init` asks; each answer becomes `values.<value>` in `project.yaml` |
+
+Each question:
+
+| Field     | Meaning                                                               |
+| --------- | --------------------------------------------------------------------- |
+| `value`   | The key in `project.yaml` `values`: lowercase letters, digits and `_` |
+| `ask`     | The question, as the user sees it                                     |
+| `default` | The answer used with `--yes` or an empty answer                       |
+
+Any other field is an error, so a misspelt one is found at once. Your editor
+checks `template.yaml` too after `ingestron schemas`.
+
+## Built-in templates
+
+<BuiltInTemplates />

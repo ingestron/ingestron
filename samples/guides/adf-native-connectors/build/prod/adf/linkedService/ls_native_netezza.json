@@ -1,0 +1,26 @@
+{
+	"name": "ls_native_netezza",
+	"properties": {
+		"type": "Netezza",
+		"version": "2.0",
+		"typeProperties": {
+			"securityLevel": "onlySecured",
+			"server": "source.example.test",
+			"database": "sales",
+			"uid": "reader",
+			"pwd": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-password"
+			},
+			"port": 5432
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

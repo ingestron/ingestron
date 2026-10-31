@@ -1,0 +1,30 @@
+---
+title: Ingestion
+description: Choose Files objects and table behaviour in Databricks.
+---
+
+## Select the source objects
+
+The flow's `source` names the connection. Each table links an `object` to its
+contract; the contract describes the source columns and keys.
+
+<Example name="minimal" file="flows/orders.yaml" />
+
+## Reading choices
+
+- `format`: Parquet by default; also CSV, JSON, Avro, ORC, XML and text.
+  For CSV with a header, set `options: { header: true }`.
+- `schema_evolution`: what happens when files gain columns. The default adds
+  them to the table.
+- The contract's column types are passed as schema hints, so the table gets
+  the types you reviewed rather than guessed ones.
+
+<SettingsSections pack="databricks" method="files" connector="files" />
+
+The table is a [streaming table](/docs/reference/packs/databricks#streaming-table). To
+keep only the current row per key from change records, see
+[Keep a table current](/docs/how-to/keep-a-table-current).
+
+## Complete examples
+
+[Download projects and inspect their files](/docs/connectors/files/examples).

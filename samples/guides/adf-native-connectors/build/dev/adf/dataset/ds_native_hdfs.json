@@ -1,0 +1,24 @@
+{
+	"name": "ds_native_hdfs",
+	"properties": {
+		"type": "Binary",
+		"linkedServiceName": {
+			"referenceName": "ls_native_hdfs",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"folder": {
+				"type": "string"
+			}
+		},
+		"typeProperties": {
+			"location": {
+				"type": "HdfsLocation",
+				"folderPath": {
+					"value": "@dataset().folder",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

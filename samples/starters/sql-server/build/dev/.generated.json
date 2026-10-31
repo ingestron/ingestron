@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "files": {
+    "databricks.yml": "sha256:bf534883318b2b605ae91cd73df03521d1592a3466f27de1b90dc1b29c4a7cf4",
+    "resources/erp.pipeline.yml": "sha256:fa7897101e8ddf13689b9841504ee8a7c248158f8fadb431c5871d7bcfd8a185",
+    "resources/erp_erp_gateway.pipeline.yml": "sha256:8c14c6a6583e96b4505d8c79a37a6265606e2a5022d38f72383c6c48c0465b2e",
+    "resources/erp_erp_ingestion.pipeline.yml": "sha256:731d46ffbd171eff152cb4d9b983d141140f25b986d9465023b3a758def48b49",
+    "resources/erp_refresh.job.yml": "sha256:0b5f70e4191f51f3051d80ab8f965f0cb367f8dc17379bfe7179087411315442",
+    "src/erp/silver/customer_balances.sql": "sha256:7fc42a18d6cac4cc12bd92b3afffdc5ca150f7c7724e76d69c5bd73a2ee88965"
+  }
+}

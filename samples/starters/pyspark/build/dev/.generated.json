@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "files": {
+    "databricks.yml": "sha256:407cf0226977c9b948e3742ca3b1a6c43a2e3b07c6d3f848f9aabcdd795bfefe",
+    "resources/subscriptions.pipeline.yml": "sha256:7683fc2b3e079904ef8bee6b6f0e54d8a3ed2bc2481f9421f1a8b3154967a637",
+    "src/subscriptions/bronze/invoices.sql": "sha256:1d341db0054e315b18109a9c110d49a4ebf117f11854bb25e0b15d12c20b99f4",
+    "src/subscriptions/silver/monthly_revenue.py": "sha256:0a325153d742418cfd38764295a1cddb59a9227640687b531d3e729648278b54"
+  }
+}

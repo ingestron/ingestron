@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_rest_rest_records",
+	"properties": {
+		"type": "RestResource",
+		"linkedServiceName": {
+			"referenceName": "ls_native_rest",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"relativeUrl": "orders"
+		}
+	}
+}

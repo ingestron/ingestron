@@ -1,0 +1,12 @@
+{
+  "title": "HubSpot",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/hubspot)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

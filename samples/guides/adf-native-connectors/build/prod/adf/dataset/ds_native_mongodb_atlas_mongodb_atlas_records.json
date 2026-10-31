@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_mongodb_atlas_mongodb_atlas_records",
+	"properties": {
+		"type": "MongoDbAtlasCollection",
+		"linkedServiceName": {
+			"referenceName": "ls_native_mongodb_atlas",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"collectionName": "orders"
+		}
+	}
+}

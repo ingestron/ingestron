@@ -1,0 +1,24 @@
+{
+	"name": "ds_stores_share",
+	"properties": {
+		"type": "Binary",
+		"linkedServiceName": {
+			"referenceName": "ls_stores_share",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"folder": {
+				"type": "string"
+			}
+		},
+		"typeProperties": {
+			"location": {
+				"type": "FileServerLocation",
+				"folderPath": {
+					"value": "@dataset().folder",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

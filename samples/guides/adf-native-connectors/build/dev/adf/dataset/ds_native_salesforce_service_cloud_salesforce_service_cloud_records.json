@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_salesforce_service_cloud_salesforce_service_cloud_records",
+	"properties": {
+		"type": "SalesforceServiceCloudV2Object",
+		"linkedServiceName": {
+			"referenceName": "ls_native_salesforce_service_cloud",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"objectApiName": "orders"
+		}
+	}
+}

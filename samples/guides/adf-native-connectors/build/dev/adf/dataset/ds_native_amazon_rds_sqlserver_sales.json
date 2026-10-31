@@ -1,0 +1,10 @@
+{
+	"name": "ds_native_amazon_rds_sqlserver_sales",
+	"properties": {
+		"type": "AmazonRdsForSqlServerTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_amazon_rds_sqlserver_sales",
+			"type": "LinkedServiceReference"
+		}
+	}
+}

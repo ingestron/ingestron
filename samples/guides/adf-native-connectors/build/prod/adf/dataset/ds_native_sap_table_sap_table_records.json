@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_sap_table_sap_table_records",
+	"properties": {
+		"type": "SapTableResource",
+		"linkedServiceName": {
+			"referenceName": "ls_native_sap_table",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"tableName": "orders"
+		}
+	}
+}

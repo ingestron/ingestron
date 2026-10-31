@@ -1,0 +1,70 @@
+---
+title: Ingestron
+description: Describe the data you need, apply your standards, and generate the files your platforms run.
+---
+
+Ingestron turns reviewed YAML definitions into platform files. A project describes
+connections, data contracts, flows and transforms. Its standard selects methods
+and sets policy; packs implement those methods for the chosen platforms.
+
+<FlowDiagram
+  title="From definitions to deployed resources"
+  steps={[
+    { title: "Define", detail: "Sources, contracts and the tables you need" },
+    { title: "Resolve", detail: "Environment values, standards and pack methods" },
+    { title: "Generate", detail: "Plan changes, then write reviewable files" },
+    { title: "Deploy", detail: "Use the target platform's deployment tools" },
+  ]}
+/>
+
+Plan shows what would change. Apply writes files; it does not deploy them or move
+data. Your platforms run the generated resources after deployment. You can learn
+the definition and generation workflow locally without connecting to a source.
+
+## Start with your task
+
+<DocLinks
+  items={[
+    {
+      title: "Start here",
+      href: "/docs/start",
+      description: "Understand the workflow and generate your first project.",
+    },
+    {
+      title: "Understand the definitions",
+      href: "/docs/concepts",
+      description: "Connections, contracts, flows, standards and environments.",
+    },
+    {
+      title: "Find a guide",
+      href: "/docs/how-to",
+      description: "Create, configure, generate and review a project.",
+    },
+    {
+      title: "YAML references and placeholders",
+      href: "/docs/concepts/yaml-references",
+      description: "Values, secrets, file includes, naming patterns and escaping.",
+    },
+    {
+      title: "Find a connection",
+      href: "/docs/connectors",
+      description: "Source requirements, ingestion behaviour and complete examples.",
+    },
+    {
+      title: "Check platform support",
+      href: "/docs/reference/packs",
+      description: "What each available pack provides and which combinations work today.",
+    },
+  ]}
+/>
+
+## One workflow, different platforms and tools
+
+Definitions and standards are the centre of the project. Packs decide the target
+syntax and capabilities; tools let you edit, inspect and generate those files.
+Neither your editor nor one platform defines the whole Ingestron workflow.
+
+The current distribution includes Databricks and Azure Data Factory packs, with
+specific supported combinations. Check [platform support](/docs/reference/packs)
+before choosing a route. Browse [examples](/docs/examples) for working projects
+and [tools](/docs/tools) for available ways to use Ingestron.

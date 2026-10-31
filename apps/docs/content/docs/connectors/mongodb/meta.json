@@ -1,0 +1,12 @@
+{
+  "title": "MongoDB",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/mongodb)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

@@ -1,0 +1,150 @@
+---
+title: Configure native ADF ingestion
+description: Configure a native source, credentials, runtime and extraction in definitions, then generate its ADF resources.
+---
+
+Use the ADF pack to copy a native source into ADLS Gen2, then let the
+Databricks pack read the landing files. Connection settings, extraction options
+and shared infrastructure all come from your definitions.
+
+## Open the example
+
+[Install a tool](/docs/start/install) first. To follow the exact settings and
+filenames on this page, download the finished PostgreSQL project:
+
+<ExampleDownload name="connection-first-adf" />
+
+Extract it into an empty folder. Open the folder containing `project.yaml` in
+VS Code, or change into it in your terminal. Continue the guide there. You can
+generate it with the synthetic values before arranging live source access.
+
+To create your own project instead, run this from a parent folder:
+
+```sh
+ingestron init sales --connector postgresql --connectivity private --via adf --yes
+cd sales
+```
+
+In VS Code, choose **PostgreSQL**, **private** and the ADF route in
+**Ingestron: New project**. The route is selected automatically when it is the
+only supported one. See [Create a project](/docs/how-to/start-from-a-template)
+for the remaining questions.
+
+The new project uses default names; the download above demonstrates explicit
+resource names. Choose one working folder and keep its definitions together.
+
+This example has one standard for both packs and explicit resource names.
+The source hosts, accounts, tables and contract are synthetic. Replace them
+and adapt the contract before deployment.
+
+For another source, [browse the connector catalogue](/docs/connectors).
+
+<ExampleDownload name="adf-native-connectors" /> contains the broader comparison set; it is not
+necessary to copy all of its connectors into your project.
+
+## Change the project values
+
+Connection and platform files refer to these values. Change the server,
+database, object, landing path, Key Vault and runtime to match your setup.
+`source_password` holds a Key Vault secret reference. `resource_prefix`
+supplies the configurable prefix used by the example's ADF names.
+
+<Example name="connection-first-adf" file="project.yaml" />
+
+## Configure the shared resources
+
+<Example name="connection-first-adf" file="standard.yaml" />
+
+<Example name="connection-first-adf" file="platform.yaml" />
+
+Name an existing integration runtime and check its `runtime_kind`. This
+example uses the method's `self-hosted` default. Set `runtime_kind: azure`
+in the method settings when the connector requires Azure integration runtime. The declaration must match the
+runtime deployed in ADF; generation does not inspect Azure.
+
+The factory identity needs access to the named Key Vault secrets and landing
+storage. Microsoft 365 uses the configured application for landing storage.
+Create the infrastructure and source permissions before running the generated
+pipeline. The pack generates linked services, datasets, Copy pipelines and
+triggers; it does not provision accounts, drivers, runtime machines or consent.
+
+## Choose and configure the source
+
+Open the [connector reference](/docs/connectors/postgresql) for your source.
+Its connection table lists required fields and conditional authentication fields.
+Secrets use `${secret:name}`; put the value in Key Vault under that name.
+
+<Example name="connection-first-adf" file="connections/postgresql.yaml" />
+
+<Example name="connection-first-adf" file="flows/postgresql.yaml" />
+
+Each flow explicitly selects its ADF method. This also lets you use ADF for a
+public or workspace source when another pack supports that connector.
+The `object` selects the native table, collection, dataset or relative path.
+When adding another source, give it a separate landing folder.
+
+For native table copies, ADF writes a full selection each window. Repeated
+snapshots append repeated rows with the default downstream store; choose
+[upsert or history](/docs/how-to/keep-a-table-current) when you need current
+rows or change history. These store modes need a reliable ordering column; rows
+missing from a later snapshot do not imply deletions. SQL-family copies also support the existing watermark
+mode. Native table sources reject incremental mode rather than inventing a
+watermark strategy.
+
+Use `ingest.with.source_options` for connector-specific settings:
+
+- REST: pagination rules, request method/body, JSON collection and column paths.
+- HTTP: GET or POST download requests, with an optional POST body.
+- Snowflake and Databricks Delta: staging SAS secret and staging path.
+- Microsoft 365: date-filter declaration and column, and optional user scope.
+- Web table: table index.
+- SAP Open Hub: whether to exclude the last request.
+- Fabric Lakehouse: schema when using a schema-enabled lakehouse.
+
+Only options supported by the selected connector are accepted. An unknown
+connection or extraction setting stops generation with a diagnostic. Fixed
+settings in your standard still take precedence.
+
+## Configure names and policy
+
+The finished example names its shared resources in `platform.yaml` and its
+pipeline, trigger and Copy activity in the PostgreSQL flow. Leave those
+roles out to use the defaults. Follow [Name ADF resources](/docs/how-to/name-adf-resources)
+for settings placement, environment references, sharing rules and safe renames.
+
+For allowed methods and fixed settings across both packs, follow
+[Configure the project standard](/docs/how-to/configure-a-standard).
+
+## Generate and inspect
+
+<ToolSteps>
+<Tool name="CLI">
+
+```sh
+ingestron plan --env dev --no-diff
+ingestron apply --env dev
+```
+
+</Tool>
+<Tool name="VS Code">
+
+Select **dev** with **Ingestron: Select environment**, then run
+**Ingestron: Plan** and **Ingestron: Apply**.
+
+</Tool>
+</ToolSteps>
+
+Inspect `build/dev/adf/linkedService`, `dataset`, `pipeline` and `trigger`.
+The finished PostgreSQL example produces `pipeline/pl_sales_orders_dev.json`; its Copy
+source and linked service use PostgreSQL's native types. The Databricks files
+under `build/dev/databricks` read the corresponding landing folder. If you
+kept the new project's default names, use the pipeline filename shown by Plan.
+
+Development triggers are stopped by default. Generation validates definitions
+and builds native assets; it does not test credentials, execute queries or deploy
+the factory. Follow [ADF publishing](/docs/how-to/publish-adf) after reviewing
+the generated files and the connector's vendor prerequisites.
+
+To check a failure safely, remove a required source field and run Plan again.
+The diagnostic identifies the missing setting, and no generated files change.
+Restore the field before applying.

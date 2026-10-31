@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_azure_table_storage_azure_table_storage_records",
+	"properties": {
+		"type": "AzureTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_azure_table_storage",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"tableName": "orders"
+		}
+	}
+}

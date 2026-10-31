@@ -1,0 +1,38 @@
+---
+title: Settings
+description: Where a method's settings come from, and which one wins.
+---
+
+Each method has settings, such as the file format or the clustering. A
+setting can be written in several places. Later places win:
+
+1. the pack's default for the method;
+2. the standard's `<action>.settings.<method>`;
+3. the platform's `settings.<method>`;
+4. the `with` of the rule that chose the method, if any;
+5. the flow's or transform's `<action>.with`;
+6. the table's own `<action>.with`.
+
+The standard's `<action>.fixed.<method>` settings come last. A flow,
+transform or table that sets one to a different value is an error
+([`FIXED_SETTING`](/docs/reference/errors#FIXED_SETTING)), not silently
+overridden. When a fixed setting is a mapping, only the keys it names are
+fixed. If the standard fixes `properties: { acme: { owner: data-platform } }`,
+a flow may still add `properties: { team: { cost_centre: "123" } }`, but not
+change `acme.owner`.
+
+For a step-by-step policy example, follow
+[Configure the project standard](/docs/how-to/configure-a-standard).
+
+The following Databricks example gives every streaming table two properties and fixes
+automatic clustering:
+
+<Example name="standards-and-conventions" file="standard.yaml" />
+
+A flow could still add its own table properties, but not set
+`cluster_by: none`.
+
+Every result is checked against the method's settings, so a misspelt or
+missing setting is reported with the file and line where it was written
+([`BAD_SETTING`](/docs/reference/errors#BAD_SETTING)). Each method's
+settings and defaults are in [Reference: packs and methods](/docs/reference/packs).

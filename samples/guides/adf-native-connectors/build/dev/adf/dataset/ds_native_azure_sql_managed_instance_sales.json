@@ -1,0 +1,10 @@
+{
+	"name": "ds_native_azure_sql_managed_instance_sales",
+	"properties": {
+		"type": "AzureSqlMITable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_azure_sql_managed_instance_sales",
+			"type": "LinkedServiceReference"
+		}
+	}
+}

@@ -1,0 +1,12 @@
+{
+  "title": "Azure Cosmos DB for MongoDB",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/azure-cosmos-db-mongodb)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

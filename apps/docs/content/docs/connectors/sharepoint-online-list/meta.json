@@ -1,0 +1,12 @@
+{
+  "title": "SharePoint Online List",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/sharepoint-online-list)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

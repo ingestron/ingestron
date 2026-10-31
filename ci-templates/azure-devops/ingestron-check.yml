@@ -1,0 +1,17 @@
+# Fails the build when the committed build/ folder is not what the definitions
+# generate today. Add as a pipeline in your definitions repository.
+trigger:
+  branches:
+    include: [main]
+pr:
+  branches:
+    include: ["*"]
+pool:
+  vmImage: ubuntu-latest
+steps:
+  - checkout: self
+  - task: NodeTool@0
+    inputs:
+      versionSpec: 22.x
+  - script: npx --yes ingestron@1 check
+    displayName: ingestron check

@@ -1,0 +1,11 @@
+{
+	"name": "ds_native_sap_bw_mdx_sap_bw_mdx_records",
+	"properties": {
+		"type": "SapBwCube",
+		"linkedServiceName": {
+			"referenceName": "ls_native_sap_bw_mdx",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {}
+	}
+}

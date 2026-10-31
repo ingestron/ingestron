@@ -1,0 +1,12 @@
+{
+  "title": "MariaDB",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/mariadb)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

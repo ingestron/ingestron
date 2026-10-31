@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_odbc_odbc_records",
+	"properties": {
+		"type": "OdbcTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_odbc",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"tableName": "orders"
+		}
+	}
+}

@@ -1,0 +1,4 @@
+# A guide: a small project that shows one idea; the docs embed it.
+title: Existing tables
+summary: A transform that reads a table another team owns, with its name per environment.
+order: 7

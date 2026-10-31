@@ -1,0 +1,10 @@
+{
+	"name": "ds_erp_erp_erp",
+	"properties": {
+		"type": "SqlServerTable",
+		"linkedServiceName": {
+			"referenceName": "ls_erp_erp_erp",
+			"type": "LinkedServiceReference"
+		}
+	}
+}

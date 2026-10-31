@@ -1,0 +1,261 @@
+---
+title: VS Code
+description: Write Ingestron projects in VS Code with problems as you type, navigation, completion and previews.
+---
+
+The Ingestron extension works on any folder with a `project.yaml`. It uses the
+same definition and generation packages as the `ingestron` command. Editor
+analysis uses the open files and selected environment.
+
+## Install
+
+Follow [Install a tool](/docs/start/install) to build and install the extension
+from this checkout.
+
+Open a folder that holds an Ingestron project. The environment the extension
+uses appears in the status bar, such as `Ingestron: dev`; click it to choose
+another. VS Code remembers the choice for each project in the workspace.
+
+![The environment picker lists dev and prod.](/images/vscode/environment.png)
+
+## Get started
+
+**Help: Welcome** lists **Get started with Ingestron**: six steps from a new
+project to generated files and a request for your platform team. Each step
+is ticked when you do it, such as when the workspace has a flow, or after
+**Ingestron: Apply** runs.
+
+## Problems as you type
+
+Definition problems appear in the Problems panel at their file and line,
+while you type and before you save: a broken link, a setting
+the standard fixes, a method that cannot read a source, a name that is not
+valid. Problems are for the environment in the status bar; click it, or run
+**Ingestron: Select environment**, to choose another.
+
+Editor analysis does not read process environment variables. A definition using
+`${envvar:NAME}` can therefore pass CLI Plan but report a missing variable in the
+editor. Use project values for portable configuration; see
+[YAML environment references](/docs/concepts/yaml-references#read-an-environment-variable).
+
+A definitions file that no import in `project.yaml` matches, such as a new
+transform in `transforms/` when the project imports only `flows/*.yaml`, is
+not part of the project: nothing is generated from it. The editor warns on
+the file (`NOT_IMPORTED`), and its quick fix adds the folder to `imports`.
+
+A file in `build/` that was changed by hand gets a warning: the next apply
+reports it as a conflict.
+
+![The Problems panel lists a broken link in flows/shop.yaml: "shops" is not the id of a Connection document, with the known ids, and the value is underlined in the editor.](/images/vscode/problems.png)
+
+## Fix a problem
+
+When a problem has an obvious remedy, the light bulb beside it, or **⌘.**
+(**Ctrl+.**), offers it:
+
+- the closest id for a broken link, and the near name for a misspelt field;
+- for settings a method needs and nobody set, every one of them at once, each
+  empty in the file it belongs in: shared infrastructure in `platform.yaml`,
+  a schedule in the standard, facts about the source in the flow;
+- for a link to a contract or connection that does not exist yet, a new file
+  for it, from the same skeleton as a new file; and `standard.yaml` for a
+  project without a standard;
+- each allowed value, and a missing field with its usual value;
+- for a method that cannot read a source, each method that can: for this
+  flow, for every such source in the standard, or from a pack the standard
+  does not name yet, which adds the pack too.
+
+A fix may change several files; one undo reverts it. You choose the fix: each
+one means something different, such as one flow or the whole standard. The
+CLI prints the first fix under the problem, as `Fix: …`.
+
+![The quick fix menu on the broken link "shops" offers: Change to "shop", and Create Connection "shops".](/images/vscode/quick-fix.png)
+
+When the same problem has a fix in several places, the menu also offers
+**Fix all N … problems**, which applies each one's first fix in one change; an
+edit several of them share, such as turning on `manage.checks`, is made once.
+
+A method's setting written outside the file its method says it belongs in,
+such as a table's `properties` in a flow or `integration_runtime` in a
+standard, offers **Move … to standard.yaml** or **to platform.yaml**, with the
+cursor on its key or value. The move removes it where it was, and any `with`
+it leaves empty, and says when it replaces a value already there. It also
+names the tables the setting will then apply to, such as
+`it applies to every adf-copy table: customers, invoices`, because a value in
+the standard or platform reaches every table that uses the method.
+
+## Move between files
+
+- **Go to Definition** (F12) on a flow's `source`, a table's `contract`, a
+  transform's `inputs`, `{{ tables.orders }}` in transform code,
+  `${values.host}` or `${file:daily_sales.sql}` opens what it names.
+- **Go to References** (⇧F12) lists every use of an id.
+- **Rename Symbol** (F2) renames a connection, contract, table or value
+  everywhere it is used, and nowhere else. In a PySpark transform's code
+  file, `tables["orders"]` is renamed with the table; comments and other
+  Python files are left as they are. A name that another table or document
+  of the same kind already has is refused, with the reason.
+- **Go to Symbol in Workspace** (⌘T on macOS, Ctrl+T elsewhere) finds any
+  table, connection, contract, flow, transform or value in the workspace's
+  projects. The **Outline** lists those a file defines.
+- **Renaming or moving a file or folder** in Explorer changes each
+  `${file:…}` that points into it, so a transform still finds its code. VS
+  Code leaves the changed YAML unsaved for you to review, and one undo puts
+  the move back.
+
+## Completion
+
+Completion offers what fits where you type: fields from the document's
+schema, allowed values and examples, the ids of connections and contracts,
+table names in `inputs`, the forms a reference
+takes after `${` and value names after `${values.`, the names a naming pattern can use inside `{{ }}`, the methods
+for `uses`, and, under `with`, the settings of the method that table uses
+in the environment in the status bar, with their defaults. This works in a
+new file too, before it has ever been valid.
+
+In a transform's code, after `{{ tables.` in SQL or `tables["` in Python,
+completion offers the transform's inputs first. Other tables follow, marked
+**not an input yet**; choosing one also adds it to the transform's `inputs`.
+The transform itself, and tables that already read it, are never offered,
+as either would make a loop.
+
+Where the standard fixes a setting, completion offers the value fixed for
+that environment first, even when the standard writes it as `${values.…}`,
+marked **fixed by the standard**, and marks the others **not allowed**. If a
+definition sets a fixed value anyway, the `FIXED_SETTING` problem has a quick
+fix, **Remove this setting**, so the standard's value applies.
+
+![Under a table's store with:, completion lists the streaming table's settings, such as changes_suffix with its default _changes, cluster_by, mode and sequence_by.](/images/vscode/completion.png)
+
+It also fills in what the project already decides:
+
+- **A new, empty file** offers a document to start from: the project
+  manifest in `project.yaml`, a standard in `standard.yaml`, and the kind its
+  folder holds in `flows/`, `connections/` (one per connector, with the
+  settings it needs), `contracts/` or `transforms/`. The id comes from the file
+  name, and **Tab** moves through the parts to fill.
+- **Under a flow's `tables`**, each contract no table uses yet is offered as
+  a table, with its object and contract filled in.
+- **A table's `contract`** offers `<source>.<object>` first.
+- **A flow's `ingest.uses`** offers the methods that can read the source
+  first; the others say why they cannot.
+
+Hover a pattern under `naming` to see the names it gives in the selected
+environment.
+
+![A new, empty flows/web.yaml filled from the Flow document skeleton: id web, and the source chosen from the project's connections.](/images/vscode/new-file.png)
+
+## What each line becomes
+
+For the environment in the status bar, the editor shows beside each line what
+it resolves to:
+
+- after a flow table or a transform, the table's full name;
+- above it, the methods that build it, with how each was chosen on hover, and
+  each file generated for it, which opens that file read-only. A contract
+  object shows the same files;
+- after a value with `${…}`, the value it resolves to. Secrets and environment
+  variables are never shown.
+
+Turn these off with VS Code's `editor.inlayHints.enabled` and
+`editor.codeLens` settings.
+
+![In flows/shop.yaml, "files → streaming-table | orders.sql" above the orders table and "→ dev_sales.bronze.orders" after it; the same for customers.](/images/vscode/annotations.png)
+
+## Why is this value what it is?
+
+Hover a flow table or a transform to see its full name, the method for each
+step, and every setting with the layer that set it: the pack's default, the
+standard, the platform, a rule, the flow or transform, the table itself, or a
+setting the standard fixes, with the file and line. Hover a setting under
+`with` for that one value.
+
+Hover any field or setting to see what it is, what each allowed value means,
+its default, an example and where it is usually set; hover a value for that
+value's meaning. Each ends with a **Reference** link to its entry in these
+docs, and each problem's code in the Problems panel links to its entry in
+[Errors](/docs/reference/errors). Links open the address in the
+`ingestron.docs.url` setting; set it to a local build, such as
+`http://localhost:3000`, to read the docs offline.
+
+![Hovering the orders table shows its full name dev_sales.bronze.orders, the files method with its pack defaults, and the streaming table's settings: mode set by this table, cluster_by fixed by the standard, properties from the standard, each with file and line.](/images/vscode/hover.png)
+
+## Reference beside the editor
+
+The **Ingestron** tab in the side bar on the right, beside chat, explains what
+the cursor is on as you move it: the problems on that line with their meaning,
+fix and quick fixes; then the field or value, with each allowed value, the one
+written marked, its default, an example and where it is usually set; on the
+document's header, the document and its fields. Open it with
+**Ingestron: Show reference**, or drag the tab to another side.
+
+It shows what the installed extension knows, so it matches its packs and
+works offline; **Reference** links open the full entry in these docs.
+
+In Cursor, the tab is a **Reference** section at the bottom of the side bar
+on the left, under the Explorer.
+
+![The Ingestron tab beside standard.yaml, with the cursor on mode: incremental: mode, a setting of adf-copy, what each window copies, its values full and incremental with incremental marked, the default full, and that it is usually set in a flow or transform.](/images/vscode/reference.png)
+
+## See what will be generated
+
+- **Ingestron: Show generated files** opens what would be generated for the
+  table at the cursor, in a read-only preview, without writing anything.
+  The path above it starts with the project folder and the environment, such
+  as `retail › dev › build › …`, and it updates as you edit the definitions.
+- **Ingestron: Compare with build** shows the difference between that and the
+  file in `build/`: what the next apply changes.
+
+Plan, Apply, Check and the other commands work from a preview too. They act
+on the preview's project and on the environment it shows, even when another
+environment is selected for the project: Apply from a `dev` preview applies
+`dev`. While a preview is active, the status bar shows its environment.
+
+![Show generated files opens orders.sql read-only: the streaming table over read_files, its checks, and the AUTO CDC flow that keeps orders current.](/images/vscode/preview.png)
+
+## Ask the platform team
+
+Some features need someone who administers the data platform: grants for
+the identity pipelines run as, tag policies, shared storage and runtimes.
+**Ingestron: Prepare platform request** writes, for the environment in the
+status bar, one Markdown document to review and send: the identity, what each
+switched-on `manage` capability needs, the features the definitions use while
+their switch is off, the shared infrastructure the methods expect (secrets
+never shown) and the generated `prerequisites.sql`. Nothing is sent or saved
+until you do so.
+
+## Plan, apply and check
+
+**Ingestron: Plan**, **Ingestron: Apply** and **Ingestron: Check** run the
+command for the project and environment, after saving open files. The output
+is in the Ingestron output panel.
+
+![The Ingestron output panel after Ingestron: Plan: three files to create in build/dev, ready to apply.](/images/vscode/plan.png)
+
+## Generate on save
+
+To see the generated files change as you edit, click **Auto-apply: off** in
+the status bar, or run **Ingestron: Turn auto-apply on or off**. Turning it on
+applies the selected environment straight away. While it is on, the switch
+names that environment, such as **Auto-apply: on (dev)**, and saving a YAML,
+SQL or Python file in the project applies it again. The Ingestron output panel
+logs each run with the files it changed.
+
+It applies nothing while the definitions have problems, and nothing when a
+generated file was changed by hand: the log says so, as `apply` would. It starts
+off, and VS Code remembers the choice for each workspace.
+
+![The status bar shows Auto-apply: on. The output panel logs "applied: 1 update, 2 unchanged" and the updated file, src/shop/bronze/orders.sql.](/images/vscode/auto-apply.png)
+
+## Start a project
+
+**Ingestron: New project** asks for a source category, connection, network
+reachability and supported route, then the project name, environments,
+standard and configuration. It asks for the destination folder last. You can
+search across all sources or within a category. When the folder is outside
+the workspace, it offers to open it or add it to the workspace.
+See [Create a project from a connection](/docs/how-to/start-from-a-template).
+
+## Every command
+
+<ExtensionCommands />

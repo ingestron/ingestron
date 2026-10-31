@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_greenplum_greenplum_records",
+	"properties": {
+		"type": "GreenplumTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_greenplum",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

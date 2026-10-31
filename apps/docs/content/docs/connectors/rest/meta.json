@@ -1,0 +1,12 @@
+{
+  "title": "REST",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/rest)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

@@ -1,0 +1,6 @@
+apiVersion: example.dev/v1
+kind: Pipeline
+id: orders
+catalog: ${values.catalgo}
+job_name: orders_${bundle.target}
+query: ${file:orders.sql}

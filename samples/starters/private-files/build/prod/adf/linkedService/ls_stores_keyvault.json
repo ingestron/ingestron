@@ -1,0 +1,9 @@
+{
+	"name": "ls_stores_keyvault",
+	"properties": {
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://kv-stores-prod.vault.azure.net"
+		}
+	}
+}

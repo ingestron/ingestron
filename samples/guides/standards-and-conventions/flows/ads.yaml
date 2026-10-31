@@ -1,0 +1,6 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: ads
+source: ads
+tables:
+  campaigns: { object: campaigns, contract: marketing.campaigns }

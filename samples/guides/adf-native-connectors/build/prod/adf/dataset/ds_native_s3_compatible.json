@@ -1,0 +1,31 @@
+{
+	"name": "ds_native_s3_compatible",
+	"properties": {
+		"type": "Binary",
+		"linkedServiceName": {
+			"referenceName": "ls_native_s3_compatible",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"folder": {
+				"type": "string"
+			},
+			"root": {
+				"type": "string"
+			}
+		},
+		"typeProperties": {
+			"location": {
+				"type": "AmazonS3CompatibleLocation",
+				"bucketName": {
+					"value": "@dataset().root",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().folder",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

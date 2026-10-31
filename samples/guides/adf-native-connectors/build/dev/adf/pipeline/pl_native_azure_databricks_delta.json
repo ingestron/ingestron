@@ -1,0 +1,90 @@
+{
+	"name": "pl_native_azure_databricks_delta",
+	"properties": {
+		"parameters": {
+			"windowStart": {
+				"type": "string"
+			},
+			"windowEnd": {
+				"type": "string"
+			}
+		},
+		"activities": [
+			{
+				"name": "copy_azure_databricks_delta_records",
+				"type": "Copy",
+				"inputs": [
+					{
+						"referenceName": "ds_native_azure_databricks_delta_azure_databricks_delta_records",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_native_parquet",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": "native/azure-databricks-delta/sales.orders",
+							"file": "@{concat(formatDateTime(pipeline().parameters.windowStart, 'yyyyMMddHHmmss'), '_', pipeline().RunId, '.parquet')}"
+						}
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "AzureDatabricksDeltaLakeSource",
+						"exportSettings": {
+							"type": "AzureDatabricksDeltaLakeExportCommand"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "MergeFiles"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "ls_native_azure_databricks_delta_staging",
+							"type": "LinkedServiceReference"
+						},
+						"path": "staging/orders"
+					},
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "invoice_id"
+								},
+								"sink": {
+									"name": "invoice_id"
+								}
+							},
+							{
+								"source": {
+									"name": "amount"
+								},
+								"sink": {
+									"name": "amount"
+								}
+							},
+							{
+								"source": {
+									"name": "modified_at"
+								},
+								"sink": {
+									"name": "modified_at"
+								}
+							}
+						]
+					}
+				}
+			}
+		]
+	}
+}

@@ -1,0 +1,110 @@
+# The data-only pack every conformance case uses.
+id: test
+version: 1
+defaults:
+  naming:
+    catalog: "{{ environment }}"
+    schema: "{{ layer }}"
+    table: "{{ table }}"
+    pipeline: "{{ project }}"
+    job: "{{ project }}_refresh"
+  layers: [bronze, silver, gold]
+  types:
+    {
+      string: STRING,
+      integer: BIGINT,
+      number: DOUBLE,
+      boolean: BOOLEAN,
+      date: DATE,
+      timestamp: TIMESTAMP,
+    }
+  quality: { required: warn, default: warn }
+rules:
+  ingest:
+    default: files
+    when:
+      - { connector: sqlserver, use: managed }
+  transform: { default: sql }
+  store:
+    default: stream
+    when:
+      - { input: query, use: view }
+methods:
+  files:
+    action: ingest
+    description: Reads files where they are.
+    connectors: [files]
+    produces: files
+    defaults: { format: parquet }
+    settings:
+      type: object
+      additionalProperties: false
+      properties: { format: { enum: [parquet, csv, json] } }
+  copy:
+    action: ingest
+    description: Copies to a landing folder first.
+    connectors: [files, sqlserver]
+    produces: files
+    settings:
+      type: object
+      additionalProperties: false
+      required: [landing]
+      properties: { landing: { type: string } }
+  share:
+    action: ingest
+    description: Copies files from a share, with settings in three places.
+    connectors: [files]
+    produces: files
+    placement: { platform: [landing], standard: [every] }
+    settings:
+      type: object
+      additionalProperties: false
+      required: [landing, every, format]
+      properties:
+        landing: { type: string }
+        every: { type: string }
+        format: { enum: [csv, json] }
+  managed:
+    action: ingest
+    description: Writes tables directly.
+    connectors: [sqlserver]
+    connectivity: [public, workspace]
+    produces: table
+    settings: { type: object }
+  sql:
+    action: transform
+    description: Runs SQL.
+    accepts: [table]
+    produces: query
+    settings: { type: object, additionalProperties: false }
+  stream:
+    action: store
+    description: Streaming table.
+    accepts: [files]
+    produces: table
+    defaults: { cluster: auto, properties: { quality: raw } }
+    settings:
+      type: object
+      additionalProperties: false
+      properties:
+        cluster: { enum: [auto, none] }
+        mode: { enum: [append, upsert] }
+        properties: { type: object }
+  view:
+    action: store
+    description: Materialised view.
+    accepts: [files, table, query]
+    produces: table
+    settings:
+      type: object
+      additionalProperties: false
+      properties: { cluster: { enum: [auto, none] } }
+contract:
+  schema.*.properties.*.name: { use: used, does: The column's name. }
+  schema.*.properties.*.physicalName: { use: used, does: Renamed when read. }
+  schema.*.properties.*.unique: { use: used, does: Checked after each refresh., needs: checks }
+  schema.*.properties.*.encryptedName: { use: not-yet, reason: Columns are not decrypted yet. }
+  schema.*.properties.*.description: { use: documentation }
+  schema.*.properties.*.tags: { use: used, does: Tags the column., needs: tags }
+capabilities:
+  - { id: tags, title: Tags, does: Tags tables and columns., needs: [APPLY TAG on the tables] }

@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "files": {
+    "databricks.yml": "sha256:618dfe16578d31aaa98af65111c7d54337eb2510d362ba3e172e13e5e57223ee",
+    "resources/clickstream_events_ingestion.pipeline.yml": "sha256:aa7f2e3b1dcc2979ef45307522d6194383600bfd9f8e1b445e0ba32853f0ad45"
+  }
+}

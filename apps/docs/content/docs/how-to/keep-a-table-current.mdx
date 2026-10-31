@@ -1,0 +1,48 @@
+---
+title: Keep a table current from change records
+description: Turn files of inserts, updates and deletes into a table of current rows, or of every version.
+---
+
+This guide uses the Databricks `streaming-table` method.
+
+Use this when your source drops one row per change: a key, a column that
+orders the changes, and often an operation column.
+
+Set the store method's `mode` on the table:
+
+<Example name="change-data" file="flows/crm.yaml" />
+
+- `mode: upsert` keeps the current row per key (SCD type 1).
+- `mode: history` keeps every version, with `__START_AT` and `__END_AT`
+  columns (SCD type 2).
+- `sequence_by` names the column that orders changes. It is required.
+- `delete_when` is a SQL condition for rows that delete the key.
+- `except_columns` leaves change-only columns out of the table.
+
+The contract must mark the key with `primaryKey: true`; it becomes the
+table's key.
+
+<ToolSteps>
+<Tool name="CLI">
+
+```sh
+ingestron plan
+```
+
+</Tool>
+<Tool name="VS Code">
+
+Run **Ingestron: Plan** from the Command Palette (⇧⌘P on macOS, Ctrl+Shift+P elsewhere). The output is in the Ingestron output panel. Problems show in the Problems panel as you type, before you plan.
+
+![The Ingestron output panel after Ingestron: Plan: three files to create in build/dev, ready to apply.](/images/vscode/plan.png)
+
+</Tool>
+</ToolSteps>
+
+Each such table becomes two: `accounts_changes`, the records as received,
+and `accounts`, kept current with `AUTO CDC`:
+
+<Example name="change-data" file="build/dev/src/crm/bronze/accounts.sql" />
+
+The settings are listed under
+[`streaming-table`](/docs/reference/packs/databricks#streaming-table).

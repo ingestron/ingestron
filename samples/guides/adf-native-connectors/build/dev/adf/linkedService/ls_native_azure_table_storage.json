@@ -1,0 +1,13 @@
+{
+	"name": "ls_native_azure_table_storage",
+	"properties": {
+		"type": "AzureTableStorage",
+		"typeProperties": {
+			"serviceEndpoint": "https://source.example.test"
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

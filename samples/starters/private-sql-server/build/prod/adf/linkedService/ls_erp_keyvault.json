@@ -1,0 +1,9 @@
+{
+	"name": "ls_erp_keyvault",
+	"properties": {
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://kv-erp-prod.vault.azure.net"
+		}
+	}
+}

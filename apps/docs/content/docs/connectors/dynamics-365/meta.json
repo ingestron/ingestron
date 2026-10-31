@@ -1,0 +1,12 @@
+{
+  "title": "Dynamics 365",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/dynamics-365)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

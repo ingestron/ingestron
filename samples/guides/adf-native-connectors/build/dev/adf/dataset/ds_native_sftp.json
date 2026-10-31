@@ -1,0 +1,24 @@
+{
+	"name": "ds_native_sftp",
+	"properties": {
+		"type": "Binary",
+		"linkedServiceName": {
+			"referenceName": "ls_native_sftp",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"folder": {
+				"type": "string"
+			}
+		},
+		"typeProperties": {
+			"location": {
+				"type": "SftpLocation",
+				"folderPath": {
+					"value": "@dataset().folder",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

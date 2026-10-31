@@ -1,0 +1,12 @@
+{
+  "title": "SAP Cloud for Customer",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/sap-c4c)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

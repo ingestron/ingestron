@@ -1,0 +1,16 @@
+id: sales
+values:
+  catalog: dev_catalog
+  cluster:
+    workers: 2
+    node_type: small
+environments:
+  dev: {}
+  prod:
+    # Merged over the values above: mappings merge key by key.
+    values:
+      catalog: prod_catalog
+      cluster:
+        workers: 8
+imports:
+  - "*.pipeline.yaml"

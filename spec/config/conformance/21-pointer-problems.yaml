@@ -1,0 +1,25 @@
+description: A pointer must find a value, and pointers only apply to YAML files.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    one: ${file:shared.yaml#/missing}
+    two: ${file:query.sql#/x}
+    three: ${file:shared.yaml#no-slash}
+  shared.yaml: |
+    present: 1
+  query.sql: |
+    SELECT 1
+expect:
+  diagnostics:
+    - { code: BAD_POINTER, line: 4 }
+    - { code: BAD_POINTER, line: 5 }
+    - { code: BAD_POINTER, line: 6 }

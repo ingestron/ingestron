@@ -1,0 +1,12 @@
+{
+  "title": "SAP HANA",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/sap-hana)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

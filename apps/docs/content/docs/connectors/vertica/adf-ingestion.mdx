@@ -1,0 +1,34 @@
+---
+title: Ingestion
+description: Choose what Vertica reads, its extraction options and destination behaviour.
+---
+
+## Select the source objects
+
+The connection's `id` is the flow's `source`. Each entry under `tables` names a
+destination table and links its source `object` to a contract. The contract lists
+the columns and keys you expect. Replace the synthetic object and contract with
+yours before deploying.
+
+<Example name="adf-native-connectors" file="flows/vertica.yaml" />
+
+## Reading behaviour
+
+The copy takes a full snapshot each window. Choose the downstream store behaviour
+for repeated snapshots; this connector does not maintain an incremental watermark.
+
+## Supported extraction settings
+
+<NativeReadSettings id="vertica" />
+
+## Keep the destination current
+
+The copy selects data again for each run. The default downstream store appends
+rows, so repeated snapshots can produce repeated rows. Choose
+[upsert or history](/docs/how-to/keep-a-table-current) with a reliable ordering
+column when you need current rows or versions. A row absent from a later
+snapshot is not a deletion instruction.
+
+## Complete examples
+
+[Download projects and inspect their files](/docs/connectors/vertica/examples).

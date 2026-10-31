@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_netezza_netezza_records",
+	"properties": {
+		"type": "NetezzaTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_netezza",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

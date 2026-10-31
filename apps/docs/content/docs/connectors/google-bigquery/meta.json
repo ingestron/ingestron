@@ -1,0 +1,12 @@
+{
+  "title": "Google BigQuery",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/google-bigquery)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

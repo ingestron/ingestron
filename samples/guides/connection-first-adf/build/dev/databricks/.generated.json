@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "files": {
+    "databricks.yml": "sha256:c480b0ca4a046059a1410794cbf24725e50805a556b934a7d4cb130a681959c3",
+    "resources/sales_dev.pipeline.yml": "sha256:bb0788ae31ae63066d93ff693823d0596f51647f60289afbeae65e63e00cb609",
+    "src/sales_dev/bronze/postgresql_records.sql": "sha256:f96c87c85946026cbadc74231fea7c825ec805ab81224999b3d99f5a4b6ab817"
+  }
+}

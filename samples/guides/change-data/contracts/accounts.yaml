@@ -1,0 +1,15 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: crm.accounts
+version: 1.0.0
+status: active
+schema:
+  - name: accounts
+    logicalType: object
+    description: Customer accounts, current version only.
+    properties:
+      - { name: account_id, logicalType: string, required: true, primaryKey: true }
+      - { name: name, logicalType: string }
+      - { name: segment, logicalType: string }
+      - { name: changed_at, logicalType: timestamp, required: true }
+      - { name: operation, logicalType: string }

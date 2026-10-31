@@ -1,0 +1,23 @@
+---
+title: Connection and access
+description: Configure Files access from Databricks.
+---
+
+## What you need
+
+A folder the workspace can read: a Unity Catalog volume, such as
+`/Volumes/dev/landing/shop`, or a cloud storage URL. Each table reads a
+sub-folder named by its `object`.
+
+## Connection example
+
+<Example name="minimal" file="connections/shop.yaml" />
+
+## Connection fields
+
+<ConnectorSettings id="files" pack="databricks" sample="minimal" file="connections/shop.yaml" />
+
+## Continue to ingestion
+
+[Choose objects and reading options](/docs/connectors/files/databricks-ingestion).
+[Download the complete example](/docs/connectors/files/examples) to use its project, standard and contracts together.

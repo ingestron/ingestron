@@ -1,0 +1,38 @@
+---
+title: Azure Data Factory guides
+description: Configure native copying with the ADF pack.
+---
+
+The ADF pack handles copying to landing storage. Current project creation pairs
+it with Databricks for downstream tables; it does not offer an ADF-only route.
+See [supported combinations](/docs/reference/packs) before starting.
+
+<DocLinks
+  items={[
+    {
+      title: "Configure native ADF ingestion",
+      href: "/docs/how-to/adf-native-connectors",
+      description: "Create, configure and inspect a complete copy project.",
+    },
+    {
+      title: "Runtime and scheduling",
+      href: "/docs/how-to/adf-runtime",
+      description: "Source access, landing storage, Key Vault, windows and retries.",
+    },
+    {
+      title: "Name ADF resources",
+      href: "/docs/how-to/name-adf-resources",
+      description: "Override resource names or keep their defaults.",
+    },
+    {
+      title: "Publish ADF resources",
+      href: "/docs/how-to/publish-adf",
+      description: "Review the generated files and publish through the factory's Git workflow.",
+    },
+    {
+      title: "Find source-specific requirements",
+      href: "/docs/connectors",
+      description: "Authentication, extraction settings and examples for each source.",
+    },
+  ]}
+/>

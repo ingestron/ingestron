@@ -1,0 +1,12 @@
+{
+  "title": "Greenplum",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/greenplum)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

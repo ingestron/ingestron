@@ -1,0 +1,7 @@
+apiVersion: ingestron.io/v1
+kind: Standard
+id: iot
+packs: [databricks@1]
+quality:
+  required: drop # a row missing a required value is dropped and counted
+  default: warn # own checks only count failures unless they say otherwise

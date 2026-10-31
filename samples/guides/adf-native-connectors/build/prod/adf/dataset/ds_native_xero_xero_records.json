@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_xero_xero_records",
+	"properties": {
+		"type": "XeroObject",
+		"linkedServiceName": {
+			"referenceName": "ls_native_xero",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"table": "orders"
+		}
+	}
+}

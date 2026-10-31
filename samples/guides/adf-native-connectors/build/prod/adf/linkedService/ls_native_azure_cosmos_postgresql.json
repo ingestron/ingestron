@@ -1,0 +1,26 @@
+{
+	"name": "ls_native_azure_cosmos_postgresql",
+	"properties": {
+		"type": "AzurePostgreSql",
+		"version": "2.0",
+		"typeProperties": {
+			"authenticationType": "Basic",
+			"sslMode": 5,
+			"server": "source.example.test",
+			"database": "sales",
+			"username": "reader",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-password"
+			}
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

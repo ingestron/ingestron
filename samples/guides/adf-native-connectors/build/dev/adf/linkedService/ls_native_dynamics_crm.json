@@ -1,0 +1,25 @@
+{
+	"name": "ls_native_dynamics_crm",
+	"properties": {
+		"type": "DynamicsCrm",
+		"typeProperties": {
+			"deploymentType": "Online",
+			"authenticationType": "AADServicePrincipal",
+			"servicePrincipalCredentialType": "ServicePrincipalKey",
+			"serviceUri": "https://source.example.test",
+			"servicePrincipalId": "synthetic-client",
+			"servicePrincipalCredential": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-client-secret"
+			}
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

@@ -1,0 +1,16 @@
+pnpm-lock.yaml
+**/dist/
+**/.tmp/
+samples/*/*/build/
+apps/docs/.next/
+apps/docs/out/
+apps/docs/.source/
+apps/docs/public/downloads/
+apps/docs/next-env.d.ts
+apps/vscode/dist/
+apps/vscode/schemas/
+apps/vscode/templates/
+apps/vscode/project-templates/
+apps/vscode/.vscode-test/
+packages/config/examples/07-editor-setup/schemas/
+.release/

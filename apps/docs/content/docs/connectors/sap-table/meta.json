@@ -1,0 +1,12 @@
+{
+  "title": "SAP Table",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/sap-table)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

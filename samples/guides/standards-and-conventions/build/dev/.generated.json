@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "files": {
+    "databricks.yml": "sha256:c8b128e801763ea4de988e7f08909e80d74e4b2d16988ced87332d543dec9d61",
+    "resources/marketing_dev.pipeline.yml": "sha256:4355c1858c564efb3ec15ccf76083632523220828494149bdcccee2d756ba5df",
+    "src/marketing_dev/raw/campaigns.sql": "sha256:16c53add6dc696f8e35d94be33bd3c44ef657c1ae598215234df1d09f6c01ac9",
+    "src/marketing_dev/raw/visits.sql": "sha256:f1d3bbae2f2cd9dd4fdd2f0243b5201b74a8718d20a20b16aebae676b28a5af3"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "title": "Teradata",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/teradata)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

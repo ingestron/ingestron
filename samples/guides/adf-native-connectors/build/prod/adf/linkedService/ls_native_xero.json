@@ -1,0 +1,39 @@
+{
+	"name": "ls_native_xero",
+	"properties": {
+		"type": "Xero",
+		"version": "2.0",
+		"typeProperties": {
+			"host": "api.xero.com",
+			"clientId": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-client-id"
+			},
+			"clientSecret": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-client-secret"
+			},
+			"tenantId": "synthetic-tenant_id",
+			"refreshToken": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-refresh-token"
+			}
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

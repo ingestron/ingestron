@@ -1,0 +1,20 @@
+id: sales
+environments:
+  dev: {}
+  prod: {}
+imports:
+  - standard.yaml
+  - platform.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - contracts/*.yaml
+values:
+  source_server: source.example.test
+  source_database: sales
+  source_user: reader
+  source_password: ${secret:source-password}
+  postgresql_records_object: sales.orders
+  landing: abfss://landing@syntheticlake.dfs.core.windows.net/native/postgresql
+  key_vault: https://synthetic-vault.vault.azure.net
+  integration_runtime: synthetic-self-hosted-runtime
+  resource_prefix: sales

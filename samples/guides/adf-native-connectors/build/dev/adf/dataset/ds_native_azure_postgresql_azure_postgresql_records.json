@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_azure_postgresql_azure_postgresql_records",
+	"properties": {
+		"type": "AzurePostgreSqlTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_azure_postgresql",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

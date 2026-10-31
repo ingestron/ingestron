@@ -1,0 +1,25 @@
+{
+	"name": "ls_native_ftp",
+	"properties": {
+		"type": "FtpServer",
+		"typeProperties": {
+			"authenticationType": "Basic",
+			"enableSsl": true,
+			"enableServerCertificateValidation": true,
+			"host": "source.example.test",
+			"userName": "reader",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-password"
+			}
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

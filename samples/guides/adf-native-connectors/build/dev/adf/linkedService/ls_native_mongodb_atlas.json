@@ -1,0 +1,21 @@
+{
+	"name": "ls_native_mongodb_atlas",
+	"properties": {
+		"type": "MongoDbAtlas",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-connection-string"
+			},
+			"database": "sales"
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

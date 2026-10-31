@@ -1,0 +1,47 @@
+---
+title: Use a downloaded example
+description: Adapt a complete sample project, generate its files and inspect the result.
+---
+
+Download the project ZIP from a connector's **Examples** page and extract it into
+an empty folder. Code blocks on that page name the project and relative path of
+the file being shown. The archive contains the same sample definitions, their
+contracts and generated output.
+
+A multi-connector project demonstrates several sources together. To build a
+project containing only one connection, use [Create a project](/docs/how-to/start-from-a-template).
+
+You can generate the unchanged synthetic example locally without source access.
+To use it with your own data, make the following changes before deployment.
+
+## Adapt the definitions
+
+Open the extracted folder containing `project.yaml`. If needed,
+[install Ingestron](/docs/start/install) first.
+
+1. Inspect the connections and replace synthetic endpoints, account names and
+   secret references. Arrange the required source credentials and platform
+   permissions before deployment; local generation does not need them.
+2. Set the source objects in the flows. Adapt each contract to the columns and
+   keys of that object. Check the connector's ingestion page for reading options.
+3. Review the project's environment values, platform and standard. Configure
+   [shared defaults and fixed settings](/docs/how-to/configure-a-standard),
+   [ADF infrastructure](/docs/how-to/adf-runtime) when used, and resource names
+   before generating. Do not put secret values in the YAML.
+
+## Generate and inspect
+
+From the extracted project folder, follow [Plan, generate and review](/docs/how-to/plan-and-generate)
+using the CLI or VS Code. Select `dev` for these examples. An unchanged download
+already contains its generated output, so Plan should report no changes.
+
+Plan shows the output locations and proposed changes. Apply writes generated
+files there. Inspect the source objects, credential references, landing paths
+and destination names in those files. Generation validates definitions; it does
+not connect to the source or deploy the result.
+
+For ADF, inspect the linked services, datasets, pipelines and triggers using
+[Generate and inspect ADF](/docs/how-to/adf-native-connectors#generate-and-inspect).
+For Databricks, inspect the generated bundle and its resources before
+[deployment](/docs/how-to/deploy-the-bundle). The packs write separate output
+folders when the project uses both platforms.

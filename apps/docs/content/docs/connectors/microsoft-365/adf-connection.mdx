@@ -1,0 +1,43 @@
+---
+title: Connection and access
+description: Configure Microsoft 365 credentials and network access for Azure Data Factory.
+---
+
+## Prepare access
+
+Use an **Azure integration runtime**: set `runtime_kind: azure` and name that
+runtime in `integration_runtime`. Microsoft 365 uses the configured application's
+credentials to write JSON landing files. Grant that application access to landing
+storage, and complete Microsoft Graph Data Connect consent and dataset permissions.
+The factory needs access to the Key Vault secrets used by the linked services.
+
+The connection does not provision an application, grant consent or create the
+runtime. Check [runtime and scheduling](/docs/how-to/adf-runtime), then the
+[dataset and date-filter choices](/docs/connectors/microsoft-365/adf-ingestion).
+
+[Read the Microsoft 365 vendor prerequisites](https://learn.microsoft.com/en-us/azure/data-factory/connector-office-365).
+
+## Configure the connection
+
+The example uses synthetic values. Replace the endpoint and account details with
+your source's values. A secret reference such as `${secret:source-password}`
+names a secret; it never contains the password itself. `id` is the name a flow
+uses in `source`, and `connector` selects the source type.
+
+<Example name="adf-native-connectors" file="connections/microsoft-365.yaml" />
+
+## Connection fields
+
+<ConnectorSettings
+  id="microsoft-365"
+  pack="adf"
+  sample="adf-native-connectors"
+  file="connections/microsoft-365.yaml"
+/>
+
+## Continue to ingestion
+
+[Choose the objects and reading options](/docs/connectors/microsoft-365/adf-ingestion), then
+[configure runtime and scheduling](/docs/how-to/adf-runtime).
+
+[Download the complete projects and see their files](/docs/connectors/microsoft-365/examples).

@@ -1,0 +1,33 @@
+{
+	"name": "ds_native_parquet",
+	"properties": {
+		"type": "Parquet",
+		"linkedServiceName": {
+			"referenceName": "ls_native_lake",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"folder": {
+				"type": "string"
+			},
+			"file": {
+				"type": "string"
+			}
+		},
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileSystem": "landing",
+				"folderPath": {
+					"value": "@dataset().folder",
+					"type": "Expression"
+				},
+				"fileName": {
+					"value": "@dataset().file",
+					"type": "Expression"
+				}
+			},
+			"compressionCodec": "snappy"
+		}
+	}
+}

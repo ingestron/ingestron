@@ -1,0 +1,47 @@
+description: Output syntax passes through. Only text starting with ${ needs the $${ escape.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  orders.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: orders
+    bundle_job: "orders_$${bundle.target}"
+    bundle_cluster: "$${var.cluster_id}"
+    bundle_resource: "$${resources.jobs.orders.id}"
+    spark_sql: "SELECT * FROM t WHERE d = '$${run_date}' AND x = $${hiveconf:x}"
+    github: "$${{ github.ref == 'refs/heads/main' }}"
+    bicep: "'$${storageName}-logs'"
+    jinja: "{{ run_date }} {% if x %}y{% endif %}"
+    adf: "@{pipeline().parameters.table} @concat('a', 'b')"
+    azure_pipelines: "$(Build.SourceBranch)"
+    terraform_directive: "%{ if x }y%{ endif }"
+    json_schema: { $ref: "#/$defs/order", $defs: { order: { type: object } } }
+    dollars: "costs $5, $$10 and ends with $"
+    literal_escape: "$$${not_a_reference}"
+expect:
+  documents:
+    - kind: Pipeline
+      id: orders
+      value:
+        apiVersion: example.dev/v1
+        kind: Pipeline
+        id: orders
+        bundle_job: "orders_${bundle.target}"
+        bundle_cluster: "${var.cluster_id}"
+        bundle_resource: "${resources.jobs.orders.id}"
+        spark_sql: "SELECT * FROM t WHERE d = '${run_date}' AND x = ${hiveconf:x}"
+        github: "${{ github.ref == 'refs/heads/main' }}"
+        bicep: "'${storageName}-logs'"
+        jinja: "{{ run_date }} {% if x %}y{% endif %}"
+        adf: "@{pipeline().parameters.table} @concat('a', 'b')"
+        azure_pipelines: "$(Build.SourceBranch)"
+        terraform_directive: "%{ if x }y%{ endif }"
+        json_schema: { $ref: "#/$defs/order", $defs: { order: { type: object } } }
+        dollars: "costs $5, $$10 and ends with $"
+        literal_escape: "$${not_a_reference}"

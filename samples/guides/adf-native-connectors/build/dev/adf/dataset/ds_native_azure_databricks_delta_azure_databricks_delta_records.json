@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_azure_databricks_delta_azure_databricks_delta_records",
+	"properties": {
+		"type": "AzureDatabricksDeltaLakeDataset",
+		"linkedServiceName": {
+			"referenceName": "ls_native_azure_databricks_delta",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"database": "sales",
+			"table": "orders"
+		}
+	}
+}

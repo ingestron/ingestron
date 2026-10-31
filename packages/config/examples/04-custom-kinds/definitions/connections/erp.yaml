@@ -1,0 +1,7 @@
+apiVersion: example.dev/v1
+kind: Connection
+id: erp
+host: erp.internal.example
+port: 1433
+# A secret is passed on as a reference; it is never read at load time.
+password: ${secret:sales/erp-password}

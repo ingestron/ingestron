@@ -1,0 +1,5 @@
+apiVersion: ingestron.io/v1
+kind: Standard
+id: defaults
+packs:
+  - databricks@1

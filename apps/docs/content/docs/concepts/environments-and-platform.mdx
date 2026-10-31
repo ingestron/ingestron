@@ -1,0 +1,54 @@
+---
+title: Environments and platform configuration
+description: Reuse one project's definitions with different values and shared infrastructure settings.
+---
+
+An environment selects a set of values for the same project. Use it for contexts
+such as `dev`, `test` and `prod`; it does not select a different tool or create
+cloud infrastructure. Plan and generate each environment separately or together.
+
+## Values that differ
+
+Put shared values in `project.yaml` and override only the values that differ
+under each environment. Mappings merge by key; scalar values and lists replace
+the earlier value.
+
+<Example name="environments" file="project.yaml" />
+
+This concrete example uses Databricks workspace and storage values. The same
+value mechanism also works for connector endpoints, landing paths and names
+used by other methods.
+
+Read the selected values with `${values.…}` and the environment name with
+`${environment.name}`. The [YAML syntax guide](/docs/concepts/yaml-references)
+explains types, references and file includes.
+
+## Shared platform configuration
+
+The optional `Platform` document holds shared operational and infrastructure
+configuration. Use `settings.<method>` for method-specific infrastructure;
+put access settings in the Connection and table-specific reading choices in
+the Flow. The [settings precedence](/docs/concepts/settings) determines overrides.
+
+<Example name="connection-first-adf" file="platform.yaml" />
+
+This example supplies landing storage, Key Vault, runtime and resource names for
+an ADF method. A project still has one Platform document when it uses several
+packs. The method reference says which fields it consumes and what must already
+exist before deployment.
+
+Workspace, compute, identity, scheduling and `manage` fields have specific
+meanings in the current platform model. Do not assume a field applies to every
+provider. See [Databricks platform configuration](/docs/reference/packs/databricks#platform-configuration)
+and [ADF runtime and scheduling](/docs/how-to/adf-runtime) for their effects.
+
+## Separate generated output
+
+The default output is `build/<environment>/`. With several packs, each pack
+gets its own subfolder. Values are resolved before generation, but packs may
+emit secret references, expressions or parameters intended for their platform's
+runtime. Generation does not fetch secrets or test the deployed infrastructure.
+
+Use [Add an environment](/docs/how-to/add-an-environment) to create another context,
+and compare the resolved choices before deployment. [Generated files](/docs/concepts/generated-files)
+explains how Ingestron protects each output folder.

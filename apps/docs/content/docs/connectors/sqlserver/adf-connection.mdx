@@ -1,0 +1,67 @@
+---
+title: Connection and access
+description: Configure SQL Server credentials and network access for Azure Data Factory.
+---
+
+## Prepare access
+
+Give the integration runtime network access to SQL Server and a source account
+that can read the selected tables. For a server on a private network, use a
+self-hosted runtime on a machine with access to that network. The name in
+`integration_runtime` must identify a runtime already deployed in ADF.
+
+Store the login password in Key Vault. The factory's managed identity needs
+permission to read that secret and write to ADLS Gen2 landing storage.
+Generation creates linked services, datasets, pipelines and triggers; it does
+not create the server account, runtime host, Key Vault or storage permissions.
+
+[Read the SQL Server vendor prerequisites](https://learn.microsoft.com/en-us/azure/data-factory/connector-sql-server).
+
+## Configure the connection
+
+The example uses synthetic values. Replace the endpoint and account details with
+your source's values. A secret reference such as `${secret:source-password}`
+names a secret; it never contains the password itself. `id` is the name a flow
+uses in `source`, and `connector` selects the source type.
+
+<Example name="adf-native-connectors" file="connections/sqlserver.yaml" />
+
+## Choose authentication
+
+**SQL authentication** is the default. Set `user` to the SQL login and `password`
+to the name of its Key Vault secret. You can leave `authentication` out, as the
+example does, or set it to `SQL` explicitly.
+
+**Windows authentication** uses a Windows account. Set `authentication` to
+`Windows`, `user` to the domain account, and `password` to its Key Vault secret.
+Set `runtime_kind` to `self-hosted` in the platform's `settings.adf-copy`.
+The runtime must be able to reach the domain and SQL Server.
+
+These are the authentication choices supported for the Ingestron `sqlserver`
+connector. Azure SQL has separate connector pages with different choices.
+
+## Encryption and certificates
+
+`encrypt` belongs to the method settings, not the connection's `settings`.
+The default is `mandatory`. The pack keeps certificate validation enabled.
+When the certificate identifies a different host name from the endpoint you use,
+set the connection's `host_name_in_certificate` to the expected certificate name.
+This does not disable validation or make an untrusted certificate trusted.
+
+<SettingsSections pack="adf" method="adf-copy" include={["encrypt"]} />
+
+## Connection fields
+
+<ConnectorSettings
+  id="sqlserver"
+  pack="adf"
+  sample="adf-native-connectors"
+  file="connections/sqlserver.yaml"
+/>
+
+## Continue to ingestion
+
+[Choose the objects and reading options](/docs/connectors/sqlserver/adf-ingestion), then
+[configure runtime and scheduling](/docs/how-to/adf-runtime).
+
+[Download the complete projects and see their files](/docs/connectors/sqlserver/examples).

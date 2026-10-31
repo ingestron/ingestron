@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_shopify_shopify_records",
+	"properties": {
+		"type": "ShopifyObject",
+		"linkedServiceName": {
+			"referenceName": "ls_native_shopify",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"tableName": "orders"
+		}
+	}
+}

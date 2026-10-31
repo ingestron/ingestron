@@ -1,0 +1,22 @@
+{
+	"name": "ls_native_oracle_cloud_storage",
+	"properties": {
+		"type": "OracleCloudStorage",
+		"typeProperties": {
+			"accessKeyId": "synthetic-access_key",
+			"secretAccessKey": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-secret-key"
+			},
+			"serviceUrl": "https://source.example.test"
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

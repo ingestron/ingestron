@@ -1,0 +1,82 @@
+---
+title: Configure the project standard
+description: Select capabilities, set defaults and protect organisation policy in one standard.
+---
+
+Use one Standard document for a project. It selects packs, chooses or limits
+methods and defines shared defaults and fixed policy. It can cover one platform
+or several compatible packs; you do not merge a separate standard per provider.
+
+## 1. Select compatible capabilities
+
+Check the [pack catalogue](/docs/reference/packs) and the connection's supported
+methods. Include the packs required for the actions you need. `allowed` limits
+methods; `settings` supplies defaults; `fixed` protects values against local
+changes. Method settings stay under their method IDs.
+
+During creation you can use the supplied standard, a local file or a Git URL.
+The standard is copied into the project; changes to the original are not
+synchronised automatically. Creation checks every requested environment before
+writing. For an existing project, edit its standard and plan the result.
+
+<ToolSteps>
+<Tool name="CLI">
+
+Pass `--standard ../platform/standard.yaml` when creating the project. Relative
+paths are resolved from your current shell directory. For a concrete ADF route:
+
+```sh
+ingestron init sales --connector postgresql --connectivity private --via adf \
+  --standard ../platform/standard.yaml --yes
+```
+
+</Tool>
+<Tool name="VS Code">
+
+Enter the path in **Standard for this project**. Relative paths are resolved from
+the destination folder selected later; use an absolute path for a standard
+outside that folder.
+
+</Tool>
+</ToolSteps>
+
+## 2. Inspect a complete policy
+
+This example deliberately combines ADF ingestion with Databricks storage. Other
+projects should select their own supported methods, rather than copy every choice.
+
+<ExampleDownload name="connection-first-adf" />
+
+<Example name="connection-first-adf" file="standard.yaml" />
+
+`ingest.allowed` permits the selected copy method; `ingest.settings.adf-table`
+supplies its schedule. `store.allowed` and `store.fixed.streaming-table` control
+the downstream table. `naming` controls its Databricks names; ADF methods use
+[resource names](/docs/how-to/name-adf-resources) instead.
+
+## 3. Put settings with their owner
+
+| Responsibility                  | Definition location                            |
+| ------------------------------- | ---------------------------------------------- |
+| Shared policy and defaults      | Standard, under the relevant action and method |
+| Shared infrastructure           | Platform, under `settings.<method>`            |
+| Source access                   | Connection `settings`                          |
+| Extraction choices              | Flow `ingest.with`                             |
+| One table's overrides           | The table's `ingest.with` or `store.with`      |
+| Reusable and environment values | Project `values` and environment overrides     |
+
+The [YAML reference syntax](/docs/concepts/yaml-references) connects reusable
+values to these settings. The method reference identifies required fields and
+their intended location. Configuring one method does not configure another.
+
+## 4. Check the resolved result
+
+[Plan the project](/docs/how-to/plan-and-generate) before generating. The
+[settings concept](/docs/concepts/settings) explains the full precedence order.
+A definition that changes a fixed setting reports `FIXED_SETTING`; it cannot
+opt out of policy.
+
+In the downloaded example, set `cluster_by` to `none` under the PostgreSQL table's
+`store.with` in `flows/postgresql.yaml`. Plan reports that policy fixes it to
+`auto`. Remove that override and plan again. The valid project produces ADF
+resources under `build/dev/adf/` and a bundle under `build/dev/databricks/`.

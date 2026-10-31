@@ -1,0 +1,26 @@
+{
+	"name": "ls_native_sqlserver_sales",
+	"properties": {
+		"type": "SqlServer",
+		"typeProperties": {
+			"server": "source.example.test",
+			"database": "sales",
+			"encrypt": "mandatory",
+			"trustServerCertificate": false,
+			"authenticationType": "SQL",
+			"userName": "reader",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-password"
+			}
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

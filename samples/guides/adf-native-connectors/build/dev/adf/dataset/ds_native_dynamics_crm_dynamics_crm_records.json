@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_dynamics_crm_dynamics_crm_records",
+	"properties": {
+		"type": "DynamicsCrmEntity",
+		"linkedServiceName": {
+			"referenceName": "ls_native_dynamics_crm",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"entityName": "orders"
+		}
+	}
+}

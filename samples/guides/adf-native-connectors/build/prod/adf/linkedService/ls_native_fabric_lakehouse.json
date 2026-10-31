@@ -1,0 +1,15 @@
+{
+	"name": "ls_native_fabric_lakehouse",
+	"properties": {
+		"type": "Lakehouse",
+		"typeProperties": {
+			"authenticationType": "SystemAssignedManagedIdentity",
+			"workspaceId": "synthetic-workspace_id",
+			"artifactId": "synthetic-artifact_id"
+		},
+		"connectVia": {
+			"referenceName": "synthetic-azure-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

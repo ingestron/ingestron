@@ -1,0 +1,15 @@
+{
+  "pages": [
+    "index",
+    "---Learn Ingestron---",
+    "start",
+    "concepts",
+    "how-to",
+    "---Find details---",
+    "connectors",
+    "examples",
+    "reference",
+    "tools",
+    "troubleshooting"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "name": "@ingestron/pack-databricks",
+  "version": "0.1.0",
+  "description": "Databricks methods for Ingestron: generates a bundle with a Lakeflow Spark Declarative Pipeline.",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "files": [
+    "dist",
+    "templates",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./sql": {
+      "types": "./dist/sql.d.ts",
+      "import": "./dist/sql.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "pnpm build && tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "check:examples": "tsx scripts/check-examples.ts",
+    "check:docs": "tsx scripts/check-docs.ts",
+    "validate": "pnpm lint && pnpm typecheck && pnpm test && pnpm check:examples && pnpm check:docs"
+  },
+  "devDependencies": {
+    "@ingestron/config": "workspace:*",
+    "@types/node": "22.20.5",
+    "ajv": "8.20.0",
+    "eslint": "10.13.0",
+    "eslint-plugin-jsdoc": "65.4.2",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.0",
+    "vitest": "5.0.5"
+  },
+  "dependencies": {
+    "@ingestron/definitions": "workspace:*",
+    "liquidjs": "10.30.0",
+    "yaml": "2.9.1"
+  }
+}

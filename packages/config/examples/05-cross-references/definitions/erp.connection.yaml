@@ -1,0 +1,4 @@
+apiVersion: example.dev/v1
+kind: Connection
+id: erp
+host: erp.internal.example

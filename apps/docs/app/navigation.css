@@ -1,0 +1,50 @@
+/* One compact directory pattern for the home page and every navigation landing. */
+.doc-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 0.6rem;
+  margin-block: 1rem;
+}
+.prose .doc-links a {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 0.5rem;
+  text-decoration: none;
+  min-width: 0;
+}
+.doc-links a:hover {
+  background: var(--color-fd-muted);
+  border-color: var(--color-fd-primary);
+}
+.doc-links a > span {
+  color: var(--color-fd-muted-foreground);
+  font-size: 0.9rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.doc-links strong {
+  font-size: 0.95rem;
+}
+.doc-links strong span {
+  color: var(--color-fd-primary);
+}
+
+.docs-shortcuts {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+}
+.docs-shortcuts a {
+  padding: 0.3rem 0.45rem;
+  border-radius: 0.3rem;
+  background: var(--color-fd-muted);
+  color: var(--color-fd-foreground);
+}
+.docs-shortcuts a:hover {
+  color: var(--color-fd-primary);
+  text-decoration: underline;
+}

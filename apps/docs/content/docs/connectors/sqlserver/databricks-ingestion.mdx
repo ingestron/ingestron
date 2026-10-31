@@ -1,0 +1,40 @@
+---
+title: Ingestion
+description: Choose SQL Server objects and table behaviour in Databricks.
+---
+
+## Select the source objects
+
+The flow's `source` names the connection. Each table links an `object` to its
+contract; the contract describes the source columns and keys.
+
+<Example name="sql-server" file="flows/erp.yaml" />
+
+## What you get
+
+An **ingestion gateway** that captures changes, and an **ingestion
+pipeline** that writes the tables. With a schedule, the refresh job runs the
+ingestion first and then your own pipeline, so transforms see fresh data.
+
+## Choices
+
+- `mode`: `upsert` keeps the current row per key (SCD type 1), `history`
+  keeps every version (SCD type 2), `append` adds every change.
+- `columns`: `contract` takes only the contract's columns; `all` takes every
+  source column.
+- `gateway_policy_id` and `staging_schema` belong to the gateway, which all
+  tables of one connection share, so they must be the same for all of them.
+
+<SettingsSections pack="databricks" method="lakeflow-connect" connector="sqlserver" />
+
+## Good to know
+
+- The gateway runs continuously, on classic compute, in every environment it
+  is deployed to, and costs compute while it runs. Deploy database
+  connections only to the environments that need them.
+- Lakeflow Connect writes the table itself, so a flow cannot add checks to
+  it. Put checks on a transform that reads the table.
+
+## Complete examples
+
+[Download projects and inspect their files](/docs/connectors/sqlserver/examples).

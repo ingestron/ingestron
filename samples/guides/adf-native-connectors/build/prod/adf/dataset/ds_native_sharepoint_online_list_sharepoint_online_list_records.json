@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_sharepoint_online_list_sharepoint_online_list_records",
+	"properties": {
+		"type": "SharePointOnlineLResource",
+		"linkedServiceName": {
+			"referenceName": "ls_native_sharepoint_online_list",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"listName": "orders"
+		}
+	}
+}

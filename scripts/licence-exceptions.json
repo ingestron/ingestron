@@ -1,0 +1,7 @@
+[
+  {
+    "name": "@img/sharp-libvips-*",
+    "licence": "LGPL-3.0-or-later",
+    "reason": "LGPL-3.0 native image library loaded dynamically by Next.js (via sharp) in the private docs site build; it is not part of any Ingestron package."
+  }
+]

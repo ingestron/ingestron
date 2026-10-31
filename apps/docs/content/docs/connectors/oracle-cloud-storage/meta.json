@@ -1,0 +1,12 @@
+{
+  "title": "Oracle Cloud Storage",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/oracle-cloud-storage)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

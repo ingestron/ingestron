@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "files": {
+    "databricks.yml": "sha256:2c789516e1ea28295242df57ba271a38ecce72ab5edefd65d9bd87951cb0a22f",
+    "resources/shop.pipeline.yml": "sha256:2c7f8ec231ea7dc31acd20afb8b035fb1e549bb55aeecba373b91467e4952adb",
+    "src/shop/bronze/orders.sql": "sha256:e88ca67e1c8a0ac67b4dc52cfc12e85b2bf97ef6f74e8fb026072759eac79611"
+  }
+}

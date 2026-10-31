@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_mysql_mysql_records",
+	"properties": {
+		"type": "MySqlTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_mysql",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"tableName": "orders"
+		}
+	}
+}

@@ -1,0 +1,12 @@
+{
+  "title": "Hive",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/hive)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

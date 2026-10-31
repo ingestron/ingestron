@@ -1,0 +1,13 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: erp.customer_balances
+version: 1.0.0
+status: active
+schema:
+  - name: customer_balances
+    logicalType: object
+    description: Open balance per customer.
+    properties:
+      - { name: customer_id, logicalType: integer, required: true, primaryKey: true }
+      - { name: name, logicalType: string }
+      - { name: balance, logicalType: number, physicalType: "DECIMAL(18,2)" }

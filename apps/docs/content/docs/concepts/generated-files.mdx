@@ -1,0 +1,43 @@
+---
+title: Generated files
+description: Where Ingestron writes, how it protects your edits, and how to check output in CI.
+---
+
+Ingestron writes one folder per environment, `build/<environment>/` by
+default. When a standard uses several packs, each pack gets its own folder
+inside it, such as `build/dev/databricks/` and `build/dev/adf/`.
+
+Generated SQL, Python and YAML files start with a comment saying where they
+came from and not to edit them. JSON files, such as the Azure Data Factory
+resources, cannot hold comments. Each folder also holds `.generated.json`,
+which records every generated file, whatever its format. With it Ingestron
+knows:
+
+- which files it may update, and which it should delete when a table goes
+  away;
+- which files were changed by hand since: these are reported as a
+  **conflict** and never overwritten. Move the change into the definitions,
+  or delete the file to generate it again.
+
+Commit the `build/` folder with your definitions, so reviewers see what
+changes on the platform. In CI, `ingestron check` fails when the committed
+output is not what the definitions generate today, when an output folder
+holds a file that was not generated, or when a folder generated before is no
+longer generated. It writes nothing.
+
+`ingestron plan` shows the changes before `ingestron apply` writes them;
+see [Reference: CLI](/docs/reference/cli).
+
+## When apply stops part-way
+
+`ingestron apply` writes one output folder at a time. A folder with a
+conflict is left as it was, while the others are still written, and the
+command ends with a line such as
+`Applied: dev. Not applied: prod.` and exits with `1`.
+
+If writing a file fails, Ingestron puts back the files it already changed in
+that folder and says `Nothing was changed.` If it cannot put one back, or
+the process is stopped part-way, it says `Some files could not be put back.`
+or leaves `.generated.lock` behind. The folder may then hold a mix of old and
+new files: restore `build/` from version control, delete the lock, and run
+`ingestron apply` again.

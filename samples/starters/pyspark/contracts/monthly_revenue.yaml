@@ -1,0 +1,14 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: billing.monthly_revenue
+version: 1.0.0
+status: active
+schema:
+  - name: monthly_revenue
+    logicalType: object
+    description: Paid revenue and customers per month and plan.
+    properties:
+      - { name: month, logicalType: timestamp, required: true }
+      - { name: plan, logicalType: string }
+      - { name: revenue, logicalType: number, physicalType: "DECIMAL(18,2)" }
+      - { name: customers, logicalType: integer }

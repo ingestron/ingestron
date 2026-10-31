@@ -1,0 +1,9 @@
+dist/
+.vscode-test/
+schemas/
+templates/
+project-templates/
+*.vsix
+LICENSE
+NOTICE
+THIRD_PARTY_NOTICES

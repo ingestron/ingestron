@@ -1,0 +1,6 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: payroll
+source: payroll
+tables:
+  employees: { object: employees, contract: hr.employees }

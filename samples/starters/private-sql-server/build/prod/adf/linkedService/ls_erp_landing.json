@@ -1,0 +1,9 @@
+{
+	"name": "ls_erp_landing",
+	"properties": {
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://erplakeprod.dfs.core.windows.net"
+		}
+	}
+}

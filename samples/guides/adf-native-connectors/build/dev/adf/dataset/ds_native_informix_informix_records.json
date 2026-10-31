@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_informix_informix_records",
+	"properties": {
+		"type": "InformixTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_informix",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"tableName": "orders"
+		}
+	}
+}

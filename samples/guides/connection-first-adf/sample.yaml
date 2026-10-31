@@ -1,0 +1,3 @@
+title: Connection-first ADF project
+summary: One PostgreSQL connection, two packs, one standard and configurable ADF names.
+order: 12

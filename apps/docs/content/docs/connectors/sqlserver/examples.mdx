@@ -1,0 +1,50 @@
+---
+title: Examples
+description: Download complete SQL Server projects and inspect their definition files.
+---
+
+## Download a project
+
+These projects use synthetic values. Choose a download for your route, then
+[adapt and generate it](/docs/how-to/use-an-example). Multi-connector projects
+contain other sources too; use [Create a project](/docs/how-to/start-from-a-template)
+when you want to start with only this connection.
+
+<ExamplesList connector="sqlserver" />
+
+The previews below show files from these archives. Each code block names its
+project and relative file path; the ZIP also includes the supporting definitions.
+
+## Azure Data Factory definitions
+
+Read [connection and access](/docs/connectors/sqlserver/adf-connection) for credentials
+and prerequisites, and [ingestion](/docs/connectors/sqlserver/adf-ingestion) for how
+the selected objects are read. Replace source objects and contracts with yours.
+
+<Example name="adf-native-connectors" file="connections/sqlserver.yaml" />
+
+<Example name="adf-native-connectors" file="flows/sqlserver.yaml" />
+
+## Example with different table watermarks
+
+The standard reads changed rows once an hour using `modified_at`. Customers
+inherit that default. Invoices override the watermark with `updated_at` in the
+flow and set the store's ordering column to match. The same hourly trigger serves
+both tables.
+
+Use the **source column name** for `watermark_column`. A contract's `physicalName`
+can rename a selected column, but it does not rewrite the watermark filter.
+
+<Example name="private-sql-server" file="standard.yaml" />
+
+<Example name="private-sql-server" file="flows/erp.yaml" />
+
+## Databricks definitions
+
+Read [connection and access](/docs/connectors/sqlserver/databricks-connection) for credentials
+and prerequisites, and [ingestion](/docs/connectors/sqlserver/databricks-ingestion) for how
+the selected objects are read. Replace source objects and contracts with yours.
+
+<Example name="sql-server" file="connections/erp.yaml" />
+
+<Example name="sql-server" file="flows/erp.yaml" />

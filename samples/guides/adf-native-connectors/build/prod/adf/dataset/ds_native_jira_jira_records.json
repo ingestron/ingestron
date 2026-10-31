@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_jira_jira_records",
+	"properties": {
+		"type": "JiraObject",
+		"linkedServiceName": {
+			"referenceName": "ls_native_jira",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

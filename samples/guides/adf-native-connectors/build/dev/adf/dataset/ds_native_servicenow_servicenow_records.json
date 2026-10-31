@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_servicenow_servicenow_records",
+	"properties": {
+		"type": "ServiceNowV2Object",
+		"linkedServiceName": {
+			"referenceName": "ls_native_servicenow",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"tableName": "orders"
+		}
+	}
+}

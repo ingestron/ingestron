@@ -1,0 +1,6 @@
+{
+  "yaml.schemas": {
+    "./schemas/project.editor.json": "definitions/project.yaml",
+    "./schemas/pipeline.editor.json": "definitions/*.pipeline.yaml"
+  }
+}

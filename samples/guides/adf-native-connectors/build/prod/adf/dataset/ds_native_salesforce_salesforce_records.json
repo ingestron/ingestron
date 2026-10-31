@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_salesforce_salesforce_records",
+	"properties": {
+		"type": "SalesforceV2Object",
+		"linkedServiceName": {
+			"referenceName": "ls_native_salesforce",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"objectApiName": "Account"
+		}
+	}
+}

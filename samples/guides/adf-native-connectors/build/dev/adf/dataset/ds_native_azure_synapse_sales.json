@@ -1,0 +1,10 @@
+{
+	"name": "ds_native_azure_synapse_sales",
+	"properties": {
+		"type": "AzureSqlDWTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_azure_synapse_sales",
+			"type": "LinkedServiceReference"
+		}
+	}
+}

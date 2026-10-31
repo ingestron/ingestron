@@ -1,0 +1,4 @@
+id: sales
+name: Sales data
+imports:
+  - "*.pipeline.yaml"

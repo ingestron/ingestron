@@ -1,0 +1,6 @@
+apiVersion: ingestron.io/v1
+kind: Standard
+id: finance
+packs: [databricks@1]
+naming:
+  catalog: finance_{{ environment }}

@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_sybase_sybase_records",
+	"properties": {
+		"type": "SybaseTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_sybase",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"tableName": "orders"
+		}
+	}
+}

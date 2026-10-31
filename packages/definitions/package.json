@@ -1,0 +1,46 @@
+{
+  "name": "@ingestron/definitions",
+  "version": "0.1.0",
+  "description": "Ingestron definitions: schemas, loading, and resolving standards into a model packs can build from.",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "files": [
+    "dist",
+    "schemas",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "pnpm build && tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "check:examples": "tsx scripts/check-examples.ts",
+    "check:docs": "tsx scripts/check-docs.ts",
+    "validate": "pnpm lint && pnpm typecheck && pnpm test && pnpm check:examples && pnpm check:docs"
+  },
+  "dependencies": {
+    "@ingestron/config": "workspace:*",
+    "ajv": "8.20.0",
+    "liquidjs": "10.30.0",
+    "yaml": "2.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "eslint": "10.13.0",
+    "eslint-plugin-jsdoc": "65.4.2",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.0",
+    "vitest": "5.0.5"
+  }
+}

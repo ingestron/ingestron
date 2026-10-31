@@ -1,0 +1,80 @@
+---
+title: Organisation standards
+description: Write one standard that every project follows, with your naming, layers, types and rules.
+---
+
+In this worked example you read a shared standard and see its effect on a
+Databricks project. The principles of defaults and fixed policy apply across
+packs; these naming, types and storage choices belong to this particular example.
+
+<ExampleDownload name="standards-and-conventions" /> and unzip it; run the commands from its folder.
+
+## 1. The standard
+
+<Example name="standards-and-conventions" file="standard.yaml" />
+
+From top to bottom:
+
+- **Naming**: one `acme` catalog; a schema per environment and layer, such
+  as `prod_raw`; flow tables prefixed with their source, such as
+  `web__visits`; a pipeline per environment. See [Naming](/docs/concepts/naming).
+- **Layers**: `raw`, `curated` and `published` instead of bronze, silver and
+  gold.
+- **Types**: numbers become `DECIMAL(38,6)` unless a contract says
+  otherwise.
+- **Ingest settings**: unexpected columns in files are kept aside in a
+  rescue column instead of changing the table.
+- **Store**: only streaming tables are allowed; each one gets two table
+  properties; clustering is fixed to automatic.
+
+## 2. Generate
+
+<ToolSteps>
+<Tool name="CLI">
+
+```sh
+ingestron apply --no-diff
+```
+
+</Tool>
+<Tool name="VS Code">
+
+Run **Ingestron: Apply** from the Command Palette (⇧⌘P on macOS, Ctrl+Shift+P elsewhere). The output is in the Ingestron output panel. Problems show in the Problems panel as you type, before you plan.
+
+</Tool>
+</ToolSteps>
+
+Open a generated table in `build/prod/` and find each rule from the standard
+in it: the names, the types, the properties and the clustering.
+
+## 3. Try to break a rule
+
+At the end of `flows/web.yaml`, add a store setting the standard fixes:
+
+Set `store.with.cluster_by` to `none` in the flow.
+
+Plan again:
+
+```text
+dev: the definitions have problems
+flows/web.yaml:10:23  error  FIXED_SETTING
+  The standard fixes "cluster_by" to "auto".
+  Remove this setting, or change the standard.
+  Fix: Remove this setting.
+prod: the definitions have problems
+flows/web.yaml:10:23  error  FIXED_SETTING
+  The standard fixes "cluster_by" to "auto".
+  Remove this setting, or change the standard.
+  Fix: Remove this setting.
+```
+
+Each environment is checked and reported.
+
+The line and column point at the value you added. Remove it; in VS Code, the
+quick fix **Remove this setting** does it for you. See
+[`FIXED_SETTING`](/docs/reference/errors#FIXED_SETTING).
+
+## Next
+
+- How every setting is resolved: [Settings](/docs/concepts/settings).
+- How a standard chooses methods: [Standards and packs](/docs/concepts/standards-and-packs).

@@ -1,0 +1,15 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+additionalProperties: false
+required: [apiVersion, kind, id, host, port, password]
+properties:
+  apiVersion: { const: example.dev/v1 }
+  kind: { const: Connection }
+  id: { type: string }
+  host: { type: string }
+  port: { type: integer, minimum: 1, maximum: 65535 }
+  password:
+    type: object
+    required: [$secret]
+    properties:
+      $secret: { type: string }

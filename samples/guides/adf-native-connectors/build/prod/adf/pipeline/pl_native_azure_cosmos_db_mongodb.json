@@ -1,0 +1,78 @@
+{
+	"name": "pl_native_azure_cosmos_db_mongodb",
+	"properties": {
+		"parameters": {
+			"windowStart": {
+				"type": "string"
+			},
+			"windowEnd": {
+				"type": "string"
+			}
+		},
+		"activities": [
+			{
+				"name": "copy_azure_cosmos_db_mongodb_records",
+				"type": "Copy",
+				"inputs": [
+					{
+						"referenceName": "ds_native_azure_cosmos_db_mongodb_azure_cosmos_db_mongodb_records",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_native_parquet",
+						"type": "DatasetReference",
+						"parameters": {
+							"folder": "native/azure-cosmos-db-mongodb/orders",
+							"file": "@{concat(formatDateTime(pipeline().parameters.windowStart, 'yyyyMMddHHmmss'), '_', pipeline().RunId, '.parquet')}"
+						}
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "CosmosDbMongoDbApiSource"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "$['invoice_id']"
+								},
+								"sink": {
+									"name": "invoice_id"
+								}
+							},
+							{
+								"source": {
+									"path": "$['amount']"
+								},
+								"sink": {
+									"name": "amount"
+								}
+							},
+							{
+								"source": {
+									"path": "$['modified_at']"
+								},
+								"sink": {
+									"name": "modified_at"
+								}
+							}
+						]
+					}
+				}
+			}
+		]
+	}
+}

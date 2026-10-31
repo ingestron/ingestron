@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_mongodb_mongodb_records",
+	"properties": {
+		"type": "MongoDbV2Collection",
+		"linkedServiceName": {
+			"referenceName": "ls_native_mongodb",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"collectionName": "orders"
+		}
+	}
+}

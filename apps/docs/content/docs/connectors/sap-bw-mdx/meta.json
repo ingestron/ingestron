@@ -1,0 +1,12 @@
+{
+  "title": "SAP Business Warehouse via MDX",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/sap-bw-mdx)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

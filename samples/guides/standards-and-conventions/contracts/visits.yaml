@@ -1,0 +1,13 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: marketing.visits
+version: 1.0.0
+status: active
+schema:
+  - name: visits
+    logicalType: object
+    description: Website visits.
+    properties:
+      - { name: visit_id, logicalType: string, required: true, primaryKey: true }
+      - { name: campaign_id, logicalType: string }
+      - { name: visited_at, logicalType: timestamp }

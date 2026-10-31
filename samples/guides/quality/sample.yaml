@@ -1,0 +1,4 @@
+# A guide: a small project that shows one idea; the docs embed it.
+title: Quality checks
+summary: Expectations from required columns and your own checks, with warn, drop and fail.
+order: 3

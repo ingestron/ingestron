@@ -1,0 +1,12 @@
+{
+  "title": "Amazon Redshift",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/amazon-redshift)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

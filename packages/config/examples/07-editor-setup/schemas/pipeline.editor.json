@@ -1,0 +1,77 @@
+{
+  "type": "object",
+  "required": [
+    "apiVersion",
+    "kind",
+    "id",
+    "table"
+  ],
+  "properties": {
+    "apiVersion": {
+      "anyOf": [
+        {
+          "const": "example.dev/v1"
+        },
+        {
+          "type": "string",
+          "pattern": "^\\$\\{\\s*(?:(?:values|environment|project)(?:\\.[A-Za-z0-9_-]+)+|(?:file|envvar|secret):\\s*[^}\\s][^}]*)\\s*\\}$"
+        }
+      ]
+    },
+    "kind": {
+      "anyOf": [
+        {
+          "const": "Pipeline"
+        },
+        {
+          "type": "string",
+          "pattern": "^\\$\\{\\s*(?:(?:values|environment|project)(?:\\.[A-Za-z0-9_-]+)+|(?:file|envvar|secret):\\s*[^}\\s][^}]*)\\s*\\}$"
+        }
+      ]
+    },
+    "id": {
+      "allOf": [
+        {
+          "type": "string"
+        },
+        {
+          "pattern": "^(?:[^$]|\\$(?!\\{)|\\$\\$\\{|\\$\\{\\s*(?:(?:values|environment|project)(?:\\.[A-Za-z0-9_-]+)+|(?:file|envvar|secret):\\s*[^}\\s][^}]*)\\s*\\})*$"
+        }
+      ]
+    },
+    "table": {
+      "description": "Target table name.",
+      "allOf": [
+        {
+          "type": "string",
+          "description": "Target table name."
+        },
+        {
+          "pattern": "^(?:[^$]|\\$(?!\\{)|\\$\\$\\{|\\$\\{\\s*(?:(?:values|environment|project)(?:\\.[A-Za-z0-9_-]+)+|(?:file|envvar|secret):\\s*[^}\\s][^}]*)\\s*\\})*$"
+        }
+      ]
+    },
+    "workers": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "string",
+          "pattern": "^\\$\\{\\s*(?:(?:values|environment|project)(?:\\.[A-Za-z0-9_-]+)+|(?:file|envvar|secret):\\s*[^}\\s][^}]*)\\s*\\}$"
+        }
+      ]
+    },
+    "job_name": {
+      "allOf": [
+        {
+          "type": "string"
+        },
+        {
+          "pattern": "^(?:[^$]|\\$(?!\\{)|\\$\\$\\{|\\$\\{\\s*(?:(?:values|environment|project)(?:\\.[A-Za-z0-9_-]+)+|(?:file|envvar|secret):\\s*[^}\\s][^}]*)\\s*\\})*$"
+        }
+      ]
+    }
+  }
+}

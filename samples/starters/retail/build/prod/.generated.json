@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "files": {
+    "databricks.yml": "sha256:5d3f1d33785616c8e4a9138ba7ba926d60e662e1374a5329bde90bd74c569b97",
+    "resources/retail.pipeline.yml": "sha256:2a907dfb63d506a4ac596eeaa7cbeb5259dd1337b32a07a4531e66180c5a401a",
+    "resources/retail_refresh.job.yml": "sha256:03d30ca00911269207fb9161dcf6cf2d39dff7b5ffb629160368c278a9accdce",
+    "src/retail/bronze/customers.sql": "sha256:03c54245ea3e0d73a6731fde81f1c8a325166fdc6a25812eb1d8f8c29785cd21",
+    "src/retail/bronze/orders.sql": "sha256:bef1befca385be984f06435a7a9d1acd4e5d3d3e03451143e26af2eb3dac282a",
+    "src/retail/silver/daily_sales.sql": "sha256:aaddff0e8dffaeb1fee92da9c8d8d3e43c599a713186b032625e8c43bba4d132"
+  }
+}

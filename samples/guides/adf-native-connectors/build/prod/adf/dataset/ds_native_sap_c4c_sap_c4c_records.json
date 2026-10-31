@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_sap_c4c_sap_c4c_records",
+	"properties": {
+		"type": "SapCloudForCustomerResource",
+		"linkedServiceName": {
+			"referenceName": "ls_native_sap_c4c",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"path": "orders"
+		}
+	}
+}

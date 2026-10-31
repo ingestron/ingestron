@@ -1,0 +1,73 @@
+---
+title: Documents
+description: Every field of project.yaml and the Standard, Platform, Connection, Flow and Transform documents.
+---
+
+Each document starts with `apiVersion: ingestron.io/v1`, its `kind` and an
+`id`. The fields below come from the documents' schemas. For how the
+documents work together, see [Definitions](/docs/concepts/definitions).
+
+Your editor can check these as you type: run `ingestron schemas` and follow
+its instructions.
+
+## Project
+
+`project.yaml`, at the project's root: its id, its environments, the values
+documents read with `${values.…}`, and the files to load. It has no
+`apiVersion` or `kind`.
+
+<DocumentFields kind="Project" />
+
+## Standard
+
+<DocumentFields kind="Standard" />
+
+See [Standards and packs](/docs/concepts/standards-and-packs),
+[Settings](/docs/concepts/settings) and [Naming](/docs/concepts/naming).
+
+## Platform
+
+<DocumentFields kind="Platform" />
+
+See [Environments and platform](/docs/concepts/environments-and-platform).
+
+## Connection
+
+<DocumentFields kind="Connection" />
+
+See [Connectors](/docs/connectors) and [Connectivity](/docs/concepts/connectivity).
+
+## Flow
+
+<DocumentFields kind="Flow" />
+
+## Transform
+
+<DocumentFields kind="Transform" />
+
+## Data contract
+
+Contracts use the
+[Open Data Contract Standard](https://bitol-io.github.io/open-data-contract-standard/)
+v3.1.0 unchanged. Ingestron reads, for each property: `name`,
+`logicalType`, `physicalType`, `physicalName`, `required`, `primaryKey`,
+`primaryKeyPosition` and `description`, and the schema entry's
+`description` for the table's comment. `physicalName` is the column's name
+at the source when it differs: the table keeps `name`, and the column is
+read under it.
+
+A column's `quality` rules that allow no failing row become checks on each
+row, with the standard's `quality.default` action: `nullValues`,
+`missingValues` and `invalidValues` (with `validValues` or `pattern`) when
+they must be 0. Other rules compare a count over all rows, such as a row
+count or a share of nulls, which a check of one row cannot; each is a
+[warning](/docs/reference/errors#QUALITY_RULE_NOT_CHECKED) and stays as
+documentation.
+
+What each pack does with every contract field, or why it does not yet, is
+on its page: [Databricks](/docs/reference/packs/databricks#contract-fields)
+and [Azure Data Factory](/docs/reference/packs/adf#contract-fields). A
+contract field that no pack of your standard uses yet is a
+[warning](/docs/reference/errors#CONTRACT_FIELD_UNUSED) at that field.
+
+<ContractFields />

@@ -1,0 +1,10 @@
+{
+	"name": "ds_native_sqlserver_sales",
+	"properties": {
+		"type": "SqlServerTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_sqlserver_sales",
+			"type": "LinkedServiceReference"
+		}
+	}
+}

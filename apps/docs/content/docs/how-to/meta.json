@@ -1,0 +1,31 @@
+{
+  "title": "Guides",
+  "pages": [
+    "index",
+    "start-from-a-template",
+    "configure-a-standard",
+    "add-an-environment",
+    "plan-and-generate",
+    "check-in-ci",
+    "draft-a-contract-from-a-sample",
+    "ask-the-platform-team",
+    "share-a-template",
+    "use-an-example",
+    "---Databricks---",
+    "databricks",
+    "write-a-transform",
+    "keep-a-table-current",
+    "add-quality-checks",
+    "name-things-your-way",
+    "refresh-on-a-schedule",
+    "manage-schemas",
+    "deploy-the-bundle",
+    "---Azure Data Factory---",
+    "adf",
+    "adf-native-connectors",
+    "adf-runtime",
+    "name-adf-resources",
+    "publish-adf"
+  ],
+  "defaultOpen": false
+}

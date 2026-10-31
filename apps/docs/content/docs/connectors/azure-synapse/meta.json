@@ -1,0 +1,12 @@
+{
+  "title": "Azure Synapse Analytics",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/azure-synapse)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

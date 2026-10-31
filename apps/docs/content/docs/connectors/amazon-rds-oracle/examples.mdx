@@ -1,0 +1,26 @@
+---
+title: Examples
+description: Download complete Amazon RDS for Oracle projects and inspect their definition files.
+---
+
+## Download a project
+
+These projects use synthetic values. Choose a download for your route, then
+[adapt and generate it](/docs/how-to/use-an-example). Multi-connector projects
+contain other sources too; use [Create a project](/docs/how-to/start-from-a-template)
+when you want to start with only this connection.
+
+<ExamplesList connector="amazon-rds-oracle" />
+
+The previews below show files from these archives. Each code block names its
+project and relative file path; the ZIP also includes the supporting definitions.
+
+## Azure Data Factory definitions
+
+Read [connection and access](/docs/connectors/amazon-rds-oracle/adf-connection) for credentials
+and prerequisites, and [ingestion](/docs/connectors/amazon-rds-oracle/adf-ingestion) for how
+the selected objects are read. Replace source objects and contracts with yours.
+
+<Example name="adf-native-connectors" file="connections/amazon-rds-oracle.yaml" />
+
+<Example name="adf-native-connectors" file="flows/amazon-rds-oracle.yaml" />

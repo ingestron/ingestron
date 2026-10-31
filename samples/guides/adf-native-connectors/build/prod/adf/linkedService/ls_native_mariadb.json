@@ -1,0 +1,25 @@
+{
+	"name": "ls_native_mariadb",
+	"properties": {
+		"type": "MariaDB",
+		"typeProperties": {
+			"driverVersion": "v2",
+			"sslMode": "4",
+			"server": "source.example.test",
+			"database": "sales",
+			"username": "reader",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-password"
+			}
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

@@ -1,0 +1,24 @@
+{
+	"name": "ls_native_sap_bw_mdx",
+	"properties": {
+		"type": "SapBw",
+		"typeProperties": {
+			"server": "source.example.test",
+			"systemNumber": "00",
+			"clientId": "synthetic-client",
+			"userName": "reader",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-password"
+			}
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

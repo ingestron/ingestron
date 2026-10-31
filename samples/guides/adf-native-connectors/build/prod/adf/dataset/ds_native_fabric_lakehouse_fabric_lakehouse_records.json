@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_fabric_lakehouse_fabric_lakehouse_records",
+	"properties": {
+		"type": "LakehouseTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_fabric_lakehouse",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"table": "orders"
+		}
+	}
+}

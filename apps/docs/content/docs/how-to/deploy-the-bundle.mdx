@@ -1,0 +1,56 @@
+---
+title: Deploy the Databricks bundle
+description: Deploy the generated Databricks bundle and run its refresh job or pipeline.
+---
+
+The generated folder is an ordinary
+[Databricks bundle](https://docs.databricks.com/aws/en/dev-tools/bundles/).
+You need the [Databricks CLI](https://docs.databricks.com/aws/en/dev-tools/cli/)
+and to be signed in to the workspace. Generate and review the files first, and
+arrange the permissions and source access listed in the
+[platform request](/docs/how-to/ask-the-platform-team).
+
+## Deploy the selected environment
+
+From the project folder, open the output folder containing `databricks.yml`:
+
+- With only the Databricks pack: `build/dev/`.
+- With several packs: `build/dev/databricks/`.
+
+Use the environment you intend to deploy in place of `dev`. Run these commands
+from that bundle folder:
+
+```sh
+databricks bundle validate
+databricks bundle deploy
+```
+
+Publish any generated ADF resources separately using
+[Publish ADF resources](/docs/how-to/publish-adf). The Databricks bundle does not
+start ADF copying; landing files must be available before downstream ingestion.
+
+## Run the complete refresh
+
+Inspect the generated files under `resources/`. If a refresh job is generated,
+run that job so its ingestion, refresh and any contract tasks execute in the
+declared order. For example, the `sql-server` download declares `erp_refresh`:
+
+<Example name="sql-server" file="build/dev/resources/erp_refresh.job.yml" />
+
+From that example's bundle folder:
+
+```sh
+databricks bundle run erp_refresh
+```
+
+For your project, use the key under `resources.jobs` in its generated job file.
+If no job is generated, run the pipeline key under `resources.pipelines` instead:
+
+```sh
+databricks bundle run <pipeline-key>
+```
+
+Replace `<pipeline-key>` with that YAML key, not the display `name` or a filename.
+Read the run output and inspect the run in Databricks to confirm that its tasks
+succeeded. See the [bundle run instructions](https://docs.databricks.com/aws/en/dev-tools/bundles/work-tasks)
+for the platform command (checked 28 October 2026).

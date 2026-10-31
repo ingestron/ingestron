@@ -1,0 +1,147 @@
+---
+title: YAML references and placeholders
+description: Use values, environment names, file includes and secret references, and understand how they differ from naming patterns.
+---
+
+Ingestron uses **`${…}` references** while loading YAML and **`{{ … }}`
+patterns in specific naming and transform contexts**. They are not interchangeable.
+Spaces inside reference braces are accepted in YAML, for example `${ values.landing }`.
+Quotation marks do not disable references: a quoted YAML string is still resolved.
+
+## Choose the right syntax
+
+| Write                                | Meaning                                                        | Where to use it                                                |
+| ------------------------------------ | -------------------------------------------------------------- | -------------------------------------------------------------- |
+| `${values.landing}`                  | A project value after environment overrides                    | Definition values                                              |
+| `${values.cluster.workers}`          | A nested value                                                 | Definition values                                              |
+| `${values.hosts.0}`                  | The first item in a value list                                 | Definition values                                              |
+| `${environment.name}`                | The selected environment, such as `dev`                        | Values and definitions                                         |
+| `${project.id}` or `${project.name}` | The project ID or optional display name                        | Values and definitions                                         |
+| `${file:query.sql}`                  | Contents of a project file                                     | Whole value, or embedded when the result is scalar             |
+| `${file:shared.yaml#/columns/0}`     | A value within a YAML file                                     | Whole value or embedded scalar; the fragment is a JSON Pointer |
+| `${secret:source-password}`          | A reference to a secret, never the secret's contents           | A whole value accepted by a connector or method                |
+| `${envvar:SOURCE_HOST}`              | Text from an environment variable supplied by the calling tool | Non-secret local inputs; see tool support below                |
+| `{{ environment }}` or `{{ table }}` | A naming pattern evaluated with naming context                 | Standard or platform `naming` only                             |
+| `{{ tables.orders }}`                | A declared input's generated name                              | SQL transform code supported by the selected method            |
+| `$${bundle.target}`                  | Literal `${bundle.target}` text after YAML loading             | Text intended for another tool; see transform exceptions below |
+
+Project `id`, `name` and `imports` are read literally. YAML mapping keys are not
+interpolated. Write references in values, not in field names or import patterns.
+A reference to a missing value is an error; it is not replaced with empty text.
+
+## Project values and environments
+
+Define shared values in `project.yaml`. An environment's `values` overrides
+them: mappings merge by key; lists and scalar values replace the earlier value.
+
+<Example name="environments" file="project.yaml" />
+
+Use the merged value in a definition:
+
+<Example name="environments" file="connections/ledger.yaml" />
+
+For `dev`, this path resolves to `/Volumes/dev_landing/finance/files/ledger`;
+for `prod`, it resolves to `/Volumes/prod_landing/finance/files/ledger`.
+
+Values cannot reference other values with `${values.…}`, including indirectly
+through included YAML. That reports
+[`VALUES_SELF_REFERENCE`](/docs/reference/errors#VALUES_SELF_REFERENCE).
+Compose text in the definition that consumes those values instead. Values may
+use `${project.…}`, `${environment.…}`, `${file:…}`, `${envvar:…}` and `${secret:…}`.
+
+## Preserve the value's type
+
+A reference used as the entire YAML value preserves its type. For example,
+`${values.workers}` can produce a number, while `workers-${values.workers}`
+produces text. The result must still match the destination field's schema.
+
+Only text, numbers and booleans can be embedded in a larger string. Lists,
+mappings and null must be whole values; embedding one reports
+[`NOT_TEXT`](/docs/reference/errors#NOT_TEXT). Secret references must also be
+whole values, otherwise loading reports
+[`SECRET_IN_TEXT`](/docs/reference/errors#SECRET_IN_TEXT).
+
+## Include another file
+
+A `${file:…}` path is relative to the file containing the reference, and must
+stay inside the project folder. YAML files are parsed and resolved; other files
+are included as literal text. A JSON Pointer such as `#/columns/0` selects a
+value inside YAML only. In pointer keys, `~1` means `/` and `~0` means `~`.
+
+<Example name="layers-and-transforms" file="transforms/store_sales.yaml" />
+
+Here `store_sales.sql` is beside the transform definition. The loader reads the
+file; the transform method then processes the code. Including YAML does not
+register it as a separate definition: `imports` determines which documents
+belong to the project. Missing files, pointers outside the data and include
+cycles are reported before generation.
+
+## Reference a secret
+
+`${secret:source-password}` carries a secret name through resolution. Ingestron
+does not retrieve the password. The selected connector or method decides how to
+write that reference into platform resources.
+
+<Example name="private-sql-server" file="connections/erp.yaml" />
+
+In this ADF example, the name identifies a Key Vault secret. Other methods may
+use a different mechanism or an existing platform connection. Read the
+connection's access page; do not assume every secret name has the same scope.
+Do not embed a secret reference in a URL or connection string.
+
+## Read an environment variable
+
+`${envvar:SOURCE_HOST}` reads text from the environment map supplied by the tool
+loading the definitions. Names use letters, digits and underscores and cannot
+start with a digit. Unset or empty values report
+[`ENVVAR_MISSING`](/docs/reference/errors#ENVVAR_MISSING).
+
+The current CLI Plan, Apply and Check commands pass their process environment.
+Editor analysis, environment comparison and infrastructure requests currently
+use an empty environment map, so they cannot resolve these references. Prefer
+project and environment `values` for definitions that must work across those
+interfaces. Environment-variable values become ordinary resolved text and may
+reach generated files; use `${secret:…}` for credentials instead.
+
+## Naming patterns and transform code
+
+A standard's or platform's `naming` uses Liquid patterns. For example,
+`{{ environment }}_{{ layer }}` can produce `dev_bronze`. The available variables
+and name constraints are described in [Naming](/docs/concepts/naming).
+ADF method `resource_names` uses `${…}` references, not per-table Liquid variables.
+
+Transform code has two stages to be aware of:
+
+- Inline YAML code is loaded with the normal `${…}` rules. Code included from a
+  non-YAML file is initially literal text.
+- Ingestron then replaces `${values.…}` in transform code, including included
+  code. Missing values report [`UNKNOWN_CODE_VALUE`](/docs/reference/errors#UNKNOWN_CODE_VALUE).
+  Other `${…}` in included code remain literal. SQL methods can also render
+  declared input names such as `{{ tables.orders }}`.
+
+The later pass has narrower syntax than YAML loading: use unspaced references
+such as `${values.reference_table}` or `${values.database.table}`. It traverses
+mapping keys, not list indexes, so `${values.hosts.0}` is not supported in included
+code even though it works in YAML. A value name containing a hyphen or a reference
+with spaces does not match that pass. Use a simple named value for the code input.
+
+<Example name="existing-tables" file="transforms/store_sales.sql" />
+
+Use [Write a transform](/docs/how-to/write-a-transform) for method-specific code
+rules. A `{{ … }}` pattern in an ordinary connection setting or project value
+is not a general replacement syntax; it stays as written and can produce
+[`PLACEHOLDER_NOT_REPLACED`](/docs/reference/errors#PLACEHOLDER_NOT_REPLACED).
+
+## Keep placeholder text literal
+
+In YAML, `$${bundle.target}` becomes `${bundle.target}`. Quoting alone does not
+escape it. Unknown unescaped `${…}` expressions report
+[`UNKNOWN_REFERENCE`](/docs/reference/errors#UNKNOWN_REFERENCE).
+
+The later transform-code pass still recognises `${values.…}`. Escaping it as
+`$${values.…}` therefore does not preserve that expression in transform
+code. Do not use that escape to pass an Ingestron value placeholder through to
+another runtime.
+
+Check the resolved result with [Plan and generate](/docs/how-to/plan-and-generate)
+before deploying. Error messages identify the source file and the reference to fix.

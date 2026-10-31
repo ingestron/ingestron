@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "files": {
+    "databricks.yml": "sha256:41488b0a2d1e3e95146f07a4486c83cc6505c3b2555f1648e1fb4d90ed8d6a53",
+    "resources/iot.pipeline.yml": "sha256:5593b00b73e4b207f74273f118bf902456f58137bbc7381dcfc06fe163d99a81",
+    "src/iot/bronze/readings.sql": "sha256:f58d60189acfd0faf7ed6ac79a666b14bd6f78f69da975bcfecb736d7a5216ce"
+  }
+}

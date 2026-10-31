@@ -1,0 +1,12 @@
+{
+  "title": "Web table",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/web-table)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

@@ -1,0 +1,37 @@
+---
+title: Connection and access
+description: Configure SharePoint Online List credentials and network access for Azure Data Factory.
+---
+
+## Prepare access
+
+Prepare [source access, runtime and credentials](/docs/how-to/adf-runtime#prepare-access),
+then check this source's vendor prerequisites for permissions, drivers, versions
+and authentication setup.
+
+[Read the SharePoint Online List vendor prerequisites](https://learn.microsoft.com/en-us/azure/data-factory/connector-sharepoint-online-list).
+
+## Configure the connection
+
+The example uses synthetic values. Replace the endpoint and account details with
+your source's values. A secret reference such as `${secret:source-password}`
+names a secret; it never contains the password itself. `id` is the name a flow
+uses in `source`, and `connector` selects the source type.
+
+<Example name="adf-native-connectors" file="connections/sharepoint-online-list.yaml" />
+
+## Connection fields
+
+<ConnectorSettings
+  id="sharepoint-online-list"
+  pack="adf"
+  sample="adf-native-connectors"
+  file="connections/sharepoint-online-list.yaml"
+/>
+
+## Continue to ingestion
+
+[Choose the objects and reading options](/docs/connectors/sharepoint-online-list/adf-ingestion), then
+[configure runtime and scheduling](/docs/how-to/adf-runtime).
+
+[Download the complete projects and see their files](/docs/connectors/sharepoint-online-list/examples).

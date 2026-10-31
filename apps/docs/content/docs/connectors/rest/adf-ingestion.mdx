@@ -1,0 +1,59 @@
+---
+title: Ingestion
+description: Choose what REST reads, its extraction options and destination behaviour.
+---
+
+## Select the source objects
+
+The connection's `id` is the flow's `source`. Each entry under `tables` names a
+destination table and links its source `object` to a contract. The contract lists
+the columns and keys you expect. Replace the synthetic object and contract with
+yours before deploying.
+
+<Example name="adf-native-connectors" file="flows/rest.yaml" />
+
+## Read a paginated JSON response
+
+The example expects a response shaped like this synthetic payload:
+
+```json
+{
+  "items": [{ "invoice": { "id": 101, "total": 42.5 }, "updatedAt": "2026-10-01T10:30:00Z" }],
+  "nextLink": "https://source.example.test/orders?page=2"
+}
+```
+
+`collection_reference` selects the `items` array. Each `column_paths` key is a
+contract column; its value selects a field inside one array item. These paths
+start without `$` because they are relative to the selected item. A field outside
+the array uses a root path starting with `$`.
+
+`pagination.AbsoluteUrl` reads the next-page URL from the response root. Adapt
+this rule to the API's response. The sample caps requests at 100; choose a cap
+that allows the complete result. The contract contains `invoice_id`, `amount`
+and `modified_at`, matching the mapping keys.
+
+## Reading behaviour
+
+The copy takes a full snapshot each window. Choose the downstream store behaviour
+for repeated snapshots; this connector does not maintain an incremental watermark.
+
+Use `source_options.pagination` for APIs that return several pages,
+`collection_reference` for a JSON array, and `column_paths` to map nested values
+to contract columns. Authentication headers use `auth_headers` secret references.
+
+## Supported extraction settings
+
+<NativeReadSettings id="rest" />
+
+## Keep the destination current
+
+The copy selects data again for each run. The default downstream store appends
+rows, so repeated snapshots can produce repeated rows. Choose
+[upsert or history](/docs/how-to/keep-a-table-current) with a reliable ordering
+column when you need current rows or versions. A row absent from a later
+snapshot is not a deletion instruction.
+
+## Complete examples
+
+[Download projects and inspect their files](/docs/connectors/rest/examples).

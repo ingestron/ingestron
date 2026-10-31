@@ -1,0 +1,9 @@
+# Change records kept current (SCD type 1) and with full history (SCD type 2).
+id: crm
+environments:
+  dev: {}
+imports:
+  - standard.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - contracts/*.yaml

@@ -1,0 +1,26 @@
+---
+title: Examples
+description: Download complete Kafka projects and inspect their definition files.
+---
+
+## Download a project
+
+These projects use synthetic values. Choose a download for your route, then
+[adapt and generate it](/docs/how-to/use-an-example). Multi-connector projects
+contain other sources too; use [Create a project](/docs/how-to/start-from-a-template)
+when you want to start with only this connection.
+
+<ExamplesList connector="kafka" />
+
+The previews below show files from these archives. Each code block names its
+project and relative file path; the ZIP also includes the supporting definitions.
+
+## Databricks definitions
+
+Read [connection and access](/docs/connectors/kafka/databricks-connection) for credentials
+and prerequisites, and [ingestion](/docs/connectors/kafka/databricks-ingestion) for how
+the selected objects are read. Replace source objects and contracts with yours.
+
+<Example name="kafka" file="connections/events.yaml" />
+
+<Example name="kafka" file="flows/events.yaml" />

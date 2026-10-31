@@ -1,0 +1,26 @@
+{
+	"name": "ls_erp_erp_erp",
+	"properties": {
+		"type": "SqlServer",
+		"typeProperties": {
+			"server": "erp-sql01.corp.local",
+			"database": "erp",
+			"encrypt": "mandatory",
+			"trustServerCertificate": false,
+			"authenticationType": "SQL",
+			"userName": "ingest_reader",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_erp_keyvault",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "erp-sql-password"
+			}
+		},
+		"connectVia": {
+			"referenceName": "shir-erp",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

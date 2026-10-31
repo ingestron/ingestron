@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_odata_odata_records",
+	"properties": {
+		"type": "ODataResource",
+		"linkedServiceName": {
+			"referenceName": "ls_native_odata",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"path": "orders"
+		}
+	}
+}

@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_azure_mysql_azure_mysql_records",
+	"properties": {
+		"type": "AzureMySqlTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_azure_mysql",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"tableName": "orders"
+		}
+	}
+}

@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_db2_db2_records",
+	"properties": {
+		"type": "Db2Table",
+		"linkedServiceName": {
+			"referenceName": "ls_native_db2",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

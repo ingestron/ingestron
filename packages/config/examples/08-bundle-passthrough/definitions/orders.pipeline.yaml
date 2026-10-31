@@ -1,0 +1,12 @@
+apiVersion: example.dev/v1
+kind: Pipeline
+id: orders
+# Resolved now, when the definitions load:
+table: ${values.catalog}.sales.orders
+# Kept for the bundle, which resolves them at deploy time.
+# `$${` is written to the output as `${`.
+job_name: orders_$${bundle.target}
+cluster_id: $${var.cluster_id}
+# Text that does not start with ${ never needs escaping.
+notebook_params:
+  run_date: "{{job.start_time.iso_date}}"

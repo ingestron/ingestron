@@ -1,0 +1,3 @@
+id: sales
+imports:
+  - "*.yaml"

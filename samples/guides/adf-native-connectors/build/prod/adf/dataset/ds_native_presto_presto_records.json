@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_presto_presto_records",
+	"properties": {
+		"type": "PrestoObject",
+		"linkedServiceName": {
+			"referenceName": "ls_native_presto",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

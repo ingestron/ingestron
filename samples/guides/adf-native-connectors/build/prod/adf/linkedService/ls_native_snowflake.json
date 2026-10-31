@@ -1,0 +1,26 @@
+{
+	"name": "ls_native_snowflake",
+	"properties": {
+		"type": "SnowflakeV2",
+		"version": "1.1",
+		"typeProperties": {
+			"authenticationType": "KeyPair",
+			"accountIdentifier": "synthetic-account",
+			"database": "sales",
+			"warehouse": "synthetic-warehouse",
+			"user": "reader",
+			"privateKey": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-private-key"
+			}
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

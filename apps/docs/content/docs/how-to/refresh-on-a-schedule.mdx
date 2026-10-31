@@ -1,0 +1,38 @@
+---
+title: Refresh on a schedule
+description: Run the pipelines on a timetable with a job.
+---
+
+This guide configures the Databricks refresh job. For standalone copy schedules within the combined route, see [ADF runtime and scheduling](/docs/how-to/adf-runtime).
+
+Add a `schedule` to the platform, with a
+[Quartz cron expression](https://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html)
+and, if not UTC, a time zone:
+
+<Example name="environments" file="platform.yaml" />
+
+Ingestron generates a job that refreshes the pipelines in order: Lakeflow
+Connect ingestion first, then your own pipeline. Outside production the job
+is created paused, so development environments do not run on their own; set
+`paused: false` to change that.
+
+<Example name="environments" file="build/prod/resources/finance_refresh.job.yml" />
+
+## Pause everything, or only the copies
+
+When Azure Data Factory copies a source first, its trigger has its own
+window (`every` in the standard), but it follows the same switch:
+`paused: true` in the platform's `schedule` stops both the job and the Data
+Factory trigger.
+
+To stop only the Data Factory copies, for example while the source database
+is down for maintenance, set `paused` for the copy method in the platform:
+
+```yaml
+settings:
+  adf-copy:
+    paused: true
+```
+
+`ingestron request` lists the state of each schedule, so the platform team
+sees the same thing the files say.

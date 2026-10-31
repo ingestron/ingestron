@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_spark_spark_records",
+	"properties": {
+		"type": "SparkObject",
+		"linkedServiceName": {
+			"referenceName": "ls_native_spark",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

@@ -1,0 +1,14 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: finance.journals
+version: 1.0.0
+status: active
+schema:
+  - name: journals
+    logicalType: object
+    description: General ledger journal lines.
+    properties:
+      - { name: journal_id, logicalType: string, required: true, primaryKey: true }
+      - { name: account, logicalType: string, required: true }
+      - { name: amount, logicalType: number, physicalType: "DECIMAL(19,4)" }
+      - { name: posted_on, logicalType: date }

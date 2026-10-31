@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "files": {
+    "databricks.yml": "sha256:bf534883318b2b605ae91cd73df03521d1592a3466f27de1b90dc1b29c4a7cf4",
+    "resources/erp.pipeline.yml": "sha256:c84cce5c296d365782ac259a984c54a167ecbe6acd15e757503e89ba670598d5",
+    "resources/erp_refresh.job.yml": "sha256:623b6d34ddc0cd8978bc6aa438c03b9f54b7427c08cfaf729918c5d021f8af83",
+    "src/erp/bronze/customers.sql": "sha256:783e4167a889b60e823c63ce405da6a5f83645c66b40419b6f4d133e2503993c",
+    "src/erp/bronze/invoices.sql": "sha256:b3a356fc330dddc9f8197dcca7a28e1fb1f8f58b9c2b4c412a2b576e350f37b5"
+  }
+}

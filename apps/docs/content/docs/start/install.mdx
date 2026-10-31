@@ -1,0 +1,60 @@
+---
+title: Install a tool
+description: Prepare a local interface for editing, planning and generating Ingestron projects.
+---
+
+The current tools are the command line and VS Code extension. Both use the same
+project definitions and generation packages. Choose the interface you need;
+cloud credentials are not required for local generation of the examples.
+
+## Set up your interface
+
+<ToolSteps>
+<Tool name="CLI">
+
+You need Node.js 22.13 or later.
+
+```sh
+npm install -g ingestron
+ingestron --help
+```
+
+Help should list the available commands. To run it without installing, use
+`npx ingestron@1` in place of `ingestron`. See the
+[command reference](/docs/reference/cli) for exact options.
+
+</Tool>
+<Tool name="VS Code">
+
+Install the `ingestron.vsix` file you were given:
+
+```sh
+code --install-extension ingestron.vsix
+```
+
+Alternatively, use **Extensions: Install from VSIX…** to select the file. After
+installation, the Command Palette should include **Ingestron: New project**. See
+[VS Code](/docs/tools/vscode) for editor features.
+
+</Tool>
+</ToolSteps>
+
+## Build from source
+
+To change Ingestron itself, build both tools from the repository. You need
+Node.js 22.13 or later and pnpm 10:
+
+```sh
+git clone https://github.com/ingestron/ingestron.git
+cd ingestron
+pnpm install
+pnpm --filter "@ingestron/cli..." build
+alias ingestron="node $PWD/packages/cli/dist/main.js"
+pnpm --filter ingestron-vscode package   # writes apps/vscode/ingestron.vsix
+```
+
+## Verify the workflow
+
+[Generate your first project](/docs/start/first-project) to confirm that your tool
+can create definitions and write local output. Configure source access and
+platform deployment only when you are ready to run that output.

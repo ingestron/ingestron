@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_hive_hive_records",
+	"properties": {
+		"type": "HiveObject",
+		"linkedServiceName": {
+			"referenceName": "ls_native_hive",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

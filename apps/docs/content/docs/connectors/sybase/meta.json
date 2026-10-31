@@ -1,0 +1,12 @@
+{
+  "title": "Sybase",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/sybase)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

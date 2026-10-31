@@ -1,0 +1,12 @@
+{
+  "title": "SAP Business Warehouse Open Hub",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/sap-bw-open-hub)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

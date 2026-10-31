@@ -1,0 +1,24 @@
+{
+	"name": "ls_native_salesforce_service_cloud",
+	"properties": {
+		"type": "SalesforceServiceCloudV2",
+		"typeProperties": {
+			"authenticationType": "OAuth2ClientCredentials",
+			"environmentUrl": "https://source.example.test",
+			"clientId": "synthetic-client",
+			"clientSecret": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-client-secret"
+			},
+			"apiVersion": "65.0"
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

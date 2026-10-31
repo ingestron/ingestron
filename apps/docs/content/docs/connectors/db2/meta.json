@@ -1,0 +1,12 @@
+{
+  "title": "DB2",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/db2)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "imports"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+      "description": "Identifier of the project, read by `${project.id}`. Letters, digits, `_` and `-`."
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name of the project, read by `${project.name}`."
+    },
+    "values": {
+      "type": "object",
+      "description": "Values that documents read with `${values.…}`. Entries may use references, but not `${values.…}`."
+    },
+    "environments": {
+      "type": "object",
+      "description": "Environments that can be selected when loading. Each one's `values` are merged over the top-level `values`.",
+      "propertyNames": {
+        "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "values": {
+            "type": "object",
+            "description": "Values that replace or add to the top-level `values`."
+          }
+        }
+      }
+    },
+    "imports": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Glob patterns of the documents to load, relative to this file. `*` stays in one folder; `**` crosses folders.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

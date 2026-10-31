@@ -1,0 +1,15 @@
+{
+	"name": "ls_native_http",
+	"properties": {
+		"type": "HttpServer",
+		"typeProperties": {
+			"authenticationType": "Anonymous",
+			"enableServerCertificateValidation": true,
+			"url": "https://source.example.test"
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

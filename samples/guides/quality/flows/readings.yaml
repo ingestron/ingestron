@@ -1,0 +1,14 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: readings
+source: sensors
+tables:
+  readings:
+    object: readings
+    contract: iot.readings
+    ingest:
+      with: { format: csv, options: { header: true, delimiter: ";" } }
+    expectations:
+      - { name: plausible_temperature, check: temperature BETWEEN -60 AND 80 }
+      - { name: known_unit, check: "unit IN ('C', 'F')", action: drop }
+      - { name: not_from_future, check: read_at <= current_timestamp(), action: fail }

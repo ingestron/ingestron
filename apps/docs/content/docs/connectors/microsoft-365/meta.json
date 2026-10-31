@@ -1,0 +1,12 @@
+{
+  "title": "Microsoft 365",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/microsoft-365)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

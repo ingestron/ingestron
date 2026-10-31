@@ -1,0 +1,12 @@
+{
+  "title": "Vertica",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/vertica)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

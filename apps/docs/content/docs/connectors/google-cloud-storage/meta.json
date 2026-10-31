@@ -1,0 +1,12 @@
+{
+  "title": "Google Cloud Storage",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/google-cloud-storage)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

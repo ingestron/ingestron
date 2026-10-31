@@ -1,0 +1,12 @@
+{
+  "title": "FTP",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/ftp)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

@@ -1,0 +1,7 @@
+apiVersion: ingestron.io/v1
+kind: Connection
+id: salesforce
+connector: salesforce
+connectivity: public
+settings:
+  uc_connection: salesforce_prod

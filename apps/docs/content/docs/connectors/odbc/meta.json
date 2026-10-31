@@ -1,0 +1,12 @@
+{
+  "title": "ODBC",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/odbc)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

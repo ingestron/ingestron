@@ -1,0 +1,57 @@
+---
+title: Names and resource identity
+description: Distinguish definition IDs, generated table names and platform resource names.
+---
+
+A project's definition IDs link its documents; generated names identify resources
+on a platform. Changing one does not automatically rename every other identity.
+
+| Identity                   | Where it comes from                                           |
+| -------------------------- | ------------------------------------------------------------- |
+| Project and definition IDs | `id` in the project or document                               |
+| Project table name         | A flow table's key or a transform's `id`                      |
+| Contract link              | The table's `contract`, identifying a data contract           |
+| Platform resource name     | Defaults and naming settings implemented by the selected pack |
+
+## Table and bundle naming
+
+The current Databricks pack uses `naming` patterns for catalogs, schemas,
+tables, pipelines and jobs. Patterns use Liquid syntax and the variables below.
+These `{{ … }}` expressions differ from the `${…}` references used throughout
+YAML; see [YAML references](/docs/concepts/yaml-references).
+
+<NamingVariables />
+
+Without a standard's naming, the pack's defaults apply: catalog
+`{{ environment }}`, schema `{{ layer }}`, table `{{ table }}`, pipeline
+`{{ project }}` and job `{{ project }}_refresh`.
+
+This standard uses one catalog with a schema per environment and layer, and
+prefixes flow tables with their source:
+
+<Example name="standards-and-conventions" file="standard.yaml" />
+
+`{% if source %}` works because variables a table does not have are empty:
+a transform's table has no source.
+
+Every name must be lowercase letters, digits and underscores, starting with
+a letter or underscore. Use filters such as `downcase` when a value might
+not be. A pattern with an unknown variable is an error
+([`BAD_PATTERN`](/docs/reference/errors#BAD_PATTERN)), so a typo cannot
+quietly give a valid but wrong name. Two tables with the same full name are
+also an error.
+
+## ADF resource names
+
+ADF linked services, datasets, pipelines, triggers and activities use the copy
+method's `resource_names` settings. They have their own defaults and validation
+rules. Use `${project.id}`, `${environment.name}` and `${values.…}` for reusable
+values; table-level Liquid variables are not available there.
+
+[Name ADF resources](/docs/how-to/name-adf-resources) lists the supported roles and
+sharing constraints. [Name Databricks resources](/docs/how-to/name-things-your-way)
+shows how to apply table and bundle naming patterns.
+
+Before applying a rename, inspect its create/delete changes with
+[Plan and generate](/docs/how-to/plan-and-generate). A generated-file rename is
+not a data migration performed by Ingestron.

@@ -1,0 +1,102 @@
+---
+title: Name ADF resources
+description: Keep generated defaults or configure linked service, dataset, pipeline, trigger and activity names in YAML.
+---
+
+Configure generated ADF names with `resource_names` under the selected
+method's settings. Leave a role out to keep its default, derived from the
+project, connection, database or table. You can override only the names you
+need.
+
+ADF resource names use resolved YAML values such as `${project.id}`,
+`${environment.name}` and `${values.resource_prefix}`. Databricks names use
+`standard.naming` and Liquid patterns such as `{{ project }}`. These are two
+different settings; changing `naming.pipeline` does not rename an ADF pipeline.
+
+## 1. Choose where the name belongs
+
+| Scope                                          | Where to put `resource_names`                              |
+| ---------------------------------------------- | ---------------------------------------------------------- |
+| Organisation default for one method            | `standard.yaml`: `ingest.settings.<method>.resource_names` |
+| Shared project resources                       | `platform.yaml`: `settings.<method>.resource_names`        |
+| A source's pipeline, trigger or linked service | A flow's `ingest.with.resource_names`                      |
+| A per-table resource or Copy activity          | The table's `ingest.with.resource_names`                   |
+
+Use the actual method ID: `adf-copy`, `adf-table` or `adf-files`. A preset for
+one method is not automatically applied to the others. See the
+[resource-name roles and defaults](/docs/reference/packs/adf#adf-table-resource-names)
+for the complete list and each resource's sharing rules.
+
+## 2. Name shared resources
+
+<ExampleDownload name="connection-first-adf" /> contains the complete example. Unzip it and run
+commands from its folder. Its platform file names the shared Key Vault linked service, landing
+linked service and Parquet dataset:
+
+<Example name="connection-first-adf" file="platform.yaml" />
+
+Tables sharing a generated resource must resolve to the same name, even
+when settings come from different flows or methods. Source linked services
+and pipelines also have grouping rules: a table-level override cannot split
+a resource that is shared per connection or database.
+
+## 3. Give the pipeline an environment-specific name
+
+The project sets `values.resource_prefix` to `sales`. Its PostgreSQL flow
+uses that value and the selected environment:
+
+<Example name="connection-first-adf" file="flows/postgresql.yaml" />
+
+Plan produces `pl_sales_orders_dev` and `pl_sales_orders_prod`, with matching
+trigger references. `copy_orders` names the Copy activity inside the pipeline.
+Source linked service and dataset roles are omitted here, so their defaults
+remain in use.
+
+Separate `build/dev/` and `build/prod/` folders do not by themselves make the
+ADF resource names different. If environments share a factory, use
+`${environment.name}` for resources that must be separate and choose shared
+names deliberately.
+
+Known roles for resources a source does not generate are accepted but unused.
+A Snowflake staging name does not create staging for another source. Unknown
+roles, invalid names, conflicting shared names and case-insensitive collisions
+stop generation. The reference lists the accepted characters and length limit.
+
+## 4. Review a rename before applying
+
+<ToolSteps>
+<Tool name="CLI">
+
+```sh
+ingestron plan --env dev --no-diff
+ingestron apply --env dev --no-diff
+ingestron check --env dev
+```
+
+</Tool>
+<Tool name="VS Code">
+
+Select **dev** with **Ingestron: Select environment**, then run
+**Ingestron: Plan**. Review the changes before **Ingestron: Apply** and
+**Ingestron: Check**.
+
+</Tool>
+</ToolSteps>
+
+Open `build/dev/adf/pipeline/pl_sales_orders_dev.json`. The matching trigger
+is `build/dev/adf/trigger/tr_sales_orders_dev.json`; its pipeline reference
+uses the chosen name. Linked services and datasets follow their chosen names
+in the same way.
+
+For a safe rename exercise, change `values.resource_prefix` in `project.yaml`
+from `sales` to `sales_v2` and run Plan. Expect new pipeline and trigger files
+and removal of the previously generated ones. Apply uses the existing
+ownership manifest and refuses to overwrite hand edits.
+
+Removing an owned local file does not delete a previously deployed Azure
+resource. Review the deployment change separately. Choose the destination factory when deploying. Existing integration runtime
+and credential references come from method and connection settings;
+`resource_names` names the assets this pack generates.
+
+For Databricks catalog, schema, table, pipeline and job names, use
+[Name Databricks resources](/docs/how-to/name-things-your-way).

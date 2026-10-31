@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_quickbooks_quickbooks_records",
+	"properties": {
+		"type": "QuickBooksObject",
+		"linkedServiceName": {
+			"referenceName": "ls_native_quickbooks",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"tableName": "orders"
+		}
+	}
+}

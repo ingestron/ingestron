@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../schemas/project.editor.json
+id: sales
+values:
+  workers: 4
+imports:
+  - "*.pipeline.yaml"

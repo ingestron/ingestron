@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "files": {
+    "databricks.yml": "sha256:51fc9be9bdf9ad47b8cf8e16565854e5293b2ed1fb1408dea2fa7d3447e7ee15",
+    "prerequisites.sql": "sha256:69a19f6598b8871fa03bbfe7511f66392a29c1b8e3e325213bb5578460b3b317",
+    "resources/hr.pipeline.yml": "sha256:9333ef32e3fa25f94f408519ce11d20177ebc65048e77809f0c3d7ed6071c93e",
+    "resources/hr_refresh.job.yml": "sha256:a04b1be51e915de21b627f4e903ef1a6570a17e9d85878d4c8179fb49009c9bf",
+    "resources/schemas.yml": "sha256:f9b80a596e245e48e640a7845c73ffbce6d86e5e8171d52306e623850809c56b",
+    "src/hr/bronze/employees.sql": "sha256:455747c7d33566f96d3daeabb83800f51e7bf3ad3f25a7903bfd0681643d023c"
+  }
+}

@@ -1,0 +1,105 @@
+---
+title: Check generated files in CI
+description: Fail a build when someone changed the definitions without generating.
+---
+
+Commit the `build/` folder with your definitions. In CI, run `ingestron check`
+from the definitions project folder. It needs only Node.js 22.13 or later; `npx`
+fetches the command from npm.
+
+## GitHub Actions
+
+Save as `.github/workflows/ingestron-check.yml`:
+
+```yaml
+name: ingestron check
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npx --yes ingestron@1 check
+```
+
+## Azure DevOps
+
+Save as `ingestron-check.yml` and add it as a pipeline:
+
+```yaml
+trigger:
+  branches:
+    include: [main]
+pr:
+  branches:
+    include: ["*"]
+pool:
+  vmImage: ubuntu-latest
+steps:
+  - checkout: self
+  - task: NodeTool@0
+    inputs:
+      versionSpec: 22.x
+  - script: npx --yes ingestron@1 check
+    displayName: ingestron check
+```
+
+## Run it locally
+
+Both files are also in the repository's `ci-templates/` folder. Locally, after
+[installation](/docs/start/install), use the equivalent command:
+
+<ToolSteps>
+<Tool name="CLI">
+
+```sh
+ingestron check
+```
+
+</Tool>
+<Tool name="VS Code">
+
+Run **Ingestron: Check** from the Command Palette (⇧⌘P on macOS, Ctrl+Shift+P elsewhere) before you commit. The result is in the Ingestron output panel. Use the command in CI itself.
+
+![The Ingestron output panel after Ingestron: Check: dev is up to date.](/images/vscode/check.png)
+
+</Tool>
+</ToolSteps>
+
+It writes nothing. It prints `up to date` for each environment and exits
+with `0`. It exits with `1` when:
+
+- the output differs from what the definitions generate today. It lists
+  what differs; run `ingestron apply` locally and commit the result.
+- a file in an output folder was not generated, such as a SQL file someone
+  added beside the generated ones. A pipeline that reads the whole folder
+  would deploy it too:
+
+  ```text
+  prod: not generated  src/retail/bronze/extra.sql
+  ```
+
+  Move the file out of `build/`, or put what it does into the definitions.
+  Run `ingestron check --allow-extra` only if you keep your own files there
+  on purpose.
+
+- a folder under `build/` was generated before but is not any more, for
+  example after you remove an environment or add a second pack:
+
+  ```text
+  build/prod: no longer generated. Delete the folder, or delete its .generated.json to keep it as your own.
+  ```
+
+  Ingestron never deletes it for you. Stop anything that deploys from it,
+  then delete it.
+
+`check` compares files. It does not say that the platform accepts them or
+that anyone approved them; keep code review for that.

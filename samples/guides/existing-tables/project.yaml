@@ -1,0 +1,16 @@
+# A transform joins the shop's sales with a stores table that another team
+# owns: its name, different in each environment, is a value.
+id: sales
+values:
+  stores: dev_reference.core.stores
+environments:
+  dev: {}
+  prod:
+    values:
+      stores: prod_reference.core.stores
+imports:
+  - standard.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - transforms/*.yaml
+  - contracts/*.yaml

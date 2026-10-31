@@ -1,0 +1,12 @@
+{
+  "title": "Amazon S3",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/amazon-s3)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

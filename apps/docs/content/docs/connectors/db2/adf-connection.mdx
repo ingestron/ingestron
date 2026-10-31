@@ -1,0 +1,32 @@
+---
+title: Connection and access
+description: Configure DB2 credentials and network access for Azure Data Factory.
+---
+
+## Prepare access
+
+Prepare [source access, runtime and credentials](/docs/how-to/adf-runtime#prepare-access),
+then check this source's vendor prerequisites for permissions, drivers, versions
+and authentication setup.
+
+[Read the DB2 vendor prerequisites](https://learn.microsoft.com/en-us/azure/data-factory/connector-db2).
+
+## Configure the connection
+
+The example uses synthetic values. Replace the endpoint and account details with
+your source's values. A secret reference such as `${secret:source-password}`
+names a secret; it never contains the password itself. `id` is the name a flow
+uses in `source`, and `connector` selects the source type.
+
+<Example name="adf-native-connectors" file="connections/db2.yaml" />
+
+## Connection fields
+
+<ConnectorSettings id="db2" pack="adf" sample="adf-native-connectors" file="connections/db2.yaml" />
+
+## Continue to ingestion
+
+[Choose the objects and reading options](/docs/connectors/db2/adf-ingestion), then
+[configure runtime and scheduling](/docs/how-to/adf-runtime).
+
+[Download the complete projects and see their files](/docs/connectors/db2/examples).

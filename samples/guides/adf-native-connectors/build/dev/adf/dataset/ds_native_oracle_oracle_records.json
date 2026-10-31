@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_oracle_oracle_records",
+	"properties": {
+		"type": "OracleTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_oracle",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

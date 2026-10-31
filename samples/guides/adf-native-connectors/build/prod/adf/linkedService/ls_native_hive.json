@@ -1,0 +1,29 @@
+{
+	"name": "ls_native_hive",
+	"properties": {
+		"type": "Hive",
+		"version": "2.0",
+		"typeProperties": {
+			"enableSsl": true,
+			"enableServerCertificateValidation": true,
+			"authenticationType": "UsernameAndPassword",
+			"serverType": "HiveServer2",
+			"host": "source.example.test",
+			"port": 5432,
+			"username": "reader",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-password"
+			},
+			"thriftTransportProtocol": "Binary"
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

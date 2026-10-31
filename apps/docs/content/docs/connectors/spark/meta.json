@@ -1,0 +1,12 @@
+{
+  "title": "Spark",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/spark)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

@@ -1,0 +1,66 @@
+---
+title: Choose platforms and an ingestion route
+description: Match your source and intended result to the capabilities available in Ingestron.
+---
+
+Start with the source you need to read and the result you want to keep. Choose
+compatible capabilities for ingestion, any transformation, and storage. Your
+editor is a separate choice; it does not determine the platform architecture.
+
+## Make four decisions
+
+1. **Source and access.** Choose a connector and declare its reachability.
+   Check the connection page for authentication and runtime requirements.
+2. **Ingestion.** Choose a method that supports that connector and reachability.
+   Decide whether its copy or change-capture behaviour meets your needs.
+3. **Destination and later processing.** Check which methods can store the
+   ingestion result and whether you need transforms or quality checks.
+4. **Standard.** Select one standard containing compatible packs and policy for
+   all the required actions.
+
+<FlowDiagram
+  title="Choose capabilities before tool-specific steps"
+  steps={[
+    { title: "Source", detail: "Connector and reachability" },
+    { title: "Required actions", detail: "Read, transform when needed, and store" },
+    { title: "Compatible packs", detail: "Methods that can hand results to each other" },
+    { title: "Project standard", detail: "Allowed methods, defaults and fixed policy" },
+  ]}
+/>
+
+## What works in the current distribution
+
+The current builder offers two complete routes. These are today's implemented
+choices, not the definition of every future Ingestron project.
+
+| Route                         | What it does                                                                                    | Packs            |
+| ----------------------------- | ----------------------------------------------------------------------------------------------- | ---------------- |
+| Databricks directly           | Reads supported sources into Databricks tables                                                  | Databricks       |
+| ADF ingestion into Databricks | Copies sources to ADLS Gen2 landing storage, then reads the landed files into Databricks tables | Databricks + ADF |
+
+**ADF-only is not a supported complete route today.** The ADF pack has ingestion
+methods but no storage method, and no alternative destination pack is bundled.
+If you need ADF with a different destination, that is a current capability gap;
+selecting another provider name in YAML will not enable it. See the
+[pack catalogue](/docs/reference/packs) for the current boundary.
+
+## Check the connector's routes
+
+The comparison below comes from the same pack metadata used by project creation.
+A route must support both the source and its `connectivity` value.
+
+<RouteComparison ids={["files", "sqlserver", "salesforce", "kafka", "postgresql"]} />
+
+`public`, `workspace` and `private` describe [reachability](/docs/concepts/connectivity).
+They do not provision networking or test credentials. A standard can also reject
+an otherwise supported method.
+
+ADF can be selected for supported public and workspace sources as well as private
+ones. In the combined route, Databricks reads the landing files; it does not run
+a second direct connection to the original source.
+
+## Create the selected project
+
+Use [Create a project](/docs/how-to/start-from-a-template) for the available
+interfaces. The builder writes an explicit ingestion choice into the definitions
+and checks its standard. Generation and deployment remain separate steps.

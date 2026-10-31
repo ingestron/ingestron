@@ -1,0 +1,18 @@
+---
+title: Errors
+description: What each problem Ingestron reports means, and how to fix it.
+---
+
+Every problem is reported with the file, line and column of the value that
+caused it, and Ingestron reports all problems in one run.
+
+## Problems in the definitions
+
+<ErrorCodes />
+
+## Problems found while loading files
+
+These come from reading the YAML files and resolving `${…}` references,
+before the definitions are checked.
+
+<LoadingCodes />

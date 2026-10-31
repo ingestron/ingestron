@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_orders_prod",
+	"properties": {
+		"type": "PostgreSqlV2Table",
+		"linkedServiceName": {
+			"referenceName": "ls_native_postgresql_prod",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

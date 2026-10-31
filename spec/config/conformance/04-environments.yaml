@@ -1,0 +1,40 @@
+description: The selected environment's values are deep-merged over the top-level values.
+environment: prod
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    name: Sales data
+    values:
+      catalog: dev_catalog
+      cluster: { workers: 2, size: small }
+    environments:
+      dev: {}
+      prod:
+        values:
+          catalog: prod_catalog
+          cluster: { workers: 8 }
+    imports: ["*.pipeline.yaml"]
+  orders.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: orders
+    catalog: ${values.catalog}
+    cluster: ${values.cluster}
+    environment: ${environment.name}
+    owner: ${project.name}
+expect:
+  documents:
+    - kind: Pipeline
+      id: orders
+      value:
+        apiVersion: example.dev/v1
+        kind: Pipeline
+        id: orders
+        catalog: prod_catalog
+        cluster: { workers: 8, size: small }
+        environment: prod
+        owner: Sales data

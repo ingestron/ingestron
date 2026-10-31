@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "files": {
+    "databricks.yml": "sha256:098c3b8e715bcb9262c4a2fa16a8c53e64cb86a9dd54251671bd412831812a4b",
+    "resources/crm.pipeline.yml": "sha256:4e0c2df4c2549be4b79a81b2feb641ebf69ba5323d69f8ff3a63f514388b0812",
+    "src/crm/bronze/accounts.sql": "sha256:18537657f0f96c5c9079880db0de2217130ac4fdb4064730d897fe9ff43e093d",
+    "src/crm/bronze/contacts.sql": "sha256:94c862d6394d112ce619e5032c2d4529e186bc16d496faa96265e490adf67286"
+  }
+}

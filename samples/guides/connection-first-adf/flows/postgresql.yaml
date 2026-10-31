@@ -1,0 +1,15 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: postgresql
+source: postgresql
+ingest:
+  uses: adf-table
+  with:
+    resource_names:
+      pipeline: pl_${values.resource_prefix}_orders_${environment.name}
+      trigger: tr_${values.resource_prefix}_orders_${environment.name}
+      copy_activity: copy_orders
+tables:
+  postgresql_records:
+    object: ${values.postgresql_records_object}
+    contract: records

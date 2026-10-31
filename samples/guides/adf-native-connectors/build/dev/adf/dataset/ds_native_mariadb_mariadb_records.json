@@ -1,0 +1,11 @@
+{
+	"name": "ds_native_mariadb_mariadb_records",
+	"properties": {
+		"type": "MariaDBTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_mariadb",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {}
+	}
+}

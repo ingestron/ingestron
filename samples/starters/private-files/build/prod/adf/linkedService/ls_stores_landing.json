@@ -1,0 +1,9 @@
+{
+	"name": "ls_stores_landing",
+	"properties": {
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://storeslakeprod.dfs.core.windows.net"
+		}
+	}
+}

@@ -1,0 +1,32 @@
+---
+title: Ingestion
+description: Choose what Azure Blob Storage reads, its extraction options and destination behaviour.
+---
+
+## Select the source objects
+
+The connection's `id` is the flow's `source`. Each entry under `tables` names a
+destination table and links its source `object` to a contract. The contract lists
+the columns and keys you expect. Replace the synthetic object and contract with
+yours before deploying.
+
+<Example name="adf-native-connectors" file="flows/azure-blob.yaml" />
+
+## File selection and format
+
+Set `format` to the format Databricks will read; ADF copies the files as they are.
+`options` configures the downstream reader, for example CSV headers. Contract
+column types are passed as schema hints when `schema_hints` is enabled.
+
+<SettingsSections pack="adf" method="adf-files" connector="azure-blob" />
+
+## Files changed more than once
+
+A file copied again can replace the landed file, while Auto Loader reads each
+file once by default. Prefer sources that write new files rather than rewriting
+old ones. Choose [store behaviour](/docs/how-to/keep-a-table-current) for the data
+inside those files separately from which files ADF copies.
+
+## Complete examples
+
+[Download projects and inspect their files](/docs/connectors/azure-blob/examples).

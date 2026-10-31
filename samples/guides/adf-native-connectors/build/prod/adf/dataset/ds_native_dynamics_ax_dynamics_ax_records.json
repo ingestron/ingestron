@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_dynamics_ax_dynamics_ax_records",
+	"properties": {
+		"type": "DynamicsAXResource",
+		"linkedServiceName": {
+			"referenceName": "ls_native_dynamics_ax",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"path": "orders"
+		}
+	}
+}

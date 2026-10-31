@@ -1,0 +1,4 @@
+apiVersion: example.dev/v1
+kind: Pipeline
+id: orders
+table: raw_orders

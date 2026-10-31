@@ -1,0 +1,127 @@
+---
+title: Create a project from a connection
+description: Choose a source, a supported ingestion route and your organisation's standard.
+---
+
+Create a project by choosing the connection first. Ingestron offers the
+routes supported for that source and how it can be reached. The selected
+route determines which capabilities the project needs; the output is ordinary
+YAML definitions you can edit. Check [current platform combinations](/docs/reference/packs)
+before choosing your destination.
+
+<FlowDiagram
+  title="Create and check a project"
+  steps={[
+    { title: "Connection", detail: "Source and reachability" },
+    { title: "Route", detail: "Supported platforms" },
+    { title: "Standard", detail: "Defaults and fixed policy" },
+    { title: "Definitions", detail: "Configure, then Plan" },
+  ]}
+/>
+
+For a route comparison, start with [Choose an ingestion route](/docs/start/choose-a-route).
+
+<ToolSteps>
+<Tool name="CLI">
+
+From the parent folder where you want the project, run:
+
+```sh
+ingestron init sales
+```
+
+Choose the source category, connector, network reachability and route.
+When only one route is supported, Ingestron selects it. Then enter the
+project name, environments, standard and connection settings. Press Enter
+to accept the default shown beside a question.
+
+To select the connection and route with flags:
+
+```sh
+ingestron init sales --connector postgresql --connectivity private --via adf \
+  --env dev --env prod --yes
+```
+
+This creates a project using example settings and shows its generation
+plan. Open the YAML files and replace the example host, objects and platform
+paths with yours before deployment. `--yes` accepts defaults for unanswered
+questions. Without a terminal or `--yes`, a missing answer produces an error
+naming the flag to pass.
+
+Use `--standard ../platform/standard.yaml` to choose your organisation's
+standard. Use `--set source_server=postgres.example.invalid` to answer a
+configuration question by its value key. The keys for the selected recipe
+are visible under `values` in the resulting `project.yaml`; an unknown key
+is rejected with the available keys.
+
+</Tool>
+<Tool name="VS Code">
+
+Run **Ingestron: New project** from the Command Palette. Choose a category,
+or **All sources**, then type to search connectors. Choose source
+reachability and a supported ingestion route, then answer the project,
+standard and configuration questions. The destination folder comes last.
+Cancelling a question creates no files.
+
+The new `project.yaml` opens when creation succeeds. The generation plan
+appears in the Ingestron output panel.
+
+</Tool>
+</ToolSteps>
+
+## Use your standard
+
+A project has one standard, including when it uses several packs.
+Creation validates every environment before writing files. See
+[Configure the project standard](/docs/how-to/configure-a-standard) for
+allowed methods, settings ownership and fixed policies.
+
+## Configure the definitions
+
+The project contains only the selected connection and its example flows,
+contracts and any required transforms. Answers become `values` in
+`project.yaml`, referenced from the definition files. Secret questions take
+`${secret:name}` references rather than credentials. For current ADF
+connections, these name Key Vault secrets; follow the selected connector's
+requirements for its secret mechanism. See [YAML references and placeholders](/docs/concepts/yaml-references)
+for values, files and secret syntax.
+
+The questions cover the recipe's string connection, object and infrastructure
+values. Nested settings, alternative authentication modes, schedules and
+resource names remain editable in YAML. Use the connector reference and
+[ADF settings guide](/docs/how-to/adf-native-connectors) to configure them.
+See [Name ADF resources](/docs/how-to/name-adf-resources) for name defaults
+and overrides.
+
+`init` never replaces an existing file. If any target file already exists,
+it lists the clashes and writes nothing. After editing the definitions,
+run `ingestron plan` from the project folder to review the generated files.
+
+## Review and generate
+
+From the new project folder, run `ingestron plan --no-diff`, or use
+**Ingestron: Plan** in VS Code. After reviewing the plan, run Apply to write
+the native assets. Neither creation nor Apply deploys them to a cloud platform.
+
+Continue with the task you need:
+
+- [Choose an ingestion route](/docs/start/choose-a-route): compare ADF and direct Databricks.
+- [Configure native ADF ingestion](/docs/how-to/adf-native-connectors): source, runtime and extraction.
+- [Name ADF resources](/docs/how-to/name-adf-resources): defaults and YAML overrides.
+- [Browse connectors](/docs/connectors): fields and supported routes by category.
+
+## Use a prepared project instead
+
+For a project with several connections or an organisation-specific layout,
+choose a named preset, folder or Git template explicitly:
+
+```sh
+ingestron init sales --template retail
+ingestron init sales --template ../templates/lakehouse
+ingestron init sales --template https://github.com/acme/data-templates.git#lakehouse
+```
+
+`--template` cannot be combined with `--connector`, `--connectivity` or
+`--via`. After `#` comes the folder inside the repository. Git uses your
+own credentials. See [Templates](/docs/reference/templates) for presets
+and [Share a template](/docs/how-to/share-a-template) to create one.

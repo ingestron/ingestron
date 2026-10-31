@@ -1,0 +1,11 @@
+description: A file that is no longer wanted but was edited by hand is kept as a conflict.
+disk:
+  jobs/old.yml: "name: old\n# keep me\n"
+manifest:
+  jobs/old.yml: "name: old\n"
+wanted: {}
+expect:
+  changes:
+    - { path: jobs/old.yml, change: conflict, reason: EDITED }
+  clean: false
+  upToDate: false

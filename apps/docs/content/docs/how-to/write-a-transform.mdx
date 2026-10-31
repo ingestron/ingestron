@@ -1,0 +1,85 @@
+---
+title: Write a transform
+description: Build a table from other tables with SQL or PySpark.
+---
+
+This guide uses SQL and PySpark methods from the Databricks pack.
+
+A transform builds one table from tables your flows or other transforms
+produce. It lands in the second layer, `silver` by default, unless it sets
+`layer`.
+
+## In SQL
+
+Write the query in its own file and refer to inputs as
+`{{ tables.<name> }}`:
+
+<Example name="layers-and-transforms" file="transforms/store_sales.sql" />
+
+<Example name="layers-and-transforms" file="transforms/store_sales.yaml" />
+
+`${file:…}` reads the code from the file next to the definition. Every input
+must be listed in `inputs`. Ingestron replaces each `{{ tables.… }}` with the
+input's full name and generates a materialised view:
+
+<Example name="layers-and-transforms" file="build/dev/src/sales/silver/store_sales.sql" />
+
+## Read a table another team owns
+
+`inputs` are tables the project builds. To read a table that already exists,
+such as reference data another team keeps, write its name as a value in the
+code. Give the value in `project.yaml`, with a different name per environment
+where it differs:
+
+<Example name="existing-tables" file="project.yaml" />
+
+<Example name="existing-tables" file="transforms/store_sales.sql" />
+
+Ingestron puts each environment's name in place and never creates or changes
+that table:
+
+<Example name="existing-tables" file="build/prod/src/sales/silver/store_sales.sql" />
+
+A value that `project.yaml` does not have is an error
+([`UNKNOWN_CODE_VALUE`](/docs/reference/errors#UNKNOWN_CODE_VALUE)), so a
+misspelt name never reaches the generated files. Other `${…}` in the code,
+such as a SQL parameter, stay as written.
+
+## In PySpark
+
+Set `transform: { uses: pyspark }` and define a function `transform(tables)`.
+`tables` is a dictionary of DataFrames keyed by input name, such as
+`tables["invoices"]`; the function returns one DataFrame:
+
+<Example name="pyspark" file="transforms/monthly_revenue.py" />
+
+<Example name="pyspark" file="transforms/monthly_revenue.yaml" />
+
+Ingestron resolves `${values.…}` references in the code, then wraps it as a
+materialised view with
+the table's name, comment, clustering and checks:
+
+<Example name="pyspark" file="build/dev/src/subscriptions/silver/monthly_revenue.py" />
+
+## Plan
+
+<ToolSteps>
+<Tool name="CLI">
+
+```sh
+ingestron plan
+```
+
+</Tool>
+<Tool name="VS Code">
+
+Run **Ingestron: Plan** from the Command Palette (⇧⌘P on macOS, Ctrl+Shift+P elsewhere). The output is in the Ingestron output panel. Problems show in the Problems panel as you type, before you plan.
+
+![The Ingestron output panel after Ingestron: Plan: three files to create in build/dev, ready to apply.](/images/vscode/plan.png)
+
+</Tool>
+</ToolSteps>
+
+Transforms run after the tables they read. A transform that reads itself,
+directly or through others, is an error
+([`INPUT_CYCLE`](/docs/reference/errors#INPUT_CYCLE)).

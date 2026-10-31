@@ -1,0 +1,31 @@
+---
+title: Ingestion
+description: Choose Kafka objects and table behaviour in Databricks.
+---
+
+## Select the source objects
+
+The flow's `source` names the connection. Each table links an `object` to its
+contract; the contract describes the source columns and keys.
+
+<Example name="kafka" file="flows/events.yaml" />
+
+## What you get
+
+One ingestion pipeline for the connection, on the `PREVIEW` channel. It
+runs continuously in production. In other environments it runs when the
+refresh job or `databricks bundle run` starts it, which costs less; set
+`continuous: true` to change that.
+
+## Choices
+
+- `value_format`: `json` (parsed with the contract's types), `avro`,
+  `protobuf` or `string`.
+- `starting_offset`: where a new pipeline starts, `earliest` or `latest`.
+- Topics can only be appended (`mode: append`); the pack sets this for you.
+
+<SettingsSections pack="databricks" method="lakeflow-connect" connector="kafka" />
+
+## Complete examples
+
+[Download projects and inspect their files](/docs/connectors/kafka/examples).

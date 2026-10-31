@@ -1,0 +1,23 @@
+---
+title: Connection and access
+description: Configure Kafka access from Databricks.
+---
+
+## What you need
+
+A Unity Catalog connection to the Kafka cluster, created by an
+administrator. Name it in the connection's `uc_connection`. A table's
+`object` is the topic.
+
+## Connection example
+
+<Example name="kafka" file="connections/events.yaml" />
+
+## Connection fields
+
+<ConnectorSettings id="kafka" pack="databricks" sample="kafka" file="connections/events.yaml" />
+
+## Continue to ingestion
+
+[Choose objects and reading options](/docs/connectors/kafka/databricks-ingestion).
+[Download the complete example](/docs/connectors/kafka/examples) to use its project, standard and contracts together.

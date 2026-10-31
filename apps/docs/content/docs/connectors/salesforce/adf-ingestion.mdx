@@ -1,0 +1,44 @@
+---
+title: Ingestion
+description: Choose what Salesforce reads, its extraction options and destination behaviour.
+---
+
+## Select the source objects
+
+The connection's `id` is the flow's `source`. Each entry under `tables` names a
+destination table and links its source `object` to a contract. The contract lists
+the columns and keys you expect. Replace the synthetic object and contract with
+yours before deploying.
+
+<Example name="adf-native-connectors" file="flows/salesforce.yaml" />
+
+## Reading behaviour
+
+`object` is the Salesforce object API name, such as `Account`. Use API field
+names in the contract. The example selects account IDs, names and modification
+times, with a SOQL `query` that excludes accounts without a name. It uses
+Salesforce's query language; `SELECT *` is not a substitute for naming fields.
+
+<Example name="adf-native-connectors" file="contracts/salesforce-account.yaml" />
+
+Each window re-runs the selection. This connector does not maintain an extraction
+watermark, even when your query contains criteria. The contract's key identifies
+the row; it does not by itself make the copy incremental. See
+[Microsoft's Salesforce source reference](https://learn.microsoft.com/en-us/azure/data-factory/connector-salesforce#salesforce-as-a-source-type)
+for SOQL and source permissions.
+
+## Supported extraction settings
+
+<NativeReadSettings id="salesforce" />
+
+## Keep the destination current
+
+The copy selects data again for each run. The default downstream store appends
+rows, so repeated snapshots can produce repeated rows. Choose
+[upsert or history](/docs/how-to/keep-a-table-current) with a reliable ordering
+column when you need current rows or versions. A row absent from a later
+snapshot is not a deletion instruction.
+
+## Complete examples
+
+[Download projects and inspect their files](/docs/connectors/salesforce/examples).

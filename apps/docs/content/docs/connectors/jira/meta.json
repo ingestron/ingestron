@@ -1,0 +1,12 @@
+{
+  "title": "Jira",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/jira)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

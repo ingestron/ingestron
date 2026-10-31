@@ -1,0 +1,69 @@
+description: A transform's code file is text, so its ${values.…} are replaced for the environment; other ${…}, such as SQL parameters, stay as written.
+environment: prod
+files:
+  project.yaml: |
+    id: retail
+    values: { crm: dev_crm.core }
+    environments: { dev: {}, prod: { values: { crm: prod_crm.core } } }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        description: One row per order.
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: total, logicalType: number, physicalType: "DECIMAL(18,2)" }
+  a_daily.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: daily
+    inputs: [orders]
+    code: ${file:daily.sql}
+    contract: daily
+  daily.sql: |
+    SELECT o.*, c.name FROM {{ tables.orders }} o JOIN ${values.crm}.customers c USING (id)
+    -- ${run_date} is a SQL parameter and stays as written
+  daily.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: daily
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: daily
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  tables:
+    - name: orders
+    - name: daily
+      transform:
+        code: |
+          SELECT o.*, c.name FROM {{ tables.orders }} o JOIN prod_crm.core.customers c USING (id)
+          -- ${run_date} is a SQL parameter and stays as written

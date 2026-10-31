@@ -1,0 +1,12 @@
+# An organisation's conventions: one catalog, schemas per environment and
+# layer, source-prefixed bronze tables, allowed and fixed settings, and
+# its own decimal type.
+id: marketing
+environments:
+  dev: {}
+  prod: {}
+imports:
+  - standard.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - contracts/*.yaml

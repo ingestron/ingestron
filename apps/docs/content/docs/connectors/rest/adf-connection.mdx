@@ -1,0 +1,57 @@
+---
+title: Connection and access
+description: Configure REST credentials and network access for Azure Data Factory.
+---
+
+## Prepare access
+
+Prepare [source access, runtime and credentials](/docs/how-to/adf-runtime#prepare-access),
+then check this source's vendor prerequisites for permissions, drivers, versions
+and authentication setup.
+
+[Read the REST vendor prerequisites](https://learn.microsoft.com/en-us/azure/data-factory/connector-rest).
+
+## Configure the connection
+
+The example uses synthetic values. Replace the endpoint and account details with
+your source's values. A secret reference such as `${secret:source-password}`
+names a secret; it never contains the password itself. `id` is the name a flow
+uses in `source`, and `connector` selects the source type.
+
+<Example name="adf-native-connectors" file="connections/rest.yaml" />
+
+## Choose authentication
+
+`Anonymous` is the default and needs no login fields. `Basic` requires both
+`user` and a `password` secret reference. Remove the OAuth fields when choosing
+Basic or Anonymous; fields for the wrong authentication option are rejected.
+
+The example uses `OAuth2ClientCredential`. This requires **all three** of
+`client_id`, `client_secret` and `token_endpoint`. The secret is a Key Vault
+reference; the endpoint issues tokens for the application.
+
+If the API requires additional authentication headers, put their secret references
+in the connection's `auth_headers`. These are connection settings, separate from
+the flow's `source_options` for requests, pagination and record selection.
+
+## OAuth audience and scopes
+
+For `OAuth2ClientCredential`, set `resource` when the token endpoint requires
+an audience, and `scope` when it requires scopes. These fields are rejected
+for Anonymous and Basic authentication.
+
+## Connection fields
+
+<ConnectorSettings
+  id="rest"
+  pack="adf"
+  sample="adf-native-connectors"
+  file="connections/rest.yaml"
+/>
+
+## Continue to ingestion
+
+[Choose the objects and reading options](/docs/connectors/rest/adf-ingestion), then
+[configure runtime and scheduling](/docs/how-to/adf-runtime).
+
+[Download the complete projects and see their files](/docs/connectors/rest/examples).

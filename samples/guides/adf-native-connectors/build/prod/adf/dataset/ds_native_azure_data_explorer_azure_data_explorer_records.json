@@ -1,0 +1,11 @@
+{
+	"name": "ds_native_azure_data_explorer_azure_data_explorer_records",
+	"properties": {
+		"type": "AzureDataExplorerTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_azure_data_explorer",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {}
+	}
+}

@@ -1,0 +1,10 @@
+apiVersion: ingestron.io/v1
+kind: Connection
+id: postgresql
+connector: postgresql
+connectivity: private
+settings:
+  server: ${values.source_server}
+  database: ${values.source_database}
+  user: ${values.source_user}
+  password: ${values.source_password}

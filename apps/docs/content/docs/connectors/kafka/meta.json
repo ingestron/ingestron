@@ -1,0 +1,12 @@
+{
+  "title": "Kafka",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/kafka)",
+    "examples",
+    "---Databricks---",
+    "databricks-connection",
+    "databricks-ingestion"
+  ],
+  "defaultOpen": false
+}

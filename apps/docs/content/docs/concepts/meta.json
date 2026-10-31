@@ -1,0 +1,15 @@
+{
+  "title": "Concepts",
+  "pages": [
+    "index",
+    "definitions",
+    "standards-and-packs",
+    "settings",
+    "environments-and-platform",
+    "yaml-references",
+    "connectivity",
+    "naming",
+    "generated-files"
+  ],
+  "defaultOpen": false
+}

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "files": {
+    "dataset/ds_sales_parquet.json": "sha256:a5c61a5c01965370036b0babf4bc39738c3b8c994310e72bef0c44cf15a75416",
+    "dataset/ds_sales_postgresql_postgresql_records.json": "sha256:606735ffbbcd36ad4ccc9a2308da46e73203bcdb004c45b76ad0450871e5b005",
+    "linkedService/ls_sales_lake.json": "sha256:e20d37e2cfcb411dd7adee2e89540dde25d555522e05425ed74501908ca50f9c",
+    "linkedService/ls_sales_postgresql.json": "sha256:b599c7e43fed80b3dd1a2b5b670df90bd2eb22221b557564c8b524502c5027eb",
+    "linkedService/ls_sales_secrets.json": "sha256:f122743950083bf39c2ee2a1e70993f42510f5df1d403009629a57f37918c364",
+    "pipeline/pl_sales_orders_prod.json": "sha256:a071f157cb2d045a2af9a701efab2d1b28cb5e9612ff27cbc836cfeaa4a653f3",
+    "trigger/tr_sales_orders_prod.json": "sha256:1d8f9c6557330c4d76bfd863c23153990b2d70f4b5550691f7ea5005183c6068"
+  }
+}

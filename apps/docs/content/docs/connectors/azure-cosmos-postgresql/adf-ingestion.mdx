@@ -1,0 +1,40 @@
+---
+title: Ingestion
+description: Choose what Azure Cosmos DB for PostgreSQL reads, its extraction options and destination behaviour.
+---
+
+## Select the source objects
+
+The connection's `id` is the flow's `source`. Each entry under `tables` names a
+destination table and links its source `object` to a contract. The contract lists
+the columns and keys you expect. Replace the synthetic object and contract with
+yours before deploying.
+
+<Example name="adf-native-connectors" file="flows/azure-cosmos-postgresql.yaml" />
+
+## Reading behaviour
+
+The copy takes a full snapshot each window. Choose the downstream store behaviour
+for repeated snapshots; this connector does not maintain an incremental watermark.
+
+This entry uses ADF's Azure PostgreSQL connector. Microsoft lists Cosmos DB for
+PostgreSQL on a retirement path and recommends other services for new projects;
+see [Microsoft's Cosmos DB for PostgreSQL guidance](https://learn.microsoft.com/en-us/azure/cosmos-db/postgresql/howto-ingest-azure-data-factory).
+Existing sources can still be described with this alias. Private endpoints for
+Cosmos DB for PostgreSQL are not supported by ADF.
+
+## Supported extraction settings
+
+<NativeReadSettings id="azure-cosmos-postgresql" />
+
+## Keep the destination current
+
+The copy selects data again for each run. The default downstream store appends
+rows, so repeated snapshots can produce repeated rows. Choose
+[upsert or history](/docs/how-to/keep-a-table-current) with a reliable ordering
+column when you need current rows or versions. A row absent from a later
+snapshot is not a deletion instruction.
+
+## Complete examples
+
+[Download projects and inspect their files](/docs/connectors/azure-cosmos-postgresql/examples).

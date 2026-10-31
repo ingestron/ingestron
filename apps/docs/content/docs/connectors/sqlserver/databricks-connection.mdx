@@ -1,0 +1,31 @@
+---
+title: Connection and access
+description: Configure SQL Server access from Databricks.
+---
+
+## What you need
+
+- A Unity Catalog connection to the server, created by an administrator.
+  Name it in the connection's `uc_connection`; no credentials go in the
+  definitions.
+- Change tracking or change data capture enabled on the source tables, as
+  Databricks' [SQL Server guide](https://docs.databricks.com/aws/en/ingestion/lakeflow-connect/sql-server-pipeline)
+  describes.
+
+## Connection example
+
+<Example name="sql-server" file="connections/erp.yaml" />
+
+## Connection fields
+
+<ConnectorSettings
+  id="sqlserver"
+  pack="databricks"
+  sample="sql-server"
+  file="connections/erp.yaml"
+/>
+
+## Continue to ingestion
+
+[Choose objects and reading options](/docs/connectors/sqlserver/databricks-ingestion).
+[Download the complete example](/docs/connectors/sqlserver/examples) to use its project, standard and contracts together.

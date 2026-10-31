@@ -1,0 +1,73 @@
+---
+title: Standards, packs and methods
+description: Separate project policy from platform capabilities and method selection.
+---
+
+A **standard** is the project's policy. A **pack** implements capabilities and
+builds platform files. A **method** performs one action for a table. Choosing a
+pack does not mean every action must run on that platform.
+
+| Action      | Responsibility                                             |
+| ----------- | ---------------------------------------------------------- |
+| `ingest`    | Read a source, producing files or a table                  |
+| `transform` | Compute a result from declared project tables              |
+| `store`     | Keep the preceding result using a supported storage method |
+
+Methods declare what they accept and produce. Consecutive methods must be
+compatible; listing two packs does not make every combination valid. If ingestion
+already produces a table, that flow has no separate store step.
+
+## One policy across the project
+
+The standard names its packs, limits methods with `allowed`, supplies defaults
+and can fix settings that definitions may not change. Use
+[Configure a standard](/docs/how-to/configure-a-standard) to write that policy,
+and [Settings](/docs/concepts/settings) to understand overrides.
+
+This example uses a pack for copying and another for downstream storage:
+
+<Example name="private-sql-server" file="standard.yaml" />
+
+The [pack catalogue](/docs/reference/packs) lists supported combinations and
+current capability gaps.
+
+## How a method is chosen
+
+For each action, the first applicable choice wins:
+
+1. An explicit `uses` in the definition, provided the standard allows it.
+2. A matching `when` rule in the standard.
+3. A matching rule in a pack. An ingest rule is skipped if it cannot read the
+   connector or reachability declared by the connection.
+4. The standard's `default`, then the applicable pack default.
+
+Rules can match connector, connectivity, layer and the preceding action's output.
+An explicit unsupported choice is reported as a problem; it does not silently
+switch to another platform.
+
+The connection-first builder writes an explicit `ingest.uses` for the chosen
+route. You can inspect that choice in the flow without learning the builder's
+interface. [Connectivity](/docs/concepts/connectivity) explains reachability.
+
+## Combine packs when their actions fit
+
+The first pack in the standard supplies project defaults such as naming and
+layers. Rules are considered in pack order. Each resolved action records the
+pack that owns it, and each pack generates its own output folder when several
+packs are selected.
+
+For the current ADF-to-Databricks route, copying produces landing files and the
+store method reads them into tables. The ADF pack supplies no store method, so
+ADF alone is not a complete route today. Other combinations require implemented,
+compatible methods; they cannot be enabled by substituting a provider name.
+
+## Keep settings with their owner
+
+Method settings are keyed by method ID: configuring one method does not configure
+another. Standards hold shared defaults and policy, Platform holds shared
+infrastructure, and flows or tables hold local choices. A missing required
+setting is reported before generation, with its expected location.
+
+Use [Plan and generate](/docs/how-to/plan-and-generate) to inspect the result.
+Tools can explain method selection and setting origins without changing the
+underlying definitions.

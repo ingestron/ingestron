@@ -1,0 +1,14 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: iot.readings
+version: 1.0.0
+status: active
+schema:
+  - name: readings
+    logicalType: object
+    description: One reading per sensor and time.
+    properties:
+      - { name: sensor_id, logicalType: string, required: true }
+      - { name: read_at, logicalType: timestamp, required: true }
+      - { name: temperature, logicalType: number }
+      - { name: unit, logicalType: string }

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+.tmp/
+*.tsbuildinfo
+build/
+.ingestron/
+!samples/*/*/build/
+packages/cli/project-templates/
+packages/cli/project-recipes/
+apps/vscode/project-recipes/
+.DS_Store
+.release/

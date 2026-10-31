@@ -1,0 +1,6 @@
+apiVersion: example.dev/v1
+kind: Pipeline
+id: orders
+catalog: ${values.catalog}
+table: raw_${environment.name}_orders
+cluster: ${values.cluster}

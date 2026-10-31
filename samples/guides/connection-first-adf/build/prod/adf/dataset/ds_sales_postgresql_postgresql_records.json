@@ -1,0 +1,14 @@
+{
+	"name": "ds_sales_postgresql_postgresql_records",
+	"properties": {
+		"type": "PostgreSqlV2Table",
+		"linkedServiceName": {
+			"referenceName": "ls_sales_postgresql",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

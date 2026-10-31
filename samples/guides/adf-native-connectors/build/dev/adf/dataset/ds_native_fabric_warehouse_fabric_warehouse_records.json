@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_fabric_warehouse_fabric_warehouse_records",
+	"properties": {
+		"type": "WarehouseTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_fabric_warehouse",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

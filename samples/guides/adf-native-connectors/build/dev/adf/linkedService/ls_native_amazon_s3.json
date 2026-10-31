@@ -1,0 +1,21 @@
+{
+	"name": "ls_native_amazon_s3",
+	"properties": {
+		"type": "AmazonS3",
+		"typeProperties": {
+			"accessKeyId": "synthetic-access_key",
+			"secretAccessKey": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-secret-key"
+			}
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

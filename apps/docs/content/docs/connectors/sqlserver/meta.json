@@ -1,0 +1,15 @@
+{
+  "title": "SQL Server",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/sqlserver)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion",
+    "---Databricks---",
+    "databricks-connection",
+    "databricks-ingestion"
+  ],
+  "defaultOpen": false
+}

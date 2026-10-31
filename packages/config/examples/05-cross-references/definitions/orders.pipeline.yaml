@@ -1,0 +1,6 @@
+apiVersion: example.dev/v1
+kind: Pipeline
+id: orders
+source: erp
+after:
+  - customers

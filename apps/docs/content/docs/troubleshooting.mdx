@@ -1,0 +1,84 @@
+---
+title: Troubleshooting
+description: Common problems, how to recognise them, and how to fix them.
+---
+
+## Plan reports a conflict
+
+**Symptom:** `conflict  src/…  Changed by hand since it was generated.`
+
+**Cause:** someone edited a generated file. Ingestron never overwrites it.
+
+**Fix:** move the change into the definitions or the standard, then delete
+the file and run `ingestron apply` to generate it again.
+
+## Check fails in CI
+
+**Symptom:** `ingestron check` prints `not up to date` and exits with `1`.
+
+**Cause:** the definitions changed but the generated files were not
+regenerated and committed, or a generated file was edited.
+
+**Fix:** run `ingestron apply` locally, review the changes and commit them.
+
+## Check reports a folder or file that was not generated
+
+**Symptom:** `ingestron check` prints `not generated  <file>` or
+`<folder>: no longer generated`, and exits with `1`.
+
+**Cause:** someone added a file inside an output folder, or a folder that
+was generated before (for an environment you removed, or before you added a
+second pack) is still in `build/`.
+
+**Fix:** move the extra file out of `build/`. Delete the old folder once
+nothing deploys from it. See [Check generated files in CI](/docs/how-to/check-in-ci).
+
+## A setting is not accepted
+
+**Symptom:** `BAD_SETTING` with `"…" is not a setting` or `"…" is required`.
+
+**Cause:** a misspelt setting, a setting of another method, or a required
+setting nobody gave.
+
+**Check:** the message's hint lists the method's settings, and
+[Reference: packs and methods](/docs/reference/packs) shows them with their
+defaults.
+
+**Fix:** correct the name at the reported line, or add the missing setting,
+usually in the standard.
+
+## The method cannot read this source
+
+**Symptom:** `CONNECTOR_NOT_SUPPORTED` or `CONNECTIVITY_NOT_SUPPORTED`.
+
+**Cause:** the chosen method does not read this kind of source, or cannot
+reach it.
+
+**Check:** the hint lists the methods that can, with the connectivity each
+supports.
+
+**Fix:** remove the flow's `uses` to let the standard choose, add the pack
+that reads it to the standard's `packs`, or correct the connection's
+`connectivity`.
+
+## Two tables get the same name
+
+**Symptom:** `DUPLICATE_TABLE` or `DUPLICATE_NAME`.
+
+**Cause:** two flows or transforms use the same table name, or the naming
+patterns give two tables the same full name.
+
+**Fix:** rename one, or include `{{ flow }}` or `{{ source }}` in the
+table pattern. See [Naming](/docs/concepts/naming).
+
+## Databricks rejects the bundle
+
+**Symptom:** `databricks bundle validate` or `deploy` fails.
+
+**Check:** the message names the resource and field. A missing schema means
+the schemas are not created yet: ask the team that owns them, or see
+[Let the bundle create the schemas](/docs/how-to/manage-schemas). A missing
+Unity Catalog connection must be created by an administrator before a
+Lakeflow Connect pipeline can deploy.
+
+Every code is explained in [Reference: errors](/docs/reference/errors).

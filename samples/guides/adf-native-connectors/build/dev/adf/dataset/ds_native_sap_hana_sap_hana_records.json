@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_sap_hana_sap_hana_records",
+	"properties": {
+		"type": "SapHanaTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_sap_hana",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

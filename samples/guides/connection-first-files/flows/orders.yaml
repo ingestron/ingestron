@@ -1,0 +1,10 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: orders
+source: shop
+tables:
+  orders:
+    object: ${values.orders_object}
+    contract: shop.orders
+ingest:
+  uses: files

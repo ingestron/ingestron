@@ -1,0 +1,9 @@
+{
+	"name": "ls_native_lake",
+	"properties": {
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://syntheticlake.dfs.core.windows.net"
+		}
+	}
+}

@@ -1,0 +1,57 @@
+---
+title: Databricks pack
+description: Every method of the databricks pack, with its settings and defaults.
+---
+
+`databricks@1` writes one Databricks bundle per environment: Lakeflow
+pipelines with SQL and Python files, Lakeflow Connect ingestion, and a
+refresh job when the platform has a schedule or a task runs after the refresh.
+The settings below come from the pack itself.
+
+Before deployment, [plan and review](/docs/how-to/plan-and-generate) the files,
+then [deploy the generated bundle](/docs/how-to/deploy-the-bundle).
+
+<PackMethods pack="databricks" />
+
+## Platform configuration
+
+The current resolved Platform model supplies these defaults. This pack uses them
+when generating bundles; they are not a promise that other packs interpret every
+field the same way.
+
+| Setting                                                             | Default                                                                             |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `mode`                                                              | `production` for environments named `prod` or `production`, otherwise `development` |
+| Compute                                                             | Serverless                                                                          |
+| `schedule`                                                          | None; when set, UTC and paused outside production unless overridden                 |
+| `manage.schemas`, `manage.tags`, `manage.comments`, `manage.checks` | `false`                                                                             |
+| `run_as`                                                            | The identity that deploys                                                           |
+
+<Example name="platform-setup" file="platform.yaml" />
+
+Only enable management of shared resources when this project owns them. The
+following capability reference describes each switch and its prerequisites.
+
+## Platform prerequisites
+
+Some features change shared Unity Catalog objects, so the platform turns each
+on with a `manage` switch. While a switch is off, a definition or contract that
+uses the feature gets a `CAPABILITY_OFF` warning with a quick fix that turns it
+on. When a switch is on, the bundle has a `prerequisites.sql` that lists the
+grants to run once as an administrator.
+
+Tags, column comments and table checks run in an `apply_contract` task after
+the refresh, on serverless jobs compute: Lakeflow pipelines cannot set tags or
+column comments, nor compare counts over all rows. With no schedule, the job
+is still generated, to run on demand.
+
+<PackCapabilities pack="databricks" />
+
+## Contract fields
+
+What this pack does with each field of a table's contract. When a contract
+writes a field that no pack of the standard uses yet, Ingestron warns at that
+field with the reason below; **Elsewhere** fields are handled by another pack
+or step and never warn.
+
+<ContractUseTable pack="databricks" />

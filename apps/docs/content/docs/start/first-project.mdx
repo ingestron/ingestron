@@ -1,0 +1,127 @@
+---
+title: Generate your first project
+description: Learn the definition-to-generation workflow with a small, local example.
+---
+
+Create definitions, inspect their plan, then generate and review the files. This
+example uses the Databricks pack to make the output concrete. You do not need a
+Databricks account, a live source or cloud access to complete it; nothing is
+deployed and no data is loaded.
+
+[Install a tool](/docs/start/install) first. For your own project, check
+[supported platform combinations](/docs/start/choose-a-route). The underlying
+workflow remains definitions → plan → generate → review.
+
+<ExampleDownload name="connection-first-files" /> contains the finished example for comparison.
+
+## 1. Create the definitions
+
+From the parent folder, create an empty project named `shop`:
+
+<ToolSteps>
+<Tool name="CLI">
+
+```sh
+ingestron init shop --connector files --connectivity public --via databricks --env dev --yes
+```
+
+`--yes` uses synthetic example values. Without these flags, project creation
+asks for the connection, reachability, route, standard and settings.
+
+</Tool>
+<Tool name="VS Code">
+
+Run **Ingestron: New project**. Choose **Files and storage**, **Files**, **public**,
+then **Databricks directly**. Name the project `shop` and environment `dev`, keep
+the supplied standard and example values, and select an empty `shop` folder.
+
+</Tool>
+</ToolSteps>
+
+Both create the same five definition files and show a plan. Open `shop`; the
+remaining steps run from that folder. No platform output has been written yet.
+
+## 2. Understand the files
+
+`project.yaml` names the project, values, environments and imports:
+
+<Example name="connection-first-files" file="project.yaml" />
+
+`standard.yaml` selects the pack. This small standard uses its defaults:
+
+<Example name="connection-first-files" file="standard.yaml" />
+
+The connection describes the source. `${values.source_path}` reads a project
+value using the [YAML reference syntax](/docs/concepts/yaml-references):
+
+<Example name="connection-first-files" file="connections/shop.yaml" />
+
+The flow links that connection's object to the contract describing `orders`:
+
+<Example name="connection-first-files" file="flows/orders.yaml" />
+
+<Example name="connection-first-files" file="contracts/orders.yaml" />
+
+The [definition model](/docs/concepts/definitions) explains those relationships.
+For this exercise keep the synthetic values; replace them before any deployment.
+
+## 3. Plan and generate
+
+<ToolSteps>
+<Tool name="CLI">
+
+```sh
+ingestron plan --env dev --no-diff
+ingestron apply --env dev --no-diff
+```
+
+</Tool>
+<Tool name="VS Code">
+
+Save the files and run **Ingestron: Plan** for `dev`. Inspect the output panel,
+then run **Ingestron: Apply**.
+
+</Tool>
+</ToolSteps>
+
+Plan lists three creates under `build/dev`: `databricks.yml`,
+`resources/shop.pipeline.yml` and `src/shop/bronze/orders.sql`. Apply writes them
+and reports `Applied.`. Read the generated table definition:
+
+<Example name="connection-first-files" file="build/dev/src/shop/bronze/orders.sql" />
+
+This pack chose table names, types and storage settings from the resolved
+standard and contract. The files describe resources to deploy later; generating
+them has not run a pipeline or read the source path.
+
+## 4. See how generated files are protected
+
+Add a comment to `build/dev/src/shop/bronze/orders.sql`, then plan again.
+Ingestron reports a conflict because the file differs from its recorded generated
+version. It does not overwrite your edit.
+
+Remove your added comment, then plan again: there should be no changes. Make
+future changes in definitions and regenerate. The
+[ownership guide](/docs/concepts/generated-files) explains conflicts and recovery.
+
+## Continue with your own project
+
+<DocLinks
+  items={[
+    {
+      title: "Create a project from your connection",
+      href: "/docs/how-to/start-from-a-template",
+      description: "Choose the supported route and standard you actually need.",
+    },
+    {
+      title: "Configure shared policy",
+      href: "/docs/how-to/configure-a-standard",
+      description: "Control defaults, allowed methods and fixed settings.",
+    },
+    {
+      title: "Plan, generate and review",
+      href: "/docs/how-to/plan-and-generate",
+      description: "Use the same workflow after every change.",
+    },
+  ]}
+/>

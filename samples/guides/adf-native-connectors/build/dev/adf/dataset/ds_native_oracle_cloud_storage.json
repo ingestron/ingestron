@@ -1,0 +1,31 @@
+{
+	"name": "ds_native_oracle_cloud_storage",
+	"properties": {
+		"type": "Binary",
+		"linkedServiceName": {
+			"referenceName": "ls_native_oracle_cloud_storage",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"folder": {
+				"type": "string"
+			},
+			"root": {
+				"type": "string"
+			}
+		},
+		"typeProperties": {
+			"location": {
+				"type": "OracleCloudStorageLocation",
+				"bucketName": {
+					"value": "@dataset().root",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().folder",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

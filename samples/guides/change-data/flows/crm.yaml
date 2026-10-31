@@ -1,0 +1,25 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: crm
+source: crm
+ingest:
+  with: { format: json }
+tables:
+  accounts:
+    object: accounts
+    contract: crm.accounts
+    store:
+      # Only the current version of each account.
+      with:
+        {
+          mode: upsert,
+          sequence_by: changed_at,
+          delete_when: "operation = 'DELETE'",
+          except_columns: [operation],
+        }
+  contacts:
+    object: contacts
+    contract: crm.contacts
+    store:
+      # Every version, with __START_AT and __END_AT.
+      with: { mode: history, sequence_by: changed_at, except_columns: [operation] }

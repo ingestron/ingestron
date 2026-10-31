@@ -1,0 +1,13 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: marketing.campaigns
+version: 1.0.0
+status: active
+schema:
+  - name: campaigns
+    logicalType: object
+    description: Advertising campaigns and their spend.
+    properties:
+      - { name: campaign_id, logicalType: string, required: true, primaryKey: true }
+      - { name: spend, logicalType: number }
+      - { name: started_on, logicalType: date }

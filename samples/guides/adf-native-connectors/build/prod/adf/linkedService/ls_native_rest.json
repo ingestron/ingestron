@@ -1,0 +1,26 @@
+{
+	"name": "ls_native_rest",
+	"properties": {
+		"type": "RestService",
+		"typeProperties": {
+			"authenticationType": "OAuth2ClientCredential",
+			"enableServerCertificateValidation": true,
+			"url": "https://source.example.test",
+			"clientId": "synthetic-reader",
+			"clientSecret": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "rest-client-secret"
+			},
+			"tokenEndpoint": "https://login.example.test/token",
+			"scope": "orders.read"
+		},
+		"connectVia": {
+			"referenceName": "synthetic-self-hosted-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

@@ -1,0 +1,12 @@
+{
+  "title": "Dynamics AX",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/dynamics-ax)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

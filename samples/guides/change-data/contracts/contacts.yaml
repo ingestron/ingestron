@@ -1,0 +1,27 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: crm.contacts
+version: 1.0.0
+status: active
+schema:
+  - name: contacts
+    logicalType: object
+    description: Contacts with every past version.
+    properties:
+      - {
+          name: account_id,
+          logicalType: string,
+          required: true,
+          primaryKey: true,
+          primaryKeyPosition: 1,
+        }
+      - {
+          name: contact_id,
+          logicalType: string,
+          required: true,
+          primaryKey: true,
+          primaryKeyPosition: 2,
+        }
+      - { name: email, logicalType: string }
+      - { name: changed_at, logicalType: timestamp, required: true }
+      - { name: operation, logicalType: string }

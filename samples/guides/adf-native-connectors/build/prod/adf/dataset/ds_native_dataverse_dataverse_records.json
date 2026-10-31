@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_dataverse_dataverse_records",
+	"properties": {
+		"type": "CommonDataServiceForAppsEntity",
+		"linkedServiceName": {
+			"referenceName": "ls_native_dataverse",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"entityName": "orders"
+		}
+	}
+}

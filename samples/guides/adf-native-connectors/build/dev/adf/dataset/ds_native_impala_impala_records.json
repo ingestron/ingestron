@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_impala_impala_records",
+	"properties": {
+		"type": "ImpalaObject",
+		"linkedServiceName": {
+			"referenceName": "ls_native_impala",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"schema": "sales",
+			"table": "orders"
+		}
+	}
+}

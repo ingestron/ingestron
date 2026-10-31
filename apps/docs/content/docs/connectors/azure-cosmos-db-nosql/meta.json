@@ -1,0 +1,12 @@
+{
+  "title": "Azure Cosmos DB for NoSQL",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/azure-cosmos-db-nosql)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

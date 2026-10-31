@@ -1,0 +1,14 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: sales.store_sales
+version: 1.0.0
+status: active
+schema:
+  - name: store_sales
+    logicalType: object
+    description: Sales per store and day.
+    properties:
+      - { name: store_id, logicalType: string, required: true }
+      - { name: region, logicalType: string }
+      - { name: day, logicalType: date, required: true }
+      - { name: amount, logicalType: number, physicalType: "DECIMAL(18,2)" }

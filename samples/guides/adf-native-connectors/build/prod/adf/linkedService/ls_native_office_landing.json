@@ -1,0 +1,19 @@
+{
+	"name": "ls_native_office_landing",
+	"properties": {
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://syntheticlake.dfs.core.windows.net",
+			"tenant": "synthetic-application_tenant",
+			"servicePrincipalId": "synthetic-client",
+			"servicePrincipalKey": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-client-secret"
+			}
+		}
+	}
+}

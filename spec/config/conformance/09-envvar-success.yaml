@@ -1,0 +1,27 @@
+description: An environment variable can be used whole or inside text.
+envvars:
+  SPARK_PROFILE: large
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    profile: ${envvar:SPARK_PROFILE}
+    label: profile-${envvar:SPARK_PROFILE}
+expect:
+  documents:
+    - kind: Pipeline
+      id: a
+      value:
+        apiVersion: example.dev/v1
+        kind: Pipeline
+        id: a
+        profile: large
+        label: profile-large

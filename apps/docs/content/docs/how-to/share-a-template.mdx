@@ -1,0 +1,38 @@
+---
+title: Share a template
+description: Turn a project into a template your team can start from.
+---
+
+A template is an ordinary project folder with one extra file,
+`template.yaml`, that says what `ingestron init` asks.
+
+1. Start from a project that works: `ingestron plan` shows no problems.
+2. Replace the values people will change with `${values.…}`, and give them
+   defaults in `project.yaml`:
+
+<Example name="minimal" file="project.yaml" />
+
+<Example name="minimal" file="connections/shop.yaml" />
+
+3. Add `template.yaml`. Each question fills one value:
+
+<Example name="minimal" file="template.yaml" />
+
+4. Put the folder in a Git repository your team can read. They start from it
+   with its URL and the folder after `#`:
+
+```sh
+ingestron init orders --template https://github.com/acme/data-templates.git#files-to-bronze
+```
+
+`init` copies every regular file except `template.yaml`, `README.md`,
+`build/` and `.generated.json`, and refuses a template that holds a
+symbolic link. It never runs anything from a template. Cloning uses your own
+`git`, without the repository's hooks or submodules; filters from your own
+git settings, such as Git LFS, still apply. A user name or token in a URL is
+never printed or written into the project.
+
+Put your organisation's standard in the template, or keep it in its own
+repository and let people choose it with `--standard`.
+
+Every field of `template.yaml` is in [Reference: templates](/docs/reference/templates).

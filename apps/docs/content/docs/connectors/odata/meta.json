@@ -1,0 +1,12 @@
+{
+  "title": "OData",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/odata)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

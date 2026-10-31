@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "files": {
+    "databricks.yml": "sha256:c480b0ca4a046059a1410794cbf24725e50805a556b934a7d4cb130a681959c3",
+    "resources/sales.pipeline.yml": "sha256:fee0fd9a71017bc3c75622bdea5d5e8244d6558da0c711facfe825480cead75b",
+    "src/sales/bronze/sales.sql": "sha256:a2be2fe7c606c0fdc7237b61b51f3d978a4f068013821bccd5a6aa1d01261008",
+    "src/sales/silver/store_sales.sql": "sha256:c430e7e48ddd673f47b0bfb7bae1d2c76ea9f86ad09243e92d3742a62953311d"
+  }
+}

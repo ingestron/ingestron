@@ -1,0 +1,13 @@
+{
+	"name": "ds_native_microsoft_access_microsoft_access_records",
+	"properties": {
+		"type": "MicrosoftAccessTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_microsoft_access",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"tableName": "orders"
+		}
+	}
+}

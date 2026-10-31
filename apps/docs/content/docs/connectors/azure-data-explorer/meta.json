@@ -1,0 +1,12 @@
+{
+  "title": "Azure Data Explorer",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/azure-data-explorer)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

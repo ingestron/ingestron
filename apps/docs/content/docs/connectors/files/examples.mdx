@@ -1,0 +1,48 @@
+---
+title: Examples
+description: Download complete Files projects and inspect their definition files.
+---
+
+## Download a project
+
+These projects use synthetic values. Choose a download for your route, then
+[adapt and generate it](/docs/how-to/use-an-example). Multi-connector projects
+contain other sources too; use [Create a project](/docs/how-to/start-from-a-template)
+when you want to start with only this connection.
+
+<ExamplesList connector="files" />
+
+The previews below show files from these archives. Each code block names its
+project and relative file path; the ZIP also includes the supporting definitions.
+
+## Azure Data Factory definitions
+
+Read [connection and access](/docs/connectors/files/adf-connection) for credentials
+and prerequisites, and [ingestion](/docs/connectors/files/adf-ingestion) for how
+the selected objects are read. Replace source objects and contracts with yours.
+
+<Example name="adf-native-connectors" file="connections/files.yaml" />
+
+<Example name="adf-native-connectors" file="flows/files.yaml" />
+
+## Example: a private CSV share
+
+This complete example reads store files from a private share. The connection
+names the share and credentials; the flow selects the folder and CSV reading
+options; the standard supplies the shared schedule.
+
+<Example name="private-files" file="connections/share.yaml" />
+
+<Example name="private-files" file="flows/stores.yaml" />
+
+<Example name="private-files" file="standard.yaml" />
+
+## Databricks definitions
+
+Read [connection and access](/docs/connectors/files/databricks-connection) for credentials
+and prerequisites, and [ingestion](/docs/connectors/files/databricks-ingestion) for how
+the selected objects are read. Replace source objects and contracts with yours.
+
+<Example name="minimal" file="connections/shop.yaml" />
+
+<Example name="minimal" file="flows/orders.yaml" />

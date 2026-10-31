@@ -1,0 +1,10 @@
+{
+	"name": "ds_native_azure_sql_database_sales",
+	"properties": {
+		"type": "AzureSqlTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_azure_sql_database_sales",
+			"type": "LinkedServiceReference"
+		}
+	}
+}

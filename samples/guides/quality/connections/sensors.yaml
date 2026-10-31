@@ -1,0 +1,7 @@
+apiVersion: ingestron.io/v1
+kind: Connection
+id: sensors
+connector: files
+connectivity: public
+settings:
+  path: /Volumes/dev/landing/iot

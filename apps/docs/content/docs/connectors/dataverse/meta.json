@@ -1,0 +1,12 @@
+{
+  "title": "Dataverse",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/dataverse)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

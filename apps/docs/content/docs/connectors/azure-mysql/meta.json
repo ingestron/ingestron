@@ -1,0 +1,12 @@
+{
+  "title": "Azure Database for MySQL",
+  "pages": [
+    "index",
+    "[Overview](/docs/connectors/azure-mysql)",
+    "examples",
+    "---Azure Data Factory---",
+    "adf-connection",
+    "adf-ingestion"
+  ],
+  "defaultOpen": false
+}

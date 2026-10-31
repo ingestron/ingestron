@@ -1,0 +1,24 @@
+{
+	"name": "ls_native_microsoft_365",
+	"properties": {
+		"type": "Office365",
+		"typeProperties": {
+			"servicePrincipalCredentialType": "ServicePrincipalKey",
+			"office365TenantId": "synthetic-tenant",
+			"servicePrincipalTenantId": "synthetic-application_tenant",
+			"servicePrincipalId": "synthetic-client",
+			"servicePrincipalKey": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_native_secrets",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "source-client-secret"
+			}
+		},
+		"connectVia": {
+			"referenceName": "synthetic-azure-runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

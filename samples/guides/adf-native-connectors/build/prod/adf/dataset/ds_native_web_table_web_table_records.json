@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_web_table_web_table_records",
+	"properties": {
+		"type": "WebTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_web_table",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"path": "orders",
+			"index": 0
+		}
+	}
+}

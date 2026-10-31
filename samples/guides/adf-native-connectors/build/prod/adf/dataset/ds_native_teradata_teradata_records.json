@@ -1,0 +1,14 @@
+{
+	"name": "ds_native_teradata_teradata_records",
+	"properties": {
+		"type": "TeradataTable",
+		"linkedServiceName": {
+			"referenceName": "ls_native_teradata",
+			"type": "LinkedServiceReference"
+		},
+		"typeProperties": {
+			"database": "sales",
+			"table": "orders"
+		}
+	}
+}

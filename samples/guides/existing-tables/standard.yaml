@@ -1,0 +1,4 @@
+apiVersion: ingestron.io/v1
+kind: Standard
+id: sales
+packs: [databricks@1]

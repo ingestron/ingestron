@@ -1,0 +1,8 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: web
+source: web
+ingest:
+  with: { format: json }
+tables:
+  visits: { object: visits, contract: marketing.visits }
