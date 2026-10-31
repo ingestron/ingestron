@@ -1,5 +1,5 @@
 // Reads the parts of a table's ODCS contract that generation uses (section 6).
-import { ruleChecks } from "./quality-rules.js";
+import { AT_FILES, notCheckedAtFiles, ruleChecks } from "./quality-rules.js";
 import type { Context } from "./context.js";
 import type { Source } from "./diagnostics.js";
 import { kinds, type ContractDoc, type ExpectationDoc } from "./documents.js";
@@ -7,12 +7,17 @@ import type { Column, Contract, Expectation } from "./model.js";
 
 type Entry = NonNullable<ContractDoc["schema"]>[number];
 
-/** The table's contract, or undefined after reporting. `at` is the table's contract field. */
+/**
+ * The table's contract, or undefined after reporting. `at` is the table's
+ * contract field; `atFiles` when the table ends at the landed files, so its
+ * rules are not checked.
+ */
 export function contractFor(
   context: Context,
   table: string,
   id: string,
   at: Source,
+  atFiles = false,
 ): Contract | undefined {
   const document = context.project.get(kinds.contract, id);
   const entries = document?.value.schema ?? [];
@@ -35,13 +40,17 @@ export function contractFor(
     ...(entry.description && { description: entry.description }),
     columns,
     primaryKey: primaryKeyOf(entry),
-    ...checksOf(context, entry, { document: document!, pointer: `/schema/${index}` }),
+    ...checksOf(context, entry, { document: document!, pointer: `/schema/${index}` }, atFiles),
     tags: (entry.tags ?? []).map(String),
   };
 }
 
 /** Checks of each row, and checks over all rows, from the object's rules. */
-function checksOf(context: Context, entry: Entry, at: Source) {
+function checksOf(context: Context, entry: Entry, at: Source, atFiles: boolean) {
+  if (atFiles) {
+    notCheckedAtFiles(context, entry, at);
+    return { checks: [], tableChecks: [] };
+  }
   const { rows, table } = ruleChecks(context, entry, at);
   return { checks: rows, tableChecks: table };
 }
@@ -67,6 +76,18 @@ function primaryKeyOf(entry: Entry): string[] {
     .filter((property) => property.primaryKey === true)
     .sort((a, b) => (a.primaryKeyPosition ?? 0) - (b.primaryKeyPosition ?? 0))
     .map((property) => property.name);
+}
+
+/** On a table that ends at the landed files, each of the flow table's expectations warns. */
+export function expectationsNotChecked(context: Context, own: ExpectationDoc[], at: Source): void {
+  own.forEach((expectation, index) =>
+    context.reporter.warning(
+      "QUALITY_RULE_NOT_CHECKED",
+      `Expectation "${expectation.name}" is not checked: ${AT_FILES}`,
+      { ...at, pointer: `${at.pointer}/${index}` },
+      "Add a store step to have it checked.",
+    ),
+  );
 }
 
 /** Not-null checks for required columns, then the table's own checks, with actions filled in. */
