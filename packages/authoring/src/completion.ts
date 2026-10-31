@@ -8,14 +8,8 @@ import type { Project } from "./project.js";
 import { inlineCompletions, patternNames } from "./inline.js";
 import { schemaFor, schemasAt } from "./schema.js";
 import { skeletons } from "./skeletons.js";
-import {
-  firstFields,
-  itemSnippets,
-  newTables,
-  preferred,
-  rankMethods,
-  standardPacks,
-} from "./smart.js";
+import { firstFields, itemSnippets, newTables, preferred, rankMethods } from "./smart.js";
+import { methodsFor } from "./method-suggestions.js";
 import { flowFacts, placeAt, writtenKeys, type Place } from "./context.js";
 import { fieldAt, fieldsIn } from "./fields.js";
 import { markFixed } from "./fixed.js";
@@ -108,7 +102,7 @@ function valueCompletions(
   if (link) return linkCompletions(project, place, link[1]);
   if (kind === "Transform" && path[0] === "inputs") return names(project, "table:", "reference");
   if (path.at(-1) === "uses") {
-    const methods = methodsFor(project, path[path.length - 2] ?? "");
+    const methods = methodsFor(project, path[path.length - 2] ?? "", kind === "Flow");
     return kind === "Flow" && path.at(-2) === "ingest"
       ? rankMethods(project, place, methods, methodNamed)
       : methods;
@@ -209,18 +203,6 @@ function fieldSuggestion(field: FieldInfo): Suggestion {
     ...(field.default !== undefined && { detail: `default: ${shown}` }),
     ...(field.description && { documentation: field.description }),
   };
-}
-
-function methodsFor(project: Project, action: string): Suggestion[] {
-  return standardPacks(project)
-    .flatMap((pack) => Object.entries(pack.methods))
-    .filter(([, method]) => method.action === action)
-    .map(([label, method]) => ({
-      label,
-      kind: "method" as const,
-      documentation: method.description,
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label));
 }
 
 function methodNamed(name: string): Method | undefined {
