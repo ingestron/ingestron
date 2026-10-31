@@ -125,7 +125,7 @@ $defs:
     properties:
       default:
         $ref: "#/$defs/method"
-        description: Replaces the pack's default method for this action.
+        description: "Replaces the pack's default method for this action. For store, none ends flows at the files ingest lands."
         examples:
           - materialised-view
       allowed:
