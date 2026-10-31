@@ -146,6 +146,28 @@ accept what the previous action produces (`HANDOVER`); a transform's own
 input is `table`. When an ingest method produces `table`, the table has no
 store step, and a flow that names a store method is `HANDOVER`.
 
+`none` is a reserved store choice, not a method. It MAY be written wherever a
+store method is chosen: a flow's `store.uses`, a standard's `store.default`
+or a `store.when` rule's `use`. It is subject to the standard's `allowed`
+list like a method (`METHOD_NOT_ALLOWED`). When ingest produces `files` and
+the store choice is `none`, the table has no store step: it ends at the
+files ingest lands, and records `endsAtFiles`, how `none` was chosen, in the
+same shape as a step's `chosenBy`. When ingest produces `table`, `none`
+changes nothing. A transform's store choice MUST NOT be `none` (`HANDOVER`):
+a transform's query needs a store step.
+
+When nothing chooses a store method, the problem is `UNKNOWN_METHOD` at the
+flow, with fixes: `End this flow at the landed files` (sets the flow's
+`store.uses` to `none`), `End every flow at the landed files` (sets the
+standard's `store.default` to `none`), and `Add the "<pack>" pack` for each
+available pack the standard does not name that has a store method accepting
+`files`.
+
+**Landed snapshot.** The default single file of a table that each load
+replaces is `<landing>/<object>/<object>.<extension>`. Packs that land or
+read whole tables use this path, so they agree without depending on each
+other.
+
 These two problems carry fixes (as in the config specification, section 6.1),
 one pair for each other ingest method of the standard's packs that can read
 the connection, in pack order:
@@ -224,6 +246,11 @@ the flow's `ingest.uses`.
   does not run other engines. A table check fails with the quality `default`
   action, except that `drop` warns, since no row can be dropped after the
   refresh.
+- On a table that ends at the landed files, nothing checks rows: each of its
+  contract's quality rules except `text`, and each of the flow table's
+  `expectations`, is `QUALITY_RULE_NOT_CHECKED`, a warning at the rule or
+  expectation, and no other quality problem is reported for it. Required
+  columns are not reported.
 - A contract's object `tags`, a column's `tags` and its `classification` are
   kept on the contract and its columns for packs that tag tables.
 
