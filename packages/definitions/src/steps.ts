@@ -6,6 +6,7 @@ import type { DefinitionCode } from "./diagnostics.js";
 import type { Step } from "./model.js";
 import type { Action, Handover, Method } from "./pack.js";
 import { methodFixes } from "./method-fixes.js";
+import type { SettingsUser } from "./missing-settings.js";
 import { mergeSettings, type SettingsLayer } from "./settings.js";
 
 /** A resolved step and what it hands to the next action. */
@@ -32,7 +33,7 @@ export function resolveStep(
   const layers = [rule, own, ...tableLayers].filter(
     (layer): layer is SettingsLayer => layer !== undefined,
   );
-  const user = { owner: named.owner, at: named.at ?? "" };
+  const user = settingsUser(named);
   const merged = mergeSettings(context, action, choice.id, choice.method, layers, user);
   const pack = context.owner.get(choice.id) ?? "";
   return (
@@ -78,7 +79,8 @@ function readProblem(
   previous: Previous,
   methods: Record<string, Method>,
 ): Problem | undefined {
-  const ingest = action === "ingest";
+  // A method that reads landed files reads no source, whatever its connectors.
+  const ingest = action === "ingest" && choice.method.reads !== "landed";
   const sourceProblem = ingest
     ? (connectorProblem(choice, facts, methods) ?? connectivityProblem(choice, facts))
     : undefined;
@@ -139,4 +141,10 @@ function handoverProblem({ id, method }: Choice, previous: Previous): Problem | 
 export function stepOf(result: StepResult): Step {
   const { method, pack, settings, origins, chosenBy } = result;
   return { method, pack, settings, origins, chosenBy };
+}
+
+/** Who the settings are for: where missing ones are reported, and whether runs-on chose the method. */
+function settingsUser(named: Named): SettingsUser {
+  const user = { owner: named.owner, at: named.at ?? "" };
+  return named.runsOn ? { ...user, runsOn: named.runsOn } : user;
 }

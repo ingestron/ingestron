@@ -60,7 +60,12 @@ quality actions), `rules` per action (`default` and `when`), and `methods`.
 The actions are `ingest`, `transform`, `store` and `serve`. A serve method
 `accepts` `table` and/or `files` and `produces` `table`; it makes a table's data
 available somewhere else, such as SQL views over its files. A method MAY set
-`needsOutput: true`: it reads the previous step's `output` (below).
+`needsOutput: true`: it reads the previous step's `output` (below). An ingest
+method MAY set `reads: landed`: it reads the files another pack's method
+lands, under its own settings, and reads no source, so its connectors and
+connectivity are not checked. A pack's rule never matches such a method and
+fixes never offer it; it is meant for environments that run on its pack
+(section 4, "Runs on").
 
 Each method has an `action`, the `connectors` it reads and the
 `connectivity` it supports (ingest), what it `accepts` (transform, store)
@@ -147,7 +152,7 @@ For each action of each table:
 
 Each step records how its method was chosen (`chosenBy`): `by` is
 `definition` (the flow's or transform's `uses`), `standard-rule`,
-`standard-default`, `pack-rule` or `pack-default`; a rule's facts are in
+`standard-default`, `pack-rule`, `pack-default` or `runs-on`; a rule's facts are in
 `when`; a pack's rule or default names its `pack`; and a choice written in a
 file gives its `file` and `line`. Tools use it to explain why a method is
 used where no file names it.
@@ -195,19 +200,23 @@ a step that records an `output` (`HANDOVER`, at the table:
 `none` is not a serve choice (`UNKNOWN_METHOD`).
 
 **Runs on.** An environment MAY name `runs-on`, a pack (config specification,
-section 3). It MUST be one of the standard's packs (`UNKNOWN_PACK`, at the
-standard's `packs`). In that environment:
+section 3). It MUST be one of the standard's packs (`UNKNOWN_PACK`, at
+`runs-on` in project.yaml, with a fix adding the pack when it is available).
+In that environment:
 
 - An ingest step whose method produces `files` and belongs to another pack is
-  replaced by the first method of the named pack with `reads: landed`, which
-  reads the files that method would have landed from the named pack's own
-  settings. Its settings come from the standard and platform under its name;
-  the replaced method's are not used. Its `chosenBy` is
-  `{ by: runs-on, pack: <pack> }`.
+  replaced by the named pack's first ingest method with `reads: landed`, which
+  reads the files that method would have landed from its own settings. Its
+  settings come from the standard and platform under its name; the replaced
+  method's are not used, the standard's `allowed` list does not apply to it,
+  and a fix adding its missing settings writes them in the standard. Its
+  `chosenBy` is `{ by: runs-on, pack: <pack> }`. When the named pack has no
+  such method, the step is `RUNS_ON`, an error at the flow's `source`.
 - A store or transform step whose method belongs to another pack is
   `RUNS_ON`, an error at the table: local runs need the table's store and
   transforms to be the named pack's.
-- A table whose ingest produces `table` is left out of that environment's
+- A table whose ingest produces `table` and belongs to another pack is left
+  out of that environment's
   model, with `RUNS_ON_SKIPPED`, a warning at the table; a transform that
   reads a table left out is left out too, with the same warning.
 - A serve step whose method belongs to another pack is dropped.
@@ -360,8 +369,9 @@ optional `environment`, and `expect`: `tables` (partial objects, in order,
 with `fullName` written as `catalog.schema.table`), `platform`, `names` or
 `diagnostics` (matched in order on the fields given; `fixes` lists the fix
 titles), and optionally `fixed`, as in the config conformance cases. All cases use the
-data-only packs [conformance/pack.yaml](conformance/pack.yaml) and
-[conformance/pack-bridge.yaml](conformance/pack-bridge.yaml), both available.
+data-only packs [conformance/pack.yaml](conformance/pack.yaml),
+[conformance/pack-bridge.yaml](conformance/pack-bridge.yaml) and
+[conformance/pack-local.yaml](conformance/pack-local.yaml), all available.
 
 ## Connector authoring metadata
 

@@ -86,6 +86,8 @@ export interface Manifest {
   file: YamlFile;
   scope: Scope;
   imports: string[];
+  /** The pack the selected environment runs on; references cannot read it. */
+  runsOn?: string;
 }
 
 /** Reads and checks the manifest, then resolves the values for `environment`. */
@@ -109,12 +111,18 @@ export function readManifest(
   if (problems.length > 0 || !isRecord(fields)) return undefined;
   const manifest = fields as unknown as ManifestFields;
 
+  const selected = selectEnvironment(context, file, manifest, environment);
   const scope: Scope = {
     project: { id: manifest.id, ...(manifest.name === undefined ? {} : { name: manifest.name }) },
-    environment: selectEnvironment(context, file, manifest, environment),
+    environment: selected && { name: selected.name },
   };
   scope.values = resolveValues(context, file, scope);
-  return { file, scope, imports: manifest.imports };
+  return {
+    file,
+    scope,
+    imports: manifest.imports,
+    ...(selected?.runsOn && { runsOn: selected.runsOn }),
+  };
 }
 
 /** The manifest as plain data. The YAML library throws when aliases expand too far. */

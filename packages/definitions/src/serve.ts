@@ -20,6 +20,8 @@ export function serveStep(
   const pick = peekMethod(context, "serve", named, serveFacts);
   if (!pick && !hasChoice(context, "serve", named, serveFacts)) return undefined;
   // Where the environment runs on a pack, another pack's serve step is dropped.
-  if (pick && context.runsOn && context.owner.get(pick.id) !== context.runsOn.id) return undefined;
+  const foreign =
+    pick?.method.action === "serve" && context.owner.get(pick.id) !== context.runsOn?.id;
+  if (context.runsOn && foreign) return undefined;
   return resolveStep(context, "serve", named, serveFacts, layers, last) ?? false;
 }

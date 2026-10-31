@@ -51,7 +51,7 @@ export function createContext(
     pack: combine(packs),
     owner,
     environment,
-    ...runsOnPack(project, standard, packs, available, reporter),
+    ...runsOnPack(project, packs),
     skipped: new Set<string>(),
     standard,
     platform: platforms[0],
@@ -155,32 +155,8 @@ function combine(packs: PackInfo[]): PackInfo {
   };
 }
 
-/** The pack the selected environment runs on; one the standard does not list is `UNKNOWN_PACK`. */
-function runsOnPack(
-  project: Project,
-  standard: DefinitionDocument<StandardDoc>,
-  packs: PackInfo[],
-  available: PackInfo[],
-  reporter: Reporter,
-): { runsOn?: PackInfo } {
-  const id = project.runsOn;
-  if (!id) return {};
-  const pack = packs.find((candidate) => candidate.id === id);
-  if (pack) return { runsOn: pack };
-  const add = available.find((candidate) => candidate.id === id);
-  reporter.error(
-    "UNKNOWN_PACK",
-    `Environment "${project.environment}" runs on "${id}", which the standard's packs do not list.`,
-    { document: standard, pointer: "/packs" },
-    add ? `Add ${id}@${add.version} to the standard's packs.` : "Name one of the standard's packs.",
-    add
-      ? [
-          {
-            title: `Add the "${id}" pack`,
-            edits: [{ file: standard.file, pointer: "/packs/-", set: `${id}@${add.version}` }],
-          },
-        ]
-      : [],
-  );
-  return {};
+/** The pack the selected environment runs on, when the standard lists it (else reported at load). */
+function runsOnPack(project: Project, packs: PackInfo[]): { runsOn?: PackInfo } {
+  const pack = project.runsOn && packs.find((candidate) => candidate.id === project.runsOn);
+  return pack ? { runsOn: pack } : {};
 }

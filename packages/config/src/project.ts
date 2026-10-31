@@ -21,7 +21,11 @@ export interface Project {
 }
 
 /** Builds the {@link Project} returned by a successful load. */
-export function createProject(scope: Scope, documents: readonly DefinitionDocument[]): Project {
+export function createProject(
+  scope: Scope,
+  documents: readonly DefinitionDocument[],
+  runsOn?: string,
+): Project {
   // Documents passed their kind's schema, so treating them as `T` is safe
   // as long as `T` matches the schema; defineKind's documentation says so.
   const all = <T>(kind: KindDefinition<T>) =>
@@ -32,7 +36,7 @@ export function createProject(scope: Scope, documents: readonly DefinitionDocume
     id: scope.project.id,
     name: scope.project.name,
     environment: scope.environment?.name,
-    ...(scope.environment?.runsOn && { runsOn: scope.environment.runsOn }),
+    ...(runsOn && { runsOn }),
     values: scope.values,
     documents,
     all,
