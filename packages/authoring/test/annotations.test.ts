@@ -74,6 +74,19 @@ describe("annotationsIn", () => {
     expect(orders.map((item) => item.label)).toEqual(["→ dev_sales.bronze.orders"]);
     expect(orders[0]?.tooltip).toMatch(/ingest: files, chosen by the pack's default/);
   });
+
+  it("says when a flow table ends at the landed files, and what chose that", () => {
+    const text = read("flows/shop.yaml").replace(
+      "source: shop\n",
+      "source: shop\nstore: { uses: none }\n",
+    );
+    const project = openProject(retail, new Map([[join(retail, "flows/shop.yaml"), text]]));
+    const found = annotationsIn(project, "flows/shop.yaml", text, "dev");
+    const orders = found.find((item) => item.line === text.split("\n").indexOf("  orders:"));
+    expect(orders?.tooltip).toMatch(
+      /store: none, ends at the landed files, written in the definition \(flows\/shop\.yaml:\d+\)/,
+    );
+  });
 });
 
 describe("generatedLenses", () => {

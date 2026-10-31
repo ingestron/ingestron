@@ -54,7 +54,18 @@ describe("completion", () => {
     const items = at("flows/shop.yaml", (text) =>
       text.replace("    store:\n", "    store:\n      uses: |\n"),
     );
-    expect(labels(items)).toEqual(["materialised-view", "streaming-table"]);
+    expect(labels(items)).toEqual(["materialised-view", "none", "streaming-table"]);
+    expect(items.find((item) => item.label === "none")).toMatchObject({
+      kind: "method",
+      documentation: "End the flow at the files ingest lands: no store step.",
+    });
+  });
+
+  it("offers none only for a flow's store", () => {
+    const items = at("flows/shop.yaml", (text) =>
+      text.replace("source: shop", "source: shop\ningest:\n  uses: |"),
+    );
+    expect(labels(items)).not.toContain("none");
   });
 
   it("offers allowed values", () => {
