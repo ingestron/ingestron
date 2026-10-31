@@ -1,6 +1,6 @@
 {
   "name": "@ingestron/definitions",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Ingestron definitions: schemas, loading, and resolving standards into a model packs can build from.",
   "license": "Apache-2.0",
   "author": "IntentLabs <hello@ingestron.io>",
