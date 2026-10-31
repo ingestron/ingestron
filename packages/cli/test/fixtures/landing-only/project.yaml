@@ -1,0 +1,18 @@
+# ADF copies the ERP's tables into storage, and that is the whole project:
+# reports read one file per table, replaced by each daily load.
+id: sales
+environments:
+  dev: {}
+  prod:
+    values:
+      landing: abfss://landing@saleslakeprod.dfs.core.windows.net/erp
+      key_vault: https://kv-sales-prod.vault.azure.net
+values:
+  landing: abfss://landing@saleslakedev.dfs.core.windows.net/erp
+  key_vault: https://kv-sales-dev.vault.azure.net
+imports:
+  - standard.yaml
+  - platform.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - contracts/*.yaml
