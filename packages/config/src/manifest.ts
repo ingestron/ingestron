@@ -54,6 +54,13 @@ export const manifestSchema: JsonSchema = {
             type: "object",
             description: "Values that replace or add to the top-level `values`.",
           },
+          "runs-on": {
+            type: "string",
+            pattern: "^[a-z][a-z0-9-]*$",
+            description:
+              "Run every step after the files land with this pack here, such as duckdb for local runs.",
+            examples: ["duckdb"],
+          },
         },
       },
     },
@@ -132,10 +139,15 @@ function selectEnvironment(
   file: YamlFile,
   manifest: ManifestFields,
   environment: string | undefined,
-): { name: string } | undefined {
+): { name: string; runsOn?: string } | undefined {
   if (environment === undefined) return undefined;
   const declared = Object.keys(manifest.environments ?? {});
-  if (declared.includes(environment)) return { name: environment };
+  if (declared.includes(environment)) {
+    const runsOn = (manifest.environments?.[environment] as { "runs-on"?: unknown } | undefined)?.[
+      "runs-on"
+    ];
+    return { name: environment, ...(typeof runsOn === "string" && { runsOn }) };
+  }
   context.diagnostics.push(
     error(
       "UNKNOWN_ENVIRONMENT",

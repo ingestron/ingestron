@@ -37,6 +37,8 @@ environments: # optional; each name matches the id pattern
   prod:
     values: # optional mapping, deep-merged over `values`
       catalog: prod
+  local:
+    runs-on: duckdb # optional; the pack that runs this environment
 imports: # required; one or more glob patterns
   - pipelines/*.pipeline.yaml
 ```
@@ -50,6 +52,8 @@ imports: # required; one or more glob patterns
   `values`: mappings merge key by key, and any other value replaces the
   earlier one. Selecting an environment that is not declared is an error
   (`UNKNOWN_ENVIRONMENT`).
+- An environment MAY name `runs-on`, a pack id; the loaded project records it
+  for the selected environment, and the definitions say what it changes.
 - Import patterns are relative to the manifest's folder. `*` matches any
   characters except `/`, `**` matches any number of folders, and `?` matches
   one character except `/`. A pattern that matches no file is a warning
