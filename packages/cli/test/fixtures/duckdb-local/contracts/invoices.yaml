@@ -1,0 +1,19 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: erp.invoices
+version: 1.0.0
+status: active
+schema:
+  - name: invoices
+    logicalType: object
+    description: ERP invoices; ADF copies them under these names.
+    properties:
+      - {
+          name: invoice_id,
+          physicalName: InvoiceID,
+          logicalType: integer,
+          required: true,
+          primaryKey: true,
+        }
+      - { name: customer_id, physicalName: CustomerID, logicalType: integer }
+      - { name: amount, physicalName: Amount, logicalType: number }

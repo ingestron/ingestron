@@ -85,7 +85,7 @@ describe("templateSource", () => {
 
   it("lists the built-in templates for an unknown name", () => {
     expect(() => templateSource("nope", "/")).toThrow(
-      'No template "nope". Built-in templates: kafka, minimal, private-files, private-sql-server, pyspark, retail, salesforce, sql-server.',
+      'No template "nope". Built-in templates: duckdb, kafka, minimal, private-files, private-sql-server, pyspark, retail, salesforce, sql-server.',
     );
   });
 });
