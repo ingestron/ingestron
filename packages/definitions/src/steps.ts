@@ -1,9 +1,9 @@
 // One action of one table: choose the method, check what it reads and
 // receives, and merge its settings (specification sections 3 and 4).
-import { chooseMethod, type Choice, type Facts, type Named } from "./choose.js";
+import { chooseMethod, located, type Choice, type Facts, type Named } from "./choose.js";
 import type { Context } from "./context.js";
 import type { DefinitionCode } from "./diagnostics.js";
-import type { ChosenBy, Step } from "./model.js";
+import type { Step } from "./model.js";
 import type { Action, Handover, Method } from "./pack.js";
 import { methodFixes } from "./method-fixes.js";
 import { mergeSettings, type SettingsLayer } from "./settings.js";
@@ -40,17 +40,11 @@ export function resolveStep(
       method: choice.id,
       pack,
       ...merged,
-      chosenBy: chosenBy(choice),
+      chosenBy: located(choice.chosenBy),
       produces: choice.method.produces,
       renames: choice.method.renames === true,
     }
   );
-}
-
-/** How the method was chosen, with the file and line of a written choice. */
-function chosenBy({ chosenBy: { at, ...rest } }: Choice): ChosenBy {
-  const location = at?.document.locate(at.pointer);
-  return { ...rest, ...(location && { file: location.file, line: location.line }) };
 }
 
 type Previous = { method: string; produces: Handover } | undefined;

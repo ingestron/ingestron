@@ -109,6 +109,8 @@ export interface ResolvedTable {
   transform?: Step & { code: string; inputs: Record<string, string> };
   /** How the data is kept. Absent when the ingest method already writes a table. */
   store?: Step;
+  /** Set when the flow ends at the files ingest lands: how `store: none` was chosen. */
+  endsAtFiles?: ChosenBy;
 }
 
 /** A schedule after defaults. */
