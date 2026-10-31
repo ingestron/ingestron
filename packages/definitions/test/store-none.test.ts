@@ -21,6 +21,21 @@ function resolve(changes: Record<string, string> = {}) {
   });
 }
 
+const landing: PackInfo = {
+  ...pack,
+  id: "landing",
+  rules: { ingest: { default: "land" } },
+  methods: {
+    land: {
+      action: "ingest",
+      description: "Lands files.",
+      connectors: ["files"],
+      produces: "files",
+      settings: { type: "object" },
+    },
+  },
+};
+
 const tableOf = (result: ReturnType<typeof resolve>) => (result.model as ResolvedModel).tables[0]!;
 const codes = (result: ReturnType<typeof resolve>) =>
   result.diagnostics.map(({ code, location }) => ({
@@ -72,7 +87,7 @@ describe("store: none", () => {
 
   it("lets a transform keep its store when the standard ends flows at files", () => {
     const standard = `${base["standard.yaml"]}store: { default: none }\n`;
-    const flow = base["sales.yaml"]!.replace("store: { uses: none }\n", "");
+    const flow = base["sales.yaml"]!.replace("store: { uses: none }", "store: { uses: stream }");
     const transform = [
       "apiVersion: ingestron.io/v1",
       "kind: Transform",
@@ -89,10 +104,57 @@ describe("store: none", () => {
     });
     expect(result.diagnostics).toEqual([]);
     const tables = (result.model as ResolvedModel).tables;
-    expect(tables.find((table) => table.name === "orders")?.endsAtFiles?.by).toBe(
-      "standard-default",
-    );
+    expect(tables.find((table) => table.name === "orders")?.store?.method).toBe("stream");
     expect(tables.find((table) => table.name === "daily")?.store?.method).toBe("view");
+  });
+
+  it("refuses a transform that reads a table ending at the landed files", () => {
+    const transform = [
+      "apiVersion: ingestron.io/v1",
+      "kind: Transform",
+      "id: daily",
+      "inputs: [orders]",
+      'code: "SELECT * FROM {{ tables.orders }}"',
+      "contract: orders",
+      "",
+    ].join("\n");
+    expect(codes(resolve({ "daily.yaml": transform }))).toEqual([
+      { code: "HANDOVER", file: "daily.yaml", line: 4 },
+    ]);
+  });
+
+  it("uses the standard's next matching rule when its none rule does not apply", () => {
+    const standard = `${base["standard.yaml"]}store:\n  when:\n    - { layer: bronze, use: none }\n    - { input: query, use: view }\n`;
+    const flow = base["sales.yaml"]!.replace("store: { uses: none }", "store: { uses: stream }");
+    const transform = [
+      "apiVersion: ingestron.io/v1",
+      "kind: Transform",
+      "id: daily",
+      "layer: bronze",
+      "inputs: [orders]",
+      'code: "SELECT * FROM {{ tables.orders }}"',
+      "contract: orders",
+      "",
+    ].join("\n");
+    const result = resolve({
+      "standard.yaml": standard,
+      "sales.yaml": flow,
+      "daily.yaml": transform,
+    });
+    expect(result.diagnostics).toEqual([]);
+    const daily = (result.model as ResolvedModel).tables.find((table) => table.name === "daily");
+    expect(daily?.store?.chosenBy).toMatchObject({ by: "standard-rule", when: { input: "query" } });
+  });
+
+  it("reports only the ingest problem when ingest fails and the standard ends flows at files", () => {
+    const files = {
+      ...base,
+      "standard.yaml": `${base["standard.yaml"]!.replace("test@1", "landing@1")}store: { default: none }\n`,
+      "sales.yaml": base["sales.yaml"]!.replace("store: { uses: none }\n", ""),
+      "shop.yaml": base["shop.yaml"]!.replace("connector: files", "connector: sqlserver"),
+    };
+    const result = resolveDefinitions(memoryFiles(files), { packs: [landing], environment: "dev" });
+    expect(result.diagnostics.map(({ code }) => code)).toEqual(["CONNECTOR_NOT_SUPPORTED"]);
   });
 });
 
@@ -117,21 +179,6 @@ describe("quality on landed files", () => {
 });
 
 describe("no store chosen", () => {
-  const landing: PackInfo = {
-    ...pack,
-    id: "landing",
-    rules: { ingest: { default: "land" } },
-    methods: {
-      land: {
-        action: "ingest",
-        description: "Lands files.",
-        connectors: ["files"],
-        produces: "files",
-        settings: { type: "object" },
-      },
-    },
-  };
-
   it("offers to end the flow at the landed files, or to add a store pack, when nothing chooses a store", () => {
     const files = {
       ...base,

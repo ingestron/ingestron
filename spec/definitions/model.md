@@ -162,10 +162,13 @@ list like a method (`METHOD_NOT_ALLOWED`). When ingest produces `files` and
 the store choice is `none`, the table has no store step: it ends at the
 files ingest lands, and records `endsAtFiles`, how `none` was chosen, in the
 same shape as a step's `chosenBy`. When ingest produces `table`, `none`
-changes nothing. A `none` from a standard's or pack's rule or default counts
-only where ingest hands over `files`; elsewhere, such as for a transform,
-the next choice in this order applies. A transform's store choice MUST NOT be `none` (`HANDOVER`):
-a transform's query needs a store step.
+changes nothing. A `none` from a standard's or pack's rule or default applies only where
+ingest hands over `files`, or where that is not known because ingest
+failed; elsewhere, such as for a transform, the next matching rule or
+default applies. A transform's store choice MUST NOT be `none`
+(`HANDOVER`): a transform's query needs a store step. A transform MUST NOT
+read a table that ends at the landed files (`HANDOVER`, at the input):
+there is no table to read.
 
 When nothing chooses a store method, the problem is `UNKNOWN_METHOD` at the
 flow, with fixes: `End this flow at the landed files` (sets the flow's

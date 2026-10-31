@@ -116,7 +116,9 @@ const pickers: Picker[] = [
   },
   (context, action, _named, facts) => {
     const rules = context.standard.value[action]?.when ?? [];
-    const index = rules.findIndex((rule) => matches(rule, facts));
+    const index = rules.findIndex(
+      (rule) => matches(rule, facts) && applies(action, rule.use, facts),
+    );
     const rule = rules[index];
     const at = { document: context.standard, pointer: `/${action}/when/${index}` };
     return (
@@ -150,17 +152,24 @@ const pickers: Picker[] = [
   },
 ];
 
-/**
- * The first picker's choice. A standard's or pack's `none` counts only where
- * ingest hands over files; elsewhere the next picker chooses.
- */
+/** The first picker's choice that applies (see `applies`). */
 function findPick(context: Context, action: Action, named: Named, facts: Facts): Pick | undefined {
   for (const picker of pickers) {
     const pick = picker(context, action, named, facts);
-    const skipped = pick?.id === NO_STORE && pick.chosenBy.by !== "definition";
-    if (pick && !(skipped && facts.input !== "files")) return pick;
+    const written = pick?.chosenBy.by === "definition";
+    if (pick && (written || applies(action, pick.id, facts))) return pick;
   }
   return undefined;
+}
+
+/**
+ * A standard's or pack's store `none` applies only where ingest hands over
+ * files, or where that is not known because ingest failed; elsewhere, such
+ * as for a transform, the next matching rule or default applies.
+ */
+function applies(action: Action, id: string, facts: Facts): boolean {
+  if (action !== "store" || id !== NO_STORE) return true;
+  return facts.input === undefined || facts.input === "files";
 }
 
 function pickMethod(

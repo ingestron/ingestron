@@ -76,15 +76,19 @@ describe("annotationsIn", () => {
   });
 
   it("says when a flow table ends at the landed files, and what chose that", () => {
-    const text = read("flows/shop.yaml").replace(
+    const minimal = join(import.meta.dirname, "../../cli/project-templates/minimal");
+    const file = join(minimal, "flows/orders.yaml");
+    const text = readFileSync(file, "utf8").replace(
       "source: shop\n",
       "source: shop\nstore: { uses: none }\n",
     );
-    const project = openProject(retail, new Map([[join(retail, "flows/shop.yaml"), text]]));
-    const found = annotationsIn(project, "flows/shop.yaml", text, "dev");
-    const orders = found.find((item) => item.line === text.split("\n").indexOf("  orders:"));
+    const project = openProject(minimal, new Map([[file, text]]));
+    const found = annotationsIn(project, "flows/orders.yaml", text, "dev");
+    const orders = found.find(
+      (item) => item.line === text.split("\n").findIndex((line) => line.startsWith("  orders:")),
+    );
     expect(orders?.tooltip).toMatch(
-      /store: none, ends at the landed files, written in the definition \(flows\/shop\.yaml:\d+\)/,
+      /store: none, ends at the landed files, written in the definition \(flows\/orders\.yaml:\d+\)/,
     );
   });
 });
