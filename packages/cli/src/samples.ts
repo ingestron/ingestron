@@ -74,7 +74,9 @@ export function sampleFacts(folder: string): SampleFacts {
     ),
     methods: all((model) =>
       model.tables.flatMap((table) =>
-        [table.ingest, table.transform, table.store].flatMap((step) => step?.method ?? []),
+        [table.ingest, table.transform, table.store, table.serve].flatMap(
+          (step) => step?.method ?? [],
+        ),
       ),
     ),
     environments,

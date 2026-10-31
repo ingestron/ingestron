@@ -37,7 +37,7 @@ export function annotationsIn(
     ...tablesIn(project, file, text, environment).map(({ line, table }) => ({
       line,
       label: `→ ${targetOf(table)}`,
-      tooltip: chosen(table),
+      tooltip: chosenText(table),
     })),
   ];
 }
@@ -56,7 +56,7 @@ export function generatedLenses(
   return found.map(({ line, table }) => ({
     line,
     methods: methodsOf(table).join(" → "),
-    chosen: chosen(table),
+    chosen: chosenText(table),
     files: generatedForTable(files, table.name, table.fullName.table).map((item) => item.path),
   }));
 }
@@ -155,7 +155,7 @@ function contractLine(
 }
 
 function methodsOf(table: ResolvedTable): string[] {
-  return [table.ingest, table.transform, table.store].flatMap((step) =>
+  return [table.ingest, table.transform, table.store, table.serve].flatMap((step) =>
     step ? [step.method] : [],
   );
 }
@@ -169,8 +169,13 @@ const choosers: Record<ChosenBy["by"], string> = {
 };
 
 /** How each step's method was chosen, one line per step. */
-function chosen(table: ResolvedTable): string {
-  const steps = { ingest: table.ingest, transform: table.transform, store: table.store };
+export function chosenText(table: ResolvedTable): string {
+  const steps = {
+    ingest: table.ingest,
+    transform: table.transform,
+    store: table.store,
+    serve: table.serve,
+  };
   const lines = Object.entries(steps).flatMap(([action, step]) =>
     step ? [`${action}: ${step.method}, ${chooser(step.chosenBy)}`] : [],
   );

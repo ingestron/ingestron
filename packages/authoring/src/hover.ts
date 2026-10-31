@@ -12,7 +12,7 @@ import { schemaFor, schemasAt } from "./schema.js";
 import { spotAt, type Spot } from "./yaml.js";
 import { targetOf } from "./target.js";
 
-const actions = ["ingest", "transform", "store"] as const;
+const actions = ["ingest", "transform", "store", "serve"] as const;
 
 /** Markdown for the hover at `offset` in `text`, the open text of `file`, or undefined. */
 export function hoverAt(

@@ -3,7 +3,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { annotationsIn, generatedLenses } from "../src/annotations.js";
+import { annotationsIn, chosenText, generatedLenses } from "../src/annotations.js";
+import type { ResolvedTable } from "@ingestron/definitions";
 import { hoverAt } from "../src/hover.js";
 import { openProject } from "../src/project.js";
 
@@ -131,5 +132,21 @@ describe("generatedLenses", () => {
     const text = read("contracts/orders.yaml");
     const lenses = generatedLenses(project, "contracts/orders.yaml", text, "dev");
     expect(lenses[0]?.files).toContain("build/dev/src/retail/bronze/orders.sql");
+  });
+});
+
+describe("chosenText", () => {
+  it("explains the serve step too", () => {
+    const step = (method: string) => ({
+      method,
+      pack: "test",
+      settings: {},
+      origins: {},
+      chosenBy: { by: "standard-default" as const },
+    });
+    const table = { ingest: step("files"), store: step("stream"), serve: step("publish") };
+    expect(chosenText(table as unknown as ResolvedTable)).toContain(
+      "serve: publish, chosen by the standard's default",
+    );
   });
 });
