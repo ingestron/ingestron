@@ -73,14 +73,14 @@ function usesOf(
     (["ingest", "transform", "store", "serve"] as const).flatMap((action) => {
       const step = table[action];
       return step?.method === id
-        ? [`\`${table.name}\` (${action}): chosen by ${chosenText(step.chosenBy)}`]
+        ? [`\`${table.name}\` (${action}): chosen by ${chosenByText(step.chosenBy)}`]
         : [];
     }),
   );
 }
 
 /** How a method was chosen, in words. */
-export function chosenText({ by, when, pack, file, line }: ChosenBy): string {
+export function chosenByText({ by, when, pack, file, line, replaced }: ChosenBy): string {
   const facts = Object.entries(when ?? {})
     .map(([key, value]) => `\`${key}: ${String(value)}\``)
     .join(" and ");
@@ -91,7 +91,7 @@ export function chosenText({ by, when, pack, file, line }: ChosenBy): string {
     "standard-default": "the standard's default",
     "pack-rule": `the ${pack} pack's rule for ${facts}`,
     "pack-default": `the ${pack} pack's default`,
-    "runs-on": `the environment, which runs on ${pack}`,
+    "runs-on": `the environment, which runs on ${pack}${replaced ? `, in place of ${replaced}` : ""}`,
   };
   return `${words[by]}${where}`;
 }

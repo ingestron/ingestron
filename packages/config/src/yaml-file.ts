@@ -41,7 +41,10 @@ export function parseYamlFile(
   });
   const file: YamlFile = { path, document, lines };
   for (const problem of document.errors) {
-    diagnostics.push(error("YAML_SYNTAX", problem.message, offsetLocation(file, problem.pos[0])));
+    const location = offsetLocation(file, problem.pos[0]);
+    diagnostics.push(
+      error("YAML_SYNTAX", problem.message, location, referenceHint(text, location)),
+    );
   }
   return document.errors.length > 0 ? undefined : file;
 }
@@ -74,4 +77,13 @@ function childNode(node: unknown, key: string): unknown {
   if (isMap(node)) return node.get(key, true);
   if (isSeq(node) && /^(0|[1-9]\d*)$/.test(key)) return node.get(Number(key), true);
   return undefined;
+}
+
+/** A reference written with a space after its colon, such as `${file: x}`, on the problem's line. */
+function referenceHint(text: string, location: Location | undefined): string | undefined {
+  const line = text.split("\n")[(location?.line ?? 1) - 1] ?? "";
+  const written = /\$\{(\w+):\s+([^}]*)\}/.exec(line);
+  return written
+    ? `A reference has no space after its colon: write \${${written[1]}:${written[2]!.trim()}}.`
+    : undefined;
 }

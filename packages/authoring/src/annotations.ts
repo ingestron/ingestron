@@ -13,6 +13,8 @@ export interface Annotation {
   line: number;
   label: string;
   tooltip?: string;
+  /** The tooltip's language when it is a file's code, such as `sql`, to show it as code. */
+  language?: string;
 }
 
 /** The methods that build a line's table, how they were chosen, and its generated files. */
@@ -57,7 +59,9 @@ export function generatedLenses(
     line,
     methods: methodsOf(table).join(" → "),
     chosen: chosenText(table),
-    files: generatedForTable(files, table.name, table.fullName.table).map((item) => item.path),
+    files: generatedForTable(files, table.name, table.fullName.table, table.fullName.schema).map(
+      (item) => item.path,
+    ),
   }));
 }
 
@@ -81,8 +85,18 @@ function variables(
         : resolveText(project, spot.text, environment);
       if (value === undefined || value === spot.text) return [];
       const shown = typeof value === "string" ? value : JSON.stringify(value);
-      const label = `= ${shown.length > 80 ? `${shown.slice(0, 79)}…` : shown}`;
-      return [{ line: positionAt(text, spot.range[0]).line, label, tooltip: shown }];
+      // One line beside the value; the tooltip keeps the lines.
+      const flat = shown.replace(/\s+/g, " ").trim();
+      const label = `= ${flat.length > 80 ? `${flat.slice(0, 79)}…` : flat}`;
+      const language = /\$\{file:\s*[^}#]*\.(\w+)/.exec(spot.text)?.[1];
+      return [
+        {
+          line: positionAt(text, spot.range[0]).line,
+          label,
+          tooltip: shown,
+          ...(language && { language: language === "py" ? "python" : language }),
+        },
+      ];
     });
 }
 
@@ -186,13 +200,14 @@ export function chosenText(table: ResolvedTable): string {
 }
 
 /** What chose a method, with the rule's facts and where it is written. */
-function chooser({ by, when, file, line, pack }: ChosenBy): string {
+function chooser({ by, when, file, line, pack, replaced }: ChosenBy): string {
   const facts = when
     ? ` when ${Object.entries(when)
         .map(([key, value]) => `${key}: ${String(value)}`)
         .join(", ")}`
     : "";
   const where = file ? ` (${file}${line ? `:${line}` : ""})` : "";
-  const runsOn = by === "runs-on" && pack ? ` ${pack}` : "";
+  const instead = replaced ? `, in place of ${replaced}` : "";
+  const runsOn = by === "runs-on" && pack ? ` ${pack}${instead}` : "";
   return `${choosers[by]}${runsOn}${facts}${where}`;
 }

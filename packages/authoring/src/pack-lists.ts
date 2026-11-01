@@ -21,7 +21,13 @@ export function packLists(): Suggestion[] {
     .flatMap((store) =>
       packs.filter((pack) => !stores(pack)).map((lands) => [id(store), id(lands)]),
     );
-  return [...packIds().map((single) => [single]), ...pairs].map((list, index) => ({
+  // Alone, a pack must read a source itself: Synapse, say, only serves what another lands.
+  const readsSources = (pack: (typeof packs)[number]) =>
+    Object.values(pack.methods).some(
+      (method) => method.action === "ingest" && (method.connectors?.length ?? 0) > 0,
+    );
+  const singles = packs.filter(readsSources).map((pack) => [id(pack)]);
+  return [...singles, ...pairs].map((list, index) => ({
     label: `[${list.join(", ")}]`,
     kind: "value" as const,
     ...(index === 0 && { preselect: true }),

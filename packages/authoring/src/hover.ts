@@ -157,7 +157,8 @@ function stepText(action: string, step: Step, table: ResolvedTable): string {
   const rows = entries
     .filter((entry) => !isDefault(entry))
     .map(
-      ([key, value]) => `| \`${key}\` | \`${shown(value)}\` | ${from(step.origins[key], table)} |`,
+      ([key, value]) =>
+        `| \`${key}\` | \`${tableCell(shown(value))}\` | ${tableCell(from(step.origins[key], table))} |`,
     );
   const chosen =
     rows.length > 0
@@ -202,12 +203,27 @@ function from(origin: Origin | undefined, table: ResolvedTable): string {
 /** A value as definitions write it: YAML flow style. */
 export function shown(value: unknown): string {
   if (typeof value === "string") return value;
-  if (Array.isArray(value)) return `[${value.map(shown).join(", ")}]`;
+  if (Array.isArray(value)) return `[${value.map(inner).join(", ")}]`;
   if (value && typeof value === "object")
     return `{ ${Object.entries(value)
-      .map(([key, item]) => `${key}: ${shown(item)}`)
+      .map(([key, item]) => `${key}: ${inner(item)}`)
       .join(", ")} }`;
   return String(value);
+}
+
+/** A value inside an object or list: text that would read as structure is quoted. */
+function inner(value: unknown): string {
+  if (typeof value === "string" && (value === "" || /[,:{}[\]|#"']|^\s|\s$/.test(value)))
+    return JSON.stringify(value);
+  return shown(value);
+}
+
+/**
+ * Text for a Markdown table cell: `|` escaped so it does not end the cell.
+ * @example tableCell("a|b") // "a\\|b"
+ */
+export function tableCell(text: string): string {
+  return text.replaceAll("|", "\\|");
 }
 
 function describe(file: string, text: string, spot: Spot | undefined): string | undefined {

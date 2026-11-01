@@ -51,5 +51,8 @@ describe("sampleFacts", () => {
     expect(sampleFacts(join(fixtures, "layers-and-transforms")).features).toContain("transforms");
     const minimal = listSamples().find((sample) => sample.name === "minimal")!;
     expect(sampleFacts(minimal.folder).features).not.toContain("transforms");
+    expect(sampleFacts(join(fixtures, "landing-only")).features).toContain(
+      "ends at the landed files",
+    );
   });
 });

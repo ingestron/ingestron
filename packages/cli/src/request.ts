@@ -46,7 +46,7 @@ export function platformRequest(files: FileSource, environment: string | undefin
     identity(model),
     switchedOn(model, capabilities),
     switchedOff(diagnostics, capabilities),
-    infrastructure(files, environment),
+    infrastructure(files, environment, usedMethods(model)),
     ...packSections(model),
     sql(model, name),
   ]
@@ -91,7 +91,11 @@ function switchedOff(diagnostics: AnyDiagnostic[], capabilities: Capability[]): 
 }
 
 /** The platform's method settings, with values for this environment; secrets never shown. */
-function infrastructure(files: FileSource, environment: string | undefined): string | undefined {
+function infrastructure(
+  files: FileSource,
+  environment: string | undefined,
+  used: Set<string>,
+): string | undefined {
   const loaded = resolveProject(files, {
     kinds: Object.values(kinds),
     ...(environment && { environment }),
@@ -100,16 +104,26 @@ function infrastructure(files: FileSource, environment: string | undefined): str
   const platform = loaded.project?.documents.find((item) => item.kind === "Platform");
   const settings = (platform?.value as { settings?: Record<string, Record<string, unknown>> })
     ?.settings;
-  const lines = Object.entries(settings ?? {}).flatMap(([method, values]) =>
-    Object.entries(values ?? {}).map(
-      ([key, value]) => `- \`${method}\` \`${key}\`: ${shown(value)}`,
-    ),
-  );
+  // Settings of methods this environment does not use, such as ADF's under runs-on, are left out.
+  const lines = Object.entries(settings ?? {})
+    .filter(([method]) => used.has(method))
+    .flatMap(([method, values]) =>
+      Object.entries(values ?? {}).map(
+        ([key, value]) => `- \`${method}\` \`${key}\`: ${shown(value)}`,
+      ),
+    );
   return lines.length > 0 ? `## Shared infrastructure\n\n${lines.join("\n")}` : undefined;
 }
 
 function shown(value: unknown): string {
   if (typeof value === "object" && value !== null && "$secret" in value) return "a secret";
+  if (typeof value === "object" && value !== null && !Array.isArray(value))
+    return Object.entries(value)
+      .map(([key, item]) => {
+        const text = shown(item);
+        return text === "a secret" ? `\`${key}\`: a secret` : `\`${key}: ${text.slice(1, -1)}\``;
+      })
+      .join(", ");
   return `\`${typeof value === "string" ? value : JSON.stringify(value)}\``;
 }
 
@@ -138,4 +152,15 @@ function sql(model: ResolvedModel, name: string): string | undefined {
     .map(({ files }) => files["prerequisites.sql"])
     .find(Boolean);
   return text && `## SQL to run once (review first)\n\n\`\`\`sql\n${text}\`\`\``;
+}
+
+/** Every method a table of this environment uses. */
+function usedMethods(model: ResolvedModel): Set<string> {
+  return new Set(
+    model.tables.flatMap((table) =>
+      [table.ingest, table.transform, table.store, table.serve].flatMap((step) =>
+        step ? [step.method] : [],
+      ),
+    ),
+  );
 }

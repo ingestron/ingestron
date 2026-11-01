@@ -99,6 +99,7 @@ function features(models: ResolvedModel[], tables: ResolvedModel["tables"]): str
         ? ["quality checks"]
         : []),
       ...(tables.some((table) => table.transform) ? ["transforms"] : []),
+      ...(tables.some((table) => table.endsAtFiles) ? ["ends at the landed files"] : []),
       ...(tables.some((table) => ["upsert", "history"].includes(String(table.store?.settings.mode)))
         ? ["change data"]
         : []),
