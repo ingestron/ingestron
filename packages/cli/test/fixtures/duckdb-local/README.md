@@ -14,6 +14,13 @@ a laptop: ADF's copy becomes `duckdb-landed`, which reads a load's files from
 - `duckdb/run.sql`: every table in order, the same SQL in both environments
   apart from where the files are.
 
+In `dev`, ADF's `after_copy` starts the Container Apps job `sales-dev-duckdb`
+after each schedule's copies: one parent pipeline, `pl_sales_every_24_hour`,
+runs the copies, starts the job and waits for it. The job runs
+`ghcr.io/ingestron/duckdb-runner:1`, a public image, which rebuilds every table
+from the landed files and publishes it. `ingestron request --env dev` lists the
+job and the access it needs.
+
 To run locally, put a load's files in `samples/erp.dbo.Invoices/`: ADF writes
 them to `erp/erp.dbo.Invoices/` in the `landing` file system, one Parquet file
 per load, so download that folder's files. Then, from this folder:
