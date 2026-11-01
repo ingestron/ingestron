@@ -1,12 +1,40 @@
 {
   "routes": [
-    { "connector": "files", "connectivity": "public", "via": ["databricks", "adf"] },
-    { "connector": "sqlserver", "connectivity": "private", "via": ["adf"] },
-    { "connector": "sqlserver", "connectivity": "workspace", "via": ["databricks", "adf"] },
-    { "connector": "postgresql", "connectivity": "private", "via": ["adf"] },
-    { "connector": "salesforce", "connectivity": "public", "via": ["databricks", "adf"] },
-    { "connector": "kafka", "connectivity": "public", "via": ["databricks"] },
-    { "connector": "kafka", "connectivity": "private", "via": [] }
+    {
+      "connector": "files",
+      "connectivity": "public",
+      "via": ["databricks", "adf", "adf-files"]
+    },
+    {
+      "connector": "sqlserver",
+      "connectivity": "private",
+      "via": ["adf", "adf-synapse", "adf-duckdb", "adf-files"]
+    },
+    {
+      "connector": "sqlserver",
+      "connectivity": "workspace",
+      "via": ["databricks", "adf", "adf-synapse", "adf-duckdb", "adf-files"]
+    },
+    {
+      "connector": "postgresql",
+      "connectivity": "private",
+      "via": ["adf", "adf-synapse", "adf-duckdb", "adf-files"]
+    },
+    {
+      "connector": "salesforce",
+      "connectivity": "public",
+      "via": ["databricks", "adf", "adf-synapse", "adf-duckdb", "adf-files"]
+    },
+    {
+      "connector": "kafka",
+      "connectivity": "public",
+      "via": ["databricks"]
+    },
+    {
+      "connector": "kafka",
+      "connectivity": "private",
+      "via": []
+    }
   ],
   "invalid": [
     ["--connector", "missing", "--yes"],

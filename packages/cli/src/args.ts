@@ -62,8 +62,9 @@ export const flags = [
     summary: "init: private, workspace or public source reachability.",
   },
   {
-    flag: "--via <adf|databricks>",
-    summary: "init: ADF ingestion into Databricks, or Databricks directly.",
+    flag: "--via <databricks|adf|adf-synapse|adf-duckdb|adf-files>",
+    summary:
+      "init: the route: Databricks directly, or ADF into Databricks, Synapse views, DuckDB tables or the landed files alone.",
   },
   {
     flag: "--env <name>",

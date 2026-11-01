@@ -50,7 +50,7 @@ export function projectRecipe(connector: string, via: string, connectivity: stri
   return { template, files };
 }
 function recipeTemplate(connector: string, via: string): Template {
-  if (via === "databricks") {
+  if (!via.startsWith("adf")) {
     const example = directExamples[connector];
     if (!example) throw new Error(`No tested project recipe for ${connector} via Databricks.`);
     return readTemplate(join(builtInFolder, example), example);
@@ -100,22 +100,60 @@ function trimSettings(
   via: string,
   flowFiles: string[],
 ): void {
-  trimStandard(files, method, via);
+  const windowed = flowFiles.some((file) =>
+    /mode: incremental|date_filter_column/.test(String(files[file])),
+  );
+  trimStandard(files, method, via, windowed);
   if (!files["platform.yaml"]) return;
   const platform = parse(String(files["platform.yaml"])) as Definition;
   if (platform.settings) platform.settings = { [method]: platform.settings[method] ?? {} };
   const settings = platform.settings?.[method];
   if (settings) delete settings.resource_names;
   if (settings) moveInfrastructure(files, flowFiles, settings);
+  if (platform.settings && settings) Object.assign(platform.settings, destination(via, settings));
   files["platform.yaml"] = stringify(platform);
 }
 
-function trimStandard(files: Record<string, Content>, method: string, via: string): void {
-  const standard = parse(String(files["standard.yaml"])) as Definition & { packs: string[] };
-  standard.packs = via === "adf" ? ["databricks@1", "adf@1"] : ["databricks@1"];
+/** Each route's packs, the pack that names and types the tables first, and its store choice. */
+const routeStandards: Record<string, { packs: string[]; store?: string }> = {
+  databricks: { packs: ["databricks@1"] },
+  adf: { packs: ["databricks@1", "adf@1"] },
+  "adf-synapse": { packs: ["synapse@1", "adf@1"], store: "synapse-view" },
+  "adf-duckdb": { packs: ["duckdb@1", "adf@1"] },
+  "adf-files": { packs: ["adf@1"], store: "none" },
+};
+
+function trimStandard(
+  files: Record<string, Content>,
+  method: string,
+  via: string,
+  windowed: boolean,
+): void {
+  const standard = parse(String(files["standard.yaml"])) as Definition & {
+    packs: string[];
+    store?: Record<string, unknown>;
+  };
+  const route = routeStandards[via] ?? routeStandards.databricks!;
+  standard.packs = route.packs;
+  if (route.store) standard.store = { ...standard.store, default: route.store };
   if (standard.ingest?.settings)
     standard.ingest.settings = { [method]: standard.ingest.settings[method] ?? {} };
+  if (snapshot(via, windowed))
+    standard.ingest = {
+      ...standard.ingest,
+      settings: {
+        [method]: {
+          ...(standard.ingest?.settings?.[method] as Record<string, unknown> | undefined),
+          layout: "snapshot",
+        },
+      },
+    };
   files["standard.yaml"] = stringify(standard);
+}
+
+/** Views and DuckDB rebuilds read one file per table, unless a flow copies windows, which must all be kept. */
+function snapshot(via: string, windowed: boolean): boolean {
+  return (via === "adf-synapse" || via === "adf-duckdb") && !windowed;
 }
 
 function moveInfrastructure(
@@ -134,4 +172,17 @@ function moveInfrastructure(
     }
     files[file] = stringify(flow);
   }
+}
+
+/** The platform settings a route's destination needs, beside ADF's landing storage. */
+function destination(via: string, adf: Record<string, unknown>): Record<string, unknown> {
+  const root = /^abfss:\/\/[^@/]+@[^/]+/.exec(String(adf.landing ?? ""))?.[0];
+  if (!root) return {};
+  if (via === "adf-synapse")
+    return { "synapse-view": { data_source: "landing", data_source_location: root } };
+  if (via === "adf-duckdb")
+    return {
+      "duckdb-table": { published: root.replace(/^abfss:\/\/[^@]+@/, "abfss://published@") },
+    };
+  return {};
 }
