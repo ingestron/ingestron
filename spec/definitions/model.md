@@ -404,8 +404,8 @@ Each product is checked:
   the definitions, so it is the same in every environment.
 - When the contract is named, but no table of the environment uses it (for
   example one a `runs-on` environment skips), it is `PRODUCT_NOT_BUILT`, a
-  warning at the port's `contractId`; the product is kept with no tables for
-  that output.
+  warning at the port's `contractId`, unless another problem stopped a table
+  resolving; the product is kept with no tables for that output.
 - A contract MUST be an output of at most one product: one owner per
   published table. A second port publishing it is `PRODUCT_CONTRACT_SHARED`,
   an error at that port's `contractId`.

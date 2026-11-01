@@ -1,0 +1,11 @@
+apiVersion: ingestron.io/v1
+kind: Transform
+id: daily_sales
+description: Order totals per customer and day.
+inputs: [orders, customers]
+code: |
+  SELECT c.id AS customer_id, CAST(o.ordered_at AS DATE) AS day, sum(o.total) AS total
+  FROM {{ tables.orders }} AS o
+  JOIN {{ tables.customers }} AS c ON c.id = o.customer_id
+  GROUP BY c.id, CAST(o.ordered_at AS DATE)
+contract: shop.daily_sales

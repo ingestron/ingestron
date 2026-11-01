@@ -24,6 +24,7 @@ export function skeletons(project: Project, file: string, id?: string): Suggesti
     connections: () => connectionSkeletons(project, id ?? base),
     contracts: () => [contractSkeleton(base, id ?? `${source}.${base}`)],
     transforms: () => [transformSkeleton(project, base, source)],
+    products: () => [productSkeleton(project, base)],
   };
   const root = rootSkeletons[file];
   if (root) return [root(project)];
@@ -105,6 +106,19 @@ function connectionSkeletons(project: Project, id: string): Suggestion[] {
         .join("\n\n"),
     };
   });
+}
+
+/** An ODPS data product publishing one of the project's contracts. */
+function productSkeleton(project: Project, base: string): Suggestion {
+  const contracts = idsOf(project, "DataContract").sort();
+  const contract = stop(6, contracts, "contract");
+  return skeleton(
+    "DataProduct",
+    `apiVersion: v1.1.0\nkind: DataProduct\nid: \${1:${base}}\nname: $2\nstatus: draft\n` +
+      `description:\n  purpose: $4\nteam:\n  members:\n    - { username: $3, role: owner }\n` +
+      `outputPorts:\n  - { name: $5, contractId: ${contract} }\n`,
+    "A data product: who owns it, what it is for, and the contracts whose tables it publishes. Add products/*.yaml to project.yaml's imports.",
+  );
 }
 
 function contractSkeleton(base: string, id: string): Suggestion {

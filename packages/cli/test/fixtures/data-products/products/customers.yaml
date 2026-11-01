@@ -1,0 +1,18 @@
+apiVersion: v1.1.0
+kind: DataProduct
+id: customers
+name: Customers
+version: 1.0.0
+domain: sales
+type: sourceAligned
+status: active
+description:
+  purpose: Everyone who has bought from the web shop, for campaigns and service.
+  usage: Join on id. Names and emails are confidential.
+team:
+  members:
+    - { username: mia.chen@example.com, name: Mia Chen, role: owner }
+support:
+  - { channel: customer-data, url: "https://example.com/teams/customer-data", tool: teams }
+outputPorts:
+  - { name: customers, contractId: shop.customers, description: One row per customer }

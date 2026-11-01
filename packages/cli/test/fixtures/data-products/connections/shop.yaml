@@ -1,0 +1,10 @@
+apiVersion: ingestron.io/v1
+kind: Connection
+id: shop
+description: The web shop's Azure SQL database.
+connector: azure-sql-database
+connectivity: public
+settings:
+  server: shop-sql.database.windows.net
+  user: ingest_reader
+  password: ${secret:shop-sql-password} # a Key Vault secret name

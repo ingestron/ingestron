@@ -1,0 +1,17 @@
+apiVersion: v1.1.0
+kind: DataProduct
+id: sales
+name: Daily sales
+version: 1.0.0
+domain: sales
+type: aggregate
+status: active
+description:
+  purpose: Order totals per customer and day, for sales reporting.
+team:
+  members:
+    - { username: sam.patel@example.com, name: Sam Patel, role: owner }
+inputPorts:
+  - { name: customers, contractId: shop.customers }
+outputPorts:
+  - { name: daily_sales, contractId: shop.daily_sales, description: One row per customer and day }

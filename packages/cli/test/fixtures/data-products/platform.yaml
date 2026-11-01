@@ -1,0 +1,12 @@
+apiVersion: ingestron.io/v1
+kind: Platform
+id: azure
+settings:
+  adf-copy: # shared infrastructure, referenced by name
+    landing: ${values.landing}
+    key_vault: ${values.key_vault}
+    integration_runtime: AutoResolveIntegrationRuntime
+    after_copy: # the DuckDB job, started after each schedule's copies
+      job: ${values.duckdb_job}
+  duckdb-table:
+    published: ${values.published}

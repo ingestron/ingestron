@@ -30,6 +30,15 @@ describe("data products", () => {
     ]);
   });
 
+  it("does not call an output unbuilt when its table failed for another reason", () => {
+    const flow = base["sales.yaml"]!.replace(
+      "source: shop",
+      "source: shop\ningest: { uses: nothing }",
+    );
+    const result = resolve({ "sales.yaml": flow, "p.yaml": product("v1.1.0") });
+    expect(result.diagnostics.map(({ code }) => code)).toEqual(["UNKNOWN_METHOD"]);
+  });
+
   it("reads roles and slaProperties from the contract", () => {
     const contract = `${base["orders.odcs.yaml"]}roles:
   - { role: finance-analysts, access: read, description: Monthly revenue reporting, firstLevelApprovers: sales-ops-lead }
