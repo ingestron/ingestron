@@ -25,6 +25,7 @@ describe("listSamples", () => {
       "landing-only",
       "synapse-views",
       "duckdb-local",
+      "data-products",
     ]);
   });
 

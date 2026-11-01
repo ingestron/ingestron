@@ -126,7 +126,7 @@ export function freshness(model: ResolvedModel, product: ResolvedProduct): strin
   const schedule = model.platform.schedule;
   const refresh = schedule
     ? `- Refreshed on the schedule \`${schedule.cron}\` (${schedule.timezone})${schedule.paused ? ", paused" : ""}.`
-    : "- Refreshed when the pipeline runs; no schedule is set.";
+    : "- Refreshed when its pipelines run.";
   return ["## Freshness", [...promises, refresh].join("\n")].join("\n\n");
 }
 

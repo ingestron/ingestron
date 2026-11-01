@@ -59,6 +59,16 @@ describe("a new, empty file", () => {
     expect(first?.snippet).toContain("id: ${1:shop.returns}");
   });
 
+  it("offers a data product skeleton in products/, with the project's contracts to publish", () => {
+    const [first] = at("products/sales.yaml", "|");
+    expect(first?.label).toBe("DataProduct document");
+    expect(first?.snippet).toContain("apiVersion: v1.1.0\nkind: DataProduct\nid: ${1:sales}\n");
+    expect(first?.snippet).toContain("    - { username: $3, role: owner }\n");
+    expect(first?.snippet).toContain(
+      "  - { name: $5, contractId: ${6|shop.customers,shop.daily_sales,shop.orders|} }\n",
+    );
+  });
+
   it("offers the project manifest in an empty project.yaml, with the id from the folder as init makes it", () => {
     const [first, ...rest] = at("project.yaml", "|");
     expect(first?.label).toBe("Project manifest");
@@ -76,7 +86,12 @@ describe("a new, empty file", () => {
   it("offers every kind outside the usual folders", () => {
     const labels = at("misc.yaml", "|").map((item) => item.label);
     expect(labels).toEqual(
-      expect.arrayContaining(["Flow document", "Connection: Files", "DataContract document"]),
+      expect.arrayContaining([
+        "Flow document",
+        "Connection: Files",
+        "DataContract document",
+        "DataProduct document",
+      ]),
     );
   });
 });

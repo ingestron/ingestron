@@ -1,0 +1,23 @@
+# A web shop's orders and customers: ADF copies them from Azure SQL and DuckDB
+# builds the tables, published as two governed data products with a passport
+# each. The local environment runs the same tables on a laptop.
+id: shop
+environments:
+  dev: {}
+  local:
+    runs-on: duckdb # ADF's copies become duckdb-landed, reading ./samples
+    values:
+      published: ./published
+values:
+  landing: abfss://landing@shopdev.dfs.core.windows.net/shop
+  published: abfss://published@shopdev.dfs.core.windows.net
+  key_vault: https://kv-shop-dev.vault.azure.net
+  duckdb_job: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-shop-dev/providers/Microsoft.App/jobs/shop-dev-duckdb
+imports:
+  - standard.yaml
+  - platform.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - transforms/*.yaml
+  - contracts/*.yaml
+  - products/*.yaml
