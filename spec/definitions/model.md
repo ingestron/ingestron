@@ -421,6 +421,41 @@ From a contract, the model also keeps its `roles` (`role`, `access`,
 `description`, `firstLevelApprovers`) and its `slaProperties` as `sla`
 (`property`, `value` as text, `unit`), for the passport.
 
+### 8.1 Governance
+
+A standard can require governance of its data products in an optional
+`governance` section. Without it nothing below is checked. It governs the
+**output contracts**: the contracts named by any product's output ports;
+other contracts are not governed.
+
+```yaml
+governance:
+  products: { require: [owner, purpose] } # owner, purpose, support, domain
+  classification:
+    values: [public, internal, confidential, restricted]
+    columns: required # or optional, the default
+    sensitive: [confidential, restricted]
+  access:
+    sensitive: { require: [description, firstLevelApprovers] } # also access
+```
+
+Every problem here is an error at the value that causes it, and all are
+reported in one run:
+
+- `PRODUCT_INCOMPLETE`, at the product's `id`: a fact `products.require`
+  names is missing. `owner` is a team member whose role is `owner`; `purpose`
+  is `description.purpose`; `support` is at least one `support` entry;
+  `domain` is `domain`.
+- `COLUMN_UNCLASSIFIED`, at the column's `name`: with `columns: required`, a
+  column of an output contract has no `classification`.
+- `CLASSIFICATION_UNKNOWN`, at the `classification`: it is not one of
+  `values` (when `values` is given). Each allowed value is offered as a fix,
+  `Change to "<value>"`.
+- `SENSITIVE_ACCESS`: an output contract with a column whose classification
+  is in `sensitive` declares no `roles` (at the first such column's
+  `classification`), or a role lacks a field `access.sensitive.require` names
+  (at that role).
+
 ## 9. Conformance
 
 Each case in [conformance/](conformance/) gives `files` (the project), an

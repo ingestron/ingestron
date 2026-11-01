@@ -40,7 +40,11 @@ export type DefinitionCode =
   | "PRODUCT_CONTRACT_UNUSED"
   | "PRODUCT_NOT_BUILT"
   | "PRODUCT_CONTRACT_SHARED"
-  | "DUPLICATE_PRODUCT";
+  | "DUPLICATE_PRODUCT"
+  | "PRODUCT_INCOMPLETE"
+  | "COLUMN_UNCLASSIFIED"
+  | "CLASSIFICATION_UNKNOWN"
+  | "SENSITIVE_ACCESS";
 
 /** Where a value was written: a document and a JSON Pointer into it. */
 export interface Source {

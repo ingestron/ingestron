@@ -9,6 +9,6 @@ describe("code help", () => {
       expect(help.meaning, code).toMatch(/^[A-Z].*\.$/);
       expect(help.fix, code).toMatch(/^[A-Z].*\.$/);
     }
-    expect(Object.keys(codeHelp)).toHaveLength(37);
+    expect(Object.keys(codeHelp)).toHaveLength(41);
   });
 });

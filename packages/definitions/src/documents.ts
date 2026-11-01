@@ -50,6 +50,14 @@ export interface StandardDoc {
   transform?: RulesDoc;
   store?: RulesDoc;
   serve?: RulesDoc;
+  governance?: GovernanceDoc;
+}
+
+/** The standard's governance section (specification section 8.1). */
+export interface GovernanceDoc {
+  products?: { require?: ("owner" | "purpose" | "support" | "domain")[] };
+  classification?: { values?: string[]; columns?: "required" | "optional"; sensitive?: string[] };
+  access?: { sensitive?: { require?: ("access" | "description" | "firstLevelApprovers")[] } };
 }
 
 /** A `Platform` document; see platform.schema.yaml for every field. */
