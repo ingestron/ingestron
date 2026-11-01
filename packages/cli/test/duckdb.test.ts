@@ -1,6 +1,6 @@
 // DuckDB projects: the starter runs end to end on a laptop, and a cloud
 // project runs its tables locally from a load's files with runs-on: duckdb.
-import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DuckDBInstance } from "@duckdb/node-api";
@@ -75,15 +75,16 @@ describe("the duckdb-local fixture", () => {
     expect(applied.code, applied.output).toBe(0);
     const cloud = readFileSync(join(project, "build/dev/duckdb/run.sql"), "utf8");
     expect(cloud).toContain(
-      "FROM read_parquet('abfss://landing@salesdev.dfs.core.windows.net/erp/erp.dbo.Invoices/*.parquet',",
+      "FROM read_parquet('abfss://landing@salesdev.dfs.core.windows.net/erp/erp.dbo.Invoices/erp.dbo.Invoices.parquet');",
     );
     const local = readFileSync(join(project, "build/local/duckdb/run.sql"), "utf8");
-    expect(local).toContain("FROM read_parquet('./samples/erp.dbo.Invoices/*.parquet',");
+    expect(local).toContain("FROM read_parquet('./samples/erp.dbo.Invoices/*.parquet');");
     expect(
       local.replaceAll("./samples/", "<landed>/").replaceAll("./published/", "<published>/"),
     ).toBe(
       cloud
         .replaceAll("abfss://landing@salesdev.dfs.core.windows.net/erp/", "<landed>/")
+        .replaceAll("erp.dbo.Invoices/erp.dbo.Invoices.parquet", "erp.dbo.Invoices/*.parquet")
         .replaceAll("abfss://published@salesdev.dfs.core.windows.net/", "<published>/")
         .replace("(dev)", "(local)"),
     );
@@ -113,6 +114,7 @@ describe("the duckdb-local fixture", () => {
     expect(applied.code, applied.output).toBe(0);
     const adf = join(project, "build/dev/adf");
     expect(readdirSync(join(adf, "trigger"))).toEqual(["tr_sales_every_24_hour.json"]);
+    expect(existsSync(join(project, "build/local/adf/pipeline"))).toBe(false);
     const parent = readFileSync(join(adf, "pipeline/pl_sales_every_24_hour.json"), "utf8");
     expect(parent).toContain("/jobs/sales-dev-duckdb/start?api-version=2026-07-01");
     const requested = ingestron("request", "--env", "dev", "--definitions", ".");
