@@ -185,8 +185,8 @@ function checkServeInputs(context: Context, tables: ResolvedTable[]): void {
       continue;
     context.reporter.error(
       "HANDOVER",
-      `"${serve.method}" reads where "${last.method}" puts its data, and "${last.method}" does not say.`,
-      originOf(context, table),
+      `The serve step "${serve.method}" reads where "${last.method}" puts its data, and "${last.method}" does not say.`,
+      serveOrigin(context, table),
       "Serve it with a method that does not need to know where its data lands.",
     );
   }
@@ -209,6 +209,16 @@ function runMethodChecks(context: Context, tables: ResolvedTable[]): void {
 }
 
 /** Where a table was defined: its key in a flow, or a transform's id. */
+/** Where the serve step was chosen: the flow's or transform's serve.uses, else the table. */
+function serveOrigin(context: Context, table: ResolvedTable): Source | undefined {
+  const document =
+    table.origin.kind === "Flow"
+      ? context.project.get(kinds.flow, table.origin.id)
+      : context.project.get(kinds.transform, table.origin.id);
+  const uses = (document?.value as { serve?: { uses?: string } } | undefined)?.serve?.uses;
+  return document && uses ? { document, pointer: "/serve/uses" } : originOf(context, table);
+}
+
 function originOf(context: Context, table: ResolvedTable): Source | undefined {
   if (table.origin.kind === "Flow") {
     const flow = context.project.get(kinds.flow, table.origin.id);

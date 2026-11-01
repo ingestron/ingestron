@@ -147,4 +147,23 @@ describe("runs-on", () => {
       renamed: true,
     });
   });
+
+  it("refuses a transform of another pack in an environment that runs on a pack", () => {
+    const transform = [
+      "apiVersion: ingestron.io/v1",
+      "kind: Transform",
+      "id: daily",
+      "inputs: [orders]",
+      "transform: { uses: sql }",
+      'code: "SELECT * FROM {{ tables.orders }}"',
+      "contract: orders",
+      "",
+    ].join("\n");
+    const shop = files["shop.yaml"]!.replace("connector: sqlserver", "connector: files");
+    const result = resolveDefinitions(
+      memoryFiles({ ...files, "shop.yaml": shop, "daily.yaml": transform }),
+      { packs, environment: "local" },
+    );
+    expect(result.diagnostics.map(({ code }) => code)).toContain("RUNS_ON");
+  });
 });
