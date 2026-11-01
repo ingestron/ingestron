@@ -12,6 +12,7 @@ values:
   landing: abfss://landing@salesdev.dfs.core.windows.net/erp
   published: abfss://published@salesdev.dfs.core.windows.net
   key_vault: https://kv-sales-dev.vault.azure.net
+  duckdb_job: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-sales-dev/providers/Microsoft.App/jobs/sales-dev-duckdb
 imports:
   - standard.yaml
   - platform.yaml

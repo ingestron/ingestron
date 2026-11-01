@@ -1,6 +1,6 @@
 // DuckDB projects: the starter runs end to end on a laptop, and a cloud
 // project runs its tables locally from a load's files with runs-on: duckdb.
-import { cpSync, mkdirSync, mkdtempSync, readFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DuckDBInstance } from "@duckdb/node-api";
@@ -103,5 +103,22 @@ describe("the duckdb-local fixture", () => {
       { customer_id: "10", total: 30 },
       { customer_id: "20", total: 8 },
     ]);
+  });
+
+  it("starts the DuckDB job after ADF's copies in dev", () => {
+    const project = mkdtempSync(join(tmpdir(), "ingestron-duckdb-cloud-"));
+    cpSync(fixture, project, { recursive: true });
+    const ingestron = session(project);
+    const applied = ingestron("apply", "--no-diff", "--definitions", ".", "--out", "build");
+    expect(applied.code, applied.output).toBe(0);
+    const adf = join(project, "build/dev/adf");
+    expect(readdirSync(join(adf, "trigger"))).toEqual(["tr_sales_every_24_hour.json"]);
+    const parent = readFileSync(join(adf, "pipeline/pl_sales_every_24_hour.json"), "utf8");
+    expect(parent).toContain("/jobs/sales-dev-duckdb/start?api-version=2026-07-01");
+    const requested = ingestron("request", "--env", "dev", "--definitions", ".");
+    expect(requested.code, requested.output).toBe(0);
+    expect(requested.output).toContain("Container Apps Jobs Operator role on `sales-dev-duckdb`");
+    expect(requested.output).toContain("DuckDB job");
+    expect(requested.output).toContain("`ghcr.io/ingestron/duckdb-runner:1`");
   });
 });
