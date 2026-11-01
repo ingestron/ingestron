@@ -45,17 +45,37 @@ export function projectRoutes(connector: string, connectivity?: string): Project
       .flatMap((source) => {
         const method = pack.methods[source.method];
         if (!supported(method, connector, connectivity)) return [];
-        return [
-          {
-            via: pack.id,
-            method: source.method,
-            title: pack.id === "adf" ? "ADF ingestion into Databricks" : "Databricks directly",
-            connectivity: method.connectivity ?? [],
-            maturity: source.maturity?.status ?? "Not stated",
-          },
-        ];
+        const destinations =
+          pack.id === "adf"
+            ? adfDestinations.filter(([via]) => reads(via!, method, connector))
+            : [["databricks", "Databricks directly"]];
+        return destinations.map(([via, title]) => ({
+          via: via!,
+          method: source.method,
+          title: title!,
+          connectivity: method.connectivity ?? [],
+          maturity: source.maturity?.status ?? "Not stated",
+        }));
       }),
   );
+}
+
+/** Where ADF's landed files go next, as `--via` and the route's title. */
+const adfDestinations = [
+  ["adf", "ADF ingestion into Databricks"],
+  ["adf-synapse", "ADF ingestion, served as Synapse serverless SQL views"],
+  ["adf-duckdb", "ADF ingestion into DuckDB tables"],
+  ["adf-files", "ADF ingestion, ending at the landed files"],
+];
+
+/**
+ * Synapse and DuckDB read ADF's table copies, which land typed files under the
+ * contract's names; not files copied as they are, nor (for Synapse) JSON.
+ */
+function reads(via: string, method: Method, connector: string): boolean {
+  if (via === "adf-synapse") return method.renames === true && connector !== "microsoft-365";
+  if (via === "adf-duckdb") return method.renames === true;
+  return true;
 }
 
 function supported(
