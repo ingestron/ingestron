@@ -17,7 +17,7 @@ From the project folder:
 
 ```sh
 ingestron apply
-duckdb ingestron.duckdb < build/dev/run.sql
+duckdb -bail ingestron.duckdb -c ".read build/dev/run.sql"
 duckdb ingestron.duckdb "SELECT * FROM silver.customer_totals"
 ```
 

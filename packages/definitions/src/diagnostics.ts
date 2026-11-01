@@ -35,7 +35,8 @@ export type DefinitionCode =
   | "PLACEHOLDER_NOT_REPLACED"
   | "RUNS_ON"
   | "RUNS_ON_SKIPPED"
-  | "SETTINGS_UNUSED";
+  | "SETTINGS_UNUSED"
+  | "TRANSFORM_COLUMNS";
 
 /** Where a value was written: a document and a JSON Pointer into it. */
 export interface Source {

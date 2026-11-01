@@ -2,6 +2,7 @@
 import type { DefinitionDocument } from "@ingestron/config";
 import { NO_STORE } from "./choose.js";
 import { codeWithValues } from "./code-values.js";
+import { checkTransformColumns } from "./transform-columns.js";
 import type { Context } from "./context.js";
 import { contractFor, expectationsFor } from "./contract.js";
 import { kinds, type TransformDoc } from "./documents.js";
@@ -111,6 +112,7 @@ function transformTable(
   const code = codeWithValues(context, doc, value.code);
   if (!steps || !contract || !fullName || code === undefined) return undefined;
   if (!readsTables(context, doc, resolved)) return undefined;
+  checkTransformColumns(context, doc, contract, code);
   const inputs = Object.fromEntries(
     value.inputs.map((input) => [input, inputName(resolved, input)]),
   );
