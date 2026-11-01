@@ -12,16 +12,18 @@ The key words MUST, MUST NOT and MAY are used as in RFC 2119.
 
 A project is loaded with the `@ingestron/config` syntax (its
 [specification](../config/syntax.md))
-and these kinds, all `apiVersion: ingestron.io/v1` except contracts:
+and these kinds, all `apiVersion: ingestron.io/v1` except contracts and data
+products:
 
-| Kind           | Schema                             | Links                                                       |
-| -------------- | ---------------------------------- | ----------------------------------------------------------- |
-| `Standard`     | `standard.schema.yaml`             |                                                             |
-| `Platform`     | `platform.schema.yaml`             |                                                             |
-| `Connection`   | `connection.schema.yaml`           |                                                             |
-| `Flow`         | `flow.schema.yaml`                 | `/source` → Connection; `/tables/*/contract` → DataContract |
-| `Transform`    | `transform.schema.yaml`            | `/contract` → DataContract                                  |
-| `DataContract` | ODCS v3.1.0 (`apiVersion: v3.1.0`) |                                                             |
+| Kind           | Schema                                         | Links                                                       |
+| -------------- | ---------------------------------------------- | ----------------------------------------------------------- |
+| `Standard`     | `standard.schema.yaml`                         |                                                             |
+| `Platform`     | `platform.schema.yaml`                         |                                                             |
+| `Connection`   | `connection.schema.yaml`                       |                                                             |
+| `Flow`         | `flow.schema.yaml`                             | `/source` → Connection; `/tables/*/contract` → DataContract |
+| `Transform`    | `transform.schema.yaml`                        | `/contract` → DataContract                                  |
+| `DataContract` | ODCS v3.1.0 (`apiVersion: v3.1.0`)             |                                                             |
+| `DataProduct`  | ODPS v1.1.0 (`apiVersion: v1.0.0` or `v1.1.0`) | `/outputPorts/*/contractId` → DataContract                  |
 
 A project MUST have exactly one `Standard` (`NO_STANDARD`, `MANY_STANDARDS`)
 and at most one `Platform` (`MANY_PLATFORMS`). The standard's `packs` list
@@ -384,12 +386,48 @@ what it needs, and a fix that sets `manage.<capability>: true` in the
 platform. Grants in the platform with `manage.schemas` off are
 `CAPABILITY_OFF` at `grants`, with the same fix.
 
-## 8. Conformance
+## 8. Data products
+
+A `DataProduct` document is an Open Data Product Standard (ODPS) file used as
+written: `apiVersion: v1.0.0` or `v1.1.0`, `kind: DataProduct`, checked
+against the bundled ODPS v1.1.0 schema. Its fields are documentation, shown on
+the product's passport, except these:
+
+- `outputPorts[].contractId` names the contract whose tables the product
+  publishes. It MUST be the id of a contract in the project (`BROKEN_LINK`).
+- `team.members[]` whose `role` is `owner`, in any case, are its owners.
+
+Each product is checked:
+
+- An output port's contract that no flow table and no transform names is
+  `PRODUCT_CONTRACT_UNUSED`, an error at the port's `contractId`. This looks at
+  the definitions, so it is the same in every environment.
+- When the contract is named, but no table of the environment uses it (for
+  example one a `runs-on` environment skips), it is `PRODUCT_NOT_BUILT`, a
+  warning at the port's `contractId`; the product is kept with no tables for
+  that output.
+- A contract MUST be an output of at most one product: one owner per
+  published table. A second port publishing it is `PRODUCT_CONTRACT_SHARED`,
+  an error at that port's `contractId`.
+- Two products MUST NOT share an id, whatever their `apiVersion`: the second
+  is `DUPLICATE_PRODUCT`, an error at its `id`.
+
+`inputPorts`, and output ports without a `contractId`, are documentation:
+nothing checks them.
+
+The resolved model lists the products in `products`, by id, each with its
+outputs and the names of the tables that build each one in the environment.
+From a contract, the model also keeps its `roles` (`role`, `access`,
+`description`, `firstLevelApprovers`) and its `slaProperties` as `sla`
+(`property`, `value` as text, `unit`), for the passport.
+
+## 9. Conformance
 
 Each case in [conformance/](conformance/) gives `files` (the project), an
 optional `environment`, and `expect`: `tables` (partial objects, in order,
 with `fullName` written as `catalog.schema.table`, and `null` for a step the
-table does not have, such as `serve: null`), `platform`, `names` or
+table does not have, such as `serve: null`), `products` (partial objects,
+in order), `platform`, `names` or
 `diagnostics` (matched in order on the fields given; `fixes` lists the fix
 titles), and optionally `fixed`, as in the config conformance cases. All cases use the
 data-only packs [conformance/pack.yaml](conformance/pack.yaml),

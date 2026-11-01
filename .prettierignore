@@ -4,3 +4,4 @@ pnpm-lock.yaml
 packages/config/test/fixtures/editor-setup/schemas/
 .release/
 packages/*/api/
+packages/definitions/schemas/odps-v1.1.0.schema.json

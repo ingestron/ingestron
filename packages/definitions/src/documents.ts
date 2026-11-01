@@ -139,7 +139,32 @@ export interface ContractDoc {
     quality?: unknown;
     tags?: unknown[];
   }[];
+  roles?: { role: string; access?: string; description?: string; firstLevelApprovers?: string }[];
+  slaProperties?: { property: string; value: unknown; unit?: string }[];
 }
+
+/** An ODPS data product: the fields Ingestron reads. */
+export interface ProductDoc {
+  id: string;
+  name?: string;
+  version?: string;
+  domain?: string;
+  type?: string;
+  status?: string;
+  deprecated?: boolean;
+  description?: { purpose?: string; usage?: string; limitations?: string };
+  team?: { members?: { username: string; name?: string; role?: string }[] };
+  support?: { channel: string; url: string; tool?: string }[];
+  outputPorts?: { name: string; contractId?: string; description?: string }[];
+}
+
+const productKind = (apiVersion: string) =>
+  defineKind<ProductDoc>({
+    apiVersion,
+    kind: "DataProduct",
+    schema: packageSchema("odps-v1.1.0.schema.json"),
+    links: { "/outputPorts/*/contractId": "DataContract" },
+  });
 
 /** A schema shipped in ../schemas. */
 export function packageSchema(file: string): JsonSchema {
@@ -186,4 +211,7 @@ export const kinds = {
     kind: "DataContract",
     schema: packageSchema("odcs-v3.1.0.schema.json"),
   }),
+  /** ODPS v1.1.0; `productV1` reads v1.0.0 files with the same schema. */
+  product: productKind("v1.1.0"),
+  productV1: productKind("v1.0.0"),
 };

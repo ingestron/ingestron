@@ -68,6 +68,18 @@ export interface Contract {
   tableChecks: TableCheck[];
   /** The contract object's tags. */
   tags: string[];
+  /** Who may use the data, as the contract declares it (ODCS `roles`). */
+  roles: ContractRole[];
+  /** The contract's promises, such as freshness (ODCS `slaProperties`), values as text. */
+  sla: { property: string; value: string; unit?: string }[];
+}
+
+/** One ODCS role: a group, its access, its purpose and who approves it. */
+export interface ContractRole {
+  role: string;
+  access?: string;
+  description?: string;
+  firstLevelApprovers?: string;
 }
 
 /** A row check; `action` decides what happens to a row that fails. */
@@ -164,4 +176,28 @@ export interface ResolvedModel {
   /** Names that are not per table. */
   names: { pipeline: string; job: string };
   tables: ResolvedTable[];
+  /** The data products, by id; empty when there are none. */
+  products: ResolvedProduct[];
+}
+
+/** A data product (ODPS) and the tables that build its outputs in this environment. */
+export interface ResolvedProduct {
+  id: string;
+  name?: string;
+  version?: string;
+  domain?: string;
+  type?: string;
+  status?: string;
+  deprecated: boolean;
+  purpose?: string;
+  usage?: string;
+  limitations?: string;
+  team: { username: string; name?: string; role?: string }[];
+  /** Team members whose role is `owner`, in any case. */
+  owners: { username: string; name?: string }[];
+  support: { channel: string; url: string; tool?: string }[];
+  /** Each output port: its contract and the names of the tables built from it here. */
+  outputs: { name: string; contract: string; description?: string; tables: string[] }[];
+  /** The product's file. */
+  file: string;
 }
