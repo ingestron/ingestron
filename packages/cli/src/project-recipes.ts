@@ -4,7 +4,7 @@ import { recipesFolder } from "@ingestron/pack-adf";
 import { parse, stringify } from "yaml";
 import { scaffoldFiles, type Content } from "./scaffold.js";
 import { builtInFolder, readTemplate, type Template } from "./templates.js";
-import { projectRoutes, projectSources } from "./project-choices.js";
+import { projectRoutes, projectSources, routeAliases } from "./project-choices.js";
 import { projectQuestions } from "./project-questions.js";
 const directExamples: Record<string, string> = {
   files: "minimal",
@@ -29,9 +29,12 @@ export interface ProjectRecipe {
   files: Record<string, Content>;
 }
 /** Select a tested source recipe and expose its values through the normal init questions.
- * @example const recipe = projectRecipe("postgresql", "adf", "private");
+ * @example const recipe = projectRecipe("postgresql", "adf-databricks", "private");
  */
 export function projectRecipe(connector: string, via: string, connectivity: string): ProjectRecipe {
+  return recipe(connector, routeAliases[via] ?? via, connectivity);
+}
+function recipe(connector: string, via: string, connectivity: string): ProjectRecipe {
   const route = projectRoutes(connector, connectivity).find((item) => item.via === via);
   if (!route)
     throw new Error(`No ${via} route for ${connector} with ${connectivity} connectivity.`);
@@ -117,7 +120,7 @@ function trimSettings(
 /** Each route's packs, the pack that names and types the tables first, and its store choice. */
 const routeStandards: Record<string, { packs: string[]; store?: string }> = {
   databricks: { packs: ["databricks@1"] },
-  adf: { packs: ["databricks@1", "adf@1"] },
+  "adf-databricks": { packs: ["databricks@1", "adf@1"] },
   "adf-synapse": { packs: ["synapse@1", "adf@1"], store: "synapse-view" },
   "adf-duckdb": { packs: ["duckdb@1", "adf@1"] },
   "adf-files": { packs: ["adf@1"], store: "none" },

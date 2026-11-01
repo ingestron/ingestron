@@ -62,11 +62,14 @@ export function projectRoutes(connector: string, connectivity?: string): Project
 
 /** Where ADF's landed files go next, as `--via` and the route's title. */
 const adfDestinations = [
-  ["adf", "ADF ingestion into Databricks"],
+  ["adf-databricks", "ADF ingestion into Databricks"],
   ["adf-synapse", "ADF ingestion, served as Synapse serverless SQL views"],
   ["adf-duckdb", "ADF ingestion into DuckDB tables"],
   ["adf-files", "ADF ingestion, ending at the landed files"],
 ];
+
+/** Earlier names for a route, still accepted as `--via`. */
+export const routeAliases: Record<string, string> = { adf: "adf-databricks" };
 
 /**
  * Synapse and DuckDB read ADF's table copies, which land typed files under the
