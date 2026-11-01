@@ -36,7 +36,11 @@ export type DefinitionCode =
   | "RUNS_ON"
   | "RUNS_ON_SKIPPED"
   | "SETTINGS_UNUSED"
-  | "TRANSFORM_COLUMNS";
+  | "TRANSFORM_COLUMNS"
+  | "PRODUCT_CONTRACT_UNUSED"
+  | "PRODUCT_NOT_BUILT"
+  | "PRODUCT_CONTRACT_SHARED"
+  | "DUPLICATE_PRODUCT";
 
 /** Where a value was written: a document and a JSON Pointer into it. */
 export interface Source {

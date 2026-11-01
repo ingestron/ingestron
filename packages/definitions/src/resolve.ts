@@ -15,8 +15,9 @@ import { createReporter, type Source } from "./diagnostics.js";
 import { kinds } from "./documents.js";
 import { flowTables } from "./flows.js";
 import { placeholderWarnings } from "./placeholders.js";
+import { resolveProducts } from "./products.js";
 import { runsOnProblems } from "./runs-on-pack.js";
-import type { ResolvedModel, ResolvedTable } from "./model.js";
+import type { ResolvedModel, ResolvedProduct, ResolvedTable } from "./model.js";
 import { renderName } from "./naming.js";
 import type { PackInfo } from "./pack.js";
 import { resolvePlatform } from "./platform.js";
@@ -126,8 +127,9 @@ function resolveLoaded(
   checkRunsOn(context, tables, (table) => originOf(context, table));
   runMethodChecks(context, tables);
   checkContractFields(context, new Set(tables.map((table) => table.contract.id)));
+  const products = resolveProducts(context, tables);
   // Project-wide checks only make sense once every table resolved.
-  const model = reporter.failed() ? undefined : buildModel(context, namer, tables);
+  const model = reporter.failed() ? undefined : buildModel(context, namer, tables, products);
   if (model) runPackCheck(context, model);
   return model && !reporter.failed()
     ? { ok: true, model, diagnostics: reporter.diagnostics }
@@ -139,6 +141,7 @@ function buildModel(
   context: Context,
   namer: TableNamer,
   tables: ResolvedTable[],
+  products: ResolvedProduct[],
 ): ResolvedModel | undefined {
   const { project } = context;
   const base = { project: project.id, environment: context.environment };
@@ -156,6 +159,7 @@ function buildModel(
     layers: namer.layers,
     names: { pipeline, job },
     tables,
+    products,
   };
 }
 

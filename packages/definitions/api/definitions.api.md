@@ -107,6 +107,12 @@ export interface Contract {
     // (undocumented)
     id: string;
     primaryKey: string[];
+    roles: ContractRole[];
+    sla: {
+        property: string;
+        value: string;
+        unit?: string;
+    }[];
     tableChecks: TableCheck[];
     tags: string[];
 }
@@ -116,6 +122,18 @@ export const contractCommon: Record<string, ContractUse>;
 
 // @public
 export const contractReads: string[];
+
+// @public
+export interface ContractRole {
+    // (undocumented)
+    access?: string;
+    // (undocumented)
+    description?: string;
+    // (undocumented)
+    firstLevelApprovers?: string;
+    // (undocumented)
+    role: string;
+}
 
 // @public
 export type ContractUse = {
@@ -137,7 +155,7 @@ export type ContractUse = {
 export function contractUseOf(pack: PackInfo, path: string): ContractUse | undefined;
 
 // @public
-export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS";
+export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT";
 
 export { DiagnosticCode }
 
@@ -215,6 +233,8 @@ export const kinds: {
     flow: KindDefinition<FlowDoc>;
     transform: KindDefinition<TransformDoc>;
     contract: KindDefinition<ContractDoc>;
+    product: KindDefinition<ProductDoc>;
+    productV1: KindDefinition<ProductDoc>;
 };
 
 // @public
@@ -365,6 +385,7 @@ export interface ResolvedModel {
     };
     // (undocumented)
     platform: ResolvedPlatform;
+    products: ResolvedProduct[];
     // (undocumented)
     project: {
         id: string;
@@ -416,6 +437,53 @@ export interface ResolvedPlatform {
         host?: string;
         root_path?: string;
     };
+}
+
+// @public
+export interface ResolvedProduct {
+    // (undocumented)
+    deprecated: boolean;
+    // (undocumented)
+    domain?: string;
+    file: string;
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    limitations?: string;
+    // (undocumented)
+    name?: string;
+    outputs: {
+        name: string;
+        contract: string;
+        description?: string;
+        tables: string[];
+    }[];
+    owners: {
+        username: string;
+        name?: string;
+    }[];
+    // (undocumented)
+    purpose?: string;
+    // (undocumented)
+    status?: string;
+    // (undocumented)
+    support: {
+        channel: string;
+        url: string;
+        tool?: string;
+    }[];
+    // (undocumented)
+    team: {
+        username: string;
+        name?: string;
+        role?: string;
+    }[];
+    // (undocumented)
+    type?: string;
+    // (undocumented)
+    usage?: string;
+    // (undocumented)
+    version?: string;
 }
 
 // @public
@@ -535,12 +603,13 @@ export interface TableCheck {
 
 // Warnings were encountered during analysis:
 //
-// dist/documents.d.ts:162:5 - (ae-forgotten-export) The symbol "StandardDoc" needs to be exported by the entry point index.d.ts
-// dist/documents.d.ts:163:5 - (ae-forgotten-export) The symbol "PlatformDoc" needs to be exported by the entry point index.d.ts
-// dist/documents.d.ts:164:5 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
-// dist/documents.d.ts:165:5 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
-// dist/documents.d.ts:166:5 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
-// dist/documents.d.ts:167:5 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
+// dist/documents.d.ts:205:5 - (ae-forgotten-export) The symbol "StandardDoc" needs to be exported by the entry point index.d.ts
+// dist/documents.d.ts:206:5 - (ae-forgotten-export) The symbol "PlatformDoc" needs to be exported by the entry point index.d.ts
+// dist/documents.d.ts:207:5 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
+// dist/documents.d.ts:208:5 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
+// dist/documents.d.ts:209:5 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
+// dist/documents.d.ts:210:5 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
+// dist/documents.d.ts:212:5 - (ae-forgotten-export) The symbol "ProductDoc" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 
