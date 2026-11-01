@@ -55,6 +55,11 @@ pnpm validate   # format, licences, then lint, types, tests and API reports per 
 Requires Node 22.13 or later and pnpm 10. How code is written here:
 [CONTRIBUTING.md](CONTRIBUTING.md). Security: [SECURITY.md](SECURITY.md).
 
+The scoped packages are packed with `pnpm --filter <package> pack`. The
+unscoped `ingestron` package, the CLI bundled with its packs and data folders so
+it installs with no dependencies, is built by `pnpm release:cli`
+([scripts/release/](scripts/release/)), which writes `.release/ingestron-<version>.tgz`.
+
 ## Contact
 
 Questions and feedback: hello@ingestron.io. Security reports: security@ingestron.io

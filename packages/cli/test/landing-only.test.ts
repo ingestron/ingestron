@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { expect, it } from "vitest";
 import { run } from "../src/index.js";
 
-it("plans and applies a project that ends at the landed files", () => {
+it("applies and checks a project that ends at the landed files, writing only ADF's files", () => {
   const folder = join(import.meta.dirname, "fixtures/landing-only");
   const out = mkdtempSync(join(tmpdir(), "ingestron-landing-"));
   let output = "";
@@ -17,4 +17,6 @@ it("plans and applies a project that ends at the landed files", () => {
     "erp.dbo.Customers.parquet",
   );
   expect(existsSync(join(out, "dev/databricks.yml"))).toBe(false);
+  // The only pack is ADF, so its files are in build/dev itself, not a pack's folder.
+  expect(existsSync(join(out, "dev/adf"))).toBe(false);
 });

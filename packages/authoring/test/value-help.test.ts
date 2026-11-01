@@ -52,11 +52,10 @@ describe("packs", () => {
     ]);
   });
 
-  it("offers each pack alone, then each storing pack with each landing pack", () => {
+  it("offers each pack that reads a source alone, then each storing pack with each landing pack", () => {
     expect(suggest("standard.yaml", `${head}packs:`)).toEqual([
       " [databricks@1]",
       " [adf@1]",
-      " [synapse@1]",
       " [duckdb@1]",
       " [databricks@1, adf@1]",
       " [synapse@1, adf@1]",

@@ -198,7 +198,7 @@ describe("references in project.yaml", () => {
     const uses = complete("flows/erp.yaml", (text) =>
       text.replace("source: erp\n", "source: erp\nserve:\n  uses: |\n"),
     );
-    expect(labels(uses)).toEqual(["synapse-serve"]);
+    expect(labels(uses)).toEqual(["none", "synapse-serve"]);
     const settings = complete("standard.yaml", (text) =>
       text.replace("ingest:\n", "serve:\n  settings:\n    synapse-serve:\n      |\ningest:\n"),
     );

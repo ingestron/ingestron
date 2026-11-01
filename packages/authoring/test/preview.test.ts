@@ -56,6 +56,16 @@ describe("generated files", () => {
     ]);
   });
 
+  it("match a DuckDB table's own SQL by schema as well as name", () => {
+    const files = ["bronze", "silver"].map((schema) => ({
+      path: `build/dev/tables/${schema}.orders.sql`,
+      text: "",
+    }));
+    expect(generatedForTable(files, "orders", "orders", "silver").map((file) => file.path)).toEqual(
+      ["build/dev/tables/silver.orders.sql"],
+    );
+  });
+
   it("say what is wrong when the project has problems", () => {
     const retail = join(templates, "retail");
     const broken = openProject(
