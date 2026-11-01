@@ -1,7 +1,7 @@
 apiVersion: ingestron.io/v1
 kind: Standard
 id: sales
-packs: [synapse@1, adf@1] # Synapse first: it provides the defaults
+packs: [synapse@1, adf@1] # Synapse first: the first pack names and types the views; ADF only copies
 store:
   default: synapse-view # each table is a view over the files ADF lands
 ingest:

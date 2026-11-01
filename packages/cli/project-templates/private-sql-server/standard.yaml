@@ -1,7 +1,7 @@
 apiVersion: ingestron.io/v1
 kind: Standard
 id: erp
-packs: [databricks@1, adf@1] # Databricks first: it provides the defaults
+packs: [databricks@1, adf@1] # Databricks first: the first pack names and types the tables; ADF only copies
 naming:
   catalog: erp_{{ environment }}
 ingest:
