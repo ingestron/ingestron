@@ -1,0 +1,66 @@
+description: "A contract with sensitive columns names who may use them, with the purpose and approvers the standard requires."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    governance:
+      products: { require: [owner, purpose] }
+      classification:
+        values: [public, internal, confidential, restricted]
+        columns: required
+        sensitive: [confidential, restricted]
+      access:
+        sensitive: { require: [description, firstLevelApprovers] }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        description: One row per order.
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true, classification: internal }
+          - { name: total, logicalType: number, classification: confidential }
+    roles:
+      - { role: finance-analysts, access: read, description: Monthly revenue reporting }
+  sales-product.yaml: |
+    apiVersion: v1.1.0
+    kind: DataProduct
+    id: sales
+    name: Sales
+    status: active
+    description:
+      purpose: Orders for reporting.
+    team:
+      members:
+        - { username: ana@example.com, role: owner }
+    outputPorts:
+      - { name: orders, contractId: orders }
+
+expect:
+  diagnostics:
+    - { code: SENSITIVE_ACCESS, severity: error, file: orders.odcs.yaml }

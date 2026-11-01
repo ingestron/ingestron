@@ -87,6 +87,46 @@ properties:
       $ref: "#/$defs/rules",
       description: "Where tables are made available after their last step: method settings, rules, and allowed and fixed settings. Nothing is served unless something chooses.",
     }
+  governance:
+    type: object
+    additionalProperties: false
+    description: "What every data product must say, and how the columns it publishes are classified and shared. Nothing is checked without it."
+    properties:
+      products:
+        type: object
+        additionalProperties: false
+        properties:
+          require:
+            type: array
+            items: { enum: [owner, purpose, support, domain] }
+            description: "Facts every data product must give: a team member with role owner, description.purpose, a support channel, a domain."
+      classification:
+        type: object
+        additionalProperties: false
+        properties:
+          values:
+            type: array
+            items: { type: string }
+            description: "The classifications a column may have, such as public, internal, confidential, restricted. Any value when not given."
+          columns:
+            enum: [required, optional]
+            description: "Whether every column of a published contract needs a classification. Default: optional."
+          sensitive:
+            type: array
+            items: { type: string }
+            description: "Classifications that make a contract sensitive: it must then say who may use it (roles)."
+      access:
+        type: object
+        additionalProperties: false
+        properties:
+          sensitive:
+            type: object
+            additionalProperties: false
+            properties:
+              require:
+                type: array
+                items: { enum: [access, description, firstLevelApprovers] }
+                description: "Fields each role of a sensitive contract must give: its access, its purpose (description) and who approves it."
 $defs:
   method: { type: string, pattern: "^[a-z][a-z0-9-]*$" }
   naming:

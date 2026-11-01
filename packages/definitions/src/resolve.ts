@@ -15,6 +15,7 @@ import { createReporter, type Source } from "./diagnostics.js";
 import { kinds } from "./documents.js";
 import { flowTables } from "./flows.js";
 import { placeholderWarnings } from "./placeholders.js";
+import { checkGovernance } from "./governance.js";
 import { resolveProducts } from "./products.js";
 import { runsOnProblems } from "./runs-on-pack.js";
 import type { ResolvedModel, ResolvedProduct, ResolvedTable } from "./model.js";
@@ -128,6 +129,7 @@ function resolveLoaded(
   runMethodChecks(context, tables);
   checkContractFields(context, new Set(tables.map((table) => table.contract.id)));
   const products = resolveProducts(context, tables);
+  checkGovernance(context, products);
   // Project-wide checks only make sense once every table resolved.
   const model = reporter.failed() ? undefined : buildModel(context, namer, tables, products);
   if (model) runPackCheck(context, model);

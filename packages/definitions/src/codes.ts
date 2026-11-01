@@ -79,6 +79,25 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
     meaning: "Two files define a data product with the same id.",
     fix: "Give each data product its own id, or remove one of the files.",
   },
+  PRODUCT_INCOMPLETE: {
+    meaning:
+      "A data product leaves out a fact the standard's governance requires, such as its owner or purpose.",
+    fix: "Add it to the product: a team member with role owner, description.purpose, a support channel or a domain.",
+  },
+  COLUMN_UNCLASSIFIED: {
+    meaning:
+      "The standard requires every column a data product publishes to be classified, and this one is not.",
+    fix: "Give the column a classification, one of the values the standard lists.",
+  },
+  CLASSIFICATION_UNKNOWN: {
+    meaning: "A published column's classification is not one the standard's governance lists.",
+    fix: "Use one of the standard's values; each is offered as a quick fix.",
+  },
+  SENSITIVE_ACCESS: {
+    meaning:
+      "A published contract has sensitive columns but does not say who may use it, or a role leaves out a field the standard requires.",
+    fix: "Add roles to the contract, each with the access, purpose (description) and approvers the standard asks for.",
+  },
   SETTINGS_UNUSED: {
     meaning:
       "Settings are written for a step the table does not have: serve settings when nothing chooses a serve method, or store settings when the flow ends at the landed files.",
