@@ -36,7 +36,7 @@ export function scaffoldFiles(
   const files: Record<string, Content> = { ...prepared };
   if (!prepared)
     for (const path of templateFiles(template, template.folder))
-      files[path] = readFileSync(join(template.folder, path));
+      files[dotted(path)] = readFileSync(join(template.folder, path));
   files["project.yaml"] = projectText(files["project.yaml"]?.toString() ?? "", answers);
   if (answers.standard) {
     const text = readFileSync(answers.standard.file, "utf8");
@@ -124,4 +124,11 @@ function projectText(text: string, answers: Answers): string {
   document.set("environments", environments);
   for (const [key, value] of Object.entries(answers.values)) document.setIn(["values", key], value);
   return document.toString();
+}
+
+/** npm does not ship dot files reliably, so a template's `gitignore` is written as `.gitignore`. */
+function dotted(path: string): string {
+  return path === "gitignore" || path.endsWith("/gitignore")
+    ? path.replace(/gitignore$/, ".gitignore")
+    : path;
 }

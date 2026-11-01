@@ -27,6 +27,17 @@ describe("annotationsIn", () => {
     expect(prod[0]?.label).toContain("retailprod");
   });
 
+  it("shows a file's code on one line, and says its language for the tooltip", () => {
+    const project = openProject(retail, new Map());
+    const text = read("transforms/daily_sales.yaml");
+    const found = annotationsIn(project, "transforms/daily_sales.yaml", text, "dev");
+    const line = text.split("\n").findIndex((item) => item.includes("${file:daily_sales.sql}"));
+    const code = found.find((item) => item.line === line)!;
+    expect(code.label).not.toContain("\n");
+    expect(code.tooltip).toContain("\n");
+    expect(code.language).toBe("sql");
+  });
+
   it("still shows values while another file has a problem", () => {
     const broken = new Map([
       [join(retail, "standard.yaml"), `${read("standard.yaml")}\nnaming: 3\n`],
@@ -164,6 +175,23 @@ describe("chosenText under runs-on", () => {
     };
     expect(chosenText(table as unknown as ResolvedTable)).toBe(
       "ingest: duckdb-landed, chosen because the environment runs on duckdb",
+    );
+  });
+});
+
+describe("chosenText under runs-on, naming what it replaced", () => {
+  it("says which method the landed method stands in for", () => {
+    const table = {
+      ingest: {
+        method: "duckdb-landed",
+        pack: "duckdb",
+        settings: {},
+        origins: {},
+        chosenBy: { by: "runs-on" as const, pack: "duckdb", replaced: "adf-copy" },
+      },
+    };
+    expect(chosenText(table as unknown as ResolvedTable)).toBe(
+      "ingest: duckdb-landed, chosen because the environment runs on duckdb, in place of adf-copy",
     );
   });
 });

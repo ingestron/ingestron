@@ -50,7 +50,8 @@ test("no code reaches into a sibling repository's folder", () => {
   const code = execFileSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8" })
     .split("\0")
     .filter((path) => /\.(?:[cm]?[jt]sx?|json)$/.test(path));
-  const sibling = /["'`]\.\.\/(?:ingestron|pack-databricks|pack-adf|vscode|docs)\//;
+  const sibling =
+    /["'`]\.\.\/(?:ingestron|pack-databricks|pack-adf|pack-synapse|pack-duckdb|vscode|docs)\//;
   assert.deepEqual(
     code.filter((path) => sibling.test(readFileSync(join(root, path), "utf8"))),
     [],

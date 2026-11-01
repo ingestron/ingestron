@@ -23,6 +23,9 @@ test(
       "package/dist/main.js",
       "package/THIRD_PARTY_NOTICES",
       "package/project-templates/minimal/project.yaml",
+      "package/project-templates/duckdb/gitignore",
+      "package/project-templates/duckdb/published/.gitkeep",
+      "package/project-templates/duckdb/samples/orders.csv",
     ])
       assert.ok(entries.includes(entry), entry);
     assert.ok(entries.some((entry) => entry.startsWith("package/schemas/")));

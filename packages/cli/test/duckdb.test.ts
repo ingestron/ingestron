@@ -46,6 +46,8 @@ describe("the duckdb starter", () => {
     const ingestron = session(cwd);
     const created = ingestron("init", "demo", "--template", "duckdb", "--yes");
     expect(created.code, created.output).toBe(0);
+    // The database and published files are data, built from the files: kept out of Git.
+    expect(readFileSync(join(cwd, "demo/.gitignore"), "utf8")).toContain("ingestron.duckdb*");
     const applied = ingestron("apply", "--no-diff", "--definitions", "demo", "--out", "demo/build");
     expect(applied.code, applied.output).toBe(0);
     const project = join(cwd, "demo");
@@ -122,5 +124,10 @@ describe("the duckdb-local fixture", () => {
     expect(requested.output).toContain("Container Apps Jobs Operator role on `sales-dev-duckdb`");
     expect(requested.output).toContain("DuckDB job");
     expect(requested.output).toContain("`ghcr.io/ingestron/duckdb-runner:1`");
+    expect(requested.output).toContain(
+      "- `adf-copy` `after_copy`: `job: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-sales-dev/providers/Microsoft.App/jobs/sales-dev-duckdb`",
+    );
+    const local = ingestron("request", "--env", "local", "--definitions", ".");
+    expect(local.output).not.toContain("`adf-copy`");
   });
 });

@@ -9,7 +9,7 @@ import { inlineCompletions, patternNames } from "./inline.js";
 import { schemaFor, schemasAt } from "./schema.js";
 import { skeletons } from "./skeletons.js";
 import { firstFields, itemSnippets, newTables, preferred, rankMethods } from "./smart.js";
-import { methodsFor } from "./method-suggestions.js";
+import { methodChoices } from "./method-suggestions.js";
 import { flowFacts, placeAt, writtenKeys, type Place } from "./context.js";
 import { fieldAt, fieldsIn } from "./fields.js";
 import { markFixed } from "./fixed.js";
@@ -101,12 +101,11 @@ function valueCompletions(
     .find(([pointer]) => matches(pointer.split("/").slice(1), path));
   if (link) return linkCompletions(project, place, link[1]);
   if (kind === "Transform" && path[0] === "inputs") return names(project, "table:", "reference");
-  if (path.at(-1) === "uses") {
-    const methods = methodsFor(project, path[path.length - 2] ?? "", kind === "Flow");
-    return kind === "Flow" && path.at(-2) === "ingest"
+  const methods = methodChoices(project, kind, path);
+  if (methods)
+    return kind === "Flow" && path.at(-2) === "ingest" && path.at(-1) === "uses"
       ? rankMethods(project, place, methods, methodNamed)
       : methods;
-  }
   return describedValues(project, place, environment);
 }
 

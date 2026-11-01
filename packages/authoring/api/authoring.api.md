@@ -11,6 +11,7 @@ import type { Fix } from '@ingestron/config';
 export interface Annotation {
     // (undocumented)
     label: string;
+    language?: string;
     // (undocumented)
     line: number;
     // (undocumented)
@@ -63,7 +64,7 @@ export interface Generated {
 export function generatedFiles(project: Project, environment: string | undefined): Files;
 
 // @public
-export function generatedForTable(files: Generated[], table: string, physical?: string): Generated[];
+export function generatedForTable(files: Generated[], table: string, physical?: string, schema?: string): Generated[];
 
 // @public
 export interface GeneratedLens {
