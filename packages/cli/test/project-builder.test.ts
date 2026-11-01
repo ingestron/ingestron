@@ -8,6 +8,7 @@ const cases = JSON.parse(
   readFileSync(new URL("../../../spec/cli/conformance/projects.json", import.meta.url), "utf8"),
 ) as {
   routes: { connector: string; connectivity: string; via: string[] }[];
+  aliases: { given: string; means: string }[];
   invalid: string[][];
 };
 it("groups every available source using existing connector metadata", () => {
@@ -26,6 +27,15 @@ it.each(cases.routes)(
     ).toEqual([...entry.via].sort());
   },
 );
+it.each(cases.aliases)("accepts --via $given as $means", ({ given, means }) => {
+  const create = (via: string) => {
+    const cwd = mkdtempSync(join(tmpdir(), "dynamic-project-"));
+    const args = ["--connector", "postgresql", "--connectivity", "private", "--via", via];
+    expect(run(["init", "project", ...args, "--yes"], { cwd, write: () => {} })).toBe(0);
+    return readFileSync(join(cwd, "project/standard.yaml"), "utf8");
+  };
+  expect(create(given)).toBe(create(means));
+});
 it.each(cases.invalid)("rejects incompatible project choices %s before writing", (...args) => {
   const cwd = mkdtempSync(join(tmpdir(), "dynamic-project-"));
   const code = run(["init", "project", ...args], { cwd, write: () => {} });
