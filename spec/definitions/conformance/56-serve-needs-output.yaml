@@ -41,4 +41,4 @@ files:
 
 expect:
   diagnostics:
-    - { code: HANDOVER, severity: error, file: sales.yaml, line: 7 }
+    - { code: HANDOVER, severity: error, file: sales.yaml, line: 5 }

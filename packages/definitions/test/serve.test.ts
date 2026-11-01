@@ -42,7 +42,8 @@ describe("serve", () => {
     expect(result.diagnostics.map(({ code, message }) => ({ code, message }))).toEqual([
       {
         code: "HANDOVER",
-        message: '"publish-files" reads where "stream" puts its data, and "stream" does not say.',
+        message:
+          'The serve step "publish-files" reads where "stream" puts its data, and "stream" does not say.',
       },
     ]);
   });
@@ -63,9 +64,9 @@ describe("serve", () => {
     expect(tableOf(result).serve?.method).toBe("publish-files");
   });
 
-  it("refuses none as a serve choice", () => {
-    expect(resolve(withServe("none")).diagnostics.map(({ code }) => code)).toEqual([
-      "UNKNOWN_METHOD",
-    ]);
+  it("has no serve step when the flow writes none", () => {
+    const result = resolve(withServe("none"));
+    expect(result.diagnostics).toEqual([]);
+    expect("serve" in tableOf(result)).toBe(false);
   });
 });

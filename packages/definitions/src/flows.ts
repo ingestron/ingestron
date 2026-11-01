@@ -1,6 +1,6 @@
 // Tables brought in by flows: ingest and store steps, contract, quality and names.
 import type { DefinitionDocument } from "@ingestron/config";
-import { endsAtFiles, NO_STORE, type Facts, type Named } from "./choose.js";
+import { allowsWritten, endsAtFiles, NO_STORE, type Facts, type Named } from "./choose.js";
 import type { Context } from "./context.js";
 import { contractFor, expectationsFor, expectationsNotChecked } from "./contract.js";
 import { kinds, type ConnectionDoc, type FlowDoc } from "./documents.js";
@@ -8,6 +8,7 @@ import type { ChosenBy, ResolvedTable } from "./model.js";
 import type { SettingsLayer } from "./settings.js";
 import { landedIngest, leftOut } from "./runs-on.js";
 import { serveStep } from "./serve.js";
+import { unusedStoreSettings } from "./unused-settings.js";
 import { resolveStep, stepOf, type StepResult } from "./steps.js";
 import { renderTableName, type TableNamer } from "./tables.js";
 
@@ -139,19 +140,11 @@ function keepSteps(
   name: string,
   facts: Facts,
 ): FlowSteps | undefined {
-  const local = landedIngest(context, named(flow, "ingest"), facts);
-  const ingest = local
-    ? local.step
-    : resolveStep(
-        context,
-        "ingest",
-        named(flow, "ingest"),
-        facts,
-        tableLayer(flow, name, "ingest"),
-      );
+  const ingest = ingestStep(context, flow, name, facts);
   if (ingest?.produces === "table") return afterTable(context, flow, ingest);
   const storeFacts = ingest ? { ...facts, input: ingest.produces } : facts;
   const none = endsAtFiles(context, named(flow, "store"), storeFacts);
+  if (none) unusedStoreSettings(context, flow, name);
   if (none !== undefined) return none && ingest ? { ingest, endsAtFiles: none } : undefined;
   const store = resolveStep(
     context,
@@ -164,10 +157,30 @@ function keepSteps(
   return ingest && store ? { ingest, store } : undefined;
 }
 
+/** The ingest step: the landed method under runs-on, else the method chosen as usual. */
+function ingestStep(
+  context: Context,
+  flow: Flow,
+  name: string,
+  facts: Facts,
+): StepResult | undefined {
+  const local = landedIngest(context, named(flow, "ingest"), facts);
+  if (local) return local.step;
+  return resolveStep(
+    context,
+    "ingest",
+    named(flow, "ingest"),
+    facts,
+    tableLayer(flow, name, "ingest"),
+  );
+}
+
 /** An ingest that writes the table has no store step; a store method named for it is an error. */
 function afterTable(context: Context, flow: Flow, ingest: StepResult): FlowSteps | undefined {
   const uses = flow.value.store?.uses;
-  if (uses === undefined || uses === NO_STORE) return { ingest };
+  if (uses === undefined) return { ingest };
+  if (uses === NO_STORE)
+    return allowsWritten(context, "store", named(flow, "store"), NO_STORE) ? { ingest } : undefined;
   reportStoreAfterTable(context, flow, ingest.method);
   return undefined;
 }

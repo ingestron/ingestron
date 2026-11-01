@@ -64,8 +64,9 @@ available somewhere else, such as SQL views over its files. A method MAY set
 method MAY set `reads: landed`: it reads the files another pack's method
 lands, under its own settings, and reads no source, so its connectors and
 connectivity are not checked. A pack's rule never matches such a method and
-fixes never offer it; it is meant for environments that run on its pack
-(section 4, "Runs on").
+fixes never offer it; only an environment that runs on its pack chooses it
+(section 4, "Runs on"). Chosen any other way, by a definition, a rule or a
+default, it is `RUNS_ON`, an error at the choice.
 
 Each method has an `action`, the `connectors` it reads and the
 `connectivity` it supports (ingest), what it `accepts` (transform, store)
@@ -153,8 +154,9 @@ For each action of each table:
 Each step records how its method was chosen (`chosenBy`): `by` is
 `definition` (the flow's or transform's `uses`), `standard-rule`,
 `standard-default`, `pack-rule`, `pack-default` or `runs-on`; a rule's facts are in
-`when`; a pack's rule or default names its `pack`; and a choice written in a
-file gives its `file` and `line`. Tools use it to explain why a method is
+`when`; a pack's rule or default names its `pack`; a step chosen by runs-on
+names the method it `replaced`; and a choice written in a file gives its
+`file` and `line`. Tools use it to explain why a method is
 used where no file names it.
 
 The chosen method MUST exist in the pack (`UNKNOWN_METHOD`) and be for this
@@ -172,7 +174,9 @@ list like a method (`METHOD_NOT_ALLOWED`). When ingest produces `files` and
 the store choice is `none`, the table has no store step: it ends at the
 files ingest lands, and records `endsAtFiles`, how `none` was chosen, in the
 same shape as a step's `chosenBy`. When ingest produces `table`, `none`
-changes nothing. A `none` from a standard's or pack's rule or default applies only where
+changes nothing, and is still subject to `allowed`. When the table ends at the
+landed files, store settings written in the flow or on the table are not used
+(`SETTINGS_UNUSED`, a warning at them). A `none` from a standard's or pack's rule or default applies only where
 ingest hands over `files`, or where that is not known because ingest
 failed; elsewhere, such as for a transform, the next matching rule or
 default applies. A transform's store choice MUST NOT be `none`
@@ -180,8 +184,9 @@ default applies. A transform's store choice MUST NOT be `none`
 read a table that ends at the landed files (`HANDOVER`, at the input):
 there is no table to read.
 
-When nothing chooses a store method, the problem is `UNKNOWN_METHOD` at the
-flow, with fixes: `End this flow at the landed files` (sets the flow's
+When nothing chooses a store method and ingest hands over `files`, the problem
+is `UNKNOWN_METHOD` at the flow (when ingest failed, its own problem is
+enough), with fixes: `End this flow at the landed files` (sets the flow's
 `store.uses` to `none`), `End every flow at the landed files` (sets the
 standard's `store.default` to `none`), and `Add the "<pack>" pack` for each
 available pack the standard does not name that has a store method accepting
@@ -192,12 +197,15 @@ available pack the standard does not name that has a store method accepting
 and default, for the table's last step: its store step, or its ingest step
 when the table ends at the landed files. Its facts are the table's own, as
 for its other steps (a flow table's connection `connectivity` and `connector`,
-and `layer`), with `input` what that step produces. When nothing chooses a serve method, the table has
-no serve step and nothing is reported. A serve method MUST accept what the
-last step produces (`HANDOVER`). A serve method with `needsOutput` MUST follow
-a step that records an `output` (`HANDOVER`, at the table:
-`"<serve>" reads where "<step>" puts its data, and "<step>" does not say.`).
-`none` is not a serve choice (`UNKNOWN_METHOD`).
+and `layer`), with `input` what that step produces. When nothing chooses a
+serve method, the table has no serve step; serve settings written in the flow
+or on the table are then not used (`SETTINGS_UNUSED`, a warning at them).
+`none` written as a flow's or transform's `serve.uses` means no serve step,
+whatever the standard chooses; it is subject to `allowed`. A serve method MUST
+accept what the last step produces (`HANDOVER`). A serve method with
+`needsOutput` MUST follow a step that records an `output` (`HANDOVER`, at the
+flow's or transform's `serve` when it chose the method, else at the table:
+`The serve step "<serve>" reads where "<step>" puts its data, and "<step>" does not say.`).
 
 **Runs on.** An environment MAY name `runs-on`, a pack (config specification,
 section 3). It MUST be one of the standard's packs (`UNKNOWN_PACK`, at
@@ -210,7 +218,7 @@ In that environment:
   settings come from the standard and platform under its name; the replaced
   method's are not used, the standard's `allowed` list does not apply to it,
   and a fix adding its missing settings writes them in the standard. Its
-  `chosenBy` is `{ by: runs-on, pack: <pack> }`, and it is `renamed` when the
+  `chosenBy` is `{ by: runs-on, pack: <pack>, replaced: <method> }`, and it is `renamed` when the
   replaced method renames, since the files hold that method's names. When the named pack has no
   such method, the step is `RUNS_ON`, an error at the flow's `source`.
 - A store or transform step whose method belongs to another pack is
@@ -221,6 +229,8 @@ In that environment:
   model, with `RUNS_ON_SKIPPED`, a warning at the table; a transform that
   reads a table left out is left out too, with the same warning.
 - A serve step whose method belongs to another pack is dropped.
+- A table that ends at the landed files (`store: none`) still ends there; its
+  ingest is replaced as above, and the environment builds nothing for it.
 
 Environments without `runs-on` are unchanged.
 
@@ -367,7 +377,8 @@ platform. Grants in the platform with `manage.schemas` off are
 
 Each case in [conformance/](conformance/) gives `files` (the project), an
 optional `environment`, and `expect`: `tables` (partial objects, in order,
-with `fullName` written as `catalog.schema.table`), `platform`, `names` or
+with `fullName` written as `catalog.schema.table`, and `null` for a step the
+table does not have, such as `serve: null`), `platform`, `names` or
 `diagnostics` (matched in order on the fields given; `fixes` lists the fix
 titles), and optionally `fixed`, as in the config conformance cases. All cases use the
 data-only packs [conformance/pack.yaml](conformance/pack.yaml),
