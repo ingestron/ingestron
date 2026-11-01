@@ -4,8 +4,9 @@ Declare data ingestion in reviewed YAML definitions, under your organisation's
 standards, and generate the files your own platform runs: Databricks Asset
 Bundles and Lakeflow pipelines, Azure Data Factory copies, Azure Synapse
 serverless SQL views over the files they land, and DuckDB SQL that builds
-tables on a laptop. Ingestron runs locally, never connects to your sources or
-your cloud, and never overwrites a file someone edited by hand.
+tables on a laptop or in an Azure job ADF starts after each load. Ingestron
+runs locally, never connects to your sources or your cloud, and never
+overwrites a file someone edited by hand.
 
 ```sh
 npx ingestron@1 init demo --template minimal --yes
@@ -40,7 +41,7 @@ The platform packs and the tools have their own repositories:
 | [ingestron/pack-databricks](https://github.com/ingestron/pack-databricks) | Databricks methods: SQL templates and bundle files               |
 | [ingestron/pack-adf](https://github.com/ingestron/pack-adf)               | Azure Data Factory copies from sources the platform cannot reach |
 | [ingestron/pack-synapse](https://github.com/ingestron/pack-synapse)       | Azure Synapse serverless SQL views over landed files             |
-| [ingestron/pack-duckdb](https://github.com/ingestron/pack-duckdb)         | DuckDB tables, transforms and local runs, published as Parquet   |
+| [ingestron/pack-duckdb](https://github.com/ingestron/pack-duckdb)         | DuckDB tables and transforms, locally or in Azure, as Parquet    |
 | [ingestron/vscode](https://github.com/ingestron/vscode)                   | The VS Code extension                                            |
 | [ingestron/docs](https://github.com/ingestron/docs)                       | The documentation site                                           |
 
