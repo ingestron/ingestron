@@ -95,6 +95,7 @@ properties:
       products:
         type: object
         additionalProperties: false
+        description: "What every data product must say about itself."
         properties:
           require:
             type: array
@@ -103,6 +104,7 @@ properties:
       classification:
         type: object
         additionalProperties: false
+        description: "How the columns a data product publishes are classified."
         properties:
           values:
             type: array
@@ -111,6 +113,9 @@ properties:
           columns:
             enum: [required, optional]
             description: "Whether every column of a published contract needs a classification. Default: optional."
+            enumDescriptions:
+              - Every column a data product publishes has a classification.
+              - Columns may leave classification out.
           sensitive:
             type: array
             items: { type: string }
@@ -118,10 +123,12 @@ properties:
       access:
         type: object
         additionalProperties: false
+        description: "Who may use the data a product publishes."
         properties:
           sensitive:
             type: object
             additionalProperties: false
+            description: "What a contract with sensitive columns must say about each role that may use it."
             properties:
               require:
                 type: array
