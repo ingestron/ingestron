@@ -31,6 +31,14 @@ describe("selectedColumns", () => {
     expect(selectedColumns("df = spark.table('x')")).toBeUndefined();
   });
 
+  it("keeps a quoted name with a dot in it whole", () => {
+    expect(selectedColumns('SELECT "Order.Id", t."Line.No", amount FROM t')).toEqual([
+      "Order.Id",
+      "Line.No",
+      "amount",
+    ]);
+  });
+
   it("ignores comments and text in quotes", () => {
     expect(selectedColumns("-- SELECT nope\nSELECT 'a, b' AS label /* , c */ FROM t")).toEqual([
       "label",
@@ -56,7 +64,7 @@ describe("transform columns", () => {
     expect(warnings("SELECT id, 1 AS extra FROM {{ tables.orders }}")).toEqual([
       {
         code: "TRANSFORM_COLUMNS",
-        message: '"extra" is not in the contract orders, so it is not kept.',
+        message: '"extra" is returned, but the contract orders does not name it.',
       },
       {
         code: "TRANSFORM_COLUMNS",

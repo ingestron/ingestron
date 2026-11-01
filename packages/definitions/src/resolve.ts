@@ -208,7 +208,6 @@ function runMethodChecks(context: Context, tables: ResolvedTable[]): void {
   }
 }
 
-/** Where a table was defined: its key in a flow, or a transform's id. */
 /** Where the serve step was chosen: the flow's or transform's serve.uses, else the table. */
 function serveOrigin(context: Context, table: ResolvedTable): Source | undefined {
   const document =
@@ -219,6 +218,7 @@ function serveOrigin(context: Context, table: ResolvedTable): Source | undefined
   return document && uses ? { document, pointer: "/serve/uses" } : originOf(context, table);
 }
 
+/** Where a table was defined: its key in a flow, or a transform's id. */
 function originOf(context: Context, table: ResolvedTable): Source | undefined {
   if (table.origin.kind === "Flow") {
     const flow = context.project.get(kinds.flow, table.origin.id);

@@ -12,7 +12,7 @@ import { generate } from "./generate.js";
 import type { Io } from "./io.js";
 import { nameProblem, projectId, scaffoldFiles, writeScaffold, type Answers } from "./scaffold.js";
 import { standardSource, templateSource } from "./sources.js";
-import { type Template } from "./templates.js";
+import { type Question, type Template } from "./templates.js";
 
 /** Asks one question; `check` explains an answer that is not valid, and the question is asked again. */
 type Ask = (
@@ -91,7 +91,7 @@ function values(set: Record<string, string>, template: Template, ask: Ask): Reco
     throw new Error(
       `The template asks no "${unknown}". It asks: ${asked.join(", ") || "nothing"}.`,
     );
-  return Object.fromEntries(
+  const answers: Record<string, string> = Object.fromEntries(
     template.questions.map((question) => [
       question.value,
       set[question.value] ??
@@ -102,6 +102,20 @@ function values(set: Record<string, string>, template: Template, ask: Ask): Reco
         ),
     ]),
   );
+  return followed(template.questions, answers);
+}
+
+/** Answers left at their default that follow another answer's storage account. */
+function followed(questions: Question[], answers: Record<string, string>): Record<string, string> {
+  for (const question of questions) {
+    const from =
+      question.follows && questions.find((item) => item.value === question.follows!.from);
+    if (!from || answers[question.value] !== question.default) continue;
+    const root = /^abfss:\/\/([^@/]+)@([^/]+)/.exec(answers[from.value] ?? "");
+    if (!root || answers[from.value] === from.default) continue;
+    answers[question.value] = `abfss://${question.follows!.fileSystem ?? root[1]}@${root[2]}`;
+  }
+  return answers;
 }
 
 /** The answer from the terminal, else the default with --yes, else an error naming the flag. */

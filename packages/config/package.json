@@ -1,6 +1,6 @@
 {
   "name": "@ingestron/config",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Multi-file YAML definitions with references, environments and schema validation.",
   "license": "Apache-2.0",
   "author": "IntentLabs <hello@ingestron.io>",

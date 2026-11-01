@@ -59,7 +59,7 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
   },
   TRANSFORM_COLUMNS: {
     meaning:
-      "A transform's query returns a column its contract does not name, which is not kept, or does not return one the contract names. A warning; it is checked only when the query's columns can be read from its outermost SELECT.",
+      "A transform's query returns a column its contract does not name, or does not return one the contract names. A warning; it is checked only when the query's columns can be read from its outermost SELECT.",
     fix: "Add the column to the contract, or change the query to return the contract's columns.",
   },
   SETTINGS_UNUSED: {

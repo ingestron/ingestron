@@ -10,6 +10,12 @@ export interface Question {
   value: string;
   ask: string;
   default: string;
+  /**
+   * Set by New project's recipes, never in template.yaml: while this answer is
+   * its default and the `from` answer is not, it follows that answer's storage
+   * account, in `file system` (or the same one when unset).
+   */
+  follows?: { from: string; fileSystem?: string };
 }
 
 /** A template folder and what it asks. */

@@ -12,5 +12,6 @@ ADF copies the ERP's tables into storage, and the flows end there:
 
 `ingestron apply` writes the ADF resources under `build/<environment>/`:
 the SQL Server linked service through the `shir-erp` integration runtime, the
-pipeline with a copy per table, and a daily trigger. Contract quality rules are
-not checked, since nothing reads the files before the reports do.
+pipeline with a copy per table, and a daily trigger. Nothing reads the files
+before the reports do, so nothing checks rows: neither the contract's quality
+rules nor its required columns.
