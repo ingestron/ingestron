@@ -156,7 +156,11 @@ function buildModel(
       ...(project.name && { name: project.name }),
       environment: context.environment,
     },
-    standard: { id: context.standard.value.id, packs: context.standard.value.packs },
+    standard: {
+      id: context.standard.value.id,
+      packs: context.standard.value.packs,
+      ...(context.standard.value.governance && { governance: context.standard.value.governance }),
+    },
     platform: resolvePlatform(context),
     layers: namer.layers,
     names: { pipeline, job },
