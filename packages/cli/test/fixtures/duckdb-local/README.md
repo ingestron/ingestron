@@ -30,7 +30,7 @@ To run locally, download a load's file from `erp/erp.dbo.Invoices/` in the
 `landing` file system to `samples/erp.dbo.Invoices/`. Then, from this folder:
 
 ```sh
-duckdb ingestron.duckdb < build/local/duckdb/run.sql
+duckdb -bail ingestron.duckdb -c ".read build/local/duckdb/run.sql"
 ```
 
 Failures inside ADF (connectors, credentials, networking) only happen in ADF.

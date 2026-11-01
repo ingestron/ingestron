@@ -272,6 +272,16 @@ the flow's `ingest.uses`.
   MUST NOT depend on the transform itself (`INPUT_CYCLE`). Tables are
   listed with every input before its readers, otherwise in path order.
 
+**Transform columns.** When a transform's code is SQL whose outermost
+`SELECT` names every column it returns (each an identifier, `table.column`, or
+an expression with `AS <name>`; no `*`), those names are compared with the
+contract's, ignoring case and quotes. A returned column the contract does not
+name is `TRANSFORM_COLUMNS`, a warning at the code: `"<column>" is not in the
+contract <id>, so it is not kept.` A contract column the query does not return
+is the same warning: `The query returns no column "<column>", which the
+contract <id> names.` Code that is not SQL, or whose columns cannot be read
+this way, is not compared.
+
 ## 6. Contracts and quality
 
 - A table's contract is the ODCS document it links to. The contract's
