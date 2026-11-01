@@ -1,0 +1,20 @@
+apiVersion: ingestron.io/v1
+kind: Standard
+id: shop
+packs: [duckdb@1, adf@1] # DuckDB first: the first pack names and types the tables; ADF only copies
+ingest:
+  default: adf-copy # ADF copies from the source; DuckDB builds the tables
+  settings:
+    adf-copy:
+      layout: snapshot # each load replaces one file per table
+      every: { frequency: Hour, interval: 24 }
+      start: 2026-10-01T00:00:00Z
+    duckdb-landed: { landing: ./samples } # where a load's files go locally
+governance: # every data product is checked against these before anything is generated
+  products: { require: [owner, purpose] }
+  classification:
+    values: [public, internal, confidential, restricted]
+    columns: required
+    sensitive: [confidential, restricted]
+  access:
+    sensitive: { require: [description, firstLevelApprovers] }

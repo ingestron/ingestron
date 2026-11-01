@@ -1,0 +1,15 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: shop.daily_sales
+version: 1.0.0
+status: active
+schema:
+  - name: daily_sales
+    logicalType: object
+    description: Order totals per customer and day.
+    properties:
+      - { name: customer_id, logicalType: integer, primaryKey: true, classification: internal }
+      - { name: day, logicalType: date, required: true, primaryKey: true, classification: internal }
+      - { name: total, logicalType: number, classification: internal }
+slaProperties:
+  - { property: freshness, value: 24, unit: h }

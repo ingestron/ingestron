@@ -1,0 +1,21 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: shop.customers
+version: 1.0.0
+status: active
+schema:
+  - name: customers
+    logicalType: object
+    description: Everyone who has bought from the web shop.
+    properties:
+      - { name: id, logicalType: integer, primaryKey: true, classification: internal }
+      - { name: name, logicalType: string, description: Full name, classification: confidential }
+      - { name: email, logicalType: string, required: true, classification: confidential }
+      - { name: country, logicalType: string, classification: internal }
+roles:
+  - role: marketing-analysts
+    access: read
+    description: Campaign reporting by country
+    firstLevelApprovers: mia.chen@example.com
+slaProperties:
+  - { property: freshness, value: 24, unit: h }

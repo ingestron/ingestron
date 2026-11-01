@@ -89,7 +89,8 @@ function reportPort(
       `The data product "${publisher.get(contract)}" already publishes the contract "${contract}"; a table has one owner.`,
       at,
     );
-  else if (built.length === 0)
+  // A table that failed to resolve is missing for that reason, which is reported.
+  else if (built.length === 0 && !context.reporter.failed())
     context.reporter.warning(
       "PRODUCT_NOT_BUILT",
       `No table uses the contract "${contract}" in this environment, so "${product}" has nothing to publish for it here.`,

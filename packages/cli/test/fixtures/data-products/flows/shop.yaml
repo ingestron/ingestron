@@ -1,0 +1,7 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: shop
+source: shop
+tables:
+  orders: { object: shop.dbo.Orders, contract: shop.orders }
+  customers: { object: shop.dbo.Customers, contract: shop.customers }
