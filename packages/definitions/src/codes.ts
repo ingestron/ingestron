@@ -62,6 +62,23 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
       "A transform's query returns a column its contract does not name, or does not return one the contract names. A warning; it is checked only when the query's columns can be read from its outermost SELECT.",
     fix: "Add the column to the contract, or change the query to return the contract's columns.",
   },
+  PRODUCT_CONTRACT_UNUSED: {
+    meaning: "A data product's output port names a contract that no flow table or transform uses.",
+    fix: "Use the contract in a flow's table or a transform, or remove the output port.",
+  },
+  PRODUCT_NOT_BUILT: {
+    meaning:
+      "A data product's output is not built in this environment, for example where runs-on leaves its table out. A warning; the passport says so.",
+    fix: "Nothing, if that is expected here; otherwise build the table in this environment.",
+  },
+  PRODUCT_CONTRACT_SHARED: {
+    meaning: "Two data products publish the same contract; each published table has one owner.",
+    fix: "Publish the contract from one product, and list it as an input port of the other.",
+  },
+  DUPLICATE_PRODUCT: {
+    meaning: "Two files define a data product with the same id.",
+    fix: "Give each data product its own id, or remove one of the files.",
+  },
   SETTINGS_UNUSED: {
     meaning:
       "Settings are written for a step the table does not have: serve settings when nothing chooses a serve method, or store settings when the flow ends at the landed files.",

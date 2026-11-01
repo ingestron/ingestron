@@ -41,6 +41,24 @@ export function contractFor(
     primaryKey: primaryKeyOf(entry),
     ...checksOf(context, entry, { document: document!, pointer: `/schema/${index}` }, atFiles),
     tags: (entry.tags ?? []).map(String),
+    ...accessOf(document!.value),
+  };
+}
+
+/** Who may use the data and what the contract promises (ODCS `roles`, `slaProperties`). */
+function accessOf(value: ContractDoc): Pick<Contract, "roles" | "sla"> {
+  return {
+    roles: (value.roles ?? []).map(({ role, access, description, firstLevelApprovers }) => ({
+      role,
+      ...(access !== undefined && { access }),
+      ...(description !== undefined && { description }),
+      ...(firstLevelApprovers !== undefined && { firstLevelApprovers }),
+    })),
+    sla: (value.slaProperties ?? []).map(({ property, value: text, unit }) => ({
+      property,
+      value: String(text),
+      ...(unit !== undefined && { unit }),
+    })),
   };
 }
 

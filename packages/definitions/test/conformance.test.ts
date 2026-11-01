@@ -13,6 +13,7 @@ interface Case {
   files: Record<string, string>;
   expect: {
     tables?: Record<string, unknown>[];
+    products?: Record<string, unknown>[];
     names?: Record<string, unknown>;
     platform?: Record<string, unknown>;
     diagnostics?: Record<string, unknown>[];
@@ -46,6 +47,11 @@ function checkTables(model: ResolvedModel, expected: Record<string, unknown>[]):
     );
     expect(tables[index]).toMatchObject(present);
   });
+}
+
+function checkProducts(model: ResolvedModel, expected: Record<string, unknown>[]): void {
+  expect(model.products).toHaveLength(expected.length);
+  expected.forEach((wanted, index) => expect(model.products[index]).toMatchObject(wanted));
 }
 
 /** Each named fix, applied to the case's files, gives the files expected. */
@@ -94,6 +100,7 @@ describe("conformance", () => {
       expect(result.diagnostics).toEqual([]);
       const model = result.model as ResolvedModel;
       if (testCase.expect.tables) checkTables(model, testCase.expect.tables);
+      if (testCase.expect.products) checkProducts(model, testCase.expect.products);
       if (testCase.expect.names) expect(model.names).toMatchObject(testCase.expect.names);
       if (testCase.expect.platform) expect(model.platform).toMatchObject(testCase.expect.platform);
     });
