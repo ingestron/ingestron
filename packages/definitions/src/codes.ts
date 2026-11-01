@@ -49,13 +49,18 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
   },
   RUNS_ON: {
     meaning:
-      "In an environment that runs on a pack, a table's store or transform belongs to another pack, or the pack has no method that reads landed files.",
+      "In an environment that runs on a pack, a table's store or transform belongs to another pack, or the pack has no method that reads landed files; or a method that reads landed files was chosen outside runs-on.",
     fix: "Keep the table's store and transforms with the pack the environment runs on, or remove runs-on from the environment.",
   },
   RUNS_ON_SKIPPED: {
     meaning:
       "In an environment that runs on a pack, a table whose ingest lands no files is left out, with the transforms that read it.",
     fix: "Nothing, if the table is not needed there; otherwise land its files with a method that does.",
+  },
+  SETTINGS_UNUSED: {
+    meaning:
+      "Settings are written for a step the table does not have: serve settings when nothing chooses a serve method, or store settings when the flow ends at the landed files.",
+    fix: "Remove the settings, or choose the method they are for.",
   },
   HANDOVER: {
     meaning:

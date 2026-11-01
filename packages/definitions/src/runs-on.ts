@@ -43,7 +43,13 @@ export function landedIngest(
   const step = resolveStep(context, "ingest", replacement, facts);
   // The files are the replaced method's, so they hold its column names.
   const renames = pick.method.renames === true;
-  return { step: step && { ...step, renames, chosenBy: { by: "runs-on", pack: runsOn.id } } };
+  return {
+    step: step && {
+      ...step,
+      renames,
+      chosenBy: { by: "runs-on", pack: runsOn.id, replaced: pick.id },
+    },
+  };
 }
 
 /** Under runs-on, true when another pack's ingest lands no files: the table is left out, with a warning. */

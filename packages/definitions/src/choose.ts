@@ -2,11 +2,12 @@
 import type { DefinitionDocument } from "@ingestron/config";
 import type { Context } from "./context.js";
 import type { Source } from "./diagnostics.js";
-import { kinds, type ActionDoc, type RuleDoc } from "./documents.js";
+import { kinds, type ActionDoc } from "./documents.js";
 import type { ChosenBy } from "./model.js";
-import type { Action, Handover, Method, Rule } from "./pack.js";
+import type { Action, Handover, Method } from "./pack.js";
 import { canServe } from "./can-serve.js";
 import { storeFixes } from "./store-fixes.js";
+import { factsOf, fromRule, matches } from "./rule-facts.js";
 
 /** Facts that `when` rules can match. */
 export interface Facts {
@@ -71,6 +72,14 @@ export function chooseMethod(
     );
     return undefined;
   }
+  if (method.reads === "landed" && !named.runsOn) {
+    report.error(
+      "RUNS_ON",
+      `"${pick.id}" reads the files another method lands, so only an environment's runs-on chooses it.`,
+      pick.origin ?? { document: named.owner, pointer: named.at ?? "" },
+    );
+    return undefined;
+  }
   return isAllowed(context, action, named, pick) ? { ...pick, method } : undefined;
 }
 
@@ -109,6 +118,23 @@ export function hasChoice(context: Context, action: Action, named: Named, facts:
 export function located({ at, ...rest }: Choice["chosenBy"]): ChosenBy {
   const location = at?.document.locate(at.pointer);
   return { ...rest, ...(location && { file: location.file, line: location.line }) };
+}
+
+/** The id something chooses for this action (a method, or `none`), without reporting anything. */
+export function choiceOf(
+  context: Context,
+  action: Action,
+  named: Named,
+  facts: Facts,
+): { id: string; written: boolean } | undefined {
+  const pick = findPick(context, action, named, facts);
+  return pick && { id: pick.id, written: pick.chosenBy.by === "definition" };
+}
+
+/** True when the standard allows `id` where the definition names it; otherwise reported. */
+export function allowsWritten(context: Context, action: Action, named: Named, id: string): boolean {
+  const origin = { document: named.owner, pointer: `/${action}/uses` };
+  return isAllowed(context, action, named, { id, origin, chosenBy: { by: "definition" } });
 }
 
 /** A method the definition names must be in the standard's `allowed` list. */
@@ -201,6 +227,8 @@ function pickMethod(
   const pick = findPick(context, action, named, facts);
   if (pick) return pick;
   if (action === "store" && named.owner.kind === kinds.flow.kind) {
+    // When ingest failed, its own problem says why; nothing more is known.
+    if (facts.input === undefined) return undefined;
     context.reporter.error(
       "UNKNOWN_METHOD",
       "Nothing chooses a store method, so nothing keeps the files ingest lands.",
@@ -218,29 +246,4 @@ function pickMethod(
   return undefined;
 }
 
-/** A rule's facts: everything but the method it chooses and its settings. */
-function factsOf(rule: Rule | RuleDoc): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(rule as unknown as Record<string, unknown>).filter(
-      ([key]) => key !== "use" && key !== "with",
-    ),
-  );
-}
-
-function fromRule(rule: Rule | RuleDoc, at?: Source): Omit<Pick, "chosenBy"> {
-  const origin = at && { document: at.document, pointer: `${at.pointer}/use` };
-  const ruleWith = rule.with && {
-    value: rule.with,
-    at: at && { document: at.document, pointer: `${at.pointer}/with` },
-  };
-  return { id: rule.use, ...(origin && { origin }), ...(ruleWith && { ruleWith }) };
-}
-
 export { canServe } from "./can-serve.js";
-
-/** A rule matches when every fact it names equals the table's. */
-function matches(rule: Rule | RuleDoc, facts: Facts): boolean {
-  return Object.entries(rule).every(
-    ([key, value]) => key === "use" || key === "with" || facts[key as keyof Facts] === value,
-  );
-}

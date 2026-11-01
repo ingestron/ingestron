@@ -23,8 +23,10 @@ export interface ChosenBy {
     "definition" | "standard-rule" | "standard-default" | "pack-rule" | "pack-default" | "runs-on";
   /** A rule's facts, such as `{ connectivity: private }`. */
   when?: Record<string, unknown>;
-  /** The pack whose rule or default chose it. */
+  /** The pack whose rule or default chose it, or that runs-on names. */
   pack?: string;
+  /** Under runs-on, the method of another pack that this one replaced. */
+  replaced?: string;
   file?: string;
   line?: number;
 }
