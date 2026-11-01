@@ -8,6 +8,11 @@ tables on a laptop or in an Azure job ADF starts after each load. Ingestron
 runs locally, never connects to your sources or your cloud, and never
 overwrites a file someone edited by hand.
 
+Data products are open-standard files too (ODPS, with ODCS contracts): the
+standard can require each one's owner, purpose, column classifications and
+who may use sensitive data, and every run writes a plain-language passport per
+product beside the pipelines.
+
 ```sh
 npx ingestron@1 init demo --template minimal --yes
 cd demo
