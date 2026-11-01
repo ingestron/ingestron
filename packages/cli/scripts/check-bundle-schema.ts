@@ -18,7 +18,11 @@ const validate = new Ajv({ strict: false, allErrors: true }).compile(
   JSON.parse(readFileSync(schemaPath, "utf8")),
 );
 let failures = 0;
-for (const { name, model } of exampleModels()) {
+// Only examples whose standard lists the Databricks pack generate a bundle.
+const withBundles = exampleModels().filter(({ model }) =>
+  model.standard.packs.some((pack) => pack.startsWith("databricks@")),
+);
+for (const { name, model } of withBundles) {
   for (const [path, text] of Object.entries(databricks.build(model)).filter(([path]) =>
     path.endsWith(".yml"),
   )) {
