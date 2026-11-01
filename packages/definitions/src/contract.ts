@@ -1,5 +1,6 @@
 // Reads the parts of a table's ODCS contract that generation uses (section 6).
-import { AT_FILES, notCheckedAtFiles, ruleChecks } from "./quality-rules.js";
+import { AT_FILES, notCheckedAtFiles } from "./quality-notes.js";
+import { ruleChecks } from "./quality-rules.js";
 import type { Context } from "./context.js";
 import type { Source } from "./diagnostics.js";
 import { kinds, type ContractDoc, type ExpectationDoc } from "./documents.js";
@@ -70,12 +71,10 @@ function entryIndex(entries: Entry[], table: string): number {
 
 /** Checks of each row, and checks over all rows, from the object's rules. */
 function checksOf(context: Context, entry: Entry, at: Source, atFiles: boolean) {
-  if (atFiles) {
-    notCheckedAtFiles(context, entry, at);
-    return { checks: [], tableChecks: [] };
-  }
-  const { rows, table } = ruleChecks(context, entry, at);
-  return { checks: rows, tableChecks: table };
+  if (atFiles)
+    return { checks: [], tableChecks: [], unchecked: notCheckedAtFiles(context, entry, at) };
+  const { rows, table, unchecked } = ruleChecks(context, entry, at);
+  return { checks: rows, tableChecks: table, unchecked };
 }
 
 function columnOf(context: Context, property: NonNullable<Entry["properties"]>[number]): Column {

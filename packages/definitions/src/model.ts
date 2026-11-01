@@ -67,6 +67,8 @@ export interface Contract {
   checks: { name: string; check: string }[];
   /** Checks over all rows, run after each refresh when checks are on. */
   tableChecks: TableCheck[];
+  /** Quality rules nothing checks, and why; text rules among them. */
+  unchecked: { name: string; description?: string; reason: string }[];
   /** The contract object's tags. */
   tags: string[];
   /** Who may use the data, as the contract declares it (ODCS `roles`). */

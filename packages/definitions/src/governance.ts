@@ -2,6 +2,7 @@
 // product must say, and how the columns it publishes are classified and shared.
 import type { DefinitionDocument } from "@ingestron/config";
 import type { Context } from "./context.js";
+import { byCodePoint } from "./merge.js";
 import { kinds, type ContractDoc, type GovernanceDoc } from "./documents.js";
 import type { ResolvedProduct } from "./model.js";
 
@@ -24,7 +25,7 @@ export function checkGovernance(context: Context, products: ResolvedProduct[]): 
   for (const product of products)
     for (const output of product.outputs)
       if (!publishers.has(output.contract)) publishers.set(output.contract, product.id);
-  for (const [id, product] of [...publishers].sort(([a], [b]) => a.localeCompare(b))) {
+  for (const [id, product] of [...publishers].sort(([a], [b]) => byCodePoint(a, b))) {
     const document = context.project.get(kinds.contract, id);
     if (document) checkContract(context, document, product, rules);
   }

@@ -1,6 +1,11 @@
 // Data product passports (spec/cli/passport.md): a plain page per product and
 // an index, generated from the same model as the pipelines.
-import type { GovernanceDoc, ResolvedModel, ResolvedProduct } from "@ingestron/definitions";
+import {
+  passportFile,
+  type GovernanceDoc,
+  type ResolvedModel,
+  type ResolvedProduct,
+} from "@ingestron/definitions";
 import { lineage } from "./passport-lineage.js";
 import { access, columns, freshness, provides, quality, table } from "./passport-sections.js";
 
@@ -9,13 +14,13 @@ export function passports(model: ResolvedModel): Record<string, string> {
   if (model.products.length === 0) return {};
   return Object.fromEntries([
     ["README.md", index(model)],
-    ...model.products.map((product) => [`${product.id}.md`, page(model, product)]),
+    ...model.products.map((product) => [passportFile(product.id), page(model, product)]),
   ]);
 }
 
 function index(model: ResolvedModel): string {
   const rows = model.products.map((product) => [
-    `[${product.name ?? product.id}](${product.id}.md)`,
+    `[${product.name ?? product.id}](${passportFile(product.id)})`,
     product.owners.map((owner) => owner.name ?? owner.username).join(", "),
     product.status ?? "",
     firstSentence(product.purpose),

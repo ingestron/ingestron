@@ -2,6 +2,7 @@
 // tables built from their output ports' contracts.
 import type { DefinitionDocument } from "@ingestron/config";
 import type { Context } from "./context.js";
+import { byCodePoint } from "./merge.js";
 import type { Source } from "./diagnostics.js";
 import { kinds, type ProductDoc } from "./documents.js";
 import type { ResolvedProduct, ResolvedTable } from "./model.js";
@@ -13,24 +14,61 @@ export function resolveProducts(context: Context, tables: ResolvedTable[]): Reso
   const documents = [
     ...context.project.all(kinds.product),
     ...context.project.all(kinds.productV1),
-  ].sort((a, b) => a.file.localeCompare(b.file));
+  ].sort((a, b) => byCodePoint(a.file, b.file));
   const named = namedContracts(context);
   const publisher = new Map<string, string>();
   const products: ResolvedProduct[] = [];
-  const seen = new Set<string>();
+  const seen = new Map<string, string>();
   for (const document of documents) {
-    if (seen.has(document.value.id)) {
-      context.reporter.error(
-        "DUPLICATE_PRODUCT",
-        `Another file already defines the data product "${document.value.id}".`,
-        { document, pointer: "/id" },
-      );
-      continue;
-    }
-    seen.add(document.value.id);
+    if (!passportFree(context, document, seen)) continue;
     products.push(productOf(document, outputsOf(context, document, tables, named, publisher)));
   }
-  return products.sort((a, b) => a.id.localeCompare(b.id));
+  return products.sort((a, b) => byCodePoint(a.id, b.id));
+}
+
+/**
+ * The file name of a product's passport: its id, with anything but letters,
+ * digits, `.`, `_` and `-` as `-`.
+ * @example passportFile("urn:product:sales") // "urn-product-sales.md"
+ */
+export function passportFile(id: string): string {
+  return `${id.replace(/[^A-Za-z0-9._-]/g, "-")}.md`;
+}
+
+/**
+ * True when the product's passport has a file name of its own: not the
+ * index's, README.md, and not another product's in any case.
+ */
+function passportFree(
+  context: Context,
+  document: ProductDocument,
+  seen: Map<string, string>,
+): boolean {
+  const { id } = document.value;
+  const file = passportFile(id);
+  const at = { document, pointer: "/id" };
+  if (file.toLowerCase() === "readme.md") {
+    context.reporter.error(
+      "PRODUCT_ID",
+      `The data product "${id}" would name its passport ${file}, which lists every product.`,
+      at,
+      "Choose another id.",
+    );
+    return false;
+  }
+  const other = seen.get(file.toLowerCase());
+  if (other !== undefined) {
+    context.reporter.error(
+      "DUPLICATE_PRODUCT",
+      other === id
+        ? `Another file already defines the data product "${id}".`
+        : `The data products "${other}" and "${id}" would share the passport file ${file}.`,
+      at,
+    );
+    return false;
+  }
+  seen.set(file.toLowerCase(), id);
+  return true;
 }
 
 /** The contracts a flow table or a transform names, whatever the environment builds. */

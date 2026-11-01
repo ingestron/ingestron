@@ -8,9 +8,9 @@ names one pack; either way it is planned, applied, checked and retired like
 theirs. A project without data products has no such folder.
 
 The folder holds `README.md`, a table of every product (its name linking to
-its page, owners, status, and the first sentence of its purpose), and one
-`<product id>.md` per product: its passport, written for someone who does not
-know the tools. Its sections, in order:
+its page, owners, status, and the first sentence of its purpose), and one page
+per product, named from its id (definitions specification section 8): its
+passport, written for someone who does not know the tools. Its sections, in order:
 
 1. **Name and summary:** the product's name (else its id), a `Deprecated` or
    `Retired` notice when `deprecated` is true or `status` is `retired`, its

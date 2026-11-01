@@ -409,8 +409,12 @@ Each product is checked:
 - A contract MUST be an output of at most one product: one owner per
   published table. A second port publishing it is `PRODUCT_CONTRACT_SHARED`,
   an error at that port's `contractId`.
-- Two products MUST NOT share an id, whatever their `apiVersion`: the second
-  is `DUPLICATE_PRODUCT`, an error at its `id`.
+- Each product's passport is named from its id: the id with anything but
+  letters, digits, `.`, `_` and `-` replaced by `-`, then `.md`. Two products
+  whose passport names are the same, ignoring case, are `DUPLICATE_PRODUCT`,
+  an error at the second one's `id`; an id whose passport would be
+  `README.md` in any case is `PRODUCT_ID`, an error at its `id`, since that
+  file lists every product.
 
 `inputPorts`, and output ports without a `contractId`, are documentation:
 nothing checks them.
@@ -419,7 +423,8 @@ The resolved model lists the products in `products`, by id, each with its
 outputs and the names of the tables that build each one in the environment.
 From a contract, the model also keeps its `roles` (`role`, `access`,
 `description`, `firstLevelApprovers`) and its `slaProperties` as `sla`
-(`property`, `value` as text, `unit`), for the passport.
+(`property`, `value` as text, `unit`), and its quality rules nothing checks
+(`name`, `description`, and why: text rules among them), for the passport.
 
 ### 8.1 Governance
 

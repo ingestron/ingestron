@@ -79,6 +79,11 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
     meaning: "Two files define a data product with the same id.",
     fix: "Give each data product its own id, or remove one of the files.",
   },
+  PRODUCT_ID: {
+    meaning:
+      "A data product's id would name its passport README.md, the file that lists every product.",
+    fix: "Choose another id for the data product.",
+  },
   PRODUCT_INCOMPLETE: {
     meaning:
       "A data product leaves out a fact the standard's governance requires, such as its owner or purpose.",

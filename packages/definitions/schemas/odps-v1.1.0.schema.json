@@ -243,17 +243,7 @@
         "type": {
           "type": "string",
           "description": "Type of definition for authority.",
-          "examples": [
-            "businessDefinition",
-            "canonicalUrl",
-            "glossary",
-            "implementation",
-            "ontology",
-            "taxonomy",
-            "transformationImplementation",
-            "tutorial",
-            "videoTutorial"
-          ]
+          "examples": ["businessDefinition", "canonicalUrl", "glossary", "implementation", "ontology", "taxonomy", "transformationImplementation", "tutorial", "videoTutorial"]
         },
         "url": {
           "type": "string",

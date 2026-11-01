@@ -32,3 +32,8 @@ function sorted(value: unknown): unknown {
       .map((key) => [key, sorted(value[key])]),
   );
 }
+
+/** Text order by code point, the same on every machine, unlike localeCompare. */
+export function byCodePoint(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
+}

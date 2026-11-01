@@ -94,24 +94,31 @@ export function columns(model: ResolvedModel, product: ResolvedProduct): string 
 
 /** Section 5: each check and when it runs, or why it does not. */
 export function quality(model: ResolvedModel, product: ResolvedProduct): string {
-  const checksOn = model.platform.manage.checks;
   const parts = outputTables(model, product).flatMap(({ output, tables }) =>
     tables.map((built) => {
-      if (built.endsAtFiles)
-        return `### ${output.name}\n\nNot checked: the data stays as the landed files.`;
-      const rows = built.expectations.map(
-        (item) =>
-          `- \`${item.name}\`: ${code(item.check)}, checked on every load; rows that fail: ${item.action}.`,
+      const rows = built.endsAtFiles
+        ? []
+        : built.expectations.map(
+            (item) =>
+              `- \`${item.name}\`: ${code(item.check)}, checked on every load; rows that fail: ${item.action}.`,
+          );
+      const counts = built.contract.tableChecks.map(
+        (item) => `- \`${item.name}\`: checked after each refresh.`,
       );
-      const after = checksOn
-        ? "checked after each refresh"
-        : "not checked: checks are off on this platform";
-      const counts = built.contract.tableChecks.map((item) => `- \`${item.name}\`: ${after}.`);
-      const lines = [...rows, ...counts];
+      const unchecked = built.contract.unchecked.map(
+        (item) =>
+          `- \`${item.name}\`: ${item.description ? `${oneLine(item.description)} ` : ""}Not checked: ${item.reason}.`,
+      );
+      const lines = [...rows, ...counts, ...unchecked];
       return `### ${output.name}\n\n${lines.length > 0 ? lines.join("\n") : "No quality rules."}`;
     }),
   );
   return ["## Quality", ...parts].join("\n\n");
+}
+
+/** Text on one line, as in a list item. */
+function oneLine(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
 }
 
 /** Section 6: the contracts' promises and the refresh schedule. */
