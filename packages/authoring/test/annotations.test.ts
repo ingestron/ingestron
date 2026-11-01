@@ -195,3 +195,14 @@ describe("chosenText under runs-on, naming what it replaced", () => {
     );
   });
 });
+
+describe("code languages", () => {
+  it("names a file's language for the tooltip only when it is known", async () => {
+    const { languageOf } = await import("../src/annotations.js");
+    expect(languageOf("${file:a.sql}")).toBe("sql");
+    expect(languageOf("${file:job.py}")).toBe("python");
+    expect(languageOf("${file:conf.yml}")).toBe("yaml");
+    expect(languageOf("${file:notes.md}")).toBeUndefined();
+    expect(languageOf("${file:a.b/c}")).toBeUndefined();
+  });
+});

@@ -38,7 +38,7 @@ export function checkTransformColumns(
   for (const name of returned.filter((item) => !kept.has(key(item))))
     context.reporter.warning(
       "TRANSFORM_COLUMNS",
-      `"${name}" is not in the contract ${contract.id}, so it is not kept.`,
+      `"${name}" is returned, but the contract ${contract.id} does not name it.`,
       at,
     );
   for (const column of contract.columns.filter((item) => !given.has(key(item.name))))
@@ -94,8 +94,9 @@ const unquote = (written: string) => written.replace(/^"(.*)"$/, "$1");
 function columnName(item: string): string | undefined {
   const alias = new RegExp(`\\bAS\\s+${name}$`, "i").exec(item);
   if (alias) return unquote(alias[1]!);
-  const path = new RegExp(`^${name}(\\.${name})*$`).exec(item);
-  if (path) return unquote(item.split(".").at(-1)!);
+  // A name, or a path such as t."Line.No": the last part, read whole even when quoted with dots.
+  const path = new RegExp(`^(?:${name}\\.)*${name}$`).exec(item);
+  if (path) return unquote(path[path.length - 1]!);
   const bare = new RegExp(`\\)\\s+${name}$`).exec(item);
   return bare ? unquote(bare[1]!) : undefined;
 }
