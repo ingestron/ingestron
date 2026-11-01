@@ -3,27 +3,27 @@
     {
       "connector": "files",
       "connectivity": "public",
-      "via": ["databricks", "adf", "adf-files"]
+      "via": ["databricks", "adf-databricks", "adf-files"]
     },
     {
       "connector": "sqlserver",
       "connectivity": "private",
-      "via": ["adf", "adf-synapse", "adf-duckdb", "adf-files"]
+      "via": ["adf-databricks", "adf-synapse", "adf-duckdb", "adf-files"]
     },
     {
       "connector": "sqlserver",
       "connectivity": "workspace",
-      "via": ["databricks", "adf", "adf-synapse", "adf-duckdb", "adf-files"]
+      "via": ["databricks", "adf-databricks", "adf-synapse", "adf-duckdb", "adf-files"]
     },
     {
       "connector": "postgresql",
       "connectivity": "private",
-      "via": ["adf", "adf-synapse", "adf-duckdb", "adf-files"]
+      "via": ["adf-databricks", "adf-synapse", "adf-duckdb", "adf-files"]
     },
     {
       "connector": "salesforce",
       "connectivity": "public",
-      "via": ["databricks", "adf", "adf-synapse", "adf-duckdb", "adf-files"]
+      "via": ["databricks", "adf-databricks", "adf-synapse", "adf-duckdb", "adf-files"]
     },
     {
       "connector": "kafka",
@@ -36,6 +36,7 @@
       "via": []
     }
   ],
+  "aliases": [{ "given": "adf", "means": "adf-databricks" }],
   "invalid": [
     ["--connector", "missing", "--yes"],
     ["--connector", "postgresql", "--via", "databricks", "--yes"],

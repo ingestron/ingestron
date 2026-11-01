@@ -10,7 +10,8 @@ capability and maturity come from the selected pack's existing metadata.
 non-interactively. `databricks` means direct ingestion and storage. Every ADF
 route lands the source's data with ADF, then:
 
-- `adf`: Databricks reads them into tables (`packs: [databricks@1, adf@1]`);
+- `adf-databricks`: Databricks reads them into tables (`packs: [databricks@1,
+adf@1]`);
 - `adf-synapse`: Synapse serverless SQL shows them as views (`packs:
 [synapse@1, adf@1]`, `store: { default: synapse-view }`, with
   `synapse-view`'s data source at the landing storage);
@@ -20,6 +21,10 @@ route lands the source's data with ADF, then:
   sets `after_copy`;
 - `adf-files`: the flows end at the landed files (`packs: [adf@1]`, `store: {
 default: none }`), for reports that read the files.
+
+Each ADF route is named for what reads the landed files. `adf`, the name of
+`adf-databricks` before CLI 1.6, is still accepted as `--via` and creates the
+same project; no menu or list shows it.
 
 `adf-synapse` and `adf-duckdb` are offered only where ADF copies tables (its
 methods that land typed files under the contract's names), not where it copies
