@@ -123,7 +123,7 @@ const routeStandards: Record<string, { packs: string[]; store?: string }> = {
   "adf-databricks": { packs: ["databricks@1", "adf@1"] },
   "adf-synapse": { packs: ["synapse@1", "adf@1"], store: "synapse-view" },
   "adf-duckdb": { packs: ["duckdb@1", "adf@1"] },
-  "adf-files": { packs: ["adf@1"], store: "none" },
+  "adf-landing": { packs: ["adf@1"], store: "none" },
 };
 
 function trimStandard(

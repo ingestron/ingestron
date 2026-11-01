@@ -116,7 +116,7 @@ it("rejects literal credentials before writing the project", () => {
 it.each([
   ["adf-synapse", "dev/synapse/views.sql"],
   ["adf-duckdb", "dev/duckdb/run.sql"],
-  ["adf-files", "dev/pipeline"],
+  ["adf-landing", "dev/pipeline"],
 ])("lands with ADF and builds the %s destination's files", (via, generated) => {
   const cwd = mkdtempSync(join(tmpdir(), "dynamic-destination-"));
   const io = { cwd, write: () => {} };

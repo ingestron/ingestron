@@ -52,7 +52,7 @@ export const flags: readonly [{
     readonly flag: "--connectivity <kind>";
     readonly summary: "init: private, workspace or public source reachability.";
 }, {
-    readonly flag: "--via <databricks|adf-databricks|adf-synapse|adf-duckdb|adf-files>";
+    readonly flag: "--via <databricks|adf-databricks|adf-synapse|adf-duckdb|adf-landing>";
     readonly summary: "init: the route: Databricks directly, or ADF into Databricks, Synapse views, DuckDB tables or the landed files alone.";
 }, {
     readonly flag: "--env <name>";

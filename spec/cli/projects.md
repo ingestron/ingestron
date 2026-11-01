@@ -19,12 +19,15 @@ adf@1]`);
 [duckdb@1, adf@1]`, with `duckdb-table`'s `published` folder beside the
   landing), started after the copies by a Container Apps job when the user
   sets `after_copy`;
-- `adf-files`: the flows end at the landed files (`packs: [adf@1]`, `store: {
+- `adf-landing`: the flows end at the landed files (`packs: [adf@1]`, `store: {
 default: none }`), for reports that read the files.
 
-Each ADF route is named for what reads the landed files. `adf`, the name of
-`adf-databricks` before CLI 1.6, is still accepted as `--via` and creates the
-same project; no menu or list shows it.
+Each ADF route is named for what reads the landed files, or for the landing
+itself when nothing does. The earlier names are still accepted as `--via` and
+create the same project, though no menu or list shows them: `adf` (before CLI
+1.6) for `adf-databricks`, and `adf-files` (before CLI 1.7) for `adf-landing`,
+renamed because `adf-files` is also the name of ADF's method that copies files
+as they are.
 
 `adf-synapse` and `adf-duckdb` are offered only where ADF copies tables (its
 methods that land typed files under the contract's names), not where it copies
