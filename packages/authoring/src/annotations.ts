@@ -88,13 +88,13 @@ function variables(
       // One line beside the value; the tooltip keeps the lines.
       const flat = shown.replace(/\s+/g, " ").trim();
       const label = `= ${flat.length > 80 ? `${flat.slice(0, 79)}…` : flat}`;
-      const language = /\$\{file:\s*[^}#]*\.(\w+)/.exec(spot.text)?.[1];
+      const language = languageOf(spot.text);
       return [
         {
           line: positionAt(text, spot.range[0]).line,
           label,
           tooltip: shown,
-          ...(language && { language: language === "py" ? "python" : language }),
+          ...(language && { language }),
         },
       ];
     });
@@ -210,4 +210,23 @@ function chooser({ by, when, file, line, pack, replaced }: ChosenBy): string {
   const instead = replaced ? `, in place of ${replaced}` : "";
   const runsOn = by === "runs-on" && pack ? ` ${pack}${instead}` : "";
   return `${choosers[by]}${runsOn}${facts}${where}`;
+}
+
+const languages: Record<string, string> = {
+  sql: "sql",
+  py: "python",
+  yml: "yaml",
+  yaml: "yaml",
+  json: "json",
+  sh: "shellscript",
+};
+
+/**
+ * The language of a `${file:…}` value's file, from its extension, when it is one an editor colours.
+ * @example languageOf("${file:daily_sales.sql}") // "sql"
+ */
+export function languageOf(text: string): string | undefined {
+  const file = /\$\{file:\s*([^}#]*)/.exec(text)?.[1]?.trim() ?? "";
+  const extension = /\.(\w+)$/.exec(file.split("/").at(-1) ?? "")?.[1];
+  return extension ? languages[extension.toLowerCase()] : undefined;
 }

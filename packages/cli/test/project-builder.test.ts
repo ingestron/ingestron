@@ -118,3 +118,25 @@ it.each([
   expect(existsSync(join(cwd, "project/build", generated))).toBe(true);
   expect(existsSync(join(cwd, "project/build/dev/databricks.yml"))).toBe(false);
 });
+
+it.each([
+  [
+    "adf-synapse",
+    "data_source_location: ${values.synapse_data_source_location}",
+    "synapse_data_source_location: abfss://raw@contosolake.dfs.core.windows.net",
+  ],
+  [
+    "adf-duckdb",
+    "published: ${values.duckdb_published}",
+    "duckdb_published: abfss://published@contosolake.dfs.core.windows.net",
+  ],
+])("puts the %s destination beside the landing storage the user answers", (via, setting, value) => {
+  const cwd = mkdtempSync(join(tmpdir(), "dynamic-landing-"));
+  let output = "";
+  const io = { cwd, write: (text: string) => (output += text) };
+  const args = ["--connector", "postgresql", "--connectivity", "private", "--via", via];
+  const landing = "landing=abfss://raw@contosolake.dfs.core.windows.net/sales";
+  expect(run(["init", "project", ...args, "--set", landing, "--yes"], io), output).toBe(0);
+  expect(readFileSync(join(cwd, "project/platform.yaml"), "utf8")).toContain(setting);
+  expect(readFileSync(join(cwd, "project/project.yaml"), "utf8")).toContain(value);
+});

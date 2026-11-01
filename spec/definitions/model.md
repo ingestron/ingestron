@@ -276,8 +276,9 @@ the flow's `ingest.uses`.
 `SELECT` names every column it returns (each an identifier, `table.column`, or
 an expression with `AS <name>`; no `*`), those names are compared with the
 contract's, ignoring case and quotes. A returned column the contract does not
-name is `TRANSFORM_COLUMNS`, a warning at the code: `"<column>" is not in the
-contract <id>, so it is not kept.` A contract column the query does not return
+name is `TRANSFORM_COLUMNS`, a warning at the code: `"<column>" is returned,
+but the contract <id> does not name it.` (whether it is kept depends on the
+pack: DuckDB and Synapse select only the contract's columns). A contract column the query does not return
 is the same warning: `The query returns no column "<column>", which the
 contract <id> names.` Code that is not SQL, or whose columns cannot be read
 this way, is not compared.
