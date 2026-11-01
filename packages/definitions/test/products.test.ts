@@ -5,7 +5,12 @@ import { join } from "node:path";
 import { memoryFiles } from "@ingestron/config";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
-import { resolveDefinitions, type PackInfo, type ResolvedModel } from "../src/index.js";
+import {
+  passportFile,
+  resolveDefinitions,
+  type PackInfo,
+  type ResolvedModel,
+} from "../src/index.js";
 
 const conformance = join(import.meta.dirname, "../../../spec/definitions/conformance");
 const read = (file: string) => parse(readFileSync(join(conformance, file), "utf8"));
@@ -23,6 +28,36 @@ describe("data products", () => {
     expect((result.model as ResolvedModel).products).toEqual([]);
   });
 
+  it("orders products by code point, whatever the machine's language", () => {
+    const named = (id: string) =>
+      `apiVersion: v1.1.0\nkind: DataProduct\nid: ${id}\noutputPorts:\n  - { name: ${id} }\n`;
+    const model = resolve({ "a.yaml": named("alpha"), "z.yaml": named("Zeta") })
+      .model as ResolvedModel;
+    expect(model.products.map(({ id }) => id)).toEqual(["Zeta", "alpha"]);
+  });
+
+  it("refuses an id that would name its passport README.md, which lists every product", () => {
+    const result = resolve({ "p.yaml": product("v1.1.0").replace("id: sales", "id: ReadMe") });
+    expect(result.diagnostics.map(({ code, location }) => [code, location?.line])).toEqual([
+      ["PRODUCT_ID", 3],
+    ]);
+  });
+
+  it("reports two ids that would share a passport file, such as Sales and sales", () => {
+    const result = resolve({
+      "a.yaml": product("v1.1.0"),
+      "b.yaml": product("v1.1.0")
+        .replace("id: sales", "id: Sales")
+        .replace("name: orders", "name: o2"),
+    });
+    expect(result.diagnostics.map(({ code }) => code)).toContain("DUPLICATE_PRODUCT");
+  });
+
+  it("names a passport file from any id, such as a URN", () => {
+    expect(passportFile("urn:product:sales")).toBe("urn-product-sales.md");
+    expect(passportFile("sales")).toBe("sales.md");
+  });
+
   it("reports the same product id in two files, one v1.0.0 and one v1.1.0", () => {
     const result = resolve({ "a.yaml": product("v1.0.0"), "b.yaml": product("v1.1.0") });
     expect(result.diagnostics.map(({ code, location }) => [code, location?.file])).toEqual([
@@ -37,6 +72,21 @@ describe("data products", () => {
     );
     const result = resolve({ "sales.yaml": flow, "p.yaml": product("v1.1.0") });
     expect(result.diagnostics.map(({ code }) => code)).toEqual(["UNKNOWN_METHOD"]);
+  });
+
+  it("keeps the rules nothing checks, with why, for the passport", () => {
+    const contract = base["orders.odcs.yaml"]!.replace(
+      "    properties:\n",
+      "    quality:\n      - { type: text, name: Whole, description: Whole orders only. }\n    properties:\n",
+    );
+    const model = resolve({ "orders.odcs.yaml": contract }).model as ResolvedModel;
+    expect(model.tables[0]!.contract.unchecked).toEqual([
+      {
+        name: "whole",
+        description: "Whole orders only.",
+        reason: "it is written for people to follow",
+      },
+    ]);
   });
 
   it("reads roles and slaProperties from the contract", () => {
