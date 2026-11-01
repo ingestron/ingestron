@@ -65,11 +65,14 @@ const adfDestinations = [
   ["adf-databricks", "ADF ingestion into Databricks"],
   ["adf-synapse", "ADF ingestion, served as Synapse serverless SQL views"],
   ["adf-duckdb", "ADF ingestion into DuckDB tables"],
-  ["adf-files", "ADF ingestion, ending at the landed files"],
+  ["adf-landing", "ADF ingestion, ending at the landed files"],
 ];
 
 /** Earlier names for a route, still accepted as `--via`. */
-export const routeAliases: Record<string, string> = { adf: "adf-databricks" };
+export const routeAliases: Record<string, string> = {
+  adf: "adf-databricks",
+  "adf-files": "adf-landing",
+};
 
 /**
  * Synapse and DuckDB read ADF's table copies, which land typed files under the
