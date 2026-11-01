@@ -211,6 +211,26 @@ export interface FullName {
 export function fullNameText(name: FullName): string;
 
 // @public
+export interface GovernanceDoc {
+    // (undocumented)
+    access?: {
+        sensitive?: {
+            require?: ("access" | "description" | "firstLevelApprovers")[];
+        };
+    };
+    // (undocumented)
+    classification?: {
+        values?: string[];
+        columns?: "required" | "optional";
+        sensitive?: string[];
+    };
+    // (undocumented)
+    products?: {
+        require?: ("owner" | "purpose" | "support" | "domain")[];
+    };
+}
+
+// @public
 export interface Grant {
     // (undocumented)
     principal: string;
@@ -392,10 +412,10 @@ export interface ResolvedModel {
         name?: string;
         environment: string;
     };
-    // (undocumented)
     standard: {
         id: string;
         packs: string[];
+        governance?: GovernanceDoc;
     };
     // (undocumented)
     tables: ResolvedTable[];

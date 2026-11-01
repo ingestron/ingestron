@@ -1,6 +1,7 @@
 // The resolved model: everything a pack needs, with every choice made,
 // every name built and every setting merged. Packs only read it.
 
+import type { GovernanceDoc } from "./documents.js";
 import type { StepOutput } from "./pack.js";
 import type { TableCheck } from "./table-checks.js";
 
@@ -170,7 +171,8 @@ export interface ResolvedPlatform {
  */
 export interface ResolvedModel {
   project: { id: string; name?: string; environment: string };
-  standard: { id: string; packs: string[] };
+  /** The standard: its id, packs and governance section as written, when it has one. */
+  standard: { id: string; packs: string[]; governance?: GovernanceDoc };
   platform: ResolvedPlatform;
   layers: string[];
   /** Names that are not per table. */

@@ -12,6 +12,7 @@ import {
   type Plan,
 } from "@ingestron/generate";
 import { packs } from "./packs.js";
+import { passports } from "./passport.js";
 import type { Options } from "./args.js";
 import { environmentsToGenerate } from "./environments.js";
 import { extraFiles, generatedFolders } from "./outputs.js";
@@ -117,11 +118,15 @@ export function generatedOutputs(
   environment: string,
 ): { pack: string; label: string; files: Record<string, string> }[] {
   const used = packs.filter((pack) => model.standard.packs.includes(`${pack.id}@${pack.version}`));
-  return used.map((pack) => ({
+  const outputs = used.map((pack) => ({
     pack: pack.id,
     label: used.length > 1 ? `${environment}/${pack.id}` : environment,
     files: pack.build(model),
   }));
+  // Data product passports, in their own output folder (spec/cli/passport.md).
+  return model.products.length > 0
+    ? [...outputs, { pack: "products", label: `${environment}/products`, files: passports(model) }]
+    : outputs;
 }
 
 /**
