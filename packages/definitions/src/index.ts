@@ -5,7 +5,7 @@ export { codeHelp } from "./codes.js";
 export { contractReads } from "./contract-notes.js";
 export { contractCommon, contractUseOf } from "./contract-use.js";
 export { loadingCodeHelp, type LoadingStage } from "./loading-codes.js";
-export { kinds, packageSchema } from "./documents.js";
+export { kinds, packageSchema, type GovernanceDoc } from "./documents.js";
 export type {
   ChosenBy,
   Column,
