@@ -1,7 +1,7 @@
 apiVersion: ingestron.io/v1
 kind: Standard
 id: sales
-packs: [duckdb@1, adf@1] # DuckDB first: it stores and transforms
+packs: [duckdb@1, adf@1] # DuckDB first: the first pack names and types the tables; ADF only copies
 ingest:
   settings:
     adf-copy:
