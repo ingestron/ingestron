@@ -52,8 +52,8 @@ export const flags: readonly [{
     readonly flag: "--connectivity <kind>";
     readonly summary: "init: private, workspace or public source reachability.";
 }, {
-    readonly flag: "--via <adf|databricks>";
-    readonly summary: "init: ADF ingestion into Databricks, or Databricks directly.";
+    readonly flag: "--via <databricks|adf|adf-synapse|adf-duckdb|adf-files>";
+    readonly summary: "init: the route: Databricks directly, or ADF into Databricks, Synapse views, DuckDB tables or the landed files alone.";
 }, {
     readonly flag: "--env <name>";
     readonly summary: "Only this environment (repeatable). Default: all in project.yaml. init: the environments.";

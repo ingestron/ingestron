@@ -102,3 +102,19 @@ it("rejects literal credentials before writing the project", () => {
   expect(code).toBe(1);
   expect(existsSync(join(cwd, "project"))).toBe(false);
 });
+
+it.each([
+  ["adf-synapse", "dev/synapse/views.sql"],
+  ["adf-duckdb", "dev/duckdb/run.sql"],
+  ["adf-files", "dev/pipeline"],
+])("lands with ADF and builds the %s destination's files", (via, generated) => {
+  const cwd = mkdtempSync(join(tmpdir(), "dynamic-destination-"));
+  const io = { cwd, write: () => {} };
+  const args = ["--connector", "postgresql", "--connectivity", "private", "--via", via, "--yes"];
+  expect(run(["init", "project", ...args], io)).toBe(0);
+  expect(
+    run(["apply", "--definitions", "project", "--out", "project/build", "--no-diff"], io),
+  ).toBe(0);
+  expect(existsSync(join(cwd, "project/build", generated))).toBe(true);
+  expect(existsSync(join(cwd, "project/build/dev/databricks.yml"))).toBe(false);
+});

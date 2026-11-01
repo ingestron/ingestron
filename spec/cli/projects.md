@@ -6,10 +6,27 @@ selects a connector, network reachability, a supported ingestion route, one
 standard, then configuration values. Connector categories organise discovery;
 capability and maturity come from the selected pack's existing metadata.
 
-`--connector`, `--connectivity` and `--via` (`databricks` or `adf`) provide the
-same choices non-interactively. Databricks means direct ingestion and storage;
-ADF means ADF ingestion with Databricks downstream. ADF alone is not offered
-as a complete data-platform project. Only routes whose method reads the
+`--connector`, `--connectivity` and `--via` provide the same choices
+non-interactively. `databricks` means direct ingestion and storage. Every ADF
+route lands the source's data with ADF, then:
+
+- `adf`: Databricks reads them into tables (`packs: [databricks@1, adf@1]`);
+- `adf-synapse`: Synapse serverless SQL shows them as views (`packs:
+[synapse@1, adf@1]`, `store: { default: synapse-view }`, with
+  `synapse-view`'s data source at the landing storage);
+- `adf-duckdb`: DuckDB builds tables from them and publishes Parquet (`packs:
+[duckdb@1, adf@1]`, with `duckdb-table`'s `published` folder beside the
+  landing), started after the copies by a Container Apps job when the user
+  sets `after_copy`;
+- `adf-files`: the flows end at the landed files (`packs: [adf@1]`, `store: {
+default: none }`), for reports that read the files.
+
+`adf-synapse` and `adf-duckdb` are offered only where ADF copies tables (its
+methods that land typed files under the contract's names), not where it copies
+files as they are; `adf-synapse` not for Microsoft 365, which lands JSON. Their
+ADF copies land one file per table replaced by each load (`layout: snapshot`),
+unless a flow copies windows (`mode: incremental`, or a date filter), whose
+files must all be kept. Only routes whose method reads the
 connector and supports the connectivity can be selected. The standard must
 contain and permit the selected method; ordinary resolution is authoritative.
 One standard can configure both packs. No independent per-platform standard
