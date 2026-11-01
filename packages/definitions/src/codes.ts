@@ -57,6 +57,11 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
       "In an environment that runs on a pack, a table whose ingest lands no files is left out, with the transforms that read it.",
     fix: "Nothing, if the table is not needed there; otherwise land its files with a method that does.",
   },
+  TRANSFORM_COLUMNS: {
+    meaning:
+      "A transform's query returns a column its contract does not name, which is not kept, or does not return one the contract names. A warning; it is checked only when the query's columns can be read from its outermost SELECT.",
+    fix: "Add the column to the contract, or change the query to return the contract's columns.",
+  },
   SETTINGS_UNUSED: {
     meaning:
       "Settings are written for a step the table does not have: serve settings when nothing chooses a serve method, or store settings when the flow ends at the landed files.",
