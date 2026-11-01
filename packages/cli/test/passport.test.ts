@@ -139,6 +139,44 @@ describe("passports", () => {
     );
   });
 
+  it("lists rules nothing checks, with why", () => {
+    const folder = project((root) => {
+      const file = join(root, "contracts/daily_sales.yaml");
+      const rules = [
+        "    quality:",
+        "      - { type: text, name: whole_days, description: Each day is a whole calendar day. }",
+        "      - { type: library, metric: rowCount, mustBeGreaterThan: 0 }",
+        "",
+      ].join("\n");
+      writeFileSync(
+        file,
+        readFileSync(file, "utf8").replace("    properties:\n", `${rules}    properties:\n`),
+      );
+    });
+    const page = passports(model(folder))["sales.md"]!;
+    expect(page).toContain(
+      "- `whole_days`: Each day is a whole calendar day. Not checked: it is written for people to follow.",
+    );
+    expect(page).toMatch(/- `daily_sales_rowcount`: Not checked: it counts all rows/);
+  });
+
+  it("writes a URN id's passport under a safe file name, and links to it", () => {
+    const folder = project((root) => {
+      const file = join(root, "contracts/sales.product.yaml");
+      writeFileSync(
+        file,
+        readFileSync(file, "utf8").replace("id: sales", 'id: "urn:product:sales"'),
+      );
+    });
+    const files = passports(model(folder));
+    expect(Object.keys(files).sort()).toEqual([
+      "README.md",
+      "customers.md",
+      "urn-product-sales.md",
+    ]);
+    expect(files["README.md"]).toContain("[Daily sales](urn-product-sales.md)");
+  });
+
   it("lists every product in the index", () => {
     const index = passports(model(project()))["README.md"]!;
     expect(index).toContain("[Customers](customers.md)");
