@@ -609,6 +609,7 @@ export interface Step {
 
 // @public
 export interface StepOutput {
+    columns?: Column[];
     // (undocumented)
     format: "parquet" | "json" | "csv" | "delta";
     loads: "replace" | "add";

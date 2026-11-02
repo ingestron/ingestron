@@ -99,6 +99,29 @@ describe("passports", () => {
     expect(page).toContain("marketing-analysts");
   });
 
+  it("lists the columns the landed files add after the contract's", () => {
+    const resolved = model(project());
+    const table = resolved.tables.find((item) => item.name === "customers")!;
+    table.ingest!.output = {
+      location: "abfss://landing@acct.dfs.core.windows.net/shop/customers/*.parquet",
+      format: "parquet",
+      loads: "add",
+      columns: [
+        {
+          name: "_loaded_at",
+          logicalType: "timestamp",
+          nullable: false,
+          description: "Added by ADF: the run's trigger time.",
+        },
+      ],
+    };
+    const page = passports(resolved)["customers.md"]!;
+    expect(page).toContain(
+      "| _loaded_at | Added by ADF: the run's trigger time. | timestamp | yes |  |  |",
+    );
+    expect(page.indexOf("| _loaded_at |")).toBeGreaterThan(page.indexOf("| email |"));
+  });
+
   it("escapes table cells", () => {
     expect(passports(model(project()))["sales.md"]).toContain("a \\| b c");
   });
