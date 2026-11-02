@@ -13,6 +13,11 @@ standard can require each one's owner, purpose, column classifications and
 who may use sensitive data, and every run writes a plain-language passport per
 product beside the pipelines.
 
+The ADF pack's design settings shape the generated pipelines from the standard:
+one Copy per table or one ForEach over the table list, the Copy activity's
+retries and timeout, audit columns that every engine keeps, and factory folders
+and annotations.
+
 ```sh
 npx ingestron@1 init demo --template minimal --yes
 cd demo
