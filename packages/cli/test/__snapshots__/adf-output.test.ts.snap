@@ -99,9 +99,11 @@ exports[`keeps the ADF files generated for private-files > dev 1`] = `
   "pipeline/pl_stores_share.json": "{
 	"name": "pl_stores_share",
 	"properties": {
+		"description": "Copies 2 tables from share to landing, each with its own Copy activity.",
 		"activities": [
 			{
 				"name": "copy_sales",
+				"description": "Copies the files of sales to landing as they are.",
 				"type": "Copy",
 				"inputs": [
 					{
@@ -143,6 +145,7 @@ exports[`keeps the ADF files generated for private-files > dev 1`] = `
 			},
 			{
 				"name": "copy_stock",
+				"description": "Copies the files of stock to landing as they are.",
 				"type": "Copy",
 				"inputs": [
 					{
@@ -327,9 +330,11 @@ exports[`keeps the ADF files generated for private-files > prod 1`] = `
   "pipeline/pl_stores_share.json": "{
 	"name": "pl_stores_share",
 	"properties": {
+		"description": "Copies 2 tables from share to landing, each with its own Copy activity.",
 		"activities": [
 			{
 				"name": "copy_sales",
+				"description": "Copies the files of sales to landing as they are.",
 				"type": "Copy",
 				"inputs": [
 					{
@@ -371,6 +376,7 @@ exports[`keeps the ADF files generated for private-files > prod 1`] = `
 			},
 			{
 				"name": "copy_stock",
+				"description": "Copies the files of stock to landing as they are.",
 				"type": "Copy",
 				"inputs": [
 					{
@@ -465,7 +471,9 @@ exports[`keeps the ADF files generated for private-sql-server > dev 1`] = `
 		"linkedServiceName": {
 			"referenceName": "ls_erp_erp_erp",
 			"type": "LinkedServiceReference"
-		}
+		},
+		"schema": [],
+		"typeProperties": {}
 	}
 }
 ",
@@ -553,9 +561,11 @@ exports[`keeps the ADF files generated for private-sql-server > dev 1`] = `
   "pipeline/pl_erp_erp.json": "{
 	"name": "pl_erp_erp",
 	"properties": {
+		"description": "Copies 2 tables from erp to landing, one Copy activity per table.",
 		"activities": [
 			{
 				"name": "copy_customers",
+				"description": "Copies erp.dbo.Customers to landing as Parquet.",
 				"type": "Copy",
 				"inputs": [
 					{
@@ -594,6 +604,7 @@ exports[`keeps the ADF files generated for private-sql-server > dev 1`] = `
 			},
 			{
 				"name": "copy_invoices",
+				"description": "Copies erp.dbo.Invoices to landing as Parquet.",
 				"type": "Copy",
 				"inputs": [
 					{
@@ -685,7 +696,9 @@ exports[`keeps the ADF files generated for private-sql-server > prod 1`] = `
 		"linkedServiceName": {
 			"referenceName": "ls_erp_erp_erp",
 			"type": "LinkedServiceReference"
-		}
+		},
+		"schema": [],
+		"typeProperties": {}
 	}
 }
 ",
@@ -773,9 +786,11 @@ exports[`keeps the ADF files generated for private-sql-server > prod 1`] = `
   "pipeline/pl_erp_erp.json": "{
 	"name": "pl_erp_erp",
 	"properties": {
+		"description": "Copies 2 tables from erp to landing, one Copy activity per table.",
 		"activities": [
 			{
 				"name": "copy_customers",
+				"description": "Copies erp.dbo.Customers to landing as Parquet.",
 				"type": "Copy",
 				"inputs": [
 					{
@@ -814,6 +829,7 @@ exports[`keeps the ADF files generated for private-sql-server > prod 1`] = `
 			},
 			{
 				"name": "copy_invoices",
+				"description": "Copies erp.dbo.Invoices to landing as Parquet.",
 				"type": "Copy",
 				"inputs": [
 					{
