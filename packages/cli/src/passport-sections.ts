@@ -2,6 +2,7 @@
 // sections 3 to 7): its tables, columns, quality, freshness and access.
 import {
   fullNameText,
+  type Column,
   type Contract,
   type ResolvedModel,
   type ResolvedProduct,
@@ -74,6 +75,14 @@ export function columns(model: ResolvedModel, product: ResolvedProduct): string 
   const parts = outputTables(model, product).map(({ output, tables }) => {
     const contract = tables[0]?.contract;
     if (!contract) return `### ${output.name}\n\nNot built in this environment.`;
+    const landed = landedColumns(tables[0]!).map((column) => [
+      column.name,
+      column.description ?? "",
+      column.type ?? column.logicalType ?? "",
+      column.nullable ? "" : "yes",
+      "",
+      "",
+    ]);
     const rows = contract.columns.map((column) => {
       const kind = column.classification;
       const marked = kind && sensitive.includes(kind) ? `${kind} (sensitive)` : kind;
@@ -87,7 +96,7 @@ export function columns(model: ResolvedModel, product: ResolvedProduct): string 
       ];
     });
     const header = ["Column", "Description", "Type", "Required", "Key", "Classification"];
-    return `### ${output.name}\n\n${table(header, rows)}`;
+    return `### ${output.name}\n\n${table(header, [...rows, ...landed])}`;
   });
   return ["## Columns", ...parts].join("\n\n");
 }
@@ -156,4 +165,9 @@ export function access(model: ResolvedModel, product: ResolvedProduct): string {
 function contracts(model: ResolvedModel, product: ResolvedProduct): Contract[] {
   const found = outputTables(model, product).flatMap(({ tables }) => tables.map((t) => t.contract));
   return found.filter((item, index) => found.findIndex((other) => other.id === item.id) === index);
+}
+
+/** Columns the table's landed files add beyond the contract; a transform's table has none. */
+function landedColumns(built: ResolvedTable): Column[] {
+  return built.transform ? [] : (built.ingest?.output?.columns ?? []);
 }

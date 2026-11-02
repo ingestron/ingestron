@@ -1,6 +1,6 @@
 // What a pack declares: its methods, its smart defaults and how it builds files.
 import type { JsonSchema } from "@ingestron/config";
-import type { ResolvedModel, ResolvedTable } from "./model.js";
+import type { Column, ResolvedModel, ResolvedTable } from "./model.js";
 
 /** The steps a table goes through. */
 export type Action = "ingest" | "transform" | "store" | "serve";
@@ -67,6 +67,11 @@ export interface StepOutput {
   format: "parquet" | "json" | "csv" | "delta";
   /** `replace`: each run replaces what is there; `add`: each run adds files. */
   loads: "replace" | "add";
+  /**
+   * Columns the files carry beyond the contract, in order, such as the audit
+   * columns ADF adds; packs that read the files keep them after the contract's.
+   */
+  columns?: Column[];
 }
 
 /** Name patterns (Liquid). */
