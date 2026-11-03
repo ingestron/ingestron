@@ -16,6 +16,7 @@ const folders: string[] = [];
 const starters = [
   { template: "sql-server", flow: "flows/erp.yaml", source: "erp", table: "customers" },
   { template: "kafka", flow: "flows/events.yaml", source: "events", table: "page_views" },
+  { template: "private-sql-server", flow: "flows/erp.yaml", source: "erp", table: "customers" },
 ];
 
 /** A copy of the starter, with its flow's source read from ${envvar:INGT_SRC} unless `asWritten`. */
