@@ -11,3 +11,10 @@ export function withoutEnvFiles(files: FileSource): FileSource {
     ...(files.size && { size: (path) => (envFile.test(path) ? undefined : files.size!(path)) }),
   };
 }
+
+/** True for a secret reference, or a list or object holding one: its name is not shown either. */
+export function holdsSecret(value: unknown): boolean {
+  if (value === null || typeof value !== "object") return false;
+  if ("$secret" in value) return true;
+  return Object.values(value).some(holdsSecret);
+}

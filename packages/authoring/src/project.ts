@@ -11,6 +11,7 @@ import {
 import { packs } from "@ingestron/cli";
 import { kinds, resolveDefinitions } from "@ingestron/definitions";
 import { parse } from "yaml";
+import { withoutEnvFiles } from "./without-env-files.js";
 
 /** A project folder, its files and the environments it declares. */
 export interface Project {
@@ -91,6 +92,33 @@ export function resolved(
       ...(environment && { environment }),
       // VS Code's environment, which the extension host shares; unset variables are advice.
       envvars: process.env,
+      missingEnvvars: "information",
+    });
+    byEnvironment.set(key, result);
+  }
+  return result;
+}
+
+const displays = new WeakMap<Project, Map<string, ReturnType<typeof resolveDefinitions>>>();
+
+/**
+ * The project resolved as hovers and labels may show it: no `.env` file and no host
+ * environment, so a setting written with `${envvar:X}` stays that text and no value from
+ * either place reaches a screen. Problems use {@link resolved}, which needs the real values.
+ */
+export function resolvedForDisplay(
+  project: Project,
+  environment: string | undefined,
+): ReturnType<typeof resolveDefinitions> {
+  let byEnvironment = displays.get(project);
+  if (!byEnvironment) displays.set(project, (byEnvironment = new Map()));
+  const key = environment ?? "";
+  let result = byEnvironment.get(key);
+  if (!result) {
+    result = resolveDefinitions(withoutEnvFiles(project.files), {
+      packs,
+      ...(environment && { environment }),
+      envvars: {},
       missingEnvvars: "information",
     });
     byEnvironment.set(key, result);

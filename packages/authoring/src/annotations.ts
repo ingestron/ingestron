@@ -4,8 +4,8 @@ import { resolveProject, type DefinitionDocument } from "@ingestron/config";
 import { kinds, NO_STORE, type ChosenBy, type ResolvedTable } from "@ingestron/definitions";
 import { targetOf } from "./target.js";
 import { generatedFiles, generatedForTable } from "./preview.js";
-import { resolved, type Project } from "./project.js";
-import { withoutEnvFiles } from "./without-env-files.js";
+import { resolvedForDisplay, type Project } from "./project.js";
+import { holdsSecret, withoutEnvFiles } from "./without-env-files.js";
 import { resolveText } from "./references.js";
 import { allSpots, positionAt, rangeOf } from "./yaml.js";
 
@@ -89,7 +89,7 @@ function variables(
       const shown = typeof value === "string" ? value : JSON.stringify(value);
       // A value written with ${envvar:…} or ${secret:…}, reached through values or a file,
       // stays as its reference here: no annotation says more than that.
-      if (hidden.test(shown)) return [];
+      if (hidden.test(shown) || holdsSecret(value)) return [];
       // One line beside the value; the tooltip keeps the lines.
       const flat = shown.replace(/\s+/g, " ").trim();
       const label = `= ${flat.length > 80 ? `${flat.slice(0, 79)}…` : flat}`;
@@ -146,7 +146,7 @@ function tablesIn(
   text: string,
   environment: string | undefined,
 ): { line: number; table: ResolvedTable }[] {
-  const model = resolved(project, environment).model;
+  const model = resolvedForDisplay(project, environment).model;
   if (!model) return [];
   const lineOf = (pointer: string, part: "key" | "value" = "key") => {
     const range = rangeOf(text, pointer, part);
