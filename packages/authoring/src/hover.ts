@@ -11,7 +11,7 @@ import { resolvedForDisplay, type Project } from "./project.js";
 import { holdsSecret } from "./without-env-files.js";
 import { schemaFor, schemasAt } from "./schema.js";
 import { spotAt, type Spot } from "./yaml.js";
-import { targetOf } from "./target.js";
+import { stepsNotKnown, targetOf } from "./target.js";
 
 const actions = ["ingest", "transform", "store", "serve"] as const;
 
@@ -148,7 +148,7 @@ function explainTable(
   const target = table.endsAtFiles
     ? `\`${targetOf(table)}\``
     : `\`${catalog}\`.\`${schema}\`.\`${tableName}\``;
-  return [`**\`${name}\`** → ${target}`, ...steps].join("\n\n");
+  return [`**\`${name}\`** → ${target}`, ...stepsNotKnown(table, true), ...steps].join("\n\n");
 }
 
 /** A step's method, then the settings something chose, then the pack's defaults on one line. */
