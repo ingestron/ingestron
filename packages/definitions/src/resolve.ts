@@ -33,6 +33,11 @@ export interface ResolveOptions {
   environment?: string;
   /** Environment variables for `${envvar:…}`. */
   envvars?: Readonly<Record<string, string | undefined>>;
+  /**
+   * What a `${envvar:…}` that is set nowhere is: an error (the default), or
+   * information that leaves the project loading, for an editor.
+   */
+  missingEnvvars?: "error" | "information";
 }
 
 /** The model when there are no errors, and every diagnostic. */
@@ -54,6 +59,7 @@ export function resolveDefinitions(files: FileSource, options: ResolveOptions): 
     kinds: allKinds,
     environment: options.environment,
     envvars: options.envvars ?? {},
+    ...(options.missingEnvvars && { missingEnvvars: options.missingEnvvars }),
   });
   return withPlaceholders(
     files,
@@ -95,6 +101,7 @@ export function loadDefinitions(folder: string, options: ResolveOptions): Resolv
     kinds: allKinds,
     environment: options.environment,
     envvars: options.envvars,
+    ...(options.missingEnvvars && { missingEnvvars: options.missingEnvvars }),
   });
   return withPlaceholders(
     nodeFiles(folder),
