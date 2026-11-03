@@ -10,7 +10,14 @@ import { projectProblem } from "./init-preflight.js";
 import type { Content } from "./scaffold.js";
 import { generate } from "./generate.js";
 import type { Io } from "./io.js";
-import { nameProblem, projectId, scaffoldFiles, writeScaffold, type Answers } from "./scaffold.js";
+import {
+  ignoredText,
+  nameProblem,
+  projectId,
+  scaffoldFiles,
+  writeScaffold,
+  type Answers,
+} from "./scaffold.js";
 import { standardSource, templateSource } from "./sources.js";
 import { type Question, type Template } from "./templates.js";
 
@@ -153,7 +160,7 @@ function create(
     return 1;
   }
   io.write(
-    `Created ${shown} from ${options.init.template ? "the template " : ""}${template.name} (${result.written.length} files).\n\n`,
+    `Created ${shown} from ${options.init.template ? "the template " : ""}${template.name} (${result.written.length} files)${ignoredText(result.ignored)}.\n\n`,
   );
   const plan = {
     command: "plan" as const,
