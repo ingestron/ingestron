@@ -1,0 +1,57 @@
+description: Environment file details; CRLF and a byte order mark, repeated names, empty values falling through, comments, quotes and escapes.
+environment: dev
+envvars: {}
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    environments:
+      dev: {}
+    imports: ["*.pipeline.yaml"]
+  .env: "﻿FIRST=one\r\nQUOTED=\"two\"\r\nREPEAT=first\r\nREPEAT=last\r\nFALL_EMPTY=fromenv\r\nFALL_COMMENT=fromenv\r\n"
+  .env.dev: |
+    FALL_EMPTY=
+    FALL_COMMENT= #x
+    HASH=#x
+    E1="a\"b"
+    E2="c\\d"
+    E3="e\tf"
+    AFTER_QUOTE='a'#x
+    SPACED = spaced
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    first: ${envvar:FIRST}
+    quoted: ${envvar:QUOTED}
+    repeat: ${envvar:REPEAT}
+    fallEmpty: ${envvar:FALL_EMPTY}
+    fallComment: ${envvar:FALL_COMMENT}
+    hash: ${envvar:HASH}
+    e1: ${envvar:E1}
+    e2: ${envvar:E2}
+    e3: ${envvar:E3}
+    afterQuote: ${envvar:AFTER_QUOTE}
+    spaced: ${envvar:SPACED}
+expect:
+  documents:
+    - kind: Pipeline
+      id: a
+      value:
+        apiVersion: example.dev/v1
+        kind: Pipeline
+        id: a
+        first: one
+        quoted: two
+        repeat: last
+        fallEmpty: fromenv
+        fallComment: fromenv
+        hash: "#x"
+        e1: 'a"b'
+        e2: 'c\d'
+        e3: 'e\tf'
+        afterQuote: a
+        spaced: spaced
