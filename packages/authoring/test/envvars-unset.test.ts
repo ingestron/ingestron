@@ -17,7 +17,7 @@ let previous: string | undefined;
 
 /** The private-files starter, whose adf-files key_vault must match a pattern, read from ${envvar:…}. */
 function workspace(files: Record<string, string> = {}): string {
-  const folder = mkdtempSync(join(tmpdir(), "ingestron-authoring-placeholders-"));
+  const folder = mkdtempSync(join(tmpdir(), "ingestron-authoring-unset-"));
   folders.push(folder);
   cpSync(template, folder, { recursive: true, filter: (path) => !path.includes("/build") });
   const project = join(folder, "project.yaml");
@@ -45,7 +45,7 @@ afterEach(() => {
 
 const flow = "flows/stores.yaml";
 
-describe("a placeholder in a pack setting", () => {
+describe("an unset reference in a pack setting", () => {
   it("an unset variable in a patterned pack setting gives only information", () => {
     const found = problems(openProject(workspace(), new Map()), "dev");
     expect(found.map(({ code, severity }) => ({ code, severity }))).toEqual([

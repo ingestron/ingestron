@@ -125,7 +125,7 @@ selected, then `.env`. Both files sit in the project folder and hold
 `NAME=value` lines. An empty value counts as unset. A variable set nowhere is
 an `ENVVAR_MISSING` error. An editor can pass `missingEnvvars: "information"`
 instead: the problem is then information, the reference stays as written, and
-nothing is checked against that text (`project.placeholders` lists it).
+nothing is checked against that text (`project.unsetEnvvars` lists it).
 
 ## Documentation
 

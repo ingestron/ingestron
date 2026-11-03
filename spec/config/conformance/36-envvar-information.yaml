@@ -25,4 +25,4 @@ expect:
         url: "${envvar:NOPE}"
   diagnostics:
     - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 4 }
-  placeholders: ["${envvar:NOPE}"]
+  unsetEnvvars: ["${envvar:NOPE}"]

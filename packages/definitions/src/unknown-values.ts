@@ -1,25 +1,26 @@
-// Values not known yet: text that holds a placeholder the loader left for an unset
-// variable (specification section 1; spec/config/syntax.md section 5.1).
+// Values not known yet: text that holds an unset reference, the text the loader left
+// for a `${envvar:…}` whose variable is set nowhere (specification section 1;
+// spec/config/syntax.md section 5.1).
 import type { Project } from "@ingestron/config";
 import type { Source } from "./diagnostics.js";
 
-/** True for text that holds one of the project's placeholders, or a list or mapping holding such text. */
-export function holdsPlaceholder(project: Project, value: unknown): boolean {
-  if (project.placeholders.length === 0) return false;
-  return holds(project.placeholders, value, new Set());
+/** True for text that holds one of the project's unset references, or a list or mapping holding such text. */
+export function holdsUnsetEnvvar(project: Project, value: unknown): boolean {
+  if (project.unsetEnvvars.length === 0) return false;
+  return holds(project.unsetEnvvars, value, new Set());
 }
 
-function holds(placeholders: readonly string[], value: unknown, seen: Set<object>): boolean {
-  if (typeof value === "string") return placeholders.some((text) => value.includes(text));
+function holds(references: readonly string[], value: unknown, seen: Set<object>): boolean {
+  if (typeof value === "string") return references.some((text) => value.includes(text));
   if (value === null || typeof value !== "object" || seen.has(value)) return false;
   seen.add(value);
-  return Object.values(value).some((child) => holds(placeholders, child, seen));
+  return Object.values(value).some((child) => holds(references, child, seen));
 }
 
-/** True when the value written at `at` is text that holds a placeholder. */
-export function placeholderAt(project: Project, at: Source): boolean {
+/** True when the value written at `at` is text that holds an unset reference. */
+export function unsetEnvvarAt(project: Project, at: Source): boolean {
   const value = valueAt(at.document.value, at.pointer);
-  return typeof value === "string" && holdsPlaceholder(project, value);
+  return typeof value === "string" && holdsUnsetEnvvar(project, value);
 }
 
 /** The value at a JSON Pointer, or undefined when there is none. */
