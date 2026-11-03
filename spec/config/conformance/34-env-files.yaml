@@ -59,3 +59,4 @@ expect:
         literal: "$BASE"
         url: "https://x/y#frag"
         pair: "a=b;c=d"
+  diagnostics: []

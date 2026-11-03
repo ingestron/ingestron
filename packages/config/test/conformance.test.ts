@@ -17,6 +17,7 @@ interface ConformanceCase {
   description: string;
   environment?: string;
   envvars?: Record<string, string>;
+  missingEnvvars?: "error" | "information";
   limits?: Partial<Limits>;
   kinds?: {
     apiVersion: string;
@@ -43,6 +44,7 @@ describe("conformance", () => {
       kinds: (testCase.kinds ?? []).map((kind) => defineKind(kind)),
       environment: testCase.environment,
       envvars: testCase.envvars ?? {},
+      missingEnvvars: testCase.missingEnvvars,
       limits: testCase.limits,
     });
 

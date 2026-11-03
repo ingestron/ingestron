@@ -45,7 +45,7 @@ export interface Diagnostic {
 }
 
 // @public
-export type DiagnosticCode = "YAML_SYNTAX" | "UNSAFE_KEY" | "MISSING_FILE" | "FILE_TOO_LARGE" | "PATH_OUTSIDE_PROJECT" | "INCLUDE_CYCLE" | "INCLUDE_TOO_DEEP" | "INCLUDE_LIMIT" | "ALIAS_LIMIT" | "BAD_POINTER" | "UNCLOSED_REFERENCE" | "UNKNOWN_REFERENCE" | "BAD_ARGUMENT" | "UNKNOWN_VALUE" | "VALUES_SELF_REFERENCE" | "NO_ENVIRONMENT" | "UNKNOWN_ENVIRONMENT" | "ENVVAR_MISSING" | "NOT_TEXT" | "SECRET_IN_TEXT" | "MISSING_HEADER" | "UNKNOWN_KIND" | "DUPLICATE_ID" | "SCHEMA" | "BROKEN_LINK" | "NO_MATCH";
+export type DiagnosticCode = "YAML_SYNTAX" | "UNSAFE_KEY" | "MISSING_FILE" | "FILE_TOO_LARGE" | "PATH_OUTSIDE_PROJECT" | "INCLUDE_CYCLE" | "INCLUDE_TOO_DEEP" | "INCLUDE_LIMIT" | "ALIAS_LIMIT" | "BAD_POINTER" | "UNCLOSED_REFERENCE" | "UNKNOWN_REFERENCE" | "BAD_ARGUMENT" | "UNKNOWN_VALUE" | "VALUES_SELF_REFERENCE" | "NO_ENVIRONMENT" | "UNKNOWN_ENVIRONMENT" | "ENVVAR_MISSING" | "ENV_FILE_LINE" | "NOT_TEXT" | "SECRET_IN_TEXT" | "MISSING_HEADER" | "UNKNOWN_KIND" | "DUPLICATE_ID" | "SCHEMA" | "BROKEN_LINK" | "NO_MATCH";
 
 // @public
 export interface FileSource {
@@ -124,6 +124,7 @@ export interface LoadOptions {
     kinds: readonly KindDefinition<any>[];
     limits?: Partial<Limits>;
     manifest?: string;
+    missingEnvvars?: "error" | "information";
 }
 
 // @public
@@ -176,7 +177,7 @@ export interface SecretReference {
 }
 
 // @public
-export type Severity = "error" | "warning";
+export type Severity = "error" | "warning" | "information";
 
 // @public
 export interface TextEdit {

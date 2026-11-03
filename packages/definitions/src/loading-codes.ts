@@ -94,8 +94,15 @@ export const loadingCodeHelp: Record<
   },
   ENVVAR_MISSING: {
     stage: "References",
-    meaning: "A `${envvar:\u2026}` names an unset or empty environment variable.",
-    fix: "Set the variable before running the command.",
+    meaning:
+      "A `${envvar:\u2026}` names a variable that is unset or empty in the environment, `.env.<environment>` and `.env`.",
+    fix: "Set the variable before running the command, or add it to `.env.<environment>` or `.env`.",
+  },
+  ENV_FILE_LINE: {
+    stage: "Files and YAML",
+    meaning:
+      "A line in `.env` or `.env.<environment>` is not a setting, so it is ignored. The message names the file and line, never the value.",
+    fix: "Write `NAME=value`, close any quote, or start the line with `#` to make it a comment.",
   },
   NOT_TEXT: {
     stage: "References",

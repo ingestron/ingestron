@@ -10,7 +10,7 @@ import { positionAt } from "./yaml.js";
 /** A problem on the cursor's line, explained. */
 export interface ProblemEntry {
   code: string;
-  severity: "error" | "warning";
+  severity: "error" | "warning" | "information";
   message: string;
   /** The problem's own hint, such as the fields that are allowed. */
   hint?: string;
