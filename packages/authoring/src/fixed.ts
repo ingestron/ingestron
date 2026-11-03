@@ -4,7 +4,8 @@
 import type { Suggestion } from "./completion.js";
 import type { Place } from "./context.js";
 import { settingsAt } from "./fields.js";
-import { loadedDocuments, type Project } from "./project.js";
+import { documentsOf, type Project } from "./project.js";
+import { holdsSecret } from "./without-env-files.js";
 
 /** `items` with the fixed value first and the others marked, or unchanged when nothing is fixed here. */
 export function markFixed(
@@ -37,16 +38,19 @@ function fixedValue(project: Project, place: Place, environment: string | undefi
     standardFixed(project, environment, action)?.[settings.method],
     settings.rest,
   );
-  return typeof value === "object" ? undefined : value;
+  // An object is not a single value; a variable or secret is never shown, so it is not marked.
+  if (typeof value === "object" || holdsSecret(value)) return undefined;
+  return typeof value === "string" && /\$\{(secret|envvar):/.test(value) ? undefined : value;
 }
 
-/** The standard's `<action>.fixed`, as resolved for the environment, so `${values.…}` is the value that applies. */
+/** The standard's `<action>.fixed`, as resolved for the environment, so `${values.…}` is the value that applies.
+ * Loaded without .env files or the host environment: what they hold is never shown. */
 function standardFixed(
   project: Project,
   environment: string | undefined,
   action: string,
 ): Record<string, unknown> | undefined {
-  const standard = loadedDocuments(project, environment)?.find(
+  const standard = documentsOf(project, environment).find(
     (document) => document.kind === "Standard",
   )?.value as Record<string, { fixed?: Record<string, unknown> } | undefined> | undefined;
   return standard?.[action]?.fixed;

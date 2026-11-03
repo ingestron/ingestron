@@ -126,6 +126,35 @@ export function resolvedForDisplay(
   return result;
 }
 
+const loads = new WeakMap<Project, Map<string, DefinitionDocument[]>>();
+
+/**
+ * The project's documents with `${…}` resolved, once per project snapshot and environment, as
+ * hovers, labels and completion may show them: see {@link resolvedForDisplay}.
+ */
+export function documentsOf(
+  project: Project,
+  environment: string | undefined,
+): DefinitionDocument[] {
+  let byEnvironment = loads.get(project);
+  if (!byEnvironment) loads.set(project, (byEnvironment = new Map()));
+  const key = environment ?? "";
+  let documents = byEnvironment.get(key);
+  if (!documents) {
+    // Nothing shown sees an environment variable's value: the host's is left out and
+    // .env files are not read, so an unset variable resolves to its own reference.
+    const loaded = resolveProject(withoutEnvFiles(project.files), {
+      kinds: Object.values(kinds),
+      ...(environment && { environment }),
+      envvars: {},
+      missingEnvvars: "information",
+    });
+    documents = loaded.ok ? [...loaded.project.documents] : [];
+    byEnvironment.set(key, documents);
+  }
+  return documents;
+}
+
 const loadings = new WeakMap<Project, Map<string, readonly DefinitionDocument[] | undefined>>();
 
 /**
