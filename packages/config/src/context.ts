@@ -13,7 +13,7 @@ export interface LoadContext {
   limits: Limits;
   envvars: Readonly<Record<string, string | undefined>>;
   /** Where each of `envvars` came from: `host`, `.env.<environment>` or `.env` (spec §4.6). */
-  envvarsSetIn: Readonly<Record<string, string>>;
+  envvarsSetIn: Readonly<Record<string, NonNullable<EnvvarReference["setIn"]>>>;
   /** What an unset `${envvar:…}` is: an error, or information that lets the load go on. */
   missingEnvvars: "error" | "information";
   /** The selected environment, for messages that tell a person which `.env` file to use. */

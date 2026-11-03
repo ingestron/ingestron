@@ -52,7 +52,7 @@ export interface EnvvarReference {
     file: string;
     name: string;
     pointer: string;
-    setIn?: string;
+    setIn?: "host" | ".env" | `.env.${string}`;
 }
 
 // @public
