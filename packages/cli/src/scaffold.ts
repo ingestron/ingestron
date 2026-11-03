@@ -47,18 +47,56 @@ export function scaffoldFiles(
 }
 
 const envIgnores = [".env", ".env.*", "!.env.example"];
+const envComment = "# Values for ${envvar:…}: keep them out of Git; commit a .env.example instead.";
 
 /**
- * A .gitignore that keeps `.env` files out of Git, whatever the template
- * ignores already. Left as it is when it has all three lines; otherwise the
- * block is added at the end, so `!.env.example` still follows `.env.*`.
+ * A .gitignore that keeps `.env` files out of Git, whatever the file ignores
+ * already: only the missing lines are added, at the end and in the file's own
+ * line ending. `!.env.example` always follows `.env.*`, so it is added again
+ * when it sits before it.
  */
 export function withEnvIgnores(text: string | undefined): string {
+  const eol = text?.includes("\r\n") ? "\r\n" : "\n";
   const lines = (text ?? "").split(/\r?\n/).map((line) => line.trim());
-  if (envIgnores.every((line) => lines.includes(line))) return text!;
-  const block = `# Values for \${envvar:…}: keep them out of Git; commit a .env.example instead.\n${envIgnores.join("\n")}\n`;
-  if (!text) return block;
-  return `${text.endsWith("\n") ? text : `${text}\n`}\n${block}`;
+  const added = missingEnvLines(lines);
+  if (added.length === 0) return text!;
+  if (!text) return [envComment, ...added, ""].join(eol);
+  const base = text.endsWith("\n") ? text : `${text}${eol}`;
+  // A comment explains the lines only when none of them is there already.
+  const fresh = envIgnores.every((line) => !lines.includes(line));
+  return `${base}${fresh ? eol + envComment + eol : ""}${added.join(eol)}${eol}`;
+}
+
+/** The .env lines to add to a file with these trimmed lines, in the order they must follow. */
+function missingEnvLines(lines: string[]): string[] {
+  const [env, glob, keep] = envIgnores as [string, string, string];
+  const addGlob = !lines.includes(glob);
+  // The exception must come after .env.* or the glob ignores .env.example again.
+  const addKeep = addGlob || lines.lastIndexOf(keep) < lines.lastIndexOf(glob);
+  return [
+    ...(lines.includes(env) ? [] : [env]),
+    ...(addGlob ? [glob] : []),
+    ...(addKeep || !lines.includes(keep) ? [keep] : []),
+  ];
+}
+
+/**
+ * The existing .gitignore with what a new project's file adds: its own lines that are
+ * missing, then the .env lines. The new file's .env lines and their comment are left to
+ * {@link withEnvIgnores}, which knows where they must go.
+ */
+function mergedGitignore(existing: string, added: string): string {
+  const eol = existing.includes("\r\n") ? "\r\n" : "\n";
+  const have = new Set(existing.split(/\r?\n/).map((line) => line.trim()));
+  const missing = added
+    .split(/\r?\n/)
+    .filter(
+      (line) => line.trim() !== "" && line !== envComment && !envIgnores.includes(line.trim()),
+    )
+    .filter((line) => !have.has(line.trim()));
+  const base =
+    missing.length === 0 || existing.endsWith("\n") || existing === "" ? existing : existing + eol;
+  return withEnvIgnores(base + missing.map((line) => line + eol).join(""));
 }
 
 /**
@@ -71,14 +109,34 @@ export function writeScaffold(
   files: Record<string, Content>,
 ): { written: string[] } | { clashes: string[] } {
   const paths = Object.keys(files).sort();
-  const clashes = [...new Set(paths.flatMap((path) => inTheWay(target, path)))].sort();
+  // A .gitignore that is already there is added to, never replaced.
+  const merged = new Map<string, string>();
+  for (const path of paths) {
+    const existing = path === ".gitignore" ? regularFileText(join(target, path)) : undefined;
+    if (existing !== undefined)
+      merged.set(path, mergedGitignore(existing, files[path]!.toString()));
+  }
+  const clashes = [
+    ...new Set(paths.filter((path) => !merged.has(path)).flatMap((path) => inTheWay(target, path))),
+  ].sort();
   if (clashes.length > 0) return { clashes };
   for (const path of paths) {
+    const text = merged.get(path);
+    if (text !== undefined) {
+      writeFileSync(join(target, path), text);
+      continue;
+    }
     mkdirSync(dirname(join(target, path)), { recursive: true });
     // "wx": never replace a file that appeared after the check.
     writeFileSync(join(target, path), files[path]!, { flag: "wx" });
   }
   return { written: paths };
+}
+
+/** The text of a regular file, not a link; undefined when there is none, or something else is. */
+function regularFileText(path: string): string | undefined {
+  const stat = lstatSync(path, { throwIfNoEntry: false });
+  return stat?.isFile() ? readFileSync(path, "utf8") : undefined;
 }
 
 /** The path itself if anything is there, or a parent that exists but is not a folder. */

@@ -56,6 +56,27 @@ describe("ingestron init with flags", () => {
     expect(readFileSync(join(cwd, "duckdb/.gitignore"), "utf8")).toContain("ingestron.duckdb*");
   });
 
+  it("init . into a folder that has a .gitignore keeps its lines and adds the .env lines once", () => {
+    for (const template of ["minimal", "duckdb"]) {
+      const { cwd, ingestron } = session();
+      writeFileSync(join(cwd, ".gitignore"), "node_modules/\n*.log\n");
+      const { code, output } = ingestron("init", ".", "--template", template, "--yes");
+      expect(code, output).toBe(0);
+      const lines = readFileSync(join(cwd, ".gitignore"), "utf8").split("\n");
+      expect(lines.slice(0, 2), template).toEqual(["node_modules/", "*.log"]);
+      for (const line of [".env", ".env.*", "!.env.example"])
+        expect(
+          lines.filter((item) => item === line),
+          `${template} ${line}`,
+        ).toHaveLength(1);
+      expect(lines.indexOf("!.env.example")).toBeGreaterThan(lines.indexOf(".env.*"));
+      if (template === "duckdb") expect(lines).toContain("ingestron.duckdb*");
+      // Run into the same folder again: a project is there, so nothing more is written.
+      expect(ingestron("init", ".", "--template", template, "--yes").code).not.toBe(0);
+      expect(readFileSync(join(cwd, ".gitignore"), "utf8").split("\n")).toEqual(lines);
+    }
+  });
+
   it("takes the name, environments and answers from flags", () => {
     const { cwd, ingestron } = session();
     const args = ["--template", "minimal", "--name", "sales", "--env", "dev", "--env", "prod"];
