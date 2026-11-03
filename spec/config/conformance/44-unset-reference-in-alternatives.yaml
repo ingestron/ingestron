@@ -1,0 +1,36 @@
+description: An unset reference hides a oneOf or anyOf only when one of its alternatives fails for it alone, including an alternative written with $ref. A oneOf whose alternatives each fail for another reason is still reported, even with an unset reference beneath it.
+envvars: {}
+missingEnvvars: information
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema:
+      type: object
+      $defs:
+        email: { type: string, pattern: "@" }
+      properties:
+        owner: { anyOf: [{ $ref: "#/$defs/email" }, { type: object }] }
+        team:
+          oneOf:
+            - type: object
+              properties:
+                lead: { type: string, pattern: "^[a-z]+$" }
+                size: { type: integer }
+            - type: array
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    owner: ${envvar:OWNER}
+    team:
+      lead: ${envvar:LEAD}
+      size: many
+expect:
+  diagnostics:
+    - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 4 }
+    - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 6 }
+    - { code: SCHEMA, severity: error, file: a.pipeline.yaml, line: 6 }

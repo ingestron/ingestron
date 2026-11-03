@@ -7,6 +7,7 @@ import { error, type Diagnostic, type Location } from "./diagnostics.js";
 import { appendPointer } from "./json-pointer.js";
 import { schemaFixes } from "./schema-fixes.js";
 import { describeFailure } from "./schema-messages.js";
+import { withoutUnsetEnvvars } from "./unset-references.js";
 import type { JsonSchema } from "./kinds.js";
 
 /** Finds where the value at a JSON Pointer was written. */
@@ -59,45 +60,6 @@ export function createSchemaChecker() {
       .sort(byLocation);
   };
 }
-
-/**
- * The failures without those an unset reference causes (spec §5.1): text that holds one
- * fails any keyword but `type` only because its value is not known yet, and so does a
- * `oneOf`, `anyOf` or `if` at or above such a failure.
- */
-export function withoutUnsetEnvvars<T extends UnsetEnvvarFailure>(
-  failures: readonly T[],
-  holdsUnsetEnvvar: (text: string) => boolean,
-): T[] {
-  const left = failures.filter(
-    (failure) =>
-      failure.keyword !== "type" &&
-      typeof failure.data === "string" &&
-      holdsUnsetEnvvar(failure.data),
-  );
-  if (left.length === 0) return [...failures];
-  const under = (failure: T) =>
-    left.some(
-      ({ instancePath }) =>
-        instancePath === failure.instancePath ||
-        instancePath.startsWith(`${failure.instancePath}/`),
-    );
-  return failures.filter(
-    (failure) => !left.includes(failure) && !(combinators.has(failure.keyword) && under(failure)),
-  );
-}
-
-/** What {@link withoutUnsetEnvvars} reads of a schema failure. */
-export interface UnsetEnvvarFailure {
-  /** The schema keyword that failed, such as `pattern` or `anyOf`. */
-  keyword: string;
-  /** Where the failing value is, as a JSON Pointer. */
-  instancePath: string;
-  /** The failing value; Ajv gives it with its `verbose` option. */
-  data?: unknown;
-}
-
-const combinators = new Set(["oneOf", "anyOf", "if"]);
 
 /** One failure as a problem with its fixes; none when it repeats another. */
 function problemFor(
