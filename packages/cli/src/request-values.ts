@@ -1,23 +1,14 @@
 // The platform request's "Values to provide": each environment variable the definitions
-// read, the values it feeds, and whether it is set, but never its value; and what the
-// request leaves out while a flow's source is not known (spec/cli/request.md).
+// read, the values it feeds, and whether it is set, but never its value; what the request
+// leaves out while one is not set; and the checks that wait for it (spec/cli/request.md).
 import type { EnvvarReference } from "@ingestron/config";
-import type { ResolvedModel } from "@ingestron/definitions";
-
-/** Each flow whose source holds an unset variable, by id, with its source as written. */
-export function sourcesNotKnown(model: ResolvedModel): Map<string, string> {
-  const flows = new Map<string, string>();
-  for (const table of model.tables)
-    if (table.sourceNotKnown !== undefined && table.origin.kind === "Flow")
-      flows.set(table.origin.id, table.sourceNotKnown);
-  return flows;
-}
+import type { LeftOut, NotKnown } from "./request-unknown.js";
 
 /** The section, or nothing when the definitions read no environment variable. */
 export function valuesToProvide(
   references: readonly EnvvarReference[],
   environment: string | undefined,
-  notKnown: Map<string, string>,
+  notKnown: NotKnown,
 ): string | undefined {
   if (references.length === 0) return undefined;
   const file = environment === undefined ? ".env" : `.env.${environment}`;
@@ -28,7 +19,7 @@ export function valuesToProvide(
     "These values come from environment variables. Set them in the pipeline that runs " +
       `Ingestron for this environment, or in \`${file}\` on your own computer, kept out of Git.`,
     [...variables].map(([name, uses]) => `- ${line(name, uses)}`).join("\n"),
-    ...(unset ? [notSetYet(notKnown)] : []),
+    ...(unset ? [notSetYet(notKnown), checksWait] : []),
   ].join("\n\n");
 }
 
@@ -76,17 +67,41 @@ function listed(items: string[]): string {
 }
 
 /** What the request shows for a variable not set yet, and what it leaves out without one. */
-function notSetYet(notKnown: Map<string, string>): string {
-  const flows = [...notKnown].map(
-    ([flow, source]) =>
-      `The source of flow \`${flow}\`, \`${source}\`, is not known yet, so nothing its tables need is listed.`,
+function notSetYet({ sources, tables }: NotKnown): string {
+  const flows = [...sources].map(
+    ([flow, references]) =>
+      `The source of flow \`${flow}\` holds ${notSet(references)}, so it is ` +
+      "not known yet and nothing its tables need is listed.",
   );
+  const leftOut = [...tables].map(
+    ([table, why]) => `Table \`${table}\` is left out: ${reason(why)}.`,
+  );
+  const sql = sources.size > 0 ? "" : ", and so does any SQL to run once";
   return [
     "Until a variable is set, this request shows it as `${envvar:NAME}`, and leaves out " +
       "what cannot be worked out without it.",
     ...flows,
-    ...(notKnown.size > 0
+    ...leftOut,
+    ...(tables.size > 0 ? [`The lists below leave these tables out${sql}.`] : []),
+    ...(sources.size > 0
       ? ["Any SQL to run once is left out until every flow's source is known."]
       : []),
   ].join(" ");
 }
+
+function reason(why: LeftOut): string {
+  if ("reads" in why) return `it reads \`${why.reads}\`, which is left out`;
+  return `it is made from ${notSet(why.holds)}`;
+}
+
+/** The unset references, quoted, and that they are not set. */
+function notSet(references: string[]): string {
+  const quoted = listed(references.map((reference) => `\`${reference}\``));
+  return `${quoted}, which ${references.length > 1 ? "are" : "is"} not set`;
+}
+
+/** The checks that need the whole project wait for every value (definitions specification, section 1). */
+const checksWait =
+  "Until every variable is set, some checks may not have run: each pack's checks of the " +
+  "whole project, and each method's checks of a table that holds a variable not set. Once " +
+  "the values are set, run `ingestron check` to run them.";
