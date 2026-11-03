@@ -2,7 +2,8 @@
 // section 4.5). Only the text of the files is handled here; they are read
 // through a `FileSource`, so this runs wherever the loader does.
 //
-// Values are never put into a diagnostic: a person's .env holds secrets.
+// The reader's own diagnostics never quote a line or a value. Later problems
+// may quote a value from .env, as they quote any other (specification 4.5).
 
 import { tooLarge } from "./context.js";
 import { warning, type Diagnostic } from "./diagnostics.js";
