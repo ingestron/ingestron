@@ -58,8 +58,9 @@ export function withoutUnsetEnvvars<T extends UnsetEnvvarFailure>(
 }
 
 /**
- * Where each alternative's failures are in the schema: under its own place, and under
- * the schema it names with a local `$ref`, whose failures Ajv reports at that schema.
+ * Where each alternative's failures are in the schema: under its own place, and, when the
+ * alternative itself is a local `$ref`, under the schema it names, where Ajv reports them.
+ * Only that one `$ref` is followed (spec §5.1).
  */
 function alternativesOf(combinator: UnsetEnvvarFailure): string[][] {
   if (combinator.keyword === "if") {
