@@ -268,8 +268,9 @@ without quoting them. Each entry has:
   reference in its values. A reference in a file read with `${file:…}` feeds
   the document that reads it;
 - `pointer`: the JSON Pointer of the value it feeds in that document. In the
-  manifest that is under `/values`, for the default values and the selected
-  environment's alike;
+  manifest it is the pointer in the merged values: a selected environment's
+  override at `environments.<name>.values.region` is `/values/region`, as is
+  the default it overrides, never `/environments/…`;
 - `setIn`: where the variable's value came from (section 4.4): `host` for the
   host environment, `.env.<environment>` or `.env`. It is absent when the
   variable is set nowhere, which only a load with `missingEnvvars:
@@ -277,8 +278,9 @@ information` allows.
 
 An entry never holds the variable's value. Each `name`, `file` and `pointer`
 appears once, in the order first resolved. A reference that is not resolved,
-such as one with a `BAD_ARGUMENT`, or one in another environment's values, is
-not listed. With `missingEnvvars: error`, a variable set nowhere stops the
+such as one with a `BAD_ARGUMENT`, one in another environment's values, one
+in a file the manifest does not import, or text kept as written with `$${`,
+is not listed. With `missingEnvvars: error`, a variable set nowhere stops the
 load, so no project lists it.
 
 ## 5. Output guarantees
