@@ -43,7 +43,10 @@ describe("readEnvFile", () => {
   });
 
   it("reads CRLF and BOM files", () => {
-    const { values, diagnostics } = readEnvFile("﻿A=1\r\nB='two'\r\n\r\nC=3 # note\r\n", ".env");
+    const { values, diagnostics } = readEnvFile(
+      "\ufeffA=1\r\nB='two'\r\n\r\nC=3 # note\r\n",
+      ".env",
+    );
     expect(values).toEqual({ A: "1", B: "two", C: "3" });
     expect(diagnostics).toEqual([]);
   });
@@ -87,7 +90,7 @@ describe("readEnvFile", () => {
   it("does not treat names such as __proto__ or constructor specially", () => {
     const { values } = readEnvFile("__proto__=x\nconstructor=y\n", ".env");
     expect(Object.keys(values)).toEqual(["__proto__", "constructor"]);
-    expect(({} as Record<string, unknown>).x).toBeUndefined();
+    expect(Object.getPrototypeOf(values)).toBeNull();
   });
 });
 
@@ -127,6 +130,18 @@ describe("envvarsFor", () => {
     };
     envvarsFor(files, "../x", {});
     expect(read).toEqual([".env"]);
+  });
+
+  it("reads .env.<environment> only for a name the manifest allows", () => {
+    for (const name of ["a:b", "dev.local", "1dev", "a b", ""]) {
+      const read: string[] = [];
+      const files = { list: () => [], read: (path: string) => (read.push(path), undefined) };
+      envvarsFor(files, name, {});
+      expect(read, name).toEqual([".env"]);
+    }
+    const read: string[] = [];
+    envvarsFor({ list: () => [], read: (path) => (read.push(path), undefined) }, "dev-2_x", {});
+    expect(read).toEqual([".env", ".env.dev-2_x"]);
   });
 
   it("reports a bad line in each file, naming that file", () => {

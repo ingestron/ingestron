@@ -16,7 +16,8 @@ interface EnvFile {
   diagnostics: Diagnostic[];
 }
 
-const byteOrderMark = "﻿";
+const byteOrderMark = "\ufeff";
+const environmentName = /^[A-Za-z][A-Za-z0-9_-]*$/;
 const assignment = /^(?:export[ \t]+)?([A-Za-z_][A-Za-z0-9_]*)[ \t]*=[ \t]*/;
 
 /**
@@ -132,8 +133,9 @@ export function envvarsFor(
   const envvars = noPrototype();
   const diagnostics: Diagnostic[] = [];
   const paths = [".env"];
-  // A name with a path separator could point outside the project.
-  if (environment !== undefined && !/[\\/\0]/.test(environment)) paths.push(`.env.${environment}`);
+  // The manifest's own rule for an environment name; anything else could name another file.
+  if (environment !== undefined && environmentName.test(environment))
+    paths.push(`.env.${environment}`);
   for (const path of paths) {
     const file = readFileIfPresent(files, path, maxFileBytes);
     diagnostics.push(...file.diagnostics);
