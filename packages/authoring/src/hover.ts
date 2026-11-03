@@ -7,7 +7,8 @@ import { kindOf, placeAt, type Place } from "./context.js";
 import { referenceAround, referenceValue } from "./references.js";
 import { explainField, methodText, type HoverOptions } from "./explain.js";
 import { methodAt, methodInfo } from "./methods.js";
-import { resolved, type Project } from "./project.js";
+import { resolvedForDisplay, type Project } from "./project.js";
+import { holdsSecret } from "./without-env-files.js";
 import { schemaFor, schemasAt } from "./schema.js";
 import { spotAt, type Spot } from "./yaml.js";
 import { targetOf } from "./target.js";
@@ -75,7 +76,7 @@ function namesIn(
   key: string | undefined,
   environment: string | undefined,
 ): string | undefined {
-  const model = resolved(project, environment).model;
+  const model = resolvedForDisplay(project, environment).model;
   if (!model || !key) return undefined;
   const all =
     key === "pipeline" || key === "job"
@@ -125,7 +126,7 @@ function resolvedTables(
   file: string,
   environment: string | undefined,
 ): ResolvedTable[] | undefined {
-  const { model } = resolved(project, environment);
+  const { model } = resolvedForDisplay(project, environment);
   return model?.tables.filter((table) => table.origin.file === file);
 }
 
@@ -152,7 +153,8 @@ function explainTable(
 
 /** A step's method, then the settings something chose, then the pack's defaults on one line. */
 function stepText(action: string, step: Step, table: ResolvedTable): string {
-  const entries = Object.entries(step.settings);
+  // A secret reference is never shown, not even its name.
+  const entries = Object.entries(step.settings).filter(([, value]) => !holdsSecret(value));
   const isDefault = ([key]: [string, unknown]) => step.origins[key]?.layer === "pack";
   const rows = entries
     .filter((entry) => !isDefault(entry))
@@ -180,6 +182,7 @@ function explainSetting(
   const table = setting.table ? tables.find((item) => item.name === setting.table) : tables[0];
   const step = table?.[setting.action as (typeof actions)[number]];
   if (!table || !step || !(setting.key in step.settings)) return undefined;
+  if (holdsSecret(step.settings[setting.key])) return undefined;
   const value = shown(step.settings[setting.key]);
   return `\`${setting.key}\` for \`${table.name}\`: \`${value}\`, set by ${from(step.origins[setting.key], table)}.`;
 }
