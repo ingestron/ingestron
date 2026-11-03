@@ -69,6 +69,15 @@ describe("a new, empty file", () => {
     );
   });
 
+  it("numbers the data product skeleton's tab stops in the order they appear", () => {
+    const [first] = at("products/sales.yaml", "|");
+    const stops = [...(first?.snippet ?? "").matchAll(/\$\{?(\d+)/g)].map((found) =>
+      Number(found[1]!),
+    );
+    expect(stops).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(first?.snippet).toMatch(/\$3, role: owner[\s\S]*purpose: \$4/);
+  });
+
   it("offers the project manifest in an empty project.yaml, with the id from the folder as init makes it", () => {
     const [first, ...rest] = at("project.yaml", "|");
     expect(first?.label).toBe("Project manifest");
