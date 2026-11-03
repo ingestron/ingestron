@@ -65,4 +65,20 @@ describe("passport claims", () => {
     expect(page).toContain("a row that fails stops the load.");
     expect(page).not.toMatch(/rows that fail: (drop|warn|fail)/);
   });
+
+  it("uses one vocabulary for the type of contract and landed columns", () => {
+    const resolved = model(project());
+    const customers = resolved.tables.find((item) => item.name === "customers")!;
+    customers.ingest!.output = {
+      location: "abfss://landing@acct.dfs.core.windows.net/shop/customers/*.parquet",
+      format: "parquet",
+      loads: "add",
+      columns: [{ name: "_loaded_at", logicalType: "timestamp", nullable: false }],
+    };
+    const page = passports(resolved)["customers.md"]!;
+    expect(page).toMatch(/\| id \|  \| integer \| yes \| yes \|/);
+    expect(page).toMatch(/\| email \|  \| string \| yes \|/);
+    expect(page).toMatch(/\| _loaded_at \|  \| timestamp \| yes \|/);
+    expect(page).not.toMatch(/\| (BIGINT|STRING|INT) \|/);
+  });
 });
