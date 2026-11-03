@@ -277,13 +277,19 @@ wherever the value ends up: written in place, copied with `${values.…}` or
 `${file:…}`, or embedded in other text. Such a value causes no error or
 warning by itself:
 
-- A schema failure is not reported when the failing value is text that holds
-  an unset reference, whatever the keyword (`pattern`, `enum`, `format`,
+- A schema failure is left out when the failing value is text that holds an
+  unset reference, whatever the keyword (`pattern`, `enum`, `format`,
   `minLength`, …) except `type`: a variable's value is always text, so text
-  where text is not allowed is wrong whatever the variable holds. Nor is a
-  `oneOf`, `anyOf` or `if` failure reported at or above the place of a
-  failure left out this way. A document whose failures are all left out is
-  valid.
+  where text is not allowed is wrong whatever the variable holds.
+- A `oneOf`, `anyOf` or `if` failure is left out, with every failure inside
+  it, when one of its alternatives failed and every failure inside that
+  alternative was left out: the value might meet that alternative. The
+  alternatives of an `if` are its `then` and `else`. A failure is inside an
+  alternative when it comes from the alternative's schema, or from a schema
+  that schema names with a local `$ref`, at or below the combinator's value.
+  Any other `oneOf`, `anyOf` or `if` failure is reported, even when an unset
+  reference sits below it.
+- A document whose failures are all left out is valid.
 - A link whose value holds an unset reference is not checked.
 
 The loaded project lists its unset references (`unsetEnvvars`), each once, in

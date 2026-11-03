@@ -200,6 +200,9 @@ export interface UnsetEnvvarFailure {
     data?: unknown;
     instancePath: string;
     keyword: string;
+    parentSchema?: unknown;
+    schema?: unknown;
+    schemaPath: string;
 }
 
 // @public
