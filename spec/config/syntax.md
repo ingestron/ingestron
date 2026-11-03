@@ -257,6 +257,30 @@ bare     = any, trimmed, up to a comment
   environment file holds values that are not secret; a secret is written as
   `${secret:…}`.
 
+### 4.6 Variables the project reads
+
+A loaded project lists the `${envvar:…}` references its load resolved
+(`envvarReferences`), so that a tool can say which variables a project needs
+without quoting them. Each entry has:
+
+- `name`: the variable's name;
+- `file`: the file of the document the reference feeds, or the manifest for a
+  reference in its values. A reference in a file read with `${file:…}` feeds
+  the document that reads it;
+- `pointer`: the JSON Pointer of the value it feeds in that document. In the
+  manifest that is under `/values`, for the default values and the selected
+  environment's alike;
+- `setIn`: where the variable's value came from (section 4.4): `host` for the
+  host environment, `.env.<environment>` or `.env`. It is absent when the
+  variable is set nowhere, which only a load with `missingEnvvars:
+information` allows.
+
+An entry never holds the variable's value. Each `name`, `file` and `pointer`
+appears once, in the order first resolved. A reference that is not resolved,
+such as one with a `BAD_ARGUMENT`, or one in another environment's values, is
+not listed. With `missingEnvvars: error`, a variable set nowhere stops the
+load, so no project lists it.
+
 ## 5. Output guarantees
 
 - A string without `${` is returned unchanged.
@@ -373,6 +397,8 @@ expect:
     - { code: UNKNOWN_REFERENCE, file: a.yaml, line: 3, column: 7 }
     - { code: ENVVAR_MISSING, severity: information, file: a.yaml, line: 4 }
   unsetEnvvars: ["${envvar:NOPE}"] # optional: the loaded project's unset references (section 5.1)
+  envvarReferences: # optional: when given, the loaded project's variable references (section 4.6)
+    - { name: NOPE, file: a.yaml, pointer: /url } # setIn absent: set nowhere
   fixed: # optional: each fix's title, and the files after applying it
     - diagnostic: 0
       title: Change to "shop"
