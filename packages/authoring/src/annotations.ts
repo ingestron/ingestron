@@ -1,11 +1,10 @@
 // What a line resolves to, shown beside it: a variable's value, a table's full
 // name with the methods that build it, and the files generated from it.
-import { resolveProject, type DefinitionDocument } from "@ingestron/config";
-import { kinds, NO_STORE, type ChosenBy, type ResolvedTable } from "@ingestron/definitions";
+import { NO_STORE, type ChosenBy, type ResolvedTable } from "@ingestron/definitions";
 import { targetOf } from "./target.js";
 import { generatedFiles, generatedForTable } from "./preview.js";
-import { resolvedForDisplay, type Project } from "./project.js";
-import { holdsSecret, withoutEnvFiles } from "./without-env-files.js";
+import { documentsOf, resolvedForDisplay, type Project } from "./project.js";
+import { holdsSecret } from "./without-env-files.js";
 import { resolveText } from "./references.js";
 import { allSpots, positionAt, rangeOf } from "./yaml.js";
 
@@ -68,7 +67,6 @@ export function generatedLenses(
 
 /** A reference to a secret or an environment variable: what it stands for is never shown. */
 const hidden = /\$\{(secret|envvar):/;
-const loads = new WeakMap<Project, Map<string, DefinitionDocument[]>>();
 
 function variables(
   project: Project,
@@ -103,30 +101,6 @@ function variables(
         },
       ];
     });
-}
-
-/** The project's documents with `${…}` resolved, once per project snapshot and environment. */
-export function documentsOf(
-  project: Project,
-  environment: string | undefined,
-): DefinitionDocument[] {
-  let byEnvironment = loads.get(project);
-  if (!byEnvironment) loads.set(project, (byEnvironment = new Map()));
-  const key = environment ?? "";
-  let documents = byEnvironment.get(key);
-  if (!documents) {
-    // Annotations never see an environment variable's value: the host's is left out and
-    // .env files are not read, so an unset variable resolves to its own reference.
-    const loaded = resolveProject(withoutEnvFiles(project.files), {
-      kinds: Object.values(kinds),
-      ...(environment && { environment }),
-      envvars: {},
-      missingEnvvars: "information",
-    });
-    documents = loaded.ok ? [...loaded.project.documents] : [];
-    byEnvironment.set(key, documents);
-  }
-  return documents;
 }
 
 function valueAt(value: unknown, segments: string[]): unknown {
