@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
-import { projectId, scaffoldFiles, writeScaffold } from "../src/scaffold.js";
+import { projectId, scaffoldFiles, withEnvIgnores, writeScaffold } from "../src/scaffold.js";
 import { builtInTemplates, readTemplate } from "../src/templates.js";
 
 const template = (name: string) => builtInTemplates().find((item) => item.name === name)!;
@@ -98,5 +98,26 @@ describe("projectId", () => {
   it("makes a valid id from a folder name", () => {
     expect(projectId("My Shop 2")).toBe("my_shop_2");
     expect(projectId("2026-data")).toBe("p_2026_data");
+  });
+});
+
+describe("withEnvIgnores", () => {
+  it("makes a .gitignore of its own when there is none", () => {
+    expect(withEnvIgnores(undefined)).toBe(
+      "# Values for ${envvar:…}: keep them out of Git; commit a .env.example instead.\n.env\n.env.*\n!.env.example\n",
+    );
+  });
+
+  it("adds the lines after the template's own, once", () => {
+    const once = withEnvIgnores("ingestron.duckdb*");
+    expect(once.startsWith("ingestron.duckdb*\n\n# Values")).toBe(true);
+    expect(once.endsWith("!.env.example\n")).toBe(true);
+    expect(withEnvIgnores(once)).toBe(once);
+  });
+
+  it("adds the whole block when any line is missing, so the exception still comes last", () => {
+    expect(withEnvIgnores("!.env.example\nbuild/\n")).toBe(
+      "!.env.example\nbuild/\n\n# Values for ${envvar:…}: keep them out of Git; commit a .env.example instead.\n.env\n.env.*\n!.env.example\n",
+    );
   });
 });
