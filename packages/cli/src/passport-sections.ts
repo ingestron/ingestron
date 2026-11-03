@@ -80,6 +80,11 @@ function taggedInUnityCatalog(model: ResolvedModel, built: ResolvedTable | undef
   return model.platform.manage.tags && built?.store?.pack === "databricks";
 }
 
+/** The contract's logical type, so landed and contract columns read alike; else the physical one. */
+function typeName(column: Column): string {
+  return column.logicalType ?? column.type ?? "";
+}
+
 /** Section 4: each output's columns, with sensitive ones marked. */
 export function columns(model: ResolvedModel, product: ResolvedProduct): string {
   const sensitive = model.standard.governance?.classification?.sensitive ?? [];
@@ -90,7 +95,7 @@ export function columns(model: ResolvedModel, product: ResolvedProduct): string 
     const landed = landedColumns(tables[0]!).map((column) => [
       column.name,
       column.description ?? "",
-      column.type ?? column.logicalType ?? "",
+      typeName(column),
       column.nullable ? "" : "yes",
       "",
       "",
@@ -101,7 +106,7 @@ export function columns(model: ResolvedModel, product: ResolvedProduct): string 
       return [
         column.name,
         column.description ?? "",
-        column.type ?? column.logicalType ?? "",
+        typeName(column),
         column.nullable ? "" : "yes",
         contract.primaryKey.includes(column.name) ? "yes" : "",
         marked ? `${marked}${tagged}` : "",

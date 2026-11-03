@@ -22,7 +22,10 @@ passport, written for someone who does not know the tools. Its sections, in orde
    serverless SQL, DuckDB, landed files (with their location), or the pack's
    id. An output no table builds here says "Not built in this environment."
 4. **Columns:** per output, each column's name, description, type, whether it
-   is required or part of the key, and its classification; a classification
+   is required or part of the key, and its classification. The type is the
+   contract's logical type (such as `integer` or `timestamp`) for every
+   column, whether it comes from the contract or from the landed files; a
+   column that has only a physical type shows that; a classification
    the standard's governance lists as sensitive is marked so, and a classified
    column says when Databricks tags it in Unity Catalog. That is decided per
    table: the table is stored by the Databricks pack and the platform turns on
