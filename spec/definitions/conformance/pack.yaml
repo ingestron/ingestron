@@ -88,6 +88,8 @@ methods:
       additionalProperties: false
       properties:
         cluster: { enum: [auto, none] }
+        cluster_by: { anyOf: [{ enum: [auto, none] }, { type: array, items: { type: string } }] }
+        retries: { type: integer }
         mode: { enum: [append, upsert] }
         properties: { type: object }
   view:

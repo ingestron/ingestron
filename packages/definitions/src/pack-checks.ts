@@ -6,10 +6,11 @@ import { holdsUnsetEnvvar } from "./unknown-values.js";
 
 /**
  * Each pack's checks on the whole model (`PACK_CHECK`), reported at the platform. Not
- * run on a model that holds an unset reference: what a check judges cannot be told apart.
+ * run on a model that holds an unset reference, whose checks cannot be told apart, nor
+ * after a problem was left out because of one, when a table may be missing.
  */
 export function runPackCheck(context: Context, model: ResolvedModel): void {
-  if (holdsUnsetEnvvar(context.project, model)) return;
+  if (context.reporter.leftOut() || holdsUnsetEnvvar(context.project, model)) return;
   const at = context.platform && { document: context.platform, pointer: "" };
   for (const message of context.packs.flatMap((pack) => pack.check?.(model) ?? []))
     context.reporter.error("PACK_CHECK", `${message}.`, at);
