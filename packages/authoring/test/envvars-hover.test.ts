@@ -95,7 +95,8 @@ describe("a secret reference is skipped", () => {
     expect(shown).not.toContain("PW_NAME");
     expect(shown).not.toContain("$secret");
     const key = hoverFor(folder, text, "options", 2).shown;
-    expect(key ?? "").not.toContain("PW_NAME");
+    expect(key).toBeDefined();
+    expect(key).not.toContain("PW_NAME");
     const found = annotationsIn(project, "flows/orders.yaml", text, "dev");
     expect(JSON.stringify(found)).not.toContain("PW_NAME");
   });
