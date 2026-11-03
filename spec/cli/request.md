@@ -69,7 +69,9 @@ line per variable gives:
   `.env.<environment>` or `.env`; or "not set yet".
 
 The section MUST NOT print a variable's value, whether it came from the host
-environment or an environment file. Elsewhere the request shows values as
+environment or an environment file. Document ids and table names are names,
+not values: the section may print them as they resolved, even when a
+variable feeds one. Elsewhere the request shows values as
 they resolved, so a value that came from a variable is shown, as a
 diagnostic may quote it (configuration specification, section 4.5).
 
