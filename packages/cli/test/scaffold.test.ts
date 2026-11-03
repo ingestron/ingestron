@@ -1,5 +1,13 @@
 // Planning and writing a new project from a template.
-import { cpSync, existsSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -102,22 +110,88 @@ describe("projectId", () => {
 });
 
 describe("withEnvIgnores", () => {
+  const comment = "# Values for ${envvar:…}: keep them out of Git; commit a .env.example instead.";
+
   it("makes a .gitignore of its own when there is none", () => {
-    expect(withEnvIgnores(undefined)).toBe(
-      "# Values for ${envvar:…}: keep them out of Git; commit a .env.example instead.\n.env\n.env.*\n!.env.example\n",
-    );
+    expect(withEnvIgnores(undefined)).toBe(`${comment}\n.env\n.env.*\n!.env.example\n`);
   });
 
   it("adds the lines after the template's own, once", () => {
     const once = withEnvIgnores("ingestron.duckdb*");
-    expect(once.startsWith("ingestron.duckdb*\n\n# Values")).toBe(true);
-    expect(once.endsWith("!.env.example\n")).toBe(true);
+    expect(once).toBe(`ingestron.duckdb*\n\n${comment}\n.env\n.env.*\n!.env.example\n`);
     expect(withEnvIgnores(once)).toBe(once);
   });
 
-  it("adds the whole block when any line is missing, so the exception still comes last", () => {
-    expect(withEnvIgnores("!.env.example\nbuild/\n")).toBe(
-      "!.env.example\nbuild/\n\n# Values for ${envvar:…}: keep them out of Git; commit a .env.example instead.\n.env\n.env.*\n!.env.example\n",
+  it("adds only the lines that are missing", () => {
+    expect(withEnvIgnores(".env\nbuild/\n")).toBe(".env\nbuild/\n.env.*\n!.env.example\n");
+    expect(withEnvIgnores(".env\n.env.*\n")).toBe(".env\n.env.*\n!.env.example\n");
+  });
+
+  it("leaves a file that has all three lines in order alone", () => {
+    const text = "build/\n.env\n.env.*\n!.env.example\n";
+    expect(withEnvIgnores(text)).toBe(text);
+    expect(withEnvIgnores(text.replaceAll("\n", "\r\n"))).toBe(text.replaceAll("\n", "\r\n"));
+  });
+
+  it("puts the exception after .env.* again when it sits before", () => {
+    expect(withEnvIgnores("!.env.example\n.env\n.env.*\n")).toBe(
+      "!.env.example\n.env\n.env.*\n!.env.example\n",
     );
+    // A missing .env.* is added after the exception, so the exception is added again.
+    expect(withEnvIgnores("!.env.example\nbuild/\n")).toBe(
+      "!.env.example\nbuild/\n.env\n.env.*\n!.env.example\n",
+    );
+  });
+
+  it("keeps the file's own line ending", () => {
+    expect(withEnvIgnores("build/\r\n")).toBe(
+      `build/\r\n\r\n${comment}\r\n.env\r\n.env.*\r\n!.env.example\r\n`,
+    );
+    expect(withEnvIgnores(".env\r\nbuild/")).toBe(".env\r\nbuild/\r\n.env.*\r\n!.env.example\r\n");
+  });
+});
+
+describe("writeScaffold and an existing .gitignore", () => {
+  it("merges into it instead of reporting a clash, and still refuses other files", () => {
+    const target = temp();
+    writeFileSync(join(target, ".gitignore"), "node_modules/\n.env\n");
+    const result = writeScaffold(target, {
+      "project.yaml": "id: x\n",
+      ".gitignore": withEnvIgnores("ingestron.duckdb*\n"),
+    });
+    expect(result).toEqual({ written: [".gitignore", "project.yaml"] });
+    const lines = readFileSync(join(target, ".gitignore"), "utf8").split("\n");
+    expect(lines.filter((line) => line === ".env")).toHaveLength(1);
+    expect(lines).toEqual(
+      expect.arrayContaining(["node_modules/", "ingestron.duckdb*", ".env.*", "!.env.example"]),
+    );
+    expect(lines.indexOf("!.env.example")).toBeGreaterThan(lines.indexOf(".env.*"));
+    expect(writeScaffold(target, { "project.yaml": "id: y\n" })).toEqual({
+      clashes: ["project.yaml"],
+    });
+  });
+
+  it("is the same when run twice", () => {
+    const target = temp();
+    writeFileSync(join(target, ".gitignore"), "node_modules/\n");
+    const files = { ".gitignore": withEnvIgnores("ingestron.duckdb*\n") };
+    writeScaffold(target, files);
+    const once = readFileSync(join(target, ".gitignore"), "utf8");
+    writeScaffold(target, files);
+    expect(readFileSync(join(target, ".gitignore"), "utf8")).toBe(once);
+  });
+
+  it("still refuses a .gitignore that is a link or a folder", () => {
+    const target = temp();
+    mkdirSync(join(target, ".gitignore"));
+    expect(writeScaffold(target, { ".gitignore": withEnvIgnores(undefined) })).toEqual({
+      clashes: [".gitignore"],
+    });
+    const other = temp();
+    writeFileSync(join(other, "real"), "x\n");
+    symlinkSync(join(other, "real"), join(other, ".gitignore"));
+    expect(writeScaffold(other, { ".gitignore": withEnvIgnores(undefined) })).toEqual({
+      clashes: [".gitignore"],
+    });
   });
 });
