@@ -19,7 +19,7 @@ describe("a variable the editor cannot find", () => {
       `${unset} isn't set; add it to .env.dev or set it before running Ingestron.`,
     );
     expect(found[0]?.message).toContain(
-      "Ingestron reads .env files in the project folder and the environment VS Code started with.",
+      "Ingestron reads .env files in the project folder and the environment the editor started with.",
     );
     expect(resolved(project, "dev").model).toBeDefined();
     expect(loadedDocuments(project, "dev")).toBeDefined();
