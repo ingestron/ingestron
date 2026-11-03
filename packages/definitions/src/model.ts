@@ -114,7 +114,7 @@ export interface ResolvedTable {
   origin: { kind: "Flow" | "Transform"; id: string; file: string };
   contract: Contract;
   expectations: Expectation[];
-  /** Flow tables: how data leaves the source. */
+  /** Flow tables: how data leaves the source. Missing when `sourceNotKnown` is set and no `uses` names the method. */
   ingest?: Step & {
     connection: {
       id: string;
