@@ -5,7 +5,7 @@ export { defineKind } from "./kinds.js";
 export type { JsonSchema, KindDefinition, KindOptions } from "./kinds.js";
 export { resolveProject } from "./load.js";
 export type { LoadOptions, LoadResult } from "./load.js";
-export type { Project } from "./project.js";
+export type { EnvvarReference, Project } from "./project.js";
 export type { DefinitionDocument } from "./documents.js";
 export { memoryFiles } from "./files.js";
 export type { FileSource } from "./files.js";

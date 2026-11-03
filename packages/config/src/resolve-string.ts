@@ -119,13 +119,19 @@ function resolveReference(
     case "file":
       return resolveFileReference(expression.argument, source, location, file, pointer, walk);
     case "envvar":
-      return readEnvironmentVariable(expression.argument, source, location, walk);
+      return readEnvironmentVariable(expression.argument, source, location, pointer, walk);
     case "secret":
       return { $secret: expression.argument } satisfies SecretReference;
   }
 }
 
-function readEnvironmentVariable(name: string, source: string, location: Location, walk: Walk) {
+function readEnvironmentVariable(
+  name: string,
+  source: string,
+  location: Location,
+  pointer: string,
+  walk: Walk,
+) {
   if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
     walk.context.diagnostics.push(
       error(
@@ -137,8 +143,14 @@ function readEnvironmentVariable(name: string, source: string, location: Locatio
     );
     return undefined;
   }
+  recordReference(name, pointer, walk);
   const value = walk.context.envvars[name];
   if (value !== undefined && value !== "") return value;
+  return reportUnset(name, source, location, walk);
+}
+
+/** An unset variable: information that leaves the reference as written, or an error. */
+function reportUnset(name: string, source: string, location: Location, walk: Walk) {
   const { environment, missingEnvvars } = walk.context;
   const files = environment === undefined ? ".env" : `.env.${environment}`;
   if (missingEnvvars === "information") {
@@ -163,4 +175,17 @@ function readEnvironmentVariable(name: string, source: string, location: Locatio
     ),
   );
   return undefined;
+}
+
+/**
+ * Notes that the value at `pointer` reads the variable (spec §4.6). The outermost file being
+ * resolved is the document's own, even inside a `${file:…}`; the value is never kept.
+ */
+function recordReference(name: string, pointer: string, walk: Walk): void {
+  const document = walk.includeStack[0] ?? "";
+  const file = document.slice(0, document.lastIndexOf("#"));
+  const key = JSON.stringify([name, file, pointer]);
+  if (walk.context.envvarReferences.has(key)) return;
+  const setIn = walk.context.envvarsSetIn[name];
+  walk.context.envvarReferences.set(key, { name, file, pointer, ...(setIn && { setIn }) });
 }
