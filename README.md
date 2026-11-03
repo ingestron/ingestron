@@ -18,6 +18,12 @@ one Copy per table or one ForEach over the table list, the Copy activity's
 retries and timeout, audit columns that every engine keeps, and factory folders
 and annotations.
 
+Values that differ per person or machine, such as a local path or a workspace
+URL, can come from `.env` and `.env.<environment>` files in the project folder
+through `${envvar:NAME}`; `init` keeps them out of Git. In VS Code, Ingestron's
+commands are on the right-click menu and in a Project view, and a variable that
+is not set yet shows as information, not an error.
+
 ```sh
 npx ingestron@1 init demo --template minimal --yes
 cd demo
