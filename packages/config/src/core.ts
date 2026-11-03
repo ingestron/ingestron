@@ -26,6 +26,6 @@ export type { Limits } from "./limits.js";
 export { manifestSchema } from "./manifest.js";
 export { toEditorSchema } from "./editor-schema.js";
 export { isSecretReference } from "./resolve-string.js";
-export { withoutUnsetEnvvars } from "./validate.js";
-export type { UnsetEnvvarFailure } from "./validate.js";
+export { withoutUnsetEnvvars } from "./unset-references.js";
+export type { UnsetEnvvarFailure } from "./unset-references.js";
 export type { SecretReference } from "./resolve-string.js";

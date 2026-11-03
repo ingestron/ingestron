@@ -1,4 +1,4 @@
-description: An unset reference is not checked, so only the information remains. Its value may have a pattern and an enum, sit in an anyOf or a link, or be copied from values into other text.
+description: An unset reference is not checked, so only the information remains. Its value may have a pattern and an enum, sit in an anyOf, an if or a link, or be copied from values into other text.
 envvars: {}
 missingEnvvars: information
 kinds:
@@ -12,6 +12,7 @@ kinds:
         landing: { type: string, pattern: "^abfss://", minLength: 40 }
         mode: { anyOf: [{ type: string, pattern: "^full$" }, { type: string, pattern: "^delta$" }] }
         target: { type: string }
+        window: { if: { type: string }, then: { pattern: "^P" } }
     links: { /target: Target }
   - apiVersion: example.dev/v1
     kind: Target
@@ -30,6 +31,7 @@ files:
     landing: ${values.lake}/raw
     mode: ${envvar:MODE}
     target: ${envvar:TARGET}
+    window: ${envvar:WINDOW}
   t.target.yaml: |
     apiVersion: example.dev/v1
     kind: Target
@@ -46,6 +48,7 @@ expect:
         landing: "${envvar:LAKE}/raw"
         mode: "${envvar:MODE}"
         target: "${envvar:TARGET}"
+        window: "${envvar:WINDOW}"
     - kind: Target
       id: t
       value: { apiVersion: example.dev/v1, kind: Target, id: t }
@@ -54,4 +57,6 @@ expect:
     - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 4 }
     - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 6 }
     - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 7 }
-  unsetEnvvars: ["${envvar:LAKE}", "${envvar:URL}", "${envvar:MODE}", "${envvar:TARGET}"]
+    - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 8 }
+  unsetEnvvars:
+    ["${envvar:LAKE}", "${envvar:URL}", "${envvar:MODE}", "${envvar:TARGET}", "${envvar:WINDOW}"]
