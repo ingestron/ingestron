@@ -3,6 +3,7 @@ import { Liquid } from "liquidjs";
 import type { Context } from "./context.js";
 import type { Source } from "./diagnostics.js";
 import type { Naming } from "./pack.js";
+import { holdsPlaceholder } from "./unknown-values.js";
 
 /** A pattern and where it was written (none for the pack's default). */
 export interface Pattern {
@@ -70,7 +71,8 @@ export function renderName(
     context.reporter.error("BAD_PATTERN", `Name pattern "${pattern.text}": ${reason}.`, pattern.at);
     return undefined;
   }
-  if (!validName.test(name)) {
+  // A name that holds a placeholder is not known yet (specification section 1).
+  if (!validName.test(name) && !holdsPlaceholder(context.project, name)) {
     const hint =
       'Names use lower-case letters, digits and "_"; filters such as "| downcase" and "| replace: \'-\', \'_\'" help.';
     context.reporter.error(

@@ -26,4 +26,6 @@ export type { Limits } from "./limits.js";
 export { manifestSchema } from "./manifest.js";
 export { toEditorSchema } from "./editor-schema.js";
 export { isSecretReference } from "./resolve-string.js";
+export { withoutPlaceholders } from "./validate.js";
+export type { PlaceholderFailure } from "./validate.js";
 export type { SecretReference } from "./resolve-string.js";

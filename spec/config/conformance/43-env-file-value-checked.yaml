@@ -1,0 +1,29 @@
+description: A value from .env is checked like any other, and a schema problem quotes it so it can be fixed. Without missingEnvvars information nothing is a placeholder.
+environment: dev
+envvars: {}
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema:
+      type: object
+      properties:
+        landing: { type: string, pattern: "^abfss://" }
+files:
+  project.yaml: |
+    id: sales
+    environments: { dev: {} }
+    imports: ["*.pipeline.yaml"]
+  .env.dev: |
+    LANDING=/mnt/landing
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    landing: ${envvar:LANDING}
+expect:
+  diagnostics:
+    - code: SCHEMA
+      severity: error
+      message: 'landing "/mnt/landing" is not in the expected form.'
+      file: a.pipeline.yaml
+      line: 4

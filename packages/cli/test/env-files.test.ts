@@ -103,5 +103,14 @@ describe("ingestron and .env files", () => {
     expect(output).toContain("ENVVAR_MISSING");
     expect(output).toContain("add it to .env.dev or .env");
     expect(output).not.toContain("VS Code");
+    expect(output).toMatch(/error\s+ENVVAR_MISSING/);
+  });
+
+  it("an invalid value from .env is still reported, with the value", () => {
+    const folder = workspace({ ".env.dev": `${name}=/mnt/not-a-lake\n` });
+    const { code, output } = ingestron(folder, "apply", "--env", "dev");
+    expect(code).not.toBe(0);
+    expect(output).toContain("BAD_SETTING");
+    expect(output).toContain('"/mnt/not-a-lake"');
   });
 });

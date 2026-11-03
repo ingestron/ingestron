@@ -9,6 +9,7 @@ import {
   fixEdits,
   memoryFiles,
   resolveProject,
+  type Diagnostic,
   type JsonSchema,
   type Limits,
 } from "../src/core.js";
@@ -29,6 +30,7 @@ interface ConformanceCase {
   expect: {
     documents?: { kind: string; id: string; value: unknown }[];
     diagnostics?: Record<string, unknown>[];
+    placeholders?: string[];
     fixed?: { diagnostic: number; title: string; files: Record<string, string> }[];
   };
 }
@@ -36,17 +38,38 @@ interface ConformanceCase {
 const casesFolder = join(import.meta.dirname, "../../../spec/config/conformance");
 const caseFiles = readdirSync(casesFolder).filter((name) => name.endsWith(".yaml"));
 
+/** The case's project, loaded; a successful load lists the placeholders it left (section 5.1). */
+function load(testCase: ConformanceCase) {
+  const result = resolveProject(memoryFiles(testCase.files), {
+    kinds: (testCase.kinds ?? []).map((kind) => defineKind(kind)),
+    environment: testCase.environment,
+    envvars: testCase.envvars ?? {},
+    missingEnvvars: testCase.missingEnvvars,
+    limits: testCase.limits,
+  });
+  expect(result.project?.placeholders ?? []).toEqual(testCase.expect.placeholders ?? []);
+  return result;
+}
+
+/** The diagnostics, matched in order on the fields each expected one gives. */
+function checkDiagnostics(found: readonly Diagnostic[], wanted: Record<string, unknown>[]): void {
+  const actual = found.map((diagnostic) => ({
+    code: diagnostic.code,
+    severity: diagnostic.severity,
+    message: diagnostic.message,
+    hint: diagnostic.hint,
+    fixes: diagnostic.fixes?.map((fix) => fix.title),
+    ...diagnostic.location,
+  }));
+  expect(actual).toHaveLength(wanted.length);
+  wanted.forEach((expected, index) => expect(actual[index]).toMatchObject(expected));
+}
+
 describe("conformance", () => {
   it.each(caseFiles)("%s", (caseFile) => {
     const testCase = parse(readFileSync(join(casesFolder, caseFile), "utf8")) as ConformanceCase;
 
-    const result = resolveProject(memoryFiles(testCase.files), {
-      kinds: (testCase.kinds ?? []).map((kind) => defineKind(kind)),
-      environment: testCase.environment,
-      envvars: testCase.envvars ?? {},
-      missingEnvvars: testCase.missingEnvvars,
-      limits: testCase.limits,
-    });
+    const result = load(testCase);
 
     if (testCase.expect.documents) {
       expect(result.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
@@ -58,20 +81,8 @@ describe("conformance", () => {
       expect(documents).toEqual(testCase.expect.documents);
     }
 
-    if (testCase.expect.diagnostics) {
-      const actual = result.diagnostics.map((diagnostic) => ({
-        code: diagnostic.code,
-        severity: diagnostic.severity,
-        message: diagnostic.message,
-        hint: diagnostic.hint,
-        fixes: diagnostic.fixes?.map((fix) => fix.title),
-        ...diagnostic.location,
-      }));
-      expect(actual).toHaveLength(testCase.expect.diagnostics.length);
-      testCase.expect.diagnostics.forEach((expected, index) => {
-        expect(actual[index]).toMatchObject(expected);
-      });
-    }
+    if (testCase.expect.diagnostics)
+      checkDiagnostics(result.diagnostics, testCase.expect.diagnostics);
 
     for (const fixed of testCase.expect.fixed ?? []) {
       const fix = result.diagnostics[fixed.diagnostic]?.fixes?.find(

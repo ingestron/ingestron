@@ -1,0 +1,26 @@
+description: A placeholder is still text, so where text is not allowed it is a schema error, as the variable's value would be; other values beside it are checked as usual.
+envvars: {}
+missingEnvvars: information
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema:
+      type: object
+      properties:
+        port: { type: integer }
+        mode: { enum: [full, delta] }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    port: ${envvar:PORT}
+    mode: weekly
+expect:
+  diagnostics:
+    - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 4 }
+    - { code: SCHEMA, severity: error, file: a.pipeline.yaml, line: 4 }
+    - { code: SCHEMA, severity: error, file: a.pipeline.yaml, line: 5 }

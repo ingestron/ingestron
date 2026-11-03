@@ -36,12 +36,16 @@ export function createSchemaChecker() {
     }
     return engine;
   }
-  /** `file` is the document's own file: fixes are offered for problems written there. */
+  /**
+   * `file` is the document's own file: fixes are offered for problems written there.
+   * Failures caused by text that `holdsPlaceholder` (spec §5.1) are left out.
+   */
   return function check(
     schema: JsonSchema,
     value: unknown,
     locate: Locate,
     file?: string,
+    holdsPlaceholder: (text: string) => boolean = () => false,
   ): Diagnostic[] {
     let validate = compiled.get(schema);
     if (!validate) {
@@ -49,12 +53,51 @@ export function createSchemaChecker() {
       compiled.set(schema, validate);
     }
     if (validate(value)) return [];
-    const failures = validate.errors ?? [];
+    const failures = withoutPlaceholders(validate.errors ?? [], holdsPlaceholder);
     return failures
       .flatMap((failure) => problemFor(failure, failures, schema, locate, file))
       .sort(byLocation);
   };
 }
+
+/**
+ * The failures without those a placeholder causes (spec §5.1): text that holds one
+ * fails any keyword but `type` only because its value is not known yet, and so does a
+ * `oneOf`, `anyOf` or `if` at or above such a failure.
+ */
+export function withoutPlaceholders<T extends PlaceholderFailure>(
+  failures: readonly T[],
+  holdsPlaceholder: (text: string) => boolean,
+): T[] {
+  const left = failures.filter(
+    (failure) =>
+      failure.keyword !== "type" &&
+      typeof failure.data === "string" &&
+      holdsPlaceholder(failure.data),
+  );
+  if (left.length === 0) return [...failures];
+  const under = (failure: T) =>
+    left.some(
+      ({ instancePath }) =>
+        instancePath === failure.instancePath ||
+        instancePath.startsWith(`${failure.instancePath}/`),
+    );
+  return failures.filter(
+    (failure) => !left.includes(failure) && !(combinators.has(failure.keyword) && under(failure)),
+  );
+}
+
+/** What {@link withoutPlaceholders} reads of a schema failure. */
+export interface PlaceholderFailure {
+  /** The schema keyword that failed, such as `pattern` or `anyOf`. */
+  keyword: string;
+  /** Where the failing value is, as a JSON Pointer. */
+  instancePath: string;
+  /** The failing value; Ajv gives it with its `verbose` option. */
+  data?: unknown;
+}
+
+const combinators = new Set(["oneOf", "anyOf", "if"]);
 
 /** One failure as a problem with its fixes; none when it repeats another. */
 function problemFor(
