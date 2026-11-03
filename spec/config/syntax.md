@@ -285,10 +285,12 @@ warning by itself:
   it, when one of its alternatives failed and every failure inside that
   alternative was left out: the value might meet that alternative. The
   alternatives of an `if` are its `then` and `else`. A failure is inside an
-  alternative when it comes from the alternative's schema, or from a schema
-  that schema names with a local `$ref`, at or below the combinator's value.
-  Any other `oneOf`, `anyOf` or `if` failure is reported, even when an unset
-  reference sits below it.
+  alternative when it comes from the alternative's own schema, or, when the
+  alternative itself is a local `$ref`, from the schema that `$ref` names,
+  and is at or below the combinator's value. Only that one `$ref` is
+  followed: a failure from a schema named by a `$ref` further inside is not
+  inside the alternative. Any other `oneOf`, `anyOf` or `if` failure is
+  reported, even when an unset reference sits below it.
 - A document whose failures are all left out is valid.
 - A link whose value holds an unset reference is not checked.
 
