@@ -124,7 +124,7 @@ export interface Problem {
         end: Position;
     };
     // (undocumented)
-    severity: "error" | "warning";
+    severity: "error" | "warning" | "information";
 }
 
 // @public
@@ -142,7 +142,7 @@ export interface ProblemEntry {
     // (undocumented)
     message: string;
     // (undocumented)
-    severity: "error" | "warning";
+    severity: "error" | "warning" | "information";
 }
 
 // @public

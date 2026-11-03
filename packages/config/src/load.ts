@@ -4,6 +4,7 @@
 
 import { uniqueDiagnostics, type LoadContext } from "./context.js";
 import { hasErrors, type Diagnostic } from "./diagnostics.js";
+import { envvarsFor } from "./env-files.js";
 import { checkDuplicateIds, loadDocument, type LoadedDocument } from "./documents.js";
 import type { FileSource } from "./files.js";
 import type { KindDefinition } from "./kinds.js";
@@ -20,8 +21,18 @@ export interface LoadOptions {
   kinds: readonly KindDefinition<any>[];
   /** Environment whose values are merged over the defaults. */
   environment?: string;
-  /** Variables for `${envvar:…}`. `loadProject` defaults to `process.env`; `resolveProject` to none. */
+  /**
+   * The host environment for `${envvar:…}`. `loadProject` defaults to
+   * `process.env`; `resolveProject` to none. Empty values count as unset.
+   * `.env.<environment>` and `.env` in the project root fill what it lacks.
+   */
   envvars?: Readonly<Record<string, string | undefined>>;
+  /**
+   * What a `${envvar:…}` that is set nowhere is. `"error"` (the default) stops
+   * the load. `"information"` reports it as information and resolves the
+   * reference to its own text, so an editor can still show the project.
+   */
+  missingEnvvars?: "error" | "information";
   /** Manifest path inside the project. Default: "project.yaml". */
   manifest?: string;
   /** Overrides for {@link defaultLimits}. */
@@ -44,11 +55,20 @@ export type LoadResult =
  * if (!result.ok) console.error(formatDiagnostics(result.diagnostics));
  */
 export function resolveProject(files: FileSource, options: LoadOptions): LoadResult {
+  const limits = { ...defaultLimits, ...options.limits };
+  const { envvars, diagnostics: envFileDiagnostics } = envvarsFor(
+    files,
+    options.environment,
+    options.envvars ?? {},
+    limits.maxFileBytes,
+  );
   const context: LoadContext = {
     files,
-    limits: { ...defaultLimits, ...options.limits },
-    envvars: options.envvars ?? {},
-    diagnostics: [],
+    limits,
+    envvars,
+    missingEnvvars: options.missingEnvvars ?? "error",
+    environment: options.environment,
+    diagnostics: envFileDiagnostics,
     parsedFiles: new Map(),
     aliasCount: 0,
     includeCount: 0,

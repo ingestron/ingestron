@@ -1,0 +1,29 @@
+description: A .env file is read even when nothing refers to it, so a malformed line is reported at once.
+envvars: {}
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  .env: |
+    UNUSED=1
+    this is not a setting
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    table: orders
+expect:
+  documents:
+    - kind: Pipeline
+      id: a
+      value:
+        apiVersion: example.dev/v1
+        kind: Pipeline
+        id: a
+        table: orders
+  diagnostics:
+    - { code: ENV_FILE_LINE, severity: warning, file: .env, line: 2 }

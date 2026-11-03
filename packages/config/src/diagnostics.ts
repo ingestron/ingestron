@@ -6,8 +6,11 @@ export interface Location {
   column: number;
 }
 
-/** Whether a diagnostic stops the load (`error`) or is advice (`warning`). */
-export type Severity = "error" | "warning";
+/**
+ * Whether a diagnostic stops the load (`error`), says something is probably
+ * wrong (`warning`) or is advice about the surroundings (`information`).
+ */
+export type Severity = "error" | "warning" | "information";
 
 /**
  * Every problem the loader can report. Each code is described, with an
@@ -32,6 +35,7 @@ export type DiagnosticCode =
   | "NO_ENVIRONMENT"
   | "UNKNOWN_ENVIRONMENT"
   | "ENVVAR_MISSING"
+  | "ENV_FILE_LINE"
   | "NOT_TEXT"
   | "SECRET_IN_TEXT"
   | "MISSING_HEADER"
@@ -94,7 +98,20 @@ export function warning(
   return { code, severity: "warning", message, location, hint };
 }
 
-/** True when the list contains at least one error (warnings do not count). */
+/**
+ * Creates an information diagnostic: advice about the tool's surroundings,
+ * such as a variable not set on this computer. It never stops a load.
+ */
+export function information(
+  code: DiagnosticCode,
+  message: string,
+  location?: Location,
+  hint?: string,
+): Diagnostic {
+  return { code, severity: "information", message, location, hint };
+}
+
+/** True when the list contains at least one error (warnings and information do not count). */
 export function hasErrors(diagnostics: readonly Diagnostic[]): boolean {
   return diagnostics.some((diagnostic) => diagnostic.severity === "error");
 }

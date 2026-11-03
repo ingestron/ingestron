@@ -55,3 +55,4 @@ expect:
         e3: 'e\tf'
         afterQuote: a
         spaced: spaced
+  diagnostics: []

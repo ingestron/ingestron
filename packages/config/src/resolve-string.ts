@@ -2,7 +2,7 @@
 // with references embedded in it.
 
 import { isRecord } from "./data.js";
-import { error, type Location } from "./diagnostics.js";
+import { error, information, type Location } from "./diagnostics.js";
 import { parseDefinitionString, type Segment } from "./references.js";
 import { resolveFileReference } from "./resolve-file.js";
 import { lookupPath, type Walk } from "./scope.js";
@@ -138,16 +138,28 @@ function readEnvironmentVariable(name: string, source: string, location: Locatio
     return undefined;
   }
   const value = walk.context.envvars[name];
-  if (value === undefined || value === "") {
+  if (value !== undefined && value !== "") return value;
+  const { environment, missingEnvvars } = walk.context;
+  const files = environment === undefined ? ".env" : `.env.${environment}`;
+  if (missingEnvvars === "information") {
     walk.context.diagnostics.push(
-      error(
+      information(
         "ENVVAR_MISSING",
-        `Environment variable ${name} is not set.`,
+        `${name} isn't set; add it to ${files} or set it before running Ingestron.`,
         location,
-        `Set ${name} before loading, or remove "${source}".`,
+        "Ingestron reads .env files in the project folder and the environment VS Code started with.",
       ),
     );
-    return undefined;
+    // The reference stays as written, so the project still loads.
+    return source;
   }
-  return value;
+  walk.context.diagnostics.push(
+    error(
+      "ENVVAR_MISSING",
+      `Environment variable ${name} is not set.`,
+      location,
+      `Set ${name}, add it to ${environment === undefined ? ".env" : `${files} or .env`}, or remove "${source}".`,
+    ),
+  );
+  return undefined;
 }
