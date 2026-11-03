@@ -102,12 +102,14 @@ function mergedGitignore(existing: string, added: string): string {
 /**
  * Writes the files under `target`, or returns what is in the way and writes
  * nothing: an existing entry at a path (a link too, never followed), or one
- * that is not a folder where the template needs a folder.
+ * that is not a folder where the template needs a folder. `written` lists the
+ * files created; a .gitignore that was there is added to, and `ignored` lists
+ * the lines added to it, comments left out.
  */
 export function writeScaffold(
   target: string,
   files: Record<string, Content>,
-): { written: string[] } | { clashes: string[] } {
+): { written: string[]; ignored: string[] } | { clashes: string[] } {
   const paths = Object.keys(files).sort();
   // A .gitignore that is already there is added to, never replaced.
   const merged = new Map<string, string>();
@@ -120,9 +122,11 @@ export function writeScaffold(
     ...new Set(paths.filter((path) => !merged.has(path)).flatMap((path) => inTheWay(target, path))),
   ].sort();
   if (clashes.length > 0) return { clashes };
+  const ignored: string[] = [];
   for (const path of paths) {
     const text = merged.get(path);
     if (text !== undefined) {
+      ignored.push(...addedLines(regularFileText(join(target, path)) ?? "", text));
       writeFileSync(join(target, path), text);
       continue;
     }
@@ -130,7 +134,29 @@ export function writeScaffold(
     // "wx": never replace a file that appeared after the check.
     writeFileSync(join(target, path), files[path]!, { flag: "wx" });
   }
-  return { written: paths };
+  return { written: paths.filter((path) => !merged.has(path)), ignored };
+}
+
+/** The lines of `after` that `before` does not have, without blank lines and comments. */
+function addedLines(before: string, after: string): string[] {
+  const had = new Set(before.split(/\r?\n/).map((line) => line.trim()));
+  return after
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line !== "" && !line.startsWith("#") && !had.has(line));
+}
+
+/**
+ * What init says it added to a .gitignore that was there: its own lines by name, the
+ * .env lines together. Empty when nothing was added.
+ */
+export function ignoredText(lines: readonly string[]): string {
+  const own = lines.filter((line) => !envIgnores.includes(line));
+  const parts = [...own, ...(own.length < lines.length ? ["the .env lines"] : [])];
+  if (parts.length === 0) return "";
+  const listed =
+    parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}`;
+  return `; added ${listed} to .gitignore`;
 }
 
 /** The text of a regular file, not a link; undefined when there is none, or something else is. */

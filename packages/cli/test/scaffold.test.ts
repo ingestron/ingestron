@@ -97,7 +97,10 @@ describe("writeScaffold", () => {
 
   it("writes every file, creating folders", () => {
     const target = join(temp(), "new");
-    expect(writeScaffold(target, { "a/b.yaml": "x\n" })).toEqual({ written: ["a/b.yaml"] });
+    expect(writeScaffold(target, { "a/b.yaml": "x\n" })).toEqual({
+      written: ["a/b.yaml"],
+      ignored: [],
+    });
     expect(readFileSync(join(target, "a/b.yaml"), "utf8")).toBe("x\n");
   });
 });
@@ -159,7 +162,11 @@ describe("writeScaffold and an existing .gitignore", () => {
       "project.yaml": "id: x\n",
       ".gitignore": withEnvIgnores("ingestron.duckdb*\n"),
     });
-    expect(result).toEqual({ written: [".gitignore", "project.yaml"] });
+    // The .gitignore was added to, not created; the lines added are named.
+    expect(result).toEqual({
+      written: ["project.yaml"],
+      ignored: ["ingestron.duckdb*", ".env.*", "!.env.example"],
+    });
     const lines = readFileSync(join(target, ".gitignore"), "utf8").split("\n");
     expect(lines.filter((line) => line === ".env")).toHaveLength(1);
     expect(lines).toEqual(

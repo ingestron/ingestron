@@ -77,6 +77,29 @@ describe("ingestron init with flags", () => {
     }
   });
 
+  it("says what it added to a .gitignore that was there, and does not count it as created", () => {
+    const fresh = session().ingestron("init", "new", "--template", "minimal", "--yes").output;
+    expect(fresh).toContain("Created new from the template minimal (6 files).");
+
+    const merged = session();
+    writeFileSync(join(merged.cwd, ".gitignore"), "node_modules/\n");
+    expect(merged.ingestron("init", ".", "--template", "minimal", "--yes").output).toContain(
+      "Created . from the template minimal (5 files); added the .env lines to .gitignore.\n",
+    );
+
+    const duckdb = session();
+    writeFileSync(join(duckdb.cwd, ".gitignore"), ".env\n");
+    expect(duckdb.ingestron("init", ".", "--template", "duckdb", "--yes").output).toMatch(
+      /^Created \. from the template duckdb \(\d+ files\); added ingestron\.duckdb\*, published\/\*\.parquet and the \.env lines to \.gitignore\.\n/,
+    );
+
+    const complete = session();
+    writeFileSync(join(complete.cwd, ".gitignore"), ".env\n.env.*\n!.env.example\n");
+    expect(complete.ingestron("init", ".", "--template", "minimal", "--yes").output).toContain(
+      "Created . from the template minimal (5 files).\n",
+    );
+  });
+
   it("takes the name, environments and answers from flags", () => {
     const { cwd, ingestron } = session();
     const args = ["--template", "minimal", "--name", "sales", "--env", "dev", "--env", "prod"];
