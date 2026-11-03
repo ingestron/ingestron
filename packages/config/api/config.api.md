@@ -160,13 +160,6 @@ export function memoryFiles(files: Readonly<Record<string, string>>): FileSource
 export function nodeFiles(root: string): FileSource;
 
 // @public
-export interface PlaceholderFailure {
-    data?: unknown;
-    instancePath: string;
-    keyword: string;
-}
-
-// @public
 export interface Project {
     all<T>(kind: KindDefinition<T>): DefinitionDocument<T>[];
     documents: readonly DefinitionDocument[];
@@ -176,8 +169,8 @@ export interface Project {
     id: string;
     // (undocumented)
     name?: string;
-    placeholders: readonly string[];
     runsOn?: string;
+    unsetEnvvars: readonly string[];
     values: unknown;
 }
 
@@ -209,7 +202,14 @@ export interface TextEdit {
 export function toEditorSchema(schema: JsonSchema): JsonSchema;
 
 // @public
-export function withoutPlaceholders<T extends PlaceholderFailure>(failures: readonly T[], holdsPlaceholder: (text: string) => boolean): T[];
+export interface UnsetEnvvarFailure {
+    data?: unknown;
+    instancePath: string;
+    keyword: string;
+}
+
+// @public
+export function withoutUnsetEnvvars<T extends UnsetEnvvarFailure>(failures: readonly T[], holdsUnsetEnvvar: (text: string) => boolean): T[];
 
 // (No @packageDocumentation comment for this package)
 

@@ -24,7 +24,7 @@ import type { PackInfo } from "./pack.js";
 import { resolvePlatform } from "./platform.js";
 import { checkDuplicateNames, createNamer, type TableNamer } from "./tables.js";
 import { transformTables } from "./transforms.js";
-import { holdsPlaceholder, placeholderAt } from "./unknown-values.js";
+import { holdsUnsetEnvvar, unsetEnvvarAt } from "./unknown-values.js";
 import { recordOutputs, runPackCheck } from "./pack-checks.js";
 
 /** Options for {@link resolveDefinitions} and {@link loadDefinitions}. */
@@ -123,8 +123,8 @@ function resolveLoaded(
   warnings: ResolveResult["diagnostics"],
 ): ResolveResult {
   // Loading succeeded, so what it reported are warnings, kept with the result.
-  // A value that holds a placeholder is not known yet, so no problem is reported at it.
-  const reporter = createReporter(warnings, (at) => placeholderAt(project, at));
+  // A value that holds an unset reference is not known yet, so no problem is reported at it.
+  const reporter = createReporter(warnings, (at) => unsetEnvvarAt(project, at));
   const context = createContext(project, packs, reporter);
   if (!context) return { ok: false, diagnostics: reporter.diagnostics };
   checkSettingsKeys(context);
@@ -197,11 +197,11 @@ function checkServeInputs(context: Context, tables: ResolvedTable[]): void {
 
 /**
  * Runs each chosen method's own check on its table (`METHOD_CHECK`), except on a table
- * that holds a placeholder: what a check judges cannot be told apart.
+ * that holds an unset reference: what a check judges cannot be told apart.
  */
 function runMethodChecks(context: Context, tables: ResolvedTable[]): void {
   for (const table of tables) {
-    if (holdsPlaceholder(context.project, table)) continue;
+    if (holdsUnsetEnvvar(context.project, table)) continue;
     for (const step of [table.ingest, table.transform, table.store, table.serve]) {
       const method = step && context.pack.methods[step.method];
       for (const message of method?.check?.(table) ?? []) {

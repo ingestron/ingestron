@@ -151,7 +151,7 @@ function readEnvironmentVariable(name: string, source: string, location: Locatio
       ),
     );
     // The reference stays as written, so the project still loads; later checks leave it alone.
-    walk.context.placeholders.add(source);
+    walk.context.unsetEnvvars.add(source);
     return source;
   }
   walk.context.diagnostics.push(

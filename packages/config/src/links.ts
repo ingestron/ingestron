@@ -11,14 +11,14 @@ import { locateIn } from "./validate.js";
  * Reports every link whose value is not the id of a document of the target
  * kind. Documents that failed their schema are targets but not sources. A
  * link to a document that could not be loaded is not reported: that
- * document's own problem already is. Nor is a link whose value holds a
- * placeholder (spec §5.1): what it names is not known yet.
+ * document's own problem already is. Nor is a link whose value holds
+ * an unset reference (spec §5.1): what it names is not known yet.
  */
 export function checkLinks(
   loaded: readonly LoadedDocument[],
   diagnostics: Diagnostic[],
   unloaded: readonly { kind?: string; id: string }[] = [],
-  holdsPlaceholder: (text: string) => boolean = () => false,
+  holdsUnsetEnvvar: (text: string) => boolean = () => false,
 ): void {
   for (const source of loaded.filter(({ valid }) => valid)) {
     for (const [pattern, targetKind] of Object.entries(source.definition.links)) {
@@ -28,16 +28,16 @@ export function checkLinks(
       const ids = [...idsOfKind(loaded, targetKind), ...skipped];
       checkPattern(source, pattern, ids, idsOfKind(loaded, targetKind), targetKind, {
         diagnostics,
-        holdsPlaceholder,
+        holdsUnsetEnvvar,
       });
     }
   }
 }
 
-/** Where problems go, and which text is a placeholder that is not checked. */
+/** Where problems go, and which text holds an unset reference, which is not checked. */
 interface Reporting {
   diagnostics: Diagnostic[];
-  holdsPlaceholder: (text: string) => boolean;
+  holdsUnsetEnvvar: (text: string) => boolean;
 }
 
 function checkPattern(
@@ -46,11 +46,11 @@ function checkPattern(
   accepted: readonly string[],
   ids: readonly string[],
   targetKind: string,
-  { diagnostics, holdsPlaceholder }: Reporting,
+  { diagnostics, holdsUnsetEnvvar }: Reporting,
 ): void {
   // An accepted id, or text whose value is not known yet.
   const fine = (value: unknown) =>
-    typeof value === "string" && (accepted.includes(value) || holdsPlaceholder(value));
+    typeof value === "string" && (accepted.includes(value) || holdsUnsetEnvvar(value));
   for (const link of valuesAt(document.value, parsePointer(pattern) ?? [], "")) {
     if (fine(link.value)) continue;
     const location = locateIn(sourceMap)(link.pointer);

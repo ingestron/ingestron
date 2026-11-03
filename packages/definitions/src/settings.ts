@@ -1,5 +1,5 @@
 // Merges a method's settings from every layer and checks them (section 3).
-import { withoutPlaceholders } from "@ingestron/config";
+import { withoutUnsetEnvvars } from "@ingestron/config";
 import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
 import type { Context } from "./context.js";
 import type { Source } from "./diagnostics.js";
@@ -7,7 +7,7 @@ import { isRecord, merge, sameValue } from "./merge.js";
 import type { Origin } from "./model.js";
 import { reportMissing, type MethodUse, type SettingsUser } from "./missing-settings.js";
 import type { Action, Method } from "./pack.js";
-import { holdsPlaceholder } from "./unknown-values.js";
+import { holdsUnsetEnvvar } from "./unknown-values.js";
 
 /** Settings from one layer, with where they were written (none for pack defaults). */
 export interface SettingsLayer {
@@ -19,7 +19,7 @@ export interface SettingsLayer {
   origin: Origin["layer"];
 }
 
-// Verbose, so each failure carries the failing value: for messages and placeholders.
+// Verbose, so each failure carries the failing value: for messages and unset references.
 const ajv = new Ajv2020({ allErrors: true, strict: false, verbose: true });
 const validators = new WeakMap<Method, ValidateFunction>();
 
@@ -98,7 +98,7 @@ function fixedRespected(
 ): boolean {
   let respected = true;
   for (const layer of layers.filter((candidate) => candidate.definition)) {
-    const unknown = (value: unknown) => holdsPlaceholder(context.project, value);
+    const unknown = (value: unknown) => holdsUnsetEnvvar(context.project, value);
     for (const { path, value } of changedFixed(fixed, layer.value, [], unknown)) {
       const pointer = path.map((key) => `/${key.replaceAll("~", "~0").replaceAll("/", "~1")}`);
       const at = layer.at && {
@@ -125,7 +125,7 @@ function fixedRespected(
 /**
  * The fixed values that `value` changes, with their key paths. Mappings in
  * both are compared key by key, so keys beside the fixed ones are allowed. A
- * value that is `unknown`, such as one holding a placeholder, changes nothing.
+ * value that is `unknown`, such as one holding an unset reference, changes nothing.
  */
 function changedFixed(
   fixed: Record<string, unknown>,
@@ -156,9 +156,9 @@ function checkSchema(
     validators.set(method, validate);
   }
   if (validate(settings)) return true;
-  // Text that holds a placeholder is not known yet, so it fails nothing but `type`.
-  const failures = withoutPlaceholders(validate.errors ?? [], (text) =>
-    holdsPlaceholder(context.project, text),
+  // Text that holds an unset reference is not known yet, so it fails nothing but `type`.
+  const failures = withoutUnsetEnvvars(validate.errors ?? [], (text) =>
+    holdsUnsetEnvvar(context.project, text),
   );
   if (failures.length === 0) return true;
   const missing = failures

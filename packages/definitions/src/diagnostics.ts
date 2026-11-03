@@ -66,7 +66,7 @@ export interface Reporter {
 /**
  * A new, empty reporter. A problem written once on a flow is found for each
  * of its tables, so an identical diagnostic is kept only once. A problem at a
- * place `unknown` names, such as text holding a placeholder, is not kept.
+ * place `unknown` names, such as text holding an unset reference, is not kept.
  */
 export function createReporter(
   start: readonly AnyDiagnostic[] = [],

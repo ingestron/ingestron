@@ -17,7 +17,7 @@ export interface LoadContext {
   environment?: string;
   diagnostics: Diagnostic[];
   /** The text of each `${envvar:…}` left as written because it is unset (spec §5.1), in order. */
-  placeholders: Set<string>;
+  unsetEnvvars: Set<string>;
   /**
    * Successfully parsed YAML by path. Failures are not cached: each reference
    * to a broken file reports again, so no reference can fail silently.
@@ -34,9 +34,9 @@ export interface LoadContext {
   unloaded: { kind?: string; id: string }[];
 }
 
-/** True when the text contains a placeholder left in this load (spec §5.1). */
-export function holdsPlaceholder(context: LoadContext, text: string): boolean {
-  for (const placeholder of context.placeholders) if (text.includes(placeholder)) return true;
+/** True when the text contains an unset reference left in this load (spec §5.1). */
+export function holdsUnsetEnvvar(context: LoadContext, text: string): boolean {
+  for (const reference of context.unsetEnvvars) if (text.includes(reference)) return true;
   return false;
 }
 

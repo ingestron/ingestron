@@ -1,4 +1,4 @@
-description: With missingEnvvars information, a placeholder for an unset variable is not judged. A setting that holds one passes its schema and does not change a fixed value, and a name that holds one is not checked, so only the information remains and the tables resolve.
+description: With missingEnvvars information, an unset reference is not judged. A setting that holds one passes its schema and does not change a fixed value, and a name that holds one is not checked, so only the information remains and the tables resolve.
 environment: dev
 envvars: {}
 missingEnvvars: information

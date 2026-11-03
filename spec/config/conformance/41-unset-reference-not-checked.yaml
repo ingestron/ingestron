@@ -1,4 +1,4 @@
-description: A placeholder left for an unset variable is not checked, so only the information remains. Its value may have a pattern and an enum, sit in an anyOf or a link, or be copied from values into other text.
+description: An unset reference is not checked, so only the information remains. Its value may have a pattern and an enum, sit in an anyOf or a link, or be copied from values into other text.
 envvars: {}
 missingEnvvars: information
 kinds:
@@ -54,4 +54,4 @@ expect:
     - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 4 }
     - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 6 }
     - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 7 }
-  placeholders: ["${envvar:LAKE}", "${envvar:URL}", "${envvar:MODE}", "${envvar:TARGET}"]
+  unsetEnvvars: ["${envvar:LAKE}", "${envvar:URL}", "${envvar:MODE}", "${envvar:TARGET}"]

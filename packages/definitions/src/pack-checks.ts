@@ -2,14 +2,14 @@
 // each pack's own checks on the whole model.
 import type { Context } from "./context.js";
 import type { ResolvedModel, ResolvedTable } from "./model.js";
-import { holdsPlaceholder } from "./unknown-values.js";
+import { holdsUnsetEnvvar } from "./unknown-values.js";
 
 /**
  * Each pack's checks on the whole model (`PACK_CHECK`), reported at the platform. Not
- * run on a model that holds a placeholder: what a check judges cannot be told apart.
+ * run on a model that holds an unset reference: what a check judges cannot be told apart.
  */
 export function runPackCheck(context: Context, model: ResolvedModel): void {
-  if (holdsPlaceholder(context.project, model)) return;
+  if (holdsUnsetEnvvar(context.project, model)) return;
   const at = context.platform && { document: context.platform, pointer: "" };
   for (const message of context.packs.flatMap((pack) => pack.check?.(model) ?? []))
     context.reporter.error("PACK_CHECK", `${message}.`, at);
