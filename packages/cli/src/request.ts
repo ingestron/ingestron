@@ -24,17 +24,18 @@ import { environmentsToGenerate } from "./environments.js";
 import { generatedOutputs } from "./generate.js";
 import type { Io } from "./io.js";
 import { packs } from "./packs.js";
-import { sourcesNotKnown, valuesToProvide } from "./request-values.js";
+import { notKnown as whatIsNotKnown } from "./request-unknown.js";
+import { valuesToProvide } from "./request-values.js";
 
-/** Prints the request for each environment. Returns the exit code. */
+/** Prints the request for each environment. Returns the exit code: 1 when any has errors. */
 export function request(options: Options, io: Io): number {
   const definitions = resolve(io.cwd, options.definitions);
   const files = nodeFiles(definitions);
-  const texts = environmentsToGenerate(definitions, options.environments).map((environment) =>
-    platformRequest(files, environment),
+  const requests = environmentsToGenerate(definitions, options.environments).map((environment) =>
+    requestFor(files, environment),
   );
-  io.write(texts.join("\n"));
-  return texts.some((text) => text.includes("The definitions have problems")) ? 1 : 0;
+  io.write(requests.map(({ text }) => text).join("\n"));
+  return requests.some(({ resolved }) => !resolved) ? 1 : 0;
 }
 
 /**
@@ -45,6 +46,14 @@ export function request(options: Options, io: Io): number {
  * console.log(platformRequest(nodeFiles("definitions"), "prod"));
  */
 export function platformRequest(files: FileSource, environment: string | undefined): string {
+  return requestFor(files, environment).text;
+}
+
+/** The request's text, and whether the definitions resolved; false gives the short note. */
+function requestFor(
+  files: FileSource,
+  environment: string | undefined,
+): { text: string; resolved: boolean } {
   const { model, diagnostics } = resolveDefinitions(files, {
     packs,
     environment,
@@ -53,7 +62,10 @@ export function platformRequest(files: FileSource, environment: string | undefin
   });
   const name = environment ?? "default";
   if (!model)
-    return `# Platform request (${name})\n\nThe definitions have problems; fix them first.\n`;
+    return {
+      text: `# Platform request (${name})\n\nThe definitions have problems; fix them first.\n`,
+      resolved: false,
+    };
   const project = resolveProject(files, {
     kinds: Object.values(kinds),
     ...(environment && { environment }),
@@ -61,8 +73,8 @@ export function platformRequest(files: FileSource, environment: string | undefin
     missingEnvvars: "information",
   }).project;
   const capabilities = packs.flatMap((pack) => pack.capabilities ?? []);
-  const notKnown = sourcesNotKnown(model);
-  return [
+  const notKnown = whatIsNotKnown(project, model);
+  const text = [
     `# Platform request: ${model.project.id} (${name})`,
     valuesToProvide(project?.envvarReferences ?? [], environment, notKnown),
     identity(model),
@@ -71,11 +83,12 @@ export function platformRequest(files: FileSource, environment: string | undefin
     infrastructure(project, usedMethods(model)),
     ...packSections(model),
     // Files are never generated from a table whose source is not known.
-    notKnown.size > 0 ? undefined : sql(model, name),
+    notKnown.sources.size > 0 ? undefined : sql(model, name),
   ]
     .filter(Boolean)
     .join("\n\n")
     .concat("\n");
+  return { text, resolved: true };
 }
 
 /** Who the generated pipelines and jobs run as; nothing when no data platform pack runs them. */
