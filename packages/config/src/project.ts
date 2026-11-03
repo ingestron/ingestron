@@ -12,6 +12,13 @@ export interface Project {
   runsOn?: string;
   /** Project values after the environment's values were merged in. */
   values: unknown;
+  /**
+   * The text of each `${envvar:…}` reference left as written because its variable is set
+   * nowhere, each once, in the order first left. Only a load with `missingEnvvars:
+   * "information"` leaves any. A text value that contains one is not known yet, so checks
+   * leave it alone (spec/config/syntax.md §5.1).
+   */
+  placeholders: readonly string[];
   /** Every document, in file path order. */
   documents: readonly DefinitionDocument[];
   /** The document of this kind with this id, if there is one. */
@@ -25,6 +32,7 @@ export function createProject(
   scope: Scope,
   documents: readonly DefinitionDocument[],
   runsOn?: string,
+  placeholders: readonly string[] = [],
 ): Project {
   // Documents passed their kind's schema, so treating them as `T` is safe
   // as long as `T` matches the schema; defineKind's documentation says so.
@@ -38,6 +46,7 @@ export function createProject(
     environment: scope.environment?.name,
     ...(runsOn && { runsOn }),
     values: scope.values,
+    placeholders,
     documents,
     all,
     get: (kind, id) => all(kind).find((document) => document.id === id),

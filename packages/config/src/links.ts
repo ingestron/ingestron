@@ -11,12 +11,14 @@ import { locateIn } from "./validate.js";
  * Reports every link whose value is not the id of a document of the target
  * kind. Documents that failed their schema are targets but not sources. A
  * link to a document that could not be loaded is not reported: that
- * document's own problem already is.
+ * document's own problem already is. Nor is a link whose value holds a
+ * placeholder (spec §5.1): what it names is not known yet.
  */
 export function checkLinks(
   loaded: readonly LoadedDocument[],
   diagnostics: Diagnostic[],
   unloaded: readonly { kind?: string; id: string }[] = [],
+  holdsPlaceholder: (text: string) => boolean = () => false,
 ): void {
   for (const source of loaded.filter(({ valid }) => valid)) {
     for (const [pattern, targetKind] of Object.entries(source.definition.links)) {
@@ -24,9 +26,18 @@ export function checkLinks(
         .filter(({ kind }) => kind === undefined || kind === targetKind)
         .map(({ id }) => id);
       const ids = [...idsOfKind(loaded, targetKind), ...skipped];
-      checkPattern(source, pattern, ids, idsOfKind(loaded, targetKind), targetKind, diagnostics);
+      checkPattern(source, pattern, ids, idsOfKind(loaded, targetKind), targetKind, {
+        diagnostics,
+        holdsPlaceholder,
+      });
     }
   }
+}
+
+/** Where problems go, and which text is a placeholder that is not checked. */
+interface Reporting {
+  diagnostics: Diagnostic[];
+  holdsPlaceholder: (text: string) => boolean;
 }
 
 function checkPattern(
@@ -35,10 +46,13 @@ function checkPattern(
   accepted: readonly string[],
   ids: readonly string[],
   targetKind: string,
-  diagnostics: Diagnostic[],
+  { diagnostics, holdsPlaceholder }: Reporting,
 ): void {
+  // An accepted id, or text whose value is not known yet.
+  const fine = (value: unknown) =>
+    typeof value === "string" && (accepted.includes(value) || holdsPlaceholder(value));
   for (const link of valuesAt(document.value, parsePointer(pattern) ?? [], "")) {
-    if (typeof link.value === "string" && accepted.includes(link.value)) continue;
+    if (fine(link.value)) continue;
     const location = locateIn(sourceMap)(link.pointer);
     const problem = error(
       "BROKEN_LINK",

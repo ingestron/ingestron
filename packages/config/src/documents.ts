@@ -1,7 +1,7 @@
 // Loads one imported file as a document: resolve, check the header, find
 // its kind, validate against the kind's schema.
 
-import { errorCount, readYaml, type LoadContext } from "./context.js";
+import { errorCount, holdsPlaceholder, readYaml, type LoadContext } from "./context.js";
 import { isRecord } from "./data.js";
 import { error, type Diagnostic, type Location } from "./diagnostics.js";
 import type { KindDefinition } from "./kinds.js";
@@ -70,7 +70,9 @@ export function loadDocument(
   if (!header) return unloaded(context, value);
   const definition = findKind(kinds, header, root, context.diagnostics);
   if (!definition) return unloaded(context, value);
-  const problems = checkSchema(definition.schema, value, locateIn(walk.sourceMap), path);
+  const problems = checkSchema(definition.schema, value, locateIn(walk.sourceMap), path, (text) =>
+    holdsPlaceholder(context, text),
+  );
   context.diagnostics.push(...problems);
   const locate = locateIn(walk.sourceMap);
   const document = {
