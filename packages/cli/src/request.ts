@@ -1,10 +1,17 @@
 // ingestron request: what to ask of whoever runs the data platform, for one
-// environment: the identity, what each switched-on capability needs, the
-// features in use but switched off, the shared infrastructure the methods
-// expect, what each pack expects to exist and its schedules, and the SQL to
-// run once. The editor's command writes the same text.
+// environment: the environment variables to provide, the identity, what each
+// switched-on capability needs, the features in use but switched off, the
+// shared infrastructure the methods expect, what each pack expects to exist
+// and its schedules, and the SQL to run once. The editor's command writes the
+// same text (spec/cli/request.md).
 import { resolve } from "node:path";
-import { nodeFiles, resolveProject, type AnyDiagnostic, type FileSource } from "@ingestron/config";
+import {
+  nodeFiles,
+  resolveProject,
+  type AnyDiagnostic,
+  type FileSource,
+  type Project,
+} from "@ingestron/config";
 import {
   kinds,
   resolveDefinitions,
@@ -17,6 +24,7 @@ import { environmentsToGenerate } from "./environments.js";
 import { generatedOutputs } from "./generate.js";
 import type { Io } from "./io.js";
 import { packs } from "./packs.js";
+import { sourcesNotKnown, valuesToProvide } from "./request-values.js";
 
 /** Prints the request for each environment. Returns the exit code. */
 export function request(options: Options, io: Io): number {
@@ -31,7 +39,8 @@ export function request(options: Options, io: Io): number {
 
 /**
  * The request as Markdown, ready to send; a short note instead when the
- * definitions do not resolve.
+ * definitions have errors. A variable set nowhere is not an error here: the
+ * request lists it under "Values to provide" and shows it as written.
  * @example
  * console.log(platformRequest(nodeFiles("definitions"), "prod"));
  */
@@ -40,19 +49,29 @@ export function platformRequest(files: FileSource, environment: string | undefin
     packs,
     environment,
     envvars: process.env,
+    missingEnvvars: "information",
   });
   const name = environment ?? "default";
   if (!model)
     return `# Platform request (${name})\n\nThe definitions have problems; fix them first.\n`;
+  const project = resolveProject(files, {
+    kinds: Object.values(kinds),
+    ...(environment && { environment }),
+    envvars: process.env,
+    missingEnvvars: "information",
+  }).project;
   const capabilities = packs.flatMap((pack) => pack.capabilities ?? []);
+  const notKnown = sourcesNotKnown(model);
   return [
     `# Platform request: ${model.project.id} (${name})`,
+    valuesToProvide(project?.envvarReferences ?? [], environment, notKnown),
     identity(model),
     switchedOn(model, capabilities),
     switchedOff(diagnostics, capabilities),
-    infrastructure(files, environment, usedMethods(model)),
+    infrastructure(project, usedMethods(model)),
     ...packSections(model),
-    sql(model, name),
+    // Files are never generated from a table whose source is not known.
+    notKnown.size > 0 ? undefined : sql(model, name),
   ]
     .filter(Boolean)
     .join("\n\n")
@@ -95,17 +114,8 @@ function switchedOff(diagnostics: AnyDiagnostic[], capabilities: Capability[]): 
 }
 
 /** The platform's method settings, with values for this environment; secrets never shown. */
-function infrastructure(
-  files: FileSource,
-  environment: string | undefined,
-  used: Set<string>,
-): string | undefined {
-  const loaded = resolveProject(files, {
-    kinds: Object.values(kinds),
-    ...(environment && { environment }),
-    envvars: process.env,
-  });
-  const platform = loaded.project?.documents.find((item) => item.kind === "Platform");
+function infrastructure(project: Project | undefined, used: Set<string>): string | undefined {
+  const platform = project?.documents.find((item) => item.kind === "Platform");
   const settings = (platform?.value as { settings?: Record<string, Record<string, unknown>> })
     ?.settings;
   // Settings of methods this environment does not use, such as ADF's under runs-on, are left out.
