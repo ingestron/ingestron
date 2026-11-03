@@ -7,6 +7,7 @@ import { fullNameText } from "@ingestron/definitions";
 import { describe, expect, it } from "vitest";
 import { generatedOutputs } from "../src/generate.js";
 import { passports } from "../src/passport.js";
+import { lineage } from "../src/passport-lineage.js";
 import { model, project, sales } from "./passport-fixtures.js";
 
 const retail = join(import.meta.dirname, "../project-templates/retail");
@@ -91,6 +92,21 @@ describe("passports", () => {
     const product = resolved.products.find((item) => item.id === "sales")!;
     product.outputs[0]!.tables = [];
     expect(passports(resolved)["sales.md"]).toContain("Not built in this environment.");
+  });
+
+  it("says there is no lineage, then each output not built, when what is built has none", () => {
+    const resolved = model(project());
+    const product = resolved.products.find((item) => item.id === "sales")!;
+    const built = resolved.tables.find((item) => item.name === product.outputs[0]!.tables[0])!;
+    // A table with no source connection and no inputs draws no line.
+    delete built.ingest;
+    delete built.transform;
+    product.outputs.push({ name: "refunds", contract: "shop.refunds", tables: [] });
+    expect(lineage(resolved, product)).toBe(
+      "There is no lineage to show.\n\n- `refunds`: Not built in this environment.",
+    );
+    product.outputs[0]!.tables = [];
+    expect(lineage(resolved, product)).toBe("Not built in this environment.");
   });
 
   it("writes checks that contain backticks as code that stays whole", () => {

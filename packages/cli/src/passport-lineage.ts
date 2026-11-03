@@ -23,9 +23,13 @@ export function lineage(model: ResolvedModel, product: ResolvedProduct): string 
     if (table) visit(model, graph, table, new Set());
   }
   const unbuilt = notBuiltLines(model, product);
-  if (graph.edges.size === 0) return unbuilt.length > 0 ? notBuilt : "There is no lineage to show.";
-  const diagram = ["```mermaid", "flowchart LR", ...graph.edges, "```"].join("\n");
-  return [diagram, ...(unbuilt.length > 0 ? [unbuilt.join("\n")] : [])].join("\n\n");
+  // Only when no output is built here does the section say just that.
+  if (unbuilt.length > 0 && unbuilt.length === product.outputs.length) return notBuilt;
+  const shown =
+    graph.edges.size === 0
+      ? "There is no lineage to show."
+      : ["```mermaid", "flowchart LR", ...graph.edges, "```"].join("\n");
+  return [shown, ...(unbuilt.length > 0 ? [unbuilt.join("\n")] : [])].join("\n\n");
 }
 
 function visit(model: ResolvedModel, graph: Graph, table: ResolvedTable, seen: Set<string>): void {

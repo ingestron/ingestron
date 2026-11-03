@@ -23,10 +23,10 @@ passport, written for someone who does not know the tools. Its sections, in orde
    id. An output no table builds here says "Not built in this environment."
 4. **Columns:** per output, each column's name, description, type, whether it
    is required or part of the key, and its classification. The type is the
-   contract's logical type (such as `integer` or `timestamp`) for every
-   column, whether it comes from the contract or from the landed files; a
-   column that has only a physical type shows that; a classification
-   the standard's governance lists as sensitive is marked so, and a classified
+   contract's logical type, such as `integer` or `timestamp`. That holds for
+   every column, whether it comes from the contract or from the landed files.
+   A column that has only a physical type shows that. A classification the
+   standard's governance lists as sensitive is marked so, and a classified
    column says when Databricks tags it in Unity Catalog. That is decided per
    table: the table is stored by the Databricks pack and the platform turns on
    `manage.tags`. A table stored by another pack makes no such claim, even when
@@ -40,8 +40,11 @@ passport, written for someone who does not know the tools. Its sections, in orde
    output no table builds here says "Not built in this environment."
 8. **Lineage:** a Mermaid flowchart from each source connection through the
    tables and transforms to each output, with the same line for each output
-   no table builds here. A product with no output built here says only
-   "Not built in this environment."
+   no table builds here. When the outputs built here have no lineage, such as
+   a table with no source connection and no inputs, the section says "There
+   is no lineage to show." in place of the flowchart, followed by those
+   lines. A product with no output built here says only "Not built in this
+   environment."
 9. **Governance:** the standard's governance rules the product meets; a
    product that broke one would have stopped generation.
 
