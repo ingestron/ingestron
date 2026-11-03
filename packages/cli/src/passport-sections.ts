@@ -65,15 +65,17 @@ export function provides(model: ResolvedModel, product: ResolvedProduct): string
   return `## What it provides in ${environment}\n\n${table(["Output", "What it is", `Table in ${environment}`, "Where it lives"], rows)}`;
 }
 
+/** Whether Databricks tags this table's classified columns: it stores the table and tags are on. */
+function taggedInUnityCatalog(model: ResolvedModel, built: ResolvedTable | undefined): boolean {
+  return model.platform.manage.tags && built?.store?.pack === "databricks";
+}
+
 /** Section 4: each output's columns, with sensitive ones marked. */
 export function columns(model: ResolvedModel, product: ResolvedProduct): string {
   const sensitive = model.standard.governance?.classification?.sensitive ?? [];
-  const tagged =
-    model.standard.packs.includes("databricks@1") && model.platform.manage.tags
-      ? ", tagged in Unity Catalog"
-      : "";
   const parts = outputTables(model, product).map(({ output, tables }) => {
     const contract = tables[0]?.contract;
+    const tagged = taggedInUnityCatalog(model, tables[0]) ? ", tagged in Unity Catalog" : "";
     if (!contract) return `### ${output.name}\n\nNot built in this environment.`;
     const landed = landedColumns(tables[0]!).map((column) => [
       column.name,
