@@ -127,6 +127,12 @@ an `ENVVAR_MISSING` error. An editor can pass `missingEnvvars: "information"`
 instead: the problem is then information, the reference stays as written, and
 nothing is checked against that text (`project.unsetEnvvars` lists it).
 
+`project.envvarReferences` lists every `${envvar:…}` the load read: the
+variable's name, the file and JSON Pointer of the value it feeds, and where it
+was set (`host`, `.env.<environment>` or `.env`), or no `setIn` when it is set
+nowhere. It never holds a value, so a tool can show which variables a project
+needs without showing them.
+
 ## Documentation
 
 User documentation: https://docs.ingestron.io. The language-neutral rules for this package are in

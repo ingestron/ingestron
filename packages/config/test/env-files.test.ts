@@ -105,6 +105,12 @@ describe("envvarsFor", () => {
     expect(diagnostics).toEqual([]);
   });
 
+  it("says where each value came from, and not where an empty one was written", () => {
+    const files = memoryFiles({ ".env": "A=env\nB=env\n", ".env.dev": "B=dev\nD=\n" });
+    const { setIn } = envvarsFor(files, "dev", { C: "host", A: "" });
+    expect(setIn).toEqual({ A: ".env", B: ".env.dev", C: "host" });
+  });
+
   it("an empty host value does not hide the file's", () => {
     const files = memoryFiles({ ".env": "A=file\n", ".env.dev": "B=dev\n" });
     const { envvars } = envvarsFor(files, "dev", { A: "", B: undefined });

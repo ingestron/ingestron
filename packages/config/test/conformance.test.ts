@@ -31,6 +31,7 @@ interface ConformanceCase {
     documents?: { kind: string; id: string; value: unknown }[];
     diagnostics?: Record<string, unknown>[];
     unsetEnvvars?: string[];
+    envvarReferences?: { name: string; file: string; pointer: string; setIn?: string }[];
     fixed?: { diagnostic: number; title: string; files: Record<string, string> }[];
   };
 }
@@ -38,7 +39,10 @@ interface ConformanceCase {
 const casesFolder = join(import.meta.dirname, "../../../spec/config/conformance");
 const caseFiles = readdirSync(casesFolder).filter((name) => name.endsWith(".yaml"));
 
-/** The case's project, loaded; a successful load lists the unset references it left (section 5.1). */
+/**
+ * The case's project, loaded; a successful load lists the unset references it left (section
+ * 5.1), and the variable references it resolved when the case gives them (section 4.6).
+ */
 function load(testCase: ConformanceCase) {
   const result = resolveProject(memoryFiles(testCase.files), {
     kinds: (testCase.kinds ?? []).map((kind) => defineKind(kind)),
@@ -48,6 +52,9 @@ function load(testCase: ConformanceCase) {
     limits: testCase.limits,
   });
   expect(result.project?.unsetEnvvars ?? []).toEqual(testCase.expect.unsetEnvvars ?? []);
+  // Section 4.6: checked when the case gives it.
+  if (testCase.expect.envvarReferences)
+    expect(result.project?.envvarReferences).toEqual(testCase.expect.envvarReferences);
   return result;
 }
 
