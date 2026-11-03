@@ -24,8 +24,10 @@ passport, written for someone who does not know the tools. Its sections, in orde
 4. **Columns:** per output, each column's name, description, type, whether it
    is required or part of the key, and its classification; a classification
    the standard's governance lists as sensitive is marked so, and a classified
-   column says when Databricks tags it in Unity Catalog (the standard names
-   `databricks@1` and the platform turns on `manage.tags`).
+   column says when Databricks tags it in Unity Catalog. That is decided per
+   table: the table is stored by the Databricks pack and the platform turns on
+   `manage.tags`. A table stored by another pack makes no such claim, even when
+   the standard also names `databricks@1`.
 5. **Quality:** each row check and table check in words, with when it runs or
    why it does not.
 6. **Freshness:** the contract's `slaProperties`, and the refresh schedule.
