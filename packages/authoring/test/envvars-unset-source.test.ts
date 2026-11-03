@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { annotationsIn } from "../src/annotations.js";
 import { problems } from "../src/diagnostics.js";
 import { hoverAt } from "../src/hover.js";
+import { generatedFiles } from "../src/preview.js";
 import { openProject, resolvedForDisplay } from "../src/project.js";
 
 const template = join(import.meta.dirname, "../../cli/project-templates/minimal");
@@ -93,5 +94,15 @@ describe("an unset reference in a flow's source and in an anyOf setting", () => 
     expect(found.map(({ code, severity }) => ({ code, severity }))).toEqual([
       { code: "ENVVAR_MISSING", severity: "information" },
     ]);
+  });
+
+  it("previews no files built from a source that is not known, and says why", () => {
+    const unset = generatedFiles(openProject(workspace(), new Map()), "dev");
+    expect(unset).toEqual({
+      problems:
+        "dev: the generated files are not shown while a flow's source is not known: ${envvar:INGT_SRC} is not set.",
+    });
+    const built = generatedFiles(openProject(workspace(set), new Map()), "dev");
+    expect(Array.isArray(built) && built.length > 0).toBe(true);
   });
 });
