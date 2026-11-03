@@ -63,6 +63,8 @@ export interface Reporter {
   failed(): boolean;
   /** True once a problem was left out because it sits at a value not known yet. */
   leftOut(): boolean;
+  /** Records that something was not checked because it is not known yet, as a problem left out. */
+  leaveOut(): void;
 }
 
 /**
@@ -101,6 +103,9 @@ export function createReporter(
     warning: (code, message, at, hint, fixes) => report("warning", code, message, at, hint, fixes),
     failed: () => diagnostics.some((diagnostic) => diagnostic.severity === "error"),
     leftOut: () => leftOut,
+    leaveOut: () => {
+      leftOut = true;
+    },
   };
 }
 
