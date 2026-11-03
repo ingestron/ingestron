@@ -37,12 +37,28 @@ export function scaffoldFiles(
   if (!prepared)
     for (const path of templateFiles(template, template.folder))
       files[dotted(path)] = readFileSync(join(template.folder, path));
+  files[".gitignore"] = withEnvIgnores(files[".gitignore"]?.toString());
   files["project.yaml"] = projectText(files["project.yaml"]?.toString() ?? "", answers);
   if (answers.standard) {
     const text = readFileSync(answers.standard.file, "utf8");
     files["standard.yaml"] = `# From ${answers.standard.source}\n${text}`;
   }
   return files;
+}
+
+const envIgnores = [".env", ".env.*", "!.env.example"];
+
+/**
+ * A .gitignore that keeps `.env` files out of Git, whatever the template
+ * ignores already. Left as it is when it has all three lines; otherwise the
+ * block is added at the end, so `!.env.example` still follows `.env.*`.
+ */
+export function withEnvIgnores(text: string | undefined): string {
+  const lines = (text ?? "").split(/\r?\n/).map((line) => line.trim());
+  if (envIgnores.every((line) => lines.includes(line))) return text!;
+  const block = `# Values for \${envvar:…}: keep them out of Git; commit a .env.example instead.\n${envIgnores.join("\n")}\n`;
+  if (!text) return block;
+  return `${text.endsWith("\n") ? text : `${text}\n`}\n${block}`;
 }
 
 /**

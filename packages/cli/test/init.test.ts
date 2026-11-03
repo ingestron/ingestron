@@ -32,7 +32,7 @@ describe("ingestron init with flags", () => {
     const { cwd, ingestron } = session();
     const { code, output } = ingestron("init", "shop", "--template", "minimal", "--yes");
     expect(code).toBe(0);
-    expect(output).toContain("Created shop from the template minimal (5 files).");
+    expect(output).toContain("Created shop from the template minimal (6 files).");
     expect(output).toContain("dev → shop/build/dev\ncreate    databricks.yml");
     expect(parse(readFileSync(join(cwd, "shop/project.yaml"), "utf8"))).toMatchObject({
       id: "shop",
@@ -42,6 +42,18 @@ describe("ingestron init with flags", () => {
     expect(ingestron("check", "--definitions", "shop", "--out", "shop/build").output).toContain(
       "dev: up to date",
     );
+  });
+
+  it("a new project ignores .env files", () => {
+    const { cwd, ingestron } = session();
+    for (const template of ["minimal", "duckdb"]) {
+      expect(ingestron("init", template, "--template", template, "--yes").code).toBe(0);
+      const lines = readFileSync(join(cwd, template, ".gitignore"), "utf8").split("\n");
+      expect(lines, template).toEqual(expect.arrayContaining([".env", ".env.*", "!.env.example"]));
+      // Ignored by Git, so a person can keep real values beside the project.
+      expect(lines.indexOf("!.env.example"), template).toBeGreaterThan(lines.indexOf(".env.*"));
+    }
+    expect(readFileSync(join(cwd, "duckdb/.gitignore"), "utf8")).toContain("ingestron.duckdb*");
   });
 
   it("takes the name, environments and answers from flags", () => {
