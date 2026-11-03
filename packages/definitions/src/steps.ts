@@ -8,6 +8,7 @@ import type { Action, Handover, Method } from "./pack.js";
 import { methodFixes } from "./method-fixes.js";
 import type { SettingsUser } from "./missing-settings.js";
 import { mergeSettings, type SettingsLayer } from "./settings.js";
+import { holdsUnsetEnvvar } from "./unknown-values.js";
 
 /** A resolved step and what it hands to the next action. */
 export type StepResult = Step & { produces: Handover; renames: boolean };
@@ -60,7 +61,15 @@ function canRead(
   previous: Previous,
   named: Named,
 ): boolean {
-  const problem = readProblem(action, choice, facts, previous, context.pack.methods);
+  // A connector or connectivity not known yet, from a source that holds an unset
+  // reference, is not checked (specification section 1).
+  const unknown = (value?: string) => holdsUnsetEnvvar(context.project, value);
+  const known = {
+    ...facts,
+    connector: unknown(facts.connector) ? undefined : facts.connector,
+    connectivity: unknown(facts.connectivity) ? undefined : facts.connectivity,
+  };
+  const problem = readProblem(action, choice, known, previous, context.pack.methods);
   if (!problem) return true;
   const { code } = problem;
   const fixes =
@@ -92,12 +101,13 @@ function connectorProblem(
   facts: Facts,
   methods: Record<string, Method>,
 ): Problem | undefined {
-  if (!method.connectors || method.connectors.includes(facts.connector ?? "")) return undefined;
+  const { connector } = facts;
+  if (!method.connectors || connector === undefined || method.connectors.includes(connector))
+    return undefined;
   // Name the methods that can read this connector, so the fix is visible.
   const readers = Object.entries(methods)
     .filter(
-      ([, candidate]) =>
-        candidate.action === "ingest" && candidate.connectors?.includes(facts.connector ?? ""),
+      ([, candidate]) => candidate.action === "ingest" && candidate.connectors?.includes(connector),
     )
     .map(
       ([name, candidate]) =>

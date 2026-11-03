@@ -123,8 +123,12 @@ function resolveLoaded(
   warnings: ResolveResult["diagnostics"],
 ): ResolveResult {
   // Loading succeeded, so what it reported are warnings, kept with the result.
-  // A value that holds an unset reference is not known yet, so no problem is reported at it.
-  const reporter = createReporter(warnings, (at) => unsetEnvvarAt(project, at));
+  // A value that holds an unset reference is not known yet, so no problem is reported at
+  // it, except a settings failure: the settings check has already left out what it causes.
+  const reporter = createReporter(
+    warnings,
+    (at, code) => code !== "BAD_SETTING" && unsetEnvvarAt(project, at),
+  );
   const context = createContext(project, packs, reporter);
   if (!context) return { ok: false, diagnostics: reporter.diagnostics };
   checkSettingsKeys(context);

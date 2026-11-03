@@ -62,17 +62,34 @@ section 5.1). A value that holds one is not known yet, so it causes no error
 or warning by itself, and resolution goes on as if it were right:
 
 - A method's settings are checked against its schema as the loader checks a
-  document: a failure whose failing value is text that holds an unset
-  reference is left out, except a `type` failure, and so is a `oneOf`, `anyOf` or `if`
-  failure at or above it. A setting that holds one never changes a `fixed`
-  value (`FIXED_SETTING`).
-- A name pattern that gives text holding an unset reference is not checked for
-  its characters (`BAD_NAME`).
-- No problem is reported where a text value that holds an unset reference
-  was written.
+  document (configuration specification, section 5.1). A failure whose
+  failing value is text that holds an unset reference is left out, except a
+  `type` failure. A `oneOf`, `anyOf` or `if` failure is left out, with every
+  failure inside it, when one of its alternatives failed only in ways left
+  out. Every failure that remains is reported as `BAD_SETTING`, wherever it
+  is. So an unset reference where a number or a list is needed is an error,
+  as it is for the loader: a variable's value is always text.
+- A setting that holds an unset reference never changes a `fixed` value
+  (`FIXED_SETTING`).
+- A name pattern that gives text holding an unset reference is not checked
+  for its characters (`BAD_NAME`).
+- A reference that holds an unset reference names something not known yet,
+  and is never reported as not found. A flow's or transform's `layer` is the
+  text as written. A flow's `source` names a connection that is not known:
+  the table's connection has that text as its `id`, `connector` and
+  `connectivity`, and no settings. No `when` on a connector or connectivity
+  matches it. The ingest method's `connectors` and `connectivity` are not
+  checked against a connector or connectivity that holds an unset reference,
+  this one or one a connection writes. Any other reference that holds one,
+  a `uses`, a table's `contract` or a transform's `inputs`, names what the
+  table is made from, so that table is left out, and so is any transform
+  that reads it. The `ENVVAR_MISSING` information at the reference says why.
+- Apart from `BAD_SETTING`, no problem is reported where a text value that
+  holds an unset reference was written. Such a problem is **left out**.
 - A method's `check` is not run on a table that holds an unset reference
-  anywhere, nor a pack's `check` on a model that holds one: what such a
-  check judges cannot be told apart from the rest of what it is given.
+  anywhere: what such a check judges cannot be told apart from the rest of
+  what it is given. A pack's `check` is not run on a model that holds one,
+  nor when any problem was left out, because a table may then be missing.
 
 The loader's `ENVVAR_MISSING` information says what is missing. A project
 without unset references is resolved as described everywhere else.

@@ -11,6 +11,7 @@ import { serveStep } from "./serve.js";
 import { unusedStoreSettings } from "./unused-settings.js";
 import { resolveStep, stepOf, type StepResult } from "./steps.js";
 import { renderTableName, type TableNamer } from "./tables.js";
+import { holdsUnsetEnvvar } from "./unknown-values.js";
 
 type Flow = DefinitionDocument<FlowDoc>;
 
@@ -52,7 +53,7 @@ function flowTable(
 ): ResolvedTable | undefined {
   const doc = flow.value.tables[name];
   const layer = namer.layerOf(flow.value.layer, 0, { document: flow, pointer: "/layer" });
-  const connection = context.project.get(kinds.connection, flow.value.source)?.value;
+  const connection = connectionOf(context, flow.value.source);
   if (!doc || !layer || !connection) return undefined;
   const facts = { connectivity: connection.connectivity, connector: connection.connector, layer };
   const at = { document: flow, pointer: `/tables/${name}` };
@@ -82,7 +83,7 @@ function tableSteps(steps: FlowSteps, connection: ConnectionDoc, object: string)
   return {
     ingest: {
       ...stepOf(steps.ingest),
-      connection: connectionOf(connection),
+      connection: connectionInTable(connection),
       object,
       renamed: steps.ingest.renames,
     },
@@ -219,7 +220,17 @@ function tableLayer(
     : [];
 }
 
-function connectionOf(connection: ConnectionDoc) {
+/**
+ * The flow's connection. A source that holds an unset reference names a connection not
+ * known yet: its id, connector and connectivity are that text (specification section 1).
+ */
+function connectionOf(context: Context, source: string): ConnectionDoc | undefined {
+  const connection = context.project.get(kinds.connection, source)?.value;
+  if (connection || !holdsUnsetEnvvar(context.project, source)) return connection;
+  return { id: source, connector: source, connectivity: source, settings: {} };
+}
+
+function connectionInTable(connection: ConnectionDoc) {
   const { id, connector, connectivity } = connection;
   return { id, connector, connectivity, settings: { ...connection.settings } };
 }

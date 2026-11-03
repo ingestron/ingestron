@@ -143,6 +143,10 @@ function changedFixed(
   });
 }
 
+/**
+ * True when the merged settings meet the method's schema. Otherwise every failure an
+ * unset reference does not cause is reported, so a table is never left out silently.
+ */
 function checkSchema(
   context: Context,
   use: MethodUse,

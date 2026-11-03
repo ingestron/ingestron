@@ -61,19 +61,22 @@ export interface Reporter {
   warning(code: DefinitionCode, message: string, at?: Source, hint?: string, fixes?: Fix[]): void;
   /** True once any error, not a warning, was reported. */
   failed(): boolean;
+  /** True once a problem was left out because it sits at a value not known yet. */
+  leftOut(): boolean;
 }
 
 /**
  * A new, empty reporter. A problem written once on a flow is found for each
- * of its tables, so an identical diagnostic is kept only once. A problem at a
- * place `unknown` names, such as text holding an unset reference, is not kept.
+ * of its tables, so an identical diagnostic is kept only once. A problem that
+ * `unknown` names, such as one at text holding an unset reference, is left out.
  */
 export function createReporter(
   start: readonly AnyDiagnostic[] = [],
-  unknown: (at: Source) => boolean = () => false,
+  unknown: (at: Source, code: DefinitionCode) => boolean = () => false,
 ): Reporter {
   const diagnostics: AnyDiagnostic[] = [...start];
   const seen = new Set<string>();
+  let leftOut = false;
   const report = (
     severity: "error" | "warning",
     code: DefinitionCode,
@@ -82,16 +85,11 @@ export function createReporter(
     hint?: string,
     fixes?: Fix[],
   ) => {
-    if (at && unknown(at)) return;
-    const location = at?.document.locate(at.pointer);
-    const diagnostic: AnyDiagnostic = {
-      code,
-      severity,
-      message,
-      ...(hint && { hint }),
-      ...(location && { location }),
-      ...(fixes && fixes.length > 0 && { fixes }),
-    };
+    if (at && unknown(at, code)) {
+      leftOut = true;
+      return;
+    }
+    const diagnostic = diagnosticOf(severity, code, message, at, hint, fixes);
     const key = JSON.stringify(diagnostic);
     if (seen.has(key)) return;
     seen.add(key);
@@ -102,5 +100,25 @@ export function createReporter(
     error: (...args) => report("error", ...args),
     warning: (code, message, at, hint, fixes) => report("warning", code, message, at, hint, fixes),
     failed: () => diagnostics.some((diagnostic) => diagnostic.severity === "error"),
+    leftOut: () => leftOut,
+  };
+}
+
+function diagnosticOf(
+  severity: "error" | "warning",
+  code: DefinitionCode,
+  message: string,
+  at?: Source,
+  hint?: string,
+  fixes?: Fix[],
+): AnyDiagnostic {
+  const location = at?.document.locate(at.pointer);
+  return {
+    code,
+    severity,
+    message,
+    ...(hint && { hint }),
+    ...(location && { location }),
+    ...(fixes && fixes.length > 0 && { fixes }),
   };
 }

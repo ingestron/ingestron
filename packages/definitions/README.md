@@ -55,7 +55,8 @@ to `process.env` and `resolveDefinitions` to none. `.env.<environment>` and
 `.env` in the project folder fill what it lacks.
 `missingEnvvars` is `"error"` by default. An editor passes `"information"`:
 an unset variable is then information, the project still resolves, and no
-check judges a value that holds the unresolved reference.
+check judges a value that holds the unset reference. A `source` or `layer`
+written with one keeps its tables.
 
 `Connector.reading` optionally describes a native table reader's query support,
 accepted source options, landing format and required runtime. Packs derive this

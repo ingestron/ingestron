@@ -4,6 +4,7 @@ import type { Source } from "./diagnostics.js";
 import type { FullName, ResolvedTable } from "./model.js";
 import { namePatterns, renderName, type NameVariables, type Pattern } from "./naming.js";
 import type { Naming } from "./pack.js";
+import { holdsUnsetEnvvar } from "./unknown-values.js";
 
 /** Layer lookups and the name patterns, prepared once per resolution. */
 export interface TableNamer {
@@ -21,7 +22,8 @@ export function createNamer(context: Context): TableNamer {
     patterns: namePatterns(context),
     layerOf(named, position, at) {
       if (named === undefined) return layers[Math.min(position, layers.length - 1)];
-      if (layers.includes(named)) return named;
+      // A layer not known yet is the text as written (specification section 1).
+      if (layers.includes(named) || holdsUnsetEnvvar(context.project, named)) return named;
       context.reporter.error(
         "UNKNOWN_LAYER",
         `"${named}" is not one of the standard's layers.`,
