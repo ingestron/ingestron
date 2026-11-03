@@ -544,6 +544,7 @@ export interface ResolvedTable {
         file: string;
     };
     serve?: Step;
+    sourceNotKnown?: string;
     store?: Step;
     transform?: Step & {
         code: string;

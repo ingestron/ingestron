@@ -40,8 +40,8 @@ function checkTables(model: ResolvedModel, expected: Record<string, unknown>[]):
   const tables = comparableTables(model);
   expect(tables).toHaveLength(expected.length);
   expected.forEach((wanted, index) => {
-    // `null` for store or serve means the table has no such step.
-    const absent = (["store", "serve"] as const).filter((step) => wanted[step] === null);
+    // `null` for a step means the table has no such step.
+    const absent = (["ingest", "store", "serve"] as const).filter((step) => wanted[step] === null);
     for (const step of absent)
       expect((tables[index] as Record<string, unknown> | undefined)?.[step]).toBeUndefined();
     const present = Object.fromEntries(
