@@ -250,7 +250,12 @@ bare     = any, trimmed, up to a comment
   missing `=`, an unclosed quote and text after a closing quote that is not a
   comment. Its message names the file and line but never quotes the line.
 - When a name is repeated in one file, the last one wins.
-- Values MUST NOT appear in any diagnostic, hint or log.
+- The reader's own diagnostics, `ENV_FILE_LINE` and `FILE_TOO_LARGE` for an
+  environment file, MUST NOT quote a line or a value. Other diagnostics MAY
+  quote a value that came from an environment file or the host environment,
+  as they quote any other value, so that a person can see what to fix. So an
+  environment file holds values that are not secret; a secret is written as
+  `${secret:…}`.
 
 ## 5. Output guarantees
 
