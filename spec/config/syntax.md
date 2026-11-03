@@ -191,11 +191,54 @@ extends to the first `}}`, so that the hint shows the whole placeholder.
   `maxIncludeDepth` (default 32) is `INCLUDE_TOO_DEEP`. Every `file:`
   reference followed counts towards `maxIncludes` per load (default 1000,
   repeats included); going over is `INCLUDE_LIMIT`.
-- `envvar:NAME`: the host environment variable. NAME MUST match
-  `^[A-Za-z_][A-Za-z0-9_]*$` (`BAD_ARGUMENT`). An unset or empty variable is
-  `ENVVAR_MISSING`.
+- `envvar:NAME`: NAME MUST match `^[A-Za-z_][A-Za-z0-9_]*$` (`BAD_ARGUMENT`).
+  The value is the first non-empty one of, in this order: the host
+  environment, `.env.<environment>` (only when an environment is selected) and
+  `.env`. Both files are read from the project root through the same file
+  source as the project (section 4.5). A variable that is unset or empty
+  everywhere is `ENVVAR_MISSING` (an error), unless the caller asked for
+  `missingEnvvars: information`. Then it is still `ENVVAR_MISSING`, with the
+  severity `information`, and the reference resolves to its own text
+  (`${envvar:NAME}`), so the load can continue. A file for another
+  environment is never read.
 - `secret:reference`: produces the mapping `{"$secret": "<reference>"}`
   unchanged. It is never resolved by this layer.
+
+### 4.5 Environment files
+
+`.env` and `.env.<environment>` feed `${envvar:NAME}` and nothing else: their
+names are never added to `values`, and they are not imported. A file that does
+not exist is skipped without a diagnostic. Each file is read once per load.
+Files are UTF-8; a byte order mark at the start and a `\r` before a line
+ending are ignored. Each line is one of:
+
+```
+line     = blank | comment | assign
+blank    = ws
+comment  = ws "#" any
+assign   = ws [ "export" 1*space ] NAME ws "=" ws value
+NAME     = as in section 4.4
+value    = single | double | bare
+single   = "'" any-but-"'" "'" ws [ comment ]
+double   = '"' { char | "\n" | '\"' | "\\" } '"' ws [ comment ]
+bare     = any, trimmed; a "#" that follows whitespace starts a comment
+```
+
+- Only the first `=` splits the line, so a value MAY contain `=`.
+- A bare value is trimmed. A `#` starts a comment only when whitespace comes
+  before it, so `https://x/y#frag` is one value and `a=b;c=d # note` is
+  `a=b;c=d`. An empty bare value is an empty string.
+- A single-quoted value is taken exactly as written between the quotes.
+- A double-quoted value understands `\n` (a line feed), `\"` and `\\`; any other
+  backslash stays as written.
+- A value is on one line. Nothing is expanded: `$X`, `${X}` and `$(x)` stay as
+  written, and the result is not interpolated again.
+- Any other line is `ENV_FILE_LINE`, a warning at the file and the line, and
+  the line is ignored. That includes a name that does not match section 4.4, a
+  missing `=`, an unclosed quote and text after a closing quote that is not a
+  comment. Its message names the file and line but never quotes the line.
+- When a name is repeated in one file, the last one wins.
+- Values MUST NOT appear in any diagnostic, hint or log.
 
 ## 5. Output guarantees
 
@@ -206,14 +249,17 @@ extends to the first `}}`, so that the hint shows the whole placeholder.
 
 ## 6. Diagnostics
 
-Every diagnostic has a `code`, a `severity` (`error` or `warning`), a
-`message`, an optional `hint`, and, when it can be attributed, a location
+Every diagnostic has a `code`, a `severity` (`error`, `warning` or
+`information`), a `message`, an optional `hint`, and, when it can be attributed, a location
 (`file`, `line`, `column`, starting at 1). A problem with a string points at
 the start of that string's value, including problems with values embedded in
 it. A schema problem points at where the failing value was written; for a
 whole-value `${file:…}` that is inside the included file. An implementation MUST report every
 problem it can find rather than stopping at the first. A load succeeds only
-when there are no errors. Each code, with an example, is listed in the
+when there are no errors; warnings and information do not stop it. A warning
+says something in the definitions or the files beside them is probably wrong.
+Information is advice about the tool's surroundings, such as a variable that
+is not set on this computer; it is never a fault in the definitions. Each code, with an example, is listed in the
 [problem reference](https://docs.ingestron.io/docs/reference/errors).
 
 ### 6.1 Fixes
@@ -256,7 +302,8 @@ Each file in [conformance/](conformance/) is one case:
 ```yaml
 description: What the case shows
 environment: prod # optional
-envvars: { NAME: value } # optional
+envvars: { NAME: value } # optional; the host environment
+missingEnvvars: information # optional; as the caller's option of that name (section 4.4)
 limits: { maxIncludes: 3 } # optional overrides of the default limits
 kinds: # optional
   - apiVersion: example.dev/v1
@@ -269,8 +316,9 @@ files: # the project, path → content
 expect:
   documents: # on success: kind, id and resolved value, in path order
     - { kind: Pipeline, id: orders, value: {} }
-  diagnostics: # on failure (or warnings): matched in order on the fields given
+  diagnostics: # on failure, or warnings and information on success: matched in order on the fields given
     - { code: UNKNOWN_REFERENCE, file: a.yaml, line: 3, column: 7 }
+    - { code: ENVVAR_MISSING, severity: information, file: a.yaml, line: 4 }
   fixed: # optional: each fix's title, and the files after applying it
     - diagnostic: 0
       title: Change to "shop"

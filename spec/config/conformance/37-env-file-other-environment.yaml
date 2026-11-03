@@ -1,0 +1,24 @@
+description: A variable defined only in the .env file of another environment is not set.
+environment: dev
+envvars: {}
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    environments:
+      dev: {}
+      prod: {}
+    imports: ["*.pipeline.yaml"]
+  .env.prod: |
+    PROD_ONLY=p
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    only: ${envvar:PROD_ONLY}
+expect:
+  diagnostics:
+    - { code: ENVVAR_MISSING, severity: error, file: a.pipeline.yaml, line: 4 }

@@ -1,0 +1,31 @@
+description: A line in a .env file that is not a setting is a warning and is ignored; the rest of the file still counts.
+envvars: {}
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  .env: |
+    NOT A LINE
+    1BAD=x
+    GOOD=1
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    good: ${envvar:GOOD}
+expect:
+  documents:
+    - kind: Pipeline
+      id: a
+      value:
+        apiVersion: example.dev/v1
+        kind: Pipeline
+        id: a
+        good: "1"
+  diagnostics:
+    - { code: ENV_FILE_LINE, severity: warning, file: .env, line: 1 }
+    - { code: ENV_FILE_LINE, severity: warning, file: .env, line: 2 }
