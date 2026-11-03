@@ -3,15 +3,21 @@ import type { DefinitionDocument } from "@ingestron/config";
 import { allowsWritten, endsAtFiles, NO_STORE, type Facts, type Named } from "./choose.js";
 import type { Context } from "./context.js";
 import { contractFor, expectationsFor, expectationsNotChecked } from "./contract.js";
-import { kinds, type ConnectionDoc, type FlowDoc } from "./documents.js";
-import type { ChosenBy, ResolvedTable } from "./model.js";
+import { kinds, type FlowDoc } from "./documents.js";
+import type { ResolvedTable } from "./model.js";
 import type { SettingsLayer } from "./settings.js";
 import { landedIngest, leftOut } from "./runs-on.js";
 import { serveStep } from "./serve.js";
 import { unusedStoreSettings } from "./unused-settings.js";
-import { resolveStep, stepOf, type StepResult } from "./steps.js";
+import { resolveStep, type StepResult } from "./steps.js";
 import { renderTableName, type TableNamer } from "./tables.js";
-import { holdsUnsetEnvvar } from "./unknown-values.js";
+import {
+  connectionOf,
+  sourceNotKnown,
+  stepsKnown,
+  tableSteps,
+  type FlowSteps,
+} from "./flow-sources.js";
 
 type Flow = DefinitionDocument<FlowDoc>;
 
@@ -56,9 +62,8 @@ function flowTable(
   const connection = connectionOf(context, flow.value.source);
   if (!doc || !layer || !connection) return undefined;
   const facts = { connectivity: connection.connectivity, connector: connection.connector, layer };
-  const at = { document: flow, pointer: `/tables/${name}` };
-  if (leftOut(context, named(flow, "ingest"), facts, name, at)) return undefined;
-  const steps = flowSteps(context, flow, name, facts);
+  const steps = stepsOf(context, flow, name, facts);
+  if (steps === false) return undefined;
   const contract = flowContract(context, flow, name, steps?.endsAtFiles !== undefined);
   const fullName = renderTableName(context, namer, {
     layer,
@@ -75,22 +80,24 @@ function flowTable(
     contract,
     expectations: expectationsFor(context, contract, doc.expectations),
     ...tableSteps(steps, connection, doc.object),
+    ...sourceNotKnown(context, flow),
   };
 }
 
-/** The resolved steps as the table records them. */
-function tableSteps(steps: FlowSteps, connection: ConnectionDoc, object: string) {
-  return {
-    ingest: {
-      ...stepOf(steps.ingest),
-      connection: connectionInTable(connection),
-      object,
-      renamed: steps.ingest.renames,
-    },
-    ...(steps.store && { store: stepOf(steps.store) }),
-    ...(steps.endsAtFiles && { endsAtFiles: steps.endsAtFiles }),
-    ...(steps.serve && { serve: stepOf(steps.serve) }),
-  };
+/**
+ * The table's steps: none when they are not known yet, false when runs-on leaves the
+ * table out (with a warning), undefined after reporting why they cannot be resolved.
+ */
+function stepsOf(
+  context: Context,
+  flow: Flow,
+  name: string,
+  facts: Facts,
+): Partial<FlowSteps> | false | undefined {
+  if (!stepsKnown(context, flow)) return {};
+  const at = { document: flow, pointer: `/tables/${name}` };
+  if (leftOut(context, named(flow, "ingest"), facts, name, at)) return false;
+  return flowSteps(context, flow, name, facts);
 }
 
 /** The flow table's contract; a table that ends at the landed files checks nothing. */
@@ -100,13 +107,6 @@ function flowContract(context: Context, flow: Flow, name: string, atFiles: boole
   if (atFiles) expectationsNotChecked(context, doc.expectations ?? [], at("expectations"));
   return contractFor(context, name, doc.contract, at("contract"), atFiles);
 }
-
-type FlowSteps = {
-  ingest: StepResult;
-  store?: StepResult;
-  endsAtFiles?: ChosenBy;
-  serve?: StepResult;
-};
 
 /**
  * The ingest and store steps. The store method is checked even when ingest
@@ -218,19 +218,4 @@ function tableLayer(
         },
       ]
     : [];
-}
-
-/**
- * The flow's connection. A source that holds an unset reference names a connection not
- * known yet: its id, connector and connectivity are that text (specification section 1).
- */
-function connectionOf(context: Context, source: string): ConnectionDoc | undefined {
-  const connection = context.project.get(kinds.connection, source)?.value;
-  if (connection || !holdsUnsetEnvvar(context.project, source)) return connection;
-  return { id: source, connector: source, connectivity: source, settings: {} };
-}
-
-function connectionInTable(connection: ConnectionDoc) {
-  const { id, connector, connectivity } = connection;
-  return { id, connector, connectivity, settings: { ...connection.settings } };
 }

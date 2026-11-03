@@ -1,4 +1,4 @@
-description: With missingEnvvars information, a flow's source or layer that holds an unset reference names something not known yet. It is not reported as not found, and the table stays. The layer is the text as written. The connection is not known, so no rule on its connector or connectivity matches, and the ingest method's connectors and connectivity are not checked. A contract that holds one leaves its table out, with only the information.
+description: With missingEnvvars information, a flow's source or layer that holds an unset reference names something not known yet. It is not reported as not found, and the table stays. The layer is the text as written. The connection is not known, so the ingest method is known only when the flow names it with uses, and then the connection's connector and connectivity are not checked. Otherwise the table has no steps, and none of their settings are checked. A contract that holds one leaves its table out, with only the information.
 environment: dev
 envvars: {}
 missingEnvvars: information
@@ -19,6 +19,16 @@ files:
     connector: files
     connectivity: public
     settings: { path: /data/shop }
+  copies.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: copies
+    source: ${envvar:SOURCE}
+    ingest:
+      uses: copy
+      with: { landing: /landing/copies }
+    tables:
+      copies: { object: copies, contract: orders }
   refunds.yaml: |
     apiVersion: ingestron.io/v1
     kind: Flow
@@ -39,6 +49,8 @@ files:
     kind: Flow
     id: sales
     source: ${envvar:SOURCE}
+    ingest:
+      with: { landing: /landing/orders } # files, the pack's default, has no landing
     tables:
       orders_in: { object: orders, contract: orders }
   orders.odcs.yaml: |
@@ -57,12 +69,25 @@ files:
         logicalType: object
         properties:
           - { name: id, logicalType: integer }
+      - name: copies
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer }
 expect:
   diagnostics:
+    - { code: ENVVAR_MISSING, severity: information, file: copies.yaml, line: 4 }
     - { code: ENVVAR_MISSING, severity: information, file: refunds.yaml, line: 6 }
     - { code: ENVVAR_MISSING, severity: information, file: returns.yaml, line: 5 }
     - { code: ENVVAR_MISSING, severity: information, file: sales.yaml, line: 4 }
   tables:
+    - name: copies
+      sourceNotKnown: ${envvar:SOURCE}
+      ingest:
+        method: copy
+        chosenBy: { by: definition }
+        settings: { landing: /landing/copies }
+        connection: { id: "${envvar:SOURCE}", settings: {} }
+      store: { method: stream }
     - name: orders
       layer: ${envvar:LAYER}
       fullName: dev.${envvar:LAYER}.orders
@@ -70,7 +95,7 @@ expect:
     - name: orders_in
       layer: bronze
       fullName: dev.bronze.orders_in
-      ingest:
-        method: files
-        chosenBy: { by: pack-default }
-        connection: { id: "${envvar:SOURCE}", settings: {} }
+      sourceNotKnown: ${envvar:SOURCE}
+      ingest: null # no uses names the method, so it is not known
+      store: null
+      serve: null

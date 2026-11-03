@@ -75,15 +75,27 @@ or warning by itself, and resolution goes on as if it were right:
   for its characters (`BAD_NAME`).
 - A reference that holds an unset reference names something not known yet,
   and is never reported as not found. A flow's or transform's `layer` is the
-  text as written. A flow's `source` names a connection that is not known:
-  the table's connection has that text as its `id`, `connector` and
-  `connectivity`, and no settings. No `when` on a connector or connectivity
-  matches it. The ingest method's `connectors` and `connectivity` are not
-  checked against a connector or connectivity that holds an unset reference,
-  this one or one a connection writes. Any other reference that holds one,
-  a `uses`, a table's `contract` or a transform's `inputs`, names what the
-  table is made from, so that table is left out, and so is any transform
-  that reads it. The `ENVVAR_MISSING` information at the reference says why.
+  text as written. A flow's `source` names a connection that is not known,
+  and the table records that text as `sourceNotKnown`; see the next item.
+  The ingest method's `connectors` and `connectivity` are not checked against
+  a connector or connectivity that holds an unset reference. Any other
+  reference that holds one, a `uses`, a table's `contract` or a transform's
+  `inputs`, names what the table is made from, so that table is left out,
+  and so is any transform that reads it. The `ENVVAR_MISSING` information at
+  the reference says why.
+- For a flow whose `source` holds an unset reference, which method ingests
+  depends on the connection, so it is known only when the flow names it with
+  `ingest.uses`. Then the table's connection has the source's text as its
+  `id`, `connector` and `connectivity`, and no settings; no `when` on a
+  connector or connectivity matches it, and the steps resolve as usual.
+  Otherwise the ingest method is not known, and nor are the steps after it,
+  which depend on what ingest hands over: the table has no ingest, store or
+  serve step. None of their settings are checked (their schema, missing
+  settings and `SETTINGS_UNUSED`), which counts as a problem left out. The
+  table stays, with its name, layer and contract. Files are never generated
+  from a table with `sourceNotKnown`: its connection is a stand-in, and its
+  steps may be missing. An editor that previews the generated files shows
+  instead that the source is not known.
 - Apart from `BAD_SETTING`, no problem is reported where a text value that
   holds an unset reference was written. Such a problem is **left out**.
 - A method's `check` is not run on a table that holds an unset reference

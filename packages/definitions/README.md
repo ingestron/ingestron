@@ -56,7 +56,9 @@ to `process.env` and `resolveDefinitions` to none. `.env.<environment>` and
 `missingEnvvars` is `"error"` by default. An editor passes `"information"`:
 an unset variable is then information, the project still resolves, and no
 check judges a value that holds the unset reference. A `source` or `layer`
-written with one keeps its tables.
+written with one keeps its tables. When the source holds one and no `uses`
+names the ingest method, the table records it as `sourceNotKnown` and has no
+steps; files are never generated from such a table.
 
 `Connector.reading` optionally describes a native table reader's query support,
 accepted source options, landing format and required runtime. Packs derive this

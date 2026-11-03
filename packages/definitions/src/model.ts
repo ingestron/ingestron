@@ -134,6 +134,13 @@ export interface ResolvedTable {
   endsAtFiles?: ChosenBy;
   /** Makes the table's data available elsewhere, after its last step. Absent unless chosen. */
   serve?: Step;
+  /**
+   * A flow table's `source` when it holds an unset `${envvar:…}`, which only an editor's
+   * resolution allows (specification section 1). The connection is then a stand-in with no
+   * settings, and unless the flow names its ingest method with `uses`, the table has no
+   * steps. Files are never generated from such a table.
+   */
+  sourceNotKnown?: string;
 }
 
 /** A schedule after defaults. */
