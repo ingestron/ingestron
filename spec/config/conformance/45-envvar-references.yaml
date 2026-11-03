@@ -1,4 +1,4 @@
-description: The loaded project lists each ${envvar:…} it resolved, with the value it feeds and where the variable was set, never the value; an included file's reference feeds the document that reads it, and a reference used twice in one value is listed once.
+description: The loaded project lists each ${envvar:…} it resolved, with the value it feeds and where the variable was set, never the value; an included file's reference feeds the document that reads it, and a reference used twice in one value is listed once; text kept with $${ and a file not imported are not listed.
 environment: dev
 envvars:
   FROM_HOST: host-value
@@ -25,6 +25,11 @@ files:
     FROM_ENV=shared
   .env.dev: |
     FROM_DEV=dev
+  notes/unused.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: unused
+    url: ${envvar:NOT_IMPORTED}
   shared.yaml: |
     host: ${envvar:FROM_HOST}
   a.pipeline.yaml: |
@@ -34,6 +39,7 @@ files:
     path: ${values.landing}
     server: ${file:shared.yaml}
     copy: ${envvar:LANDING}/copy
+    kept: $${envvar:KEPT}
     twice: ${envvar:LANDING}-${envvar:LANDING}
 expect:
   documents:
@@ -46,11 +52,12 @@ expect:
         path: "${envvar:LANDING}"
         server: { host: host-value }
         copy: "${envvar:LANDING}/copy"
+        kept: "${envvar:KEPT}"
         twice: "${envvar:LANDING}-${envvar:LANDING}"
   diagnostics:
     - { code: ENVVAR_MISSING, severity: information, file: project.yaml, line: 3 }
     - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 6 }
-    - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 7 }
+    - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 8 }
   unsetEnvvars: ["${envvar:LANDING}"]
   envvarReferences:
     - { name: LANDING, file: project.yaml, pointer: /values/landing }

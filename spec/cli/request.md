@@ -9,13 +9,27 @@ environment.
 
 The definitions are resolved as an editor resolves them, with
 `missingEnvvars: information` (definitions specification, section 1): a
-`${envvar:…}` whose variable is set nowhere does not stop the request. Any
-other error does. Then the request is only the title
+`${envvar:…}` whose variable is set nowhere does not stop the request.
+
+Every other error is still found and stops the request: every loading
+error, and every resolution error at a value that holds no unset reference.
+So is an unset reference where a number or a list is needed: a `type`
+failure, `BAD_SETTING` in a method's settings. Some problems wait until the variables are
+set, because what they judge is not known yet (definitions specification,
+section 1):
+
+- a problem at a value that holds an unset reference, which is left out;
+- a method's `check` of a table that holds an unset reference anywhere;
+- each pack's `check` of the whole project, when the model holds an unset
+  reference or any problem was left out.
+
+When an error stops the request, the request is only the title
 `# Platform request (<environment>)` and the note "The definitions have
 problems; fix them first.", and no problem is listed; `ingestron plan`
 lists them. The command's exit code is 1 when any environment's definitions
 have errors, and 0 otherwise, including when the only problems are unset
-variables.
+variables. The exit code comes from whether each environment resolved, not
+from the text.
 
 ## Sections
 
@@ -64,11 +78,23 @@ diagnostic may quote it (configuration specification, section 4.5).
 Elsewhere in the request, a value that holds an unset reference reads as
 written, as `${envvar:NAME}`, so the reader sees what is missing. When any
 variable is not set, the section says that the request shows each such
-variable as `${envvar:NAME}`, and that what depends on one may be left out.
+variable as `${envvar:NAME}`, and that what cannot be worked out without one
+is left out. It then names what is left out, quoting only the text of unset
+references, never a resolved value: a source or a contract may also hold a
+variable that is set, or a value copied from one.
 
-What cannot be worked out without a value is left out, never guessed. A flow
-whose source is not known (definitions specification, section 1) has no
-steps, so nothing its tables need is listed. For each such flow the section
-says that its source is not known yet, naming the source as written. Files
-are never generated from such a table, so the SQL to run once is then left
-out, and the section says so.
+- A flow whose source is not known (definitions specification, section 1)
+  has no steps, so nothing its tables need is listed. The section names the
+  flow and the unset references its source holds. Files are never generated
+  from such a table, so the SQL to run once is then left out, and the
+  section says so.
+- A table left out because what it is made from holds an unset reference (a
+  flow's `uses` or the table's `contract`; a transform's `uses`, `contract`
+  or `inputs`) is named with those references. A transform left out because
+  it reads such a table is named with the table it reads. The section says
+  that the lists that follow, and the SQL to run once when it is shown,
+  leave these tables out.
+
+The section also says that, until every variable is set, the checks that
+wait for them (section "Resolving") may not have run, and to run
+`ingestron check` once the values are set.
