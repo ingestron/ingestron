@@ -11,6 +11,10 @@ export interface LoadContext {
   files: FileSource;
   limits: Limits;
   envvars: Readonly<Record<string, string | undefined>>;
+  /** What an unset `${envvar:…}` is: an error, or information that lets the load go on. */
+  missingEnvvars: "error" | "information";
+  /** The selected environment, for messages that tell a person which `.env` file to use. */
+  environment?: string;
   diagnostics: Diagnostic[];
   /**
    * Successfully parsed YAML by path. Failures are not cached: each reference
@@ -44,7 +48,7 @@ export function readProjectFile(
 ): string | undefined {
   const knownSize = context.files.size?.(path);
   if (knownSize !== undefined && knownSize > context.limits.maxFileBytes) {
-    context.diagnostics.push(tooLarge(context, path, knownSize, referredFrom));
+    context.diagnostics.push(tooLarge(path, knownSize, context.limits.maxFileBytes, referredFrom));
     return undefined;
   }
   const text = context.files.read(path);
@@ -61,16 +65,22 @@ export function readProjectFile(
   }
   const bytes = new TextEncoder().encode(text).length;
   if (bytes > context.limits.maxFileBytes) {
-    context.diagnostics.push(tooLarge(context, path, bytes, referredFrom));
+    context.diagnostics.push(tooLarge(path, bytes, context.limits.maxFileBytes, referredFrom));
     return undefined;
   }
   return text;
 }
 
-function tooLarge(context: LoadContext, path: string, bytes: number, referredFrom?: Location) {
+/** The error for a file over `maxFileBytes`. */
+export function tooLarge(
+  path: string,
+  bytes: number,
+  maxFileBytes: number,
+  referredFrom?: Location,
+) {
   return error(
     "FILE_TOO_LARGE",
-    `${path} is ${bytes} bytes; the limit is ${context.limits.maxFileBytes}.`,
+    `${path} is ${bytes} bytes; the limit is ${maxFileBytes}.`,
     referredFrom,
     "Split the file, or raise limits.maxFileBytes.",
   );

@@ -13,7 +13,7 @@ export interface Problem {
   /** Path relative to the project, with "/". */
   file: string;
   range: { start: Position; end: Position };
-  severity: "error" | "warning";
+  severity: "error" | "warning" | "information";
   code: string;
   message: string;
   /** Changes that each solve it, when the definitions know them. */
