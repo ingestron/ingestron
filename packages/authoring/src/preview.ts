@@ -32,6 +32,12 @@ function build(project: Project, environment: string | undefined): Files {
     return {
       problems: `${name}: the definitions have problems\n${formatDiagnostics(diagnostics)}`,
     };
+  // A source not known yet gives a stand-in connection and no steps: nothing to build from.
+  const source = model.tables.find((table) => table.sourceNotKnown)?.sourceNotKnown;
+  if (source)
+    return {
+      problems: `${name}: the generated files are not shown while a flow's source is not known: ${source} is not set.`,
+    };
   return generatedOutputs(model, name).flatMap(({ label, files }) =>
     Object.entries(files).map(([path, text]) => ({ path: `build/${label}/${path}`, text })),
   );

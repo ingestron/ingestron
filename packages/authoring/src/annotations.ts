@@ -1,7 +1,7 @@
 // What a line resolves to, shown beside it: a variable's value, a table's full
 // name with the methods that build it, and the files generated from it.
 import { NO_STORE, type ChosenBy, type ResolvedTable } from "@ingestron/definitions";
-import { targetOf } from "./target.js";
+import { stepsNotKnown, targetOf } from "./target.js";
 import { generatedFiles, generatedForTable } from "./preview.js";
 import { documentsOf, resolvedForDisplay, type Project } from "./project.js";
 import { holdsSecret } from "./without-env-files.js";
@@ -178,7 +178,7 @@ export function chosenText(table: ResolvedTable): string {
   );
   if (table.endsAtFiles)
     lines.push(`store: ${NO_STORE}, ends at the landed files, ${chooser(table.endsAtFiles)}`);
-  return lines.join("\n");
+  return [...stepsNotKnown(table), ...lines].join("\n");
 }
 
 /** What chose a method, with the rule's facts and where it is written. */
