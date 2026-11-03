@@ -5,6 +5,7 @@ import { kinds, NO_STORE, type ChosenBy, type ResolvedTable } from "@ingestron/d
 import { targetOf } from "./target.js";
 import { generatedFiles, generatedForTable } from "./preview.js";
 import { resolved, type Project } from "./project.js";
+import { withoutEnvFiles } from "./without-env-files.js";
 import { resolveText } from "./references.js";
 import { allSpots, positionAt, rangeOf } from "./yaml.js";
 
@@ -65,6 +66,7 @@ export function generatedLenses(
   }));
 }
 
+/** A reference to a secret or an environment variable: what it stands for is never shown. */
 const hidden = /\$\{(secret|envvar):/;
 const loads = new WeakMap<Project, Map<string, DefinitionDocument[]>>();
 
@@ -85,6 +87,9 @@ function variables(
         : resolveText(project, spot.text, environment);
       if (value === undefined || value === spot.text) return [];
       const shown = typeof value === "string" ? value : JSON.stringify(value);
+      // A value written with ${envvar:…} or ${secret:…}, reached through values or a file,
+      // stays as its reference here: no annotation says more than that.
+      if (hidden.test(shown)) return [];
       // One line beside the value; the tooltip keeps the lines.
       const flat = shown.replace(/\s+/g, " ").trim();
       const label = `= ${flat.length > 80 ? `${flat.slice(0, 79)}…` : flat}`;
@@ -110,10 +115,13 @@ export function documentsOf(
   const key = environment ?? "";
   let documents = byEnvironment.get(key);
   if (!documents) {
-    const loaded = resolveProject(project.files, {
+    // Annotations never see an environment variable's value: the host's is left out and
+    // .env files are not read, so an unset variable resolves to its own reference.
+    const loaded = resolveProject(withoutEnvFiles(project.files), {
       kinds: Object.values(kinds),
       ...(environment && { environment }),
       envvars: {},
+      missingEnvvars: "information",
     });
     documents = loaded.ok ? [...loaded.project.documents] : [];
     byEnvironment.set(key, documents);
