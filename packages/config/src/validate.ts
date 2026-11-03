@@ -38,14 +38,14 @@ export function createSchemaChecker() {
   }
   /**
    * `file` is the document's own file: fixes are offered for problems written there.
-   * Failures caused by text that `holdsPlaceholder` (spec §5.1) are left out.
+   * Failures caused by text that `holdsUnsetEnvvar` (spec §5.1) are left out.
    */
   return function check(
     schema: JsonSchema,
     value: unknown,
     locate: Locate,
     file?: string,
-    holdsPlaceholder: (text: string) => boolean = () => false,
+    holdsUnsetEnvvar: (text: string) => boolean = () => false,
   ): Diagnostic[] {
     let validate = compiled.get(schema);
     if (!validate) {
@@ -53,7 +53,7 @@ export function createSchemaChecker() {
       compiled.set(schema, validate);
     }
     if (validate(value)) return [];
-    const failures = withoutPlaceholders(validate.errors ?? [], holdsPlaceholder);
+    const failures = withoutUnsetEnvvars(validate.errors ?? [], holdsUnsetEnvvar);
     return failures
       .flatMap((failure) => problemFor(failure, failures, schema, locate, file))
       .sort(byLocation);
@@ -61,19 +61,19 @@ export function createSchemaChecker() {
 }
 
 /**
- * The failures without those a placeholder causes (spec §5.1): text that holds one
+ * The failures without those an unset reference causes (spec §5.1): text that holds one
  * fails any keyword but `type` only because its value is not known yet, and so does a
  * `oneOf`, `anyOf` or `if` at or above such a failure.
  */
-export function withoutPlaceholders<T extends PlaceholderFailure>(
+export function withoutUnsetEnvvars<T extends UnsetEnvvarFailure>(
   failures: readonly T[],
-  holdsPlaceholder: (text: string) => boolean,
+  holdsUnsetEnvvar: (text: string) => boolean,
 ): T[] {
   const left = failures.filter(
     (failure) =>
       failure.keyword !== "type" &&
       typeof failure.data === "string" &&
-      holdsPlaceholder(failure.data),
+      holdsUnsetEnvvar(failure.data),
   );
   if (left.length === 0) return [...failures];
   const under = (failure: T) =>
@@ -87,8 +87,8 @@ export function withoutPlaceholders<T extends PlaceholderFailure>(
   );
 }
 
-/** What {@link withoutPlaceholders} reads of a schema failure. */
-export interface PlaceholderFailure {
+/** What {@link withoutUnsetEnvvars} reads of a schema failure. */
+export interface UnsetEnvvarFailure {
   /** The schema keyword that failed, such as `pattern` or `anyOf`. */
   keyword: string;
   /** Where the failing value is, as a JSON Pointer. */

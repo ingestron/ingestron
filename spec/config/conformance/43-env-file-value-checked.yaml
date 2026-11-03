@@ -1,4 +1,4 @@
-description: A value from .env is checked like any other, and a schema problem quotes it so it can be fixed. Without missingEnvvars information nothing is a placeholder.
+description: A value from .env is checked like any other, and a schema problem quotes it so it can be fixed. Without missingEnvvars information nothing is an unset reference.
 environment: dev
 envvars: {}
 kinds:

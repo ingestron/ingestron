@@ -2,7 +2,7 @@
 //   manifest → imported paths → each document (resolve, header, kind, schema)
 //   → duplicate ids → links → result
 
-import { holdsPlaceholder, uniqueDiagnostics, type LoadContext } from "./context.js";
+import { holdsUnsetEnvvar, uniqueDiagnostics, type LoadContext } from "./context.js";
 import { hasErrors, type Diagnostic } from "./diagnostics.js";
 import { envvarsFor } from "./env-files.js";
 import { checkDuplicateIds, loadDocument, type LoadedDocument } from "./documents.js";
@@ -69,7 +69,7 @@ export function resolveProject(files: FileSource, options: LoadOptions): LoadRes
     missingEnvvars: options.missingEnvvars ?? "error",
     environment: options.environment,
     diagnostics: envFileDiagnostics,
-    placeholders: new Set(),
+    unsetEnvvars: new Set(),
     parsedFiles: new Map(),
     aliasCount: 0,
     includeCount: 0,
@@ -84,7 +84,7 @@ export function resolveProject(files: FileSource, options: LoadOptions): LoadRes
     .filter((document): document is LoadedDocument => document !== undefined);
   checkDuplicateIds(loaded, context.diagnostics);
   checkLinks(loaded, context.diagnostics, context.unloaded, (text) =>
-    holdsPlaceholder(context, text),
+    holdsUnsetEnvvar(context, text),
   );
 
   if (hasErrors(context.diagnostics)) return failure(context);
@@ -92,7 +92,7 @@ export function resolveProject(files: FileSource, options: LoadOptions): LoadRes
     manifest.scope,
     loaded.map(({ document }) => document),
     manifest.runsOn,
-    [...context.placeholders],
+    [...context.unsetEnvvars],
   );
   return { ok: true, project, diagnostics: uniqueDiagnostics(context.diagnostics) };
 }

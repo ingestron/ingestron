@@ -199,8 +199,8 @@ extends to the first `}}`, so that the hint shows the whole placeholder.
   everywhere is `ENVVAR_MISSING` (an error), unless the caller asked for
   `missingEnvvars: information`. Then it is still `ENVVAR_MISSING`, with the
   severity `information`, and the reference resolves to its own text as
-  written (`${envvar:NAME}`), so the load can continue. That text is a
-  placeholder (section 5.1). A file for another environment is never read.
+  written (`${envvar:NAME}`), so the load can continue. That text is an
+  unset reference (section 5.1). A file for another environment is never read.
 - `secret:reference`: produces the mapping `{"$secret": "<reference>"}`
   unchanged. It is never resolved by this layer.
 
@@ -267,29 +267,30 @@ bare     = any, trimmed, up to a comment
   the caller asked for `missingEnvvars: information` (section 4.4). That text
   is not scanned again, so `$${` handling does not apply to it.
 
-### 5.1 Placeholders
+### 5.1 Unset references
 
 With `missingEnvvars: information`, the text an unset variable's reference
-resolves to (section 4.4) is a **placeholder**: it stands for a value that is
-not known on this computer. A text value **holds a placeholder** when it
-contains the text of a placeholder left in the same load, wherever the value
-ends up: written in place, copied with `${values.…}` or `${file:…}`, or
-embedded in other text. Such a value causes no error or warning by itself:
+resolves to (section 4.4) is an **unset reference**: it stands for a value
+that is not known on this computer. A text value **holds an unset reference**
+when it contains the text of an unset reference left in the same load,
+wherever the value ends up: written in place, copied with `${values.…}` or
+`${file:…}`, or embedded in other text. Such a value causes no error or
+warning by itself:
 
 - A schema failure is not reported when the failing value is text that holds
-  a placeholder, whatever the keyword (`pattern`, `enum`, `format`,
+  an unset reference, whatever the keyword (`pattern`, `enum`, `format`,
   `minLength`, …) except `type`: a variable's value is always text, so text
   where text is not allowed is wrong whatever the variable holds. Nor is a
   `oneOf`, `anyOf` or `if` failure reported at or above the place of a
   failure left out this way. A document whose failures are all left out is
   valid.
-- A link whose value holds a placeholder is not checked.
+- A link whose value holds an unset reference is not checked.
 
-The loaded project lists its placeholders (`placeholders`), each once, in the
-order they were first left, so that the checks that follow the load can do
-the same. The `ENVVAR_MISSING` information says what is missing. With
-`missingEnvvars: error` there are no placeholders, and nothing in this section
-applies.
+The loaded project lists its unset references (`unsetEnvvars`), each once, in
+the order they were first left, so that the checks that follow the load can
+do the same. The `ENVVAR_MISSING` information says what is missing. With
+`missingEnvvars: error` there are no unset references, and nothing in this
+section applies.
 
 ## 6. Diagnostics
 
@@ -363,7 +364,7 @@ expect:
   diagnostics: # on failure, or warnings and information on success: matched in order on the fields given
     - { code: UNKNOWN_REFERENCE, file: a.yaml, line: 3, column: 7 }
     - { code: ENVVAR_MISSING, severity: information, file: a.yaml, line: 4 }
-  placeholders: ["${envvar:NOPE}"] # optional: the loaded project's placeholders (section 5.1)
+  unsetEnvvars: ["${envvar:NOPE}"] # optional: the loaded project's unset references (section 5.1)
   fixed: # optional: each fix's title, and the files after applying it
     - diagnostic: 0
       title: Change to "shop"
