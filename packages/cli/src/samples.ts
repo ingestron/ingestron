@@ -58,7 +58,7 @@ export function sampleFacts(folder: string): SampleFacts {
     const { model } = loadDefinitions(folder, {
       packs,
       environment,
-      envvars: {},
+      envvars: process.env,
     });
     return model ? [model] : [];
   });

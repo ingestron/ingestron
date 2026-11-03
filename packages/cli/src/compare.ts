@@ -33,8 +33,8 @@ export function compare(options: Options, io: Io): number {
  * console.log(compareEnvironments(nodeFiles("definitions"), "dev", "prod"));
  */
 export function compareEnvironments(files: FileSource, a: string, b: string): string {
-  const left = resolveDefinitions(files, { packs, environment: a, envvars: {} });
-  const right = resolveDefinitions(files, { packs, environment: b, envvars: {} });
+  const left = resolveDefinitions(files, { packs, environment: a, envvars: process.env });
+  const right = resolveDefinitions(files, { packs, environment: b, envvars: process.env });
   for (const [name, result] of [
     [a, left],
     [b, right],

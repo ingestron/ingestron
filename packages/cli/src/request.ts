@@ -36,7 +36,11 @@ export function request(options: Options, io: Io): number {
  * console.log(platformRequest(nodeFiles("definitions"), "prod"));
  */
 export function platformRequest(files: FileSource, environment: string | undefined): string {
-  const { model, diagnostics } = resolveDefinitions(files, { packs, environment, envvars: {} });
+  const { model, diagnostics } = resolveDefinitions(files, {
+    packs,
+    environment,
+    envvars: process.env,
+  });
   const name = environment ?? "default";
   if (!model)
     return `# Platform request (${name})\n\nThe definitions have problems; fix them first.\n`;
@@ -99,7 +103,7 @@ function infrastructure(
   const loaded = resolveProject(files, {
     kinds: Object.values(kinds),
     ...(environment && { environment }),
-    envvars: {},
+    envvars: process.env,
   });
   const platform = loaded.project?.documents.find((item) => item.kind === "Platform");
   const settings = (platform?.value as { settings?: Record<string, Record<string, unknown>> })
