@@ -6,6 +6,7 @@ import {
   type ResolvedProduct,
   type ResolvedTable,
 } from "@ingestron/definitions";
+import { notBuilt, notBuiltLines } from "./passport-sections.js";
 
 interface Graph {
   ids: Map<string, string>;
@@ -13,7 +14,7 @@ interface Graph {
   edges: Set<string>;
 }
 
-/** The product's lineage as a Mermaid block, or a sentence when nothing is built here. */
+/** The product's lineage as a Mermaid block, with a line for each output not built here. */
 export function lineage(model: ResolvedModel, product: ResolvedProduct): string {
   const graph: Graph = { ids: new Map(), labels: new Map(), edges: new Set() };
   const outputs = product.outputs.flatMap(({ tables }) => tables);
@@ -21,8 +22,10 @@ export function lineage(model: ResolvedModel, product: ResolvedProduct): string 
     const table = model.tables.find((item) => item.name === name);
     if (table) visit(model, graph, table, new Set());
   }
-  if (graph.edges.size === 0) return "Not built in this environment, so there is no lineage here.";
-  return ["```mermaid", "flowchart LR", ...graph.edges, "```"].join("\n");
+  const unbuilt = notBuiltLines(model, product);
+  if (graph.edges.size === 0) return unbuilt.length > 0 ? notBuilt : "There is no lineage to show.";
+  const diagram = ["```mermaid", "flowchart LR", ...graph.edges, "```"].join("\n");
+  return [diagram, ...(unbuilt.length > 0 ? [unbuilt.join("\n")] : [])].join("\n\n");
 }
 
 function visit(model: ResolvedModel, graph: Graph, table: ResolvedTable, seen: Set<string>): void {

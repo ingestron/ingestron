@@ -49,11 +49,21 @@ export function outputTables(model: ResolvedModel, product: ResolvedProduct) {
   }));
 }
 
+/** The sentence for an output with no table in this environment. */
+export const notBuilt = "Not built in this environment.";
+
+/** One line per output with no table here, for sections that list by contract or diagram. */
+export function notBuiltLines(model: ResolvedModel, product: ResolvedProduct): string[] {
+  return outputTables(model, product)
+    .filter(({ tables }) => tables.length === 0)
+    .map(({ output }) => `- \`${output.name}\`: ${notBuilt}`);
+}
+
 /** Section 3: each output's table in this environment and where it lives. */
 export function provides(model: ResolvedModel, product: ResolvedProduct): string {
   const rows = outputTables(model, product).flatMap(({ output, tables }) =>
     tables.length === 0
-      ? [[output.name, output.description ?? "", "Not built in this environment.", ""]]
+      ? [[output.name, output.description ?? "", notBuilt, ""]]
       : tables.map((built) => [
           output.name,
           output.description ?? "",
@@ -76,7 +86,7 @@ export function columns(model: ResolvedModel, product: ResolvedProduct): string 
   const parts = outputTables(model, product).map(({ output, tables }) => {
     const contract = tables[0]?.contract;
     const tagged = taggedInUnityCatalog(model, tables[0]) ? ", tagged in Unity Catalog" : "";
-    if (!contract) return `### ${output.name}\n\nNot built in this environment.`;
+    if (!contract) return `### ${output.name}\n\n${notBuilt}`;
     const landed = landedColumns(tables[0]!).map((column) => [
       column.name,
       column.description ?? "",
@@ -106,23 +116,25 @@ export function columns(model: ResolvedModel, product: ResolvedProduct): string 
 /** Section 5: each check and when it runs, or why it does not. */
 export function quality(model: ResolvedModel, product: ResolvedProduct): string {
   const parts = outputTables(model, product).flatMap(({ output, tables }) =>
-    tables.map((built) => {
-      const rows = built.endsAtFiles
-        ? []
-        : built.expectations.map(
-            (item) =>
-              `- \`${item.name}\`: ${code(item.check)}, checked on every load; rows that fail: ${item.action}.`,
+    tables.length === 0
+      ? [`### ${output.name}\n\n${notBuilt}`]
+      : tables.map((built) => {
+          const rows = built.endsAtFiles
+            ? []
+            : built.expectations.map(
+                (item) =>
+                  `- \`${item.name}\`: ${code(item.check)}, checked on every load; rows that fail: ${item.action}.`,
+              );
+          const counts = built.contract.tableChecks.map(
+            (item) => `- \`${item.name}\`: checked after each refresh.`,
           );
-      const counts = built.contract.tableChecks.map(
-        (item) => `- \`${item.name}\`: checked after each refresh.`,
-      );
-      const unchecked = built.contract.unchecked.map(
-        (item) =>
-          `- \`${item.name}\`: ${item.description ? `${oneLine(item.description)} ` : ""}Not checked: ${item.reason}.`,
-      );
-      const lines = [...rows, ...counts, ...unchecked];
-      return `### ${output.name}\n\n${lines.length > 0 ? lines.join("\n") : "No quality rules."}`;
-    }),
+          const unchecked = built.contract.unchecked.map(
+            (item) =>
+              `- \`${item.name}\`: ${item.description ? `${oneLine(item.description)} ` : ""}Not checked: ${item.reason}.`,
+          );
+          const lines = [...rows, ...counts, ...unchecked];
+          return `### ${output.name}\n\n${lines.length > 0 ? lines.join("\n") : "No quality rules."}`;
+        }),
   );
   return ["## Quality", ...parts].join("\n\n");
 }
@@ -158,9 +170,16 @@ export function access(model: ResolvedModel, product: ResolvedProduct): string {
       role.firstLevelApprovers ?? "",
     ]),
   );
-  if (rows.length === 0) return "## Who may use it\n\nThe contracts name no roles.";
+  const unbuilt = notBuiltLines(model, product);
   const note = "As declared in the contracts; Ingestron does not grant access.";
-  return `## Who may use it\n\n${table(["Role", "Access", "Purpose", "Approvers"], rows)}\n\n${note}`;
+  const body =
+    rows.length > 0
+      ? [table(["Role", "Access", "Purpose", "Approvers"], rows), ...unbuilt, note]
+      : [
+          ...(unbuilt.length < product.outputs.length ? ["The contracts name no roles."] : []),
+          ...unbuilt,
+        ];
+  return `## Who may use it\n\n${body.join("\n\n")}`;
 }
 
 /** The contract of each output built here, once each. */
