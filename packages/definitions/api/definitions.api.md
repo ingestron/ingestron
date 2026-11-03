@@ -555,6 +555,7 @@ export interface ResolvedTable {
 export interface ResolveOptions {
     environment?: string;
     envvars?: Readonly<Record<string, string | undefined>>;
+    missingEnvvars?: "error" | "information";
     packs: PackInfo[];
 }
 
