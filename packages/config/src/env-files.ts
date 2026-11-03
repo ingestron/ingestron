@@ -9,6 +9,10 @@ import { tooLarge } from "./context.js";
 import { warning, type Diagnostic } from "./diagnostics.js";
 import type { FileSource } from "./files.js";
 import { defaultLimits } from "./limits.js";
+import type { EnvvarReference } from "./project.js";
+
+/** Where a variable's value came from (specification 4.6). */
+type SetIn = NonNullable<EnvvarReference["setIn"]>;
 
 /** The settings of one file, and a warning for each line that is not one. */
 interface EnvFile {
@@ -131,11 +135,11 @@ export function envvarsFor(
   environment: string | undefined,
   host: Readonly<Record<string, string | undefined>>,
   maxFileBytes: number = defaultLimits.maxFileBytes,
-): { envvars: Record<string, string>; setIn: Record<string, string>; diagnostics: Diagnostic[] } {
+): { envvars: Record<string, string>; setIn: Record<string, SetIn>; diagnostics: Diagnostic[] } {
   const envvars = noPrototype();
-  const setIn = noPrototype();
+  const setIn = noPrototype() as Record<string, SetIn>;
   const diagnostics: Diagnostic[] = [];
-  const paths = [".env"];
+  const paths: SetIn[] = [".env"];
   // The manifest's own rule for an environment name; anything else could name another file.
   if (environment !== undefined && environmentName.test(environment))
     paths.push(`.env.${environment}`);

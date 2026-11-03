@@ -13,13 +13,17 @@ export interface EnvvarReference {
   name: string;
   /** The file of the document the reference feeds, or the manifest for its values. */
   file: string;
-  /** The JSON Pointer of the value it feeds in that document. */
+  /**
+   * The JSON Pointer of the value it feeds in that document. In the manifest it is the
+   * pointer in the merged values, `/values/…`, for a default value and for the selected
+   * environment's override alike, never `/environments/…`.
+   */
   pointer: string;
   /**
    * Where the value came from: `host` for the environment Ingestron runs in,
    * `.env.<environment>` or `.env`. Absent when the variable is set nowhere.
    */
-  setIn?: string;
+  setIn?: "host" | ".env" | `.env.${string}`;
 }
 
 /** A successfully loaded project. */
