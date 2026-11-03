@@ -147,7 +147,7 @@ function readEnvironmentVariable(name: string, source: string, location: Locatio
         "ENVVAR_MISSING",
         `${name} isn't set; add it to ${files} or set it before running Ingestron.`,
         location,
-        "Ingestron reads .env files in the project folder and the environment VS Code started with.",
+        "Ingestron reads .env files in the project folder and the environment the editor started with.",
       ),
     );
     // The reference stays as written, so the project still loads.

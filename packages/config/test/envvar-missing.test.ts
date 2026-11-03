@@ -43,7 +43,7 @@ describe("a variable set nowhere", () => {
       code: "ENVVAR_MISSING",
       severity: "information",
       message: "HOST isn't set; add it to .env.dev or set it before running Ingestron.",
-      hint: "Ingestron reads .env files in the project folder and the environment VS Code started with.",
+      hint: "Ingestron reads .env files in the project folder and the environment the editor started with.",
     });
     expect(result.project?.documents[0]?.value).toMatchObject({ url: "https://${envvar:HOST}/x" });
     expect(hasErrors(result.diagnostics)).toBe(false);
