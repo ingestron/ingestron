@@ -1,5 +1,5 @@
 // Behaviour of environment files that the conformance cases do not pin down:
-// the reader on its own, precedence, and that values never reach a message.
+// the reader on its own, precedence, and that its own messages never quote a line.
 import { describe, expect, it } from "vitest";
 import { envvarsFor, readEnvFile } from "../src/env-files.js";
 import { memoryFiles } from "../src/files.js";

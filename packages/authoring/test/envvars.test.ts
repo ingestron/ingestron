@@ -73,11 +73,12 @@ describe("where the editor looks", () => {
     ]);
   });
 
-  it("never puts a value in a problem", () => {
+  it("never quotes a bad .env line in a problem", () => {
     const folder = made(fromFile, {
-      ".env.dev": `${fromFile}=secret-value-123\nbad line secret-value-456\n`,
+      ".env.dev": `${fromFile}=${landing}\nbad line value-456\n`,
     });
-    const text = JSON.stringify(problems(openProject(folder, new Map()), "dev"));
-    expect(text).not.toContain("secret-value");
+    const found = problems(openProject(folder, new Map()), "dev");
+    expect(found.map((problem) => problem.code)).toEqual(["ENV_FILE_LINE"]);
+    expect(JSON.stringify(found)).not.toContain("value-456");
   });
 });
