@@ -100,7 +100,7 @@ describe("an unset reference in a flow's source and in an anyOf setting", () => 
     const unset = generatedFiles(openProject(workspace(), new Map()), "dev");
     expect(unset).toEqual({
       problems:
-        "dev: the generated files are not shown while a flow's source is not known: ${envvar:INGT_SRC} is not set.",
+        'dev: the generated files are not shown while a flow\'s source is not known: "${envvar:INGT_SRC}" holds a variable that is not set.',
     });
     const built = generatedFiles(openProject(workspace(set), new Map()), "dev");
     expect(Array.isArray(built) && built.length > 0).toBe(true);
