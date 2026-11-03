@@ -29,12 +29,16 @@ passport, written for someone who does not know the tools. Its sections, in orde
    `manage.tags`. A table stored by another pack makes no such claim, even when
    the standard also names `databricks@1`.
 5. **Quality:** each row check and table check in words, with when it runs or
-   why it does not.
+   why it does not. An output no table builds here says "Not built in this
+   environment."
 6. **Freshness:** the contract's `slaProperties`, and the refresh schedule.
 7. **Who may use it:** each contract role with its access, purpose and
-   approvers, as declared; Ingestron does not grant access.
+   approvers, as declared; Ingestron does not grant access. A line for each
+   output no table builds here says "Not built in this environment."
 8. **Lineage:** a Mermaid flowchart from each source connection through the
-   tables and transforms to each output.
+   tables and transforms to each output, with the same line for each output
+   no table builds here. A product with no output built here says only
+   "Not built in this environment."
 9. **Governance:** the standard's governance rules the product meets; a
    product that broke one would have stopped generation.
 

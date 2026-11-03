@@ -15,4 +15,38 @@ describe("passport claims", () => {
     expect(elsewhere).toMatch(/\| email \|.*confidential \(sensitive\) \|/);
     expect(elsewhere).not.toContain("Unity Catalog");
   });
+
+  it("says in every section that an output is not built here, beside one that is", () => {
+    const resolved = model(project());
+    const product = resolved.products.find((item) => item.id === "sales")!;
+    product.outputs.push({ name: "returns", contract: "shop.returns", tables: [] });
+    const page = passports(resolved)["sales.md"]!;
+    const section = (title: string) =>
+      page
+        .split("\n## ")
+        .find((item) => item.startsWith(title))!
+        .trim();
+    const note = "`returns`: Not built in this environment.";
+    expect(section("Quality")).toContain("### returns\n\nNot built in this environment.");
+    expect(section("Quality")).toContain("### daily_sales");
+    expect(section("Who may use it")).toContain(note);
+    expect(section("Lineage")).toContain(note);
+    expect(section("Lineage")).toContain("```mermaid");
+  });
+
+  it("gives the plain sentence for an output when nothing is built here", () => {
+    const resolved = model(project());
+    const product = resolved.products.find((item) => item.id === "sales")!;
+    product.outputs[0]!.tables = [];
+    const page = passports(resolved)["sales.md"]!;
+    const section = (title: string) =>
+      page
+        .split("\n## ")
+        .find((item) => item.startsWith(title))!
+        .trim();
+    expect(section("Quality")).toContain("### daily_sales\n\nNot built in this environment.");
+    expect(section("Who may use it")).toContain("`daily_sales`: Not built in this environment.");
+    expect(section("Who may use it")).not.toContain("name no roles");
+    expect(section("Lineage")).toBe("Lineage\n\nNot built in this environment.");
+  });
 });
