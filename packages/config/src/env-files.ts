@@ -122,16 +122,18 @@ function noPrototype(): Record<string, string> {
  * The variables `${envvar:…}` can read: the non-empty host values over
  * `.env.<environment>` (only when an environment is selected) over `.env`.
  * Each file is read whenever it exists, unless it is over `maxFileBytes`
- * (then it is an error, as for any project file). The diagnostics are those
- * and the files' bad lines.
+ * (then it is an error, as for any project file). `setIn` says where each
+ * value came from: `host`, or the file's path (specification 4.6). The
+ * diagnostics are those and the files' bad lines.
  */
 export function envvarsFor(
   files: FileSource,
   environment: string | undefined,
   host: Readonly<Record<string, string | undefined>>,
   maxFileBytes: number = defaultLimits.maxFileBytes,
-): { envvars: Record<string, string>; diagnostics: Diagnostic[] } {
+): { envvars: Record<string, string>; setIn: Record<string, string>; diagnostics: Diagnostic[] } {
   const envvars = noPrototype();
+  const setIn = noPrototype();
   const diagnostics: Diagnostic[] = [];
   const paths = [".env"];
   // The manifest's own rule for an environment name; anything else could name another file.
@@ -142,13 +144,17 @@ export function envvarsFor(
     diagnostics.push(...file.diagnostics);
     // An empty value counts as unset, so it never hides what an earlier file set.
     for (const [name, value] of Object.entries(file.values)) {
-      if (value !== "") envvars[name] = value;
+      if (value === "") continue;
+      envvars[name] = value;
+      setIn[name] = path;
     }
   }
   for (const [name, value] of Object.entries(host)) {
-    if (value !== undefined && value !== "") envvars[name] = value;
+    if (value === undefined || value === "") continue;
+    envvars[name] = value;
+    setIn[name] = "host";
   }
-  return { envvars, diagnostics };
+  return { envvars, setIn, diagnostics };
 }
 
 function readFileIfPresent(files: FileSource, path: string, maxFileBytes: number): EnvFile {

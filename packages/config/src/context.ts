@@ -4,6 +4,7 @@
 import { error, type Diagnostic, type Location } from "./diagnostics.js";
 import type { FileSource } from "./files.js";
 import type { Limits } from "./limits.js";
+import type { EnvvarReference } from "./project.js";
 import { parseYamlFile, type YamlFile } from "./yaml-file.js";
 
 /** Everything one call to `resolveProject` works with. */
@@ -11,6 +12,8 @@ export interface LoadContext {
   files: FileSource;
   limits: Limits;
   envvars: Readonly<Record<string, string | undefined>>;
+  /** Where each of `envvars` came from: `host`, `.env.<environment>` or `.env` (spec §4.6). */
+  envvarsSetIn: Readonly<Record<string, string>>;
   /** What an unset `${envvar:…}` is: an error, or information that lets the load go on. */
   missingEnvvars: "error" | "information";
   /** The selected environment, for messages that tell a person which `.env` file to use. */
@@ -18,6 +21,8 @@ export interface LoadContext {
   diagnostics: Diagnostic[];
   /** The text of each `${envvar:…}` left as written because it is unset (spec §5.1), in order. */
   unsetEnvvars: Set<string>;
+  /** Each `${envvar:…}` resolved so far, by name, file and pointer, in order (spec §4.6). */
+  envvarReferences: Map<string, EnvvarReference>;
   /**
    * Successfully parsed YAML by path. Failures are not cached: each reference
    * to a broken file reports again, so no reference can fail silently.

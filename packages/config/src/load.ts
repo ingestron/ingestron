@@ -55,26 +55,7 @@ export type LoadResult =
  * if (!result.ok) console.error(formatDiagnostics(result.diagnostics));
  */
 export function resolveProject(files: FileSource, options: LoadOptions): LoadResult {
-  const limits = { ...defaultLimits, ...options.limits };
-  const { envvars, diagnostics: envFileDiagnostics } = envvarsFor(
-    files,
-    options.environment,
-    options.envvars ?? {},
-    limits.maxFileBytes,
-  );
-  const context: LoadContext = {
-    files,
-    limits,
-    envvars,
-    missingEnvvars: options.missingEnvvars ?? "error",
-    environment: options.environment,
-    diagnostics: envFileDiagnostics,
-    unsetEnvvars: new Set(),
-    parsedFiles: new Map(),
-    aliasCount: 0,
-    includeCount: 0,
-    unloaded: [],
-  };
+  const context = createLoadContext(files, options);
   const manifest = readManifest(context, options.manifest ?? "project.yaml", options.environment);
   if (!manifest) return failure(context);
 
@@ -92,9 +73,35 @@ export function resolveProject(files: FileSource, options: LoadOptions): LoadRes
     manifest.scope,
     loaded.map(({ document }) => document),
     manifest.runsOn,
-    [...context.unsetEnvvars],
+    { unset: [...context.unsetEnvvars], references: [...context.envvarReferences.values()] },
   );
   return { ok: true, project, diagnostics: uniqueDiagnostics(context.diagnostics) };
+}
+
+/** A load's starting state, with the variables `.env` files and the host give. */
+function createLoadContext(files: FileSource, options: LoadOptions): LoadContext {
+  const limits = { ...defaultLimits, ...options.limits };
+  const { envvars, setIn, diagnostics } = envvarsFor(
+    files,
+    options.environment,
+    options.envvars ?? {},
+    limits.maxFileBytes,
+  );
+  return {
+    files,
+    limits,
+    envvars,
+    envvarsSetIn: setIn,
+    missingEnvvars: options.missingEnvvars ?? "error",
+    environment: options.environment,
+    diagnostics,
+    unsetEnvvars: new Set(),
+    envvarReferences: new Map(),
+    parsedFiles: new Map(),
+    aliasCount: 0,
+    includeCount: 0,
+    unloaded: [],
+  };
 }
 
 function failure(context: LoadContext): LoadResult {
