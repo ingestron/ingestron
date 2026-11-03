@@ -86,7 +86,13 @@ export function resolved(
   const key = environment ?? "";
   let result = byEnvironment.get(key);
   if (!result) {
-    result = resolveDefinitions(project.files, { packs, ...(environment && { environment }) });
+    result = resolveDefinitions(project.files, {
+      packs,
+      ...(environment && { environment }),
+      // VS Code's environment, which the extension host shares; unset variables are advice.
+      envvars: process.env,
+      missingEnvvars: "information",
+    });
     byEnvironment.set(key, result);
   }
   return result;
@@ -112,7 +118,8 @@ export function loadedDocuments(
       resolveProject(project.files, {
         kinds: Object.values(kinds),
         ...(environment && { environment }),
-        envvars: {},
+        envvars: process.env,
+        missingEnvvars: "information",
       }).project?.documents,
     );
   return byEnvironment.get(key);
