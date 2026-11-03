@@ -1,0 +1,61 @@
+description: The loaded project lists each ${envvar:…} it resolved, with the value it feeds and where the variable was set, never the value; an included file's reference feeds the document that reads it, and a reference used twice in one value is listed once.
+environment: dev
+envvars:
+  FROM_HOST: host-value
+missingEnvvars: information
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    values:
+      landing: ${envvar:LANDING}
+      region: ${envvar:FROM_ENV}
+    environments:
+      dev:
+        values:
+          region: ${envvar:FROM_DEV}
+      prod:
+        values:
+          region: ${envvar:PROD_ONLY}
+    imports: ["*.pipeline.yaml"]
+  .env: |
+    FROM_ENV=shared
+  .env.dev: |
+    FROM_DEV=dev
+  shared.yaml: |
+    host: ${envvar:FROM_HOST}
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    path: ${values.landing}
+    server: ${file:shared.yaml}
+    copy: ${envvar:LANDING}/copy
+    twice: ${envvar:LANDING}-${envvar:LANDING}
+expect:
+  documents:
+    - kind: Pipeline
+      id: a
+      value:
+        apiVersion: example.dev/v1
+        kind: Pipeline
+        id: a
+        path: "${envvar:LANDING}"
+        server: { host: host-value }
+        copy: "${envvar:LANDING}/copy"
+        twice: "${envvar:LANDING}-${envvar:LANDING}"
+  diagnostics:
+    - { code: ENVVAR_MISSING, severity: information, file: project.yaml, line: 3 }
+    - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 6 }
+    - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 7 }
+  unsetEnvvars: ["${envvar:LANDING}"]
+  envvarReferences:
+    - { name: LANDING, file: project.yaml, pointer: /values/landing }
+    - { name: FROM_ENV, file: project.yaml, pointer: /values/region, setIn: .env }
+    - { name: FROM_DEV, file: project.yaml, pointer: /values/region, setIn: .env.dev }
+    - { name: FROM_HOST, file: a.pipeline.yaml, pointer: /server/host, setIn: host }
+    - { name: LANDING, file: a.pipeline.yaml, pointer: /copy }
+    - { name: LANDING, file: a.pipeline.yaml, pointer: /twice }
