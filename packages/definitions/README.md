@@ -40,15 +40,22 @@ if (!result.model) {
 
 ## API
 
-| Export                               | Meaning                                                                                   |
-| ------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `loadDefinitions(folder, options)`   | Load from disk and resolve: `{ ok, model?, diagnostics }`                                 |
-| `resolveDefinitions(files, options)` | The same from any `FileSource` (for example `memoryFiles`)                                |
-| `options`                            | `{ packs, environment?, envvars? }`: the available packs; the standard chooses among them |
-| `kinds`                              | The document kinds, for editor schemas or your own loading                                |
-| `ResolvedModel`, `ResolvedTable`, …  | The model's types; see `src/model.ts`                                                     |
-| `Pack`, `PackInfo`, `Method`, `Rule` | What a pack declares; see `src/pack.ts`                                                   |
-| `fullNameText(name)`                 | `catalog.schema.table`                                                                    |
+| Export                               | Meaning                                                                                                    |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `loadDefinitions(folder, options)`   | Load from disk and resolve: `{ ok, model?, diagnostics }`                                                  |
+| `resolveDefinitions(files, options)` | The same from any `FileSource` (for example `memoryFiles`)                                                 |
+| `options`                            | `{ packs, environment?, envvars?, missingEnvvars? }`: the available packs; the standard chooses among them |
+| `kinds`                              | The document kinds, for editor schemas or your own loading                                                 |
+| `ResolvedModel`, `ResolvedTable`, …  | The model's types; see `src/model.ts`                                                                      |
+| `Pack`, `PackInfo`, `Method`, `Rule` | What a pack declares; see `src/pack.ts`                                                                    |
+| `fullNameText(name)`                 | `catalog.schema.table`                                                                                     |
+
+`envvars` is the environment for `${envvar:…}`: `loadDefinitions` defaults
+to `process.env` and `resolveDefinitions` to none. `.env.<environment>` and
+`.env` in the project folder fill what it lacks.
+`missingEnvvars` is `"error"` by default. An editor passes `"information"`:
+an unset variable is then information, the project still resolves, and no
+check judges a value that holds the unresolved reference.
 
 `Connector.reading` optionally describes a native table reader's query support,
 accepted source options, landing format and required runtime. Packs derive this

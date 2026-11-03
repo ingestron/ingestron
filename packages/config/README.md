@@ -111,12 +111,21 @@ pipelines/orders.pipeline.yaml:7:11  error  UNKNOWN_REFERENCE
 | `${environment.name}`   | The selected environment's name                               |
 | `${project.id}`         | The manifest's `id` (also `project.name`)                     |
 | `${file:path#/pointer}` | A value from another YAML file, or the text of any other file |
-| `${envvar:NAME}`        | An environment variable of the machine that loads the project |
+| `${envvar:NAME}`        | An environment variable, read as described below              |
 | `${secret:scope/key}`   | A secret reference, passed on as `{ $secret: "scope/key" }`   |
 | `$${`                   | The literal text `${`, for placeholders meant for the output  |
 
 Only text starting with `${` is interpreted. Everything else, including
 `{{ }}`, `@{}`, `$(…)` and `$ref`, is passed on exactly as written.
+
+`${envvar:NAME}` takes the first value it finds: the environment of the
+process that loads the project (`options.envvars`, which `loadProject` fills
+from `process.env`), then `.env.<environment>` when an environment is
+selected, then `.env`. Both files sit in the project folder and hold
+`NAME=value` lines. An empty value counts as unset. A variable set nowhere is
+an `ENVVAR_MISSING` error. An editor can pass `missingEnvvars: "information"`
+instead: the problem is then information, the reference stays as written, and
+nothing is checked against that text (`project.placeholders` lists it).
 
 ## Documentation
 
