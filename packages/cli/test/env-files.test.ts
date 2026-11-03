@@ -2,13 +2,16 @@
 import { cpSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { run } from "../src/index.js";
 
+// A name no developer's shell sets, so "unset" is unset everywhere; any real value is restored.
+const name = "INGESTRON_TEST_LANDING";
+let previous: string | undefined;
 const dev = "abfss://landing@envfiledev.dfs.core.windows.net/stores";
 const prod = "abfss://landing@envfileprod.dfs.core.windows.net/stores";
 
-/** A copy of the private-files starter whose landing folder comes from ${envvar:LANDING}. */
+/** A copy of the private-files starter whose landing folder comes from ${envvar:INGESTRON_TEST_LANDING}. */
 function workspace(files: Record<string, string>): string {
   const folder = mkdtempSync(join(tmpdir(), "ingestron-env-files-"));
   cpSync(join(import.meta.dirname, "../project-templates/private-files"), folder, {
@@ -20,10 +23,10 @@ function workspace(files: Record<string, string>): string {
     project,
     readFileSync(project, "utf8").replace(
       /abfss:\/\/landing@\w+\.dfs\.core\.windows\.net\/stores/g,
-      "${envvar:LANDING}",
+      `\${envvar:${name}}`,
     ),
   );
-  for (const [name, text] of Object.entries(files)) writeFileSync(join(folder, name), text);
+  for (const [file, text] of Object.entries(files)) writeFileSync(join(folder, file), text);
   return folder;
 }
 
@@ -41,21 +44,27 @@ function generated(folder: string): string {
     .join("\n");
 }
 
+beforeEach(() => {
+  previous = process.env[name];
+  delete process.env[name];
+});
+
 afterEach(() => {
-  delete process.env.LANDING;
+  if (previous === undefined) delete process.env[name];
+  else process.env[name] = previous;
 });
 
 describe("ingestron and .env files", () => {
   it("apply reads .env.dev", () => {
-    const folder = workspace({ ".env.dev": `LANDING=${dev}\n` });
+    const folder = workspace({ ".env.dev": `${name}=${dev}\n` });
     const { code, output } = ingestron(folder, "apply", "--env", "dev");
     expect(code, output).toBe(0);
     expect(generated(join(folder, "build"))).toContain("envfiledev.dfs.core.windows.net");
   });
 
   it("apply reads .env, and the host environment wins", () => {
-    const folder = workspace({ ".env": `LANDING=${dev}\n` });
-    process.env.LANDING = prod;
+    const folder = workspace({ ".env": `${name}=${dev}\n` });
+    process.env[name] = prod;
     const { code, output } = ingestron(folder, "apply", "--env", "dev");
     expect(code, output).toBe(0);
     expect(generated(join(folder, "build"))).toContain("envfileprod.dfs.core.windows.net");
@@ -63,7 +72,7 @@ describe("ingestron and .env files", () => {
   });
 
   it("compare and request read .env too", () => {
-    const folder = workspace({ ".env": `LANDING=${dev}\n`, ".env.prod": `LANDING=${prod}\n` });
+    const folder = workspace({ ".env": `${name}=${dev}\n`, ".env.prod": `${name}=${prod}\n` });
     const compared = ingestron(folder, "compare", "--env", "dev", "--env", "prod");
     expect(compared.code, compared.output).toBe(0);
     expect(compared.output).not.toContain("the definitions have problems");
@@ -77,8 +86,8 @@ describe("ingestron and .env files", () => {
   });
 
   it("compare and request read the host environment, which wins over .env", () => {
-    const folder = workspace({ ".env": `LANDING=${dev}\n` });
-    process.env.LANDING = prod;
+    const folder = workspace({ ".env": `${name}=${dev}\n` });
+    process.env[name] = prod;
     const compared = ingestron(folder, "compare", "--env", "dev", "--env", "prod");
     expect(compared.output).not.toContain("the definitions have problems");
     expect(compared.output).not.toContain("envfiledev");
