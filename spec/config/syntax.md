@@ -207,30 +207,42 @@ extends to the first `}}`, so that the hint shows the whole placeholder.
 ### 4.5 Environment files
 
 `.env` and `.env.<environment>` feed `${envvar:NAME}` and nothing else: their
-names are never added to `values`, and they are not imported. A file that does
-not exist is skipped without a diagnostic. Each file is read once per load.
-Files are UTF-8; a byte order mark at the start and a `\r` before a line
-ending are ignored. Each line is one of:
+names are never added to `values`, and they are not imported. `.env` is read
+whenever it exists, and `.env.<environment>` whenever an environment is
+selected and the file exists, whether or not any reference needs them, so a
+malformed line is reported early. A file that does not exist is skipped
+without a diagnostic. Each file is read once per load.
+
+Files are UTF-8; a byte order mark at the start is ignored. Lines end with
+`\n`, and a `\r` before it is removed. In this section **whitespace** is a
+space or a tab. Each line is one of:
 
 ```
 line     = blank | comment | assign
 blank    = ws
 comment  = ws "#" any
-assign   = ws [ "export" 1*space ] NAME ws "=" ws value
+assign   = ws [ "export" 1*ws ] NAME ws "=" ws value
 NAME     = as in section 4.4
 value    = single | double | bare
-single   = "'" any-but-"'" "'" ws [ comment ]
-double   = '"' { char | "\n" | '\"' | "\\" } '"' ws [ comment ]
-bare     = any, trimmed; a "#" that follows whitespace starts a comment
+single   = "'" any-but-"'" "'" ws [ "#" any ]
+double   = '"' { char | "\n" | '\"' | "\\" } '"' ws [ "#" any ]
+bare     = any, trimmed, up to a comment
 ```
 
 - Only the first `=` splits the line, so a value MAY contain `=`.
-- A bare value is trimmed. A `#` starts a comment only when whitespace comes
-  before it, so `https://x/y#frag` is one value and `a=b;c=d # note` is
-  `a=b;c=d`. An empty bare value is an empty string.
+- Whitespace around `=` is trimmed before the value is read.
+- A bare value ends at the first `#` that has whitespace directly before it
+  (the whitespace may be the one after `=`), or at the end of the line; it is
+  then trimmed. So `https://x/y#frag` is one value, `a=b;c=d # note` is
+  `a=b;c=d`, `A=#x` is the value `#x`, and `A= #x` is an empty value followed
+  by a comment. An empty value is an empty string, which counts as unset
+  (section 4.4).
 - A single-quoted value is taken exactly as written between the quotes.
 - A double-quoted value understands `\n` (a line feed), `\"` and `\\`; any other
-  backslash stays as written.
+  backslash, such as the one in `\t`, stays as written.
+- After a closing quote only whitespace and an optional comment may follow.
+  There the `#` needs no whitespace before it, so `'a' #x` and `'a'#x` are
+  both the value `a`, and `'a'b` is an `ENV_FILE_LINE`.
 - A value is on one line. Nothing is expanded: `$X`, `${X}` and `$(x)` stay as
   written, and the result is not interpolated again.
 - Any other line is `ENV_FILE_LINE`, a warning at the file and the line, and
@@ -245,7 +257,10 @@ bare     = any, trimmed; a "#" that follows whitespace starts a comment
 - A string without `${` is returned unchanged.
 - `$${` always produces `${`. Nothing else is altered: `{{ }}`, `@{}`, `$( )`,
   `%{ }`, `$ref` and the like pass through as written.
-- No unresolved reference survives into a successful result.
+- No unresolved reference survives into a successful result. The one
+  exception is an `envvar` reference that was resolved to its own text because
+  the caller asked for `missingEnvvars: information` (section 4.4). That text
+  is not scanned again, so `$${` handling does not apply to it.
 
 ## 6. Diagnostics
 

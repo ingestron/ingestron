@@ -12,6 +12,8 @@ files:
     NOT A LINE
     1BAD=x
     GOOD=1
+    AFTER='a'b
+    OPEN="abc
   a.pipeline.yaml: |
     apiVersion: example.dev/v1
     kind: Pipeline
@@ -29,3 +31,5 @@ expect:
   diagnostics:
     - { code: ENV_FILE_LINE, severity: warning, file: .env, line: 1 }
     - { code: ENV_FILE_LINE, severity: warning, file: .env, line: 2 }
+    - { code: ENV_FILE_LINE, severity: warning, file: .env, line: 4 }
+    - { code: ENV_FILE_LINE, severity: warning, file: .env, line: 5 }
