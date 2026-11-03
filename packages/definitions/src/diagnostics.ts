@@ -65,9 +65,13 @@ export interface Reporter {
 
 /**
  * A new, empty reporter. A problem written once on a flow is found for each
- * of its tables, so an identical diagnostic is kept only once.
+ * of its tables, so an identical diagnostic is kept only once. A problem at a
+ * place `unknown` names, such as text holding a placeholder, is not kept.
  */
-export function createReporter(start: readonly AnyDiagnostic[] = []): Reporter {
+export function createReporter(
+  start: readonly AnyDiagnostic[] = [],
+  unknown: (at: Source) => boolean = () => false,
+): Reporter {
   const diagnostics: AnyDiagnostic[] = [...start];
   const seen = new Set<string>();
   const report = (
@@ -78,6 +82,7 @@ export function createReporter(start: readonly AnyDiagnostic[] = []): Reporter {
     hint?: string,
     fixes?: Fix[],
   ) => {
+    if (at && unknown(at)) return;
     const location = at?.document.locate(at.pointer);
     const diagnostic: AnyDiagnostic = {
       code,

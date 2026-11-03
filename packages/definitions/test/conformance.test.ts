@@ -10,6 +10,8 @@ import { resolveDefinitions, type PackInfo, type ResolvedModel } from "../src/in
 interface Case {
   description: string;
   environment?: string;
+  envvars?: Record<string, string>;
+  missingEnvvars?: "error" | "information";
   files: Record<string, string>;
   expect: {
     tables?: Record<string, unknown>[];
@@ -83,8 +85,15 @@ describe("conformance", () => {
       const result = resolveDefinitions(memoryFiles(testCase.files), {
         packs,
         environment: testCase.environment,
+        envvars: testCase.envvars ?? {},
+        ...(testCase.missingEnvvars && { missingEnvvars: testCase.missingEnvvars }),
       });
       const { diagnostics } = testCase.expect;
+      // A case that expects only information still resolves, so its tables can be checked too.
+      if (diagnostics && testCase.expect.tables) {
+        expect(result.model, "the project resolves").toBeDefined();
+        checkTables(result.model!, testCase.expect.tables);
+      }
       if (diagnostics) {
         const actual = result.diagnostics.map(({ code, severity, location, fixes }) => ({
           code,

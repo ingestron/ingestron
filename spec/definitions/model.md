@@ -48,12 +48,34 @@ does for code written inline; so in code, `$${values.<name>}` cannot keep
 that text. Any other `${…}`, such as a SQL parameter, stays as written. A name with no value is
 `UNKNOWN_CODE_VALUE`, an error at the code, listing the names that exist.
 
-A problem is an error or a warning: a project resolves when it has no
-errors, and its warnings, including those found while loading, are reported
-with the model. Every problem is reported with the location of the value that caused it (for a method nobody named, such as a pack's default, the
+A problem is an error, a warning or information: a project resolves when it
+has no errors, and its warnings and information, including those found while
+loading, are reported with the model. Every problem is reported with the location of the value that caused it (for a method nobody named, such as a pack's default, the
 flow's `source`, or its `store` when it has one), and
 resolution continues so that all problems are found in one run. A problem
 written once, such as on a flow shared by several tables, is reported once.
+
+Loaded with `missingEnvvars: information`, as an editor loads it, a project
+MAY hold placeholders: the text of `${envvar:…}` references whose variable is
+set nowhere ([configuration specification](../config/syntax.md), section
+5.1). A value that holds one is not known yet, so it causes no error or
+warning by itself, and resolution goes on as if it were right:
+
+- A method's settings are checked against its schema as the loader checks a
+  document: a failure whose failing value is text that holds a placeholder
+  is left out, except a `type` failure, and so is a `oneOf`, `anyOf` or `if`
+  failure at or above it. A setting that holds one never changes a `fixed`
+  value (`FIXED_SETTING`).
+- A name pattern that gives text holding a placeholder is not checked for
+  its characters (`BAD_NAME`).
+- No problem is reported where a text value that holds a placeholder was
+  written.
+- A method's `check` is not run on a table that holds a placeholder
+  anywhere, nor a pack's `check` on a model that holds one: what such a
+  check judges cannot be told apart from the rest of what it is given.
+
+The loader's `ENVVAR_MISSING` information says what is missing. A project
+without placeholders is resolved as described everywhere else.
 
 ## 2. Packs
 
@@ -464,7 +486,8 @@ reported in one run:
 ## 9. Conformance
 
 Each case in [conformance/](conformance/) gives `files` (the project), an
-optional `environment`, and `expect`: `tables` (partial objects, in order,
+optional `environment`, optional `envvars` and `missingEnvvars` (as in the
+config conformance cases), and `expect`: `tables` (partial objects, in order,
 with `fullName` written as `catalog.schema.table`, and `null` for a step the
 table does not have, such as `serve: null`), `products` (partial objects,
 in order), `platform`, `names` or

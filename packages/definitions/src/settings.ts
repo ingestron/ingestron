@@ -1,4 +1,5 @@
 // Merges a method's settings from every layer and checks them (section 3).
+import { withoutPlaceholders } from "@ingestron/config";
 import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
 import type { Context } from "./context.js";
 import type { Source } from "./diagnostics.js";
@@ -6,6 +7,7 @@ import { isRecord, merge, sameValue } from "./merge.js";
 import type { Origin } from "./model.js";
 import { reportMissing, type MethodUse, type SettingsUser } from "./missing-settings.js";
 import type { Action, Method } from "./pack.js";
+import { holdsPlaceholder } from "./unknown-values.js";
 
 /** Settings from one layer, with where they were written (none for pack defaults). */
 export interface SettingsLayer {
@@ -17,7 +19,8 @@ export interface SettingsLayer {
   origin: Origin["layer"];
 }
 
-const ajv = new Ajv2020({ allErrors: true, strict: false });
+// Verbose, so each failure carries the failing value: for messages and placeholders.
+const ajv = new Ajv2020({ allErrors: true, strict: false, verbose: true });
 const validators = new WeakMap<Method, ValidateFunction>();
 
 /** The merged settings and where each came from, or undefined after reporting why they are not valid. */
@@ -95,7 +98,8 @@ function fixedRespected(
 ): boolean {
   let respected = true;
   for (const layer of layers.filter((candidate) => candidate.definition)) {
-    for (const { path, value } of changedFixed(fixed, layer.value, [])) {
+    const unknown = (value: unknown) => holdsPlaceholder(context.project, value);
+    for (const { path, value } of changedFixed(fixed, layer.value, [], unknown)) {
       const pointer = path.map((key) => `/${key.replaceAll("~", "~0").replaceAll("/", "~1")}`);
       const at = layer.at && {
         document: layer.at.document,
@@ -120,17 +124,21 @@ function fixedRespected(
 
 /**
  * The fixed values that `value` changes, with their key paths. Mappings in
- * both are compared key by key, so keys beside the fixed ones are allowed.
+ * both are compared key by key, so keys beside the fixed ones are allowed. A
+ * value that is `unknown`, such as one holding a placeholder, changes nothing.
  */
 function changedFixed(
   fixed: Record<string, unknown>,
   value: Record<string, unknown>,
   path: string[],
+  unknown: (value: unknown) => boolean,
 ): { path: string[]; value: unknown }[] {
   return Object.entries(value).flatMap(([key, given]) => {
     if (!(key in fixed)) return [];
     const wanted = fixed[key];
-    if (isRecord(wanted) && isRecord(given)) return changedFixed(wanted, given, [...path, key]);
+    if (isRecord(wanted) && isRecord(given))
+      return changedFixed(wanted, given, [...path, key], unknown);
+    if (unknown(given)) return [];
     return sameValue(wanted, given) ? [] : [{ path: [...path, key], value: wanted }];
   });
 }
@@ -148,7 +156,11 @@ function checkSchema(
     validators.set(method, validate);
   }
   if (validate(settings)) return true;
-  const failures = validate.errors ?? [];
+  // Text that holds a placeholder is not known yet, so it fails nothing but `type`.
+  const failures = withoutPlaceholders(validate.errors ?? [], (text) =>
+    holdsPlaceholder(context.project, text),
+  );
+  if (failures.length === 0) return true;
   const missing = failures
     .filter((failure) => failure.keyword === "required" && failure.instancePath === "")
     .map((failure) => String(failure.params.missingProperty));
@@ -186,8 +198,11 @@ function describe(failure: ErrorObject, layers: SettingsLayer[]): { message: str
     };
   }
   const path = failure.instancePath;
+  const quoted = ["string", "number", "boolean"].includes(typeof failure.data)
+    ? ` is ${JSON.stringify(failure.data)}; it`
+    : "";
   return {
-    message: `${path || "/"} ${failure.message ?? "is not valid"}`,
+    message: `${path || "/"}${quoted} ${failure.message ?? "is not valid"}`,
     at: whereSet(layers, path),
   };
 }

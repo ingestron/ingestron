@@ -16,6 +16,8 @@ export interface LoadContext {
   /** The selected environment, for messages that tell a person which `.env` file to use. */
   environment?: string;
   diagnostics: Diagnostic[];
+  /** The text of each `${envvar:…}` left as written because it is unset (spec §5.1), in order. */
+  placeholders: Set<string>;
   /**
    * Successfully parsed YAML by path. Failures are not cached: each reference
    * to a broken file reports again, so no reference can fail silently.
@@ -30,6 +32,12 @@ export interface LoadContext {
    * kind and id they declare, so links to them do not repeat their problem.
    */
   unloaded: { kind?: string; id: string }[];
+}
+
+/** True when the text contains a placeholder left in this load (spec §5.1). */
+export function holdsPlaceholder(context: LoadContext, text: string): boolean {
+  for (const placeholder of context.placeholders) if (text.includes(placeholder)) return true;
+  return false;
 }
 
 /** Number of errors reported so far; used to tell whether a step added any. */

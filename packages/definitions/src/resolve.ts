@@ -24,6 +24,8 @@ import type { PackInfo } from "./pack.js";
 import { resolvePlatform } from "./platform.js";
 import { checkDuplicateNames, createNamer, type TableNamer } from "./tables.js";
 import { transformTables } from "./transforms.js";
+import { holdsPlaceholder, placeholderAt } from "./unknown-values.js";
+import { recordOutputs, runPackCheck } from "./pack-checks.js";
 
 /** Options for {@link resolveDefinitions} and {@link loadDefinitions}. */
 export interface ResolveOptions {
@@ -121,7 +123,8 @@ function resolveLoaded(
   warnings: ResolveResult["diagnostics"],
 ): ResolveResult {
   // Loading succeeded, so what it reported are warnings, kept with the result.
-  const reporter = createReporter(warnings);
+  // A value that holds a placeholder is not known yet, so no problem is reported at it.
+  const reporter = createReporter(warnings, (at) => placeholderAt(project, at));
   const context = createContext(project, packs, reporter);
   if (!context) return { ok: false, diagnostics: reporter.diagnostics };
   checkSettingsKeys(context);
@@ -176,23 +179,6 @@ function buildModel(
   };
 }
 
-/** Each pack's checks on the whole model (`PACK_CHECK`), reported at the platform. */
-function runPackCheck(context: Context, model: ResolvedModel): void {
-  const at = context.platform && { document: context.platform, pointer: "" };
-  for (const message of context.packs.flatMap((pack) => pack.check?.(model) ?? []))
-    context.reporter.error("PACK_CHECK", `${message}.`, at);
-}
-
-/** Records where each step's data lands, when its method says (`output`). */
-function recordOutputs(context: Context, tables: ResolvedTable[]): void {
-  for (const table of tables) {
-    for (const step of [table.ingest, table.transform, table.store, table.serve]) {
-      const output = step && context.pack.methods[step.method]?.output?.(table);
-      if (step && output) step.output = output;
-    }
-  }
-}
-
 /** A serve method that reads where the data lands needs a last step that says where (`HANDOVER`). */
 function checkServeInputs(context: Context, tables: ResolvedTable[]): void {
   for (const table of tables) {
@@ -209,9 +195,13 @@ function checkServeInputs(context: Context, tables: ResolvedTable[]): void {
   }
 }
 
-/** Runs each chosen method's own check on its table (`METHOD_CHECK`). */
+/**
+ * Runs each chosen method's own check on its table (`METHOD_CHECK`), except on a table
+ * that holds a placeholder: what a check judges cannot be told apart.
+ */
 function runMethodChecks(context: Context, tables: ResolvedTable[]): void {
   for (const table of tables) {
+    if (holdsPlaceholder(context.project, table)) continue;
     for (const step of [table.ingest, table.transform, table.store, table.serve]) {
       const method = step && context.pack.methods[step.method];
       for (const message of method?.check?.(table) ?? []) {
