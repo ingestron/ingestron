@@ -70,14 +70,14 @@ importers:
         specifier: workspace:^
         version: link:../generate
       '@ingestron/pack-adf':
-        specifier: ^1.4.0
-        version: 1.4.0(@ingestron/definitions@packages+definitions)
+        specifier: ^1.5.0
+        version: 1.5.0(@ingestron/definitions@packages+definitions)
       '@ingestron/pack-databricks':
         specifier: ^1.1.0
         version: 1.1.0(@ingestron/definitions@packages+definitions)
       '@ingestron/pack-duckdb':
-        specifier: ^1.3.0
-        version: 1.3.0(@ingestron/definitions@packages+definitions)
+        specifier: ^1.3.1
+        version: 1.3.1(@ingestron/definitions@packages+definitions)
       '@ingestron/pack-synapse':
         specifier: ^1.2.0
         version: 1.2.0(@ingestron/definitions@packages+definitions)
@@ -519,8 +519,8 @@ packages:
     peerDependencies:
       '@ingestron/definitions': ^1.1.0
 
-  '@ingestron/pack-adf@1.4.0':
-    resolution: {integrity: sha512-l/d1mhSF5v8eQwxAH6CKjYQxzChdbuG0KVNmODSukd93cLsenA/bEx4ZSvIIZY95AJRAY+fDesQIx1azR24Qaw==}
+  '@ingestron/pack-adf@1.5.0':
+    resolution: {integrity: sha512-CyVopN5S4os8crgNEl7SOU+wyOtQRMjayNZjewvhbHYUnR4NU4A2p8fQYz9wvxcVemsDaOFsiKs8tHHjYgbNXg==}
     engines: {node: '>=22.13.0'}
     peerDependencies:
       '@ingestron/definitions': ^1.1.0
@@ -531,8 +531,8 @@ packages:
     peerDependencies:
       '@ingestron/definitions': ^1.2.0
 
-  '@ingestron/pack-duckdb@1.3.0':
-    resolution: {integrity: sha512-PGZ7Au8K8zrLJaRK+uVMp/BPi7mI7/qAxdaNF9CRDd592aWCBDpU1cBuJlHZ5P2D4x9TJ6H31XbyzWEY4L3XFA==}
+  '@ingestron/pack-duckdb@1.3.1':
+    resolution: {integrity: sha512-cg0kgmr/lP18gmy0997Ql1wzIXs6hkgvksd2feFFZHf9oj00+Z+3bhEWeK4fHbKAVqm4EYo5B11xYq0KgRMONw==}
     engines: {node: '>=22.13.0'}
     peerDependencies:
       '@ingestron/definitions': ^1.3.1
@@ -1786,7 +1786,7 @@ snapshots:
     dependencies:
       '@ingestron/definitions': link:packages/definitions
 
-  '@ingestron/pack-adf@1.4.0(@ingestron/definitions@packages+definitions)':
+  '@ingestron/pack-adf@1.5.0(@ingestron/definitions@packages+definitions)':
     dependencies:
       '@ingestron/definitions': link:packages/definitions
 
@@ -1796,7 +1796,7 @@ snapshots:
       liquidjs: 10.30.0
       yaml: 2.9.1
 
-  '@ingestron/pack-duckdb@1.3.0(@ingestron/definitions@packages+definitions)':
+  '@ingestron/pack-duckdb@1.3.1(@ingestron/definitions@packages+definitions)':
     dependencies:
       '@ingestron/definitions': link:packages/definitions
 
