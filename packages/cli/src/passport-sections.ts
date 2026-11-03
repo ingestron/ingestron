@@ -113,6 +113,13 @@ export function columns(model: ResolvedModel, product: ResolvedProduct): string 
   return ["## Columns", ...parts].join("\n\n");
 }
 
+/** What happens to a row that fails a check, for the end of "a row that fails ...". */
+const failing = {
+  drop: "is left out of the table",
+  warn: "is kept, and the failure is recorded",
+  fail: "stops the load",
+};
+
 /** Section 5: each check and when it runs, or why it does not. */
 export function quality(model: ResolvedModel, product: ResolvedProduct): string {
   const parts = outputTables(model, product).flatMap(({ output, tables }) =>
@@ -123,7 +130,7 @@ export function quality(model: ResolvedModel, product: ResolvedProduct): string 
             ? []
             : built.expectations.map(
                 (item) =>
-                  `- \`${item.name}\`: ${code(item.check)}, checked on every load; rows that fail: ${item.action}.`,
+                  `- \`${item.name}\`: ${code(item.check)}, checked on every load; a row that fails ${failing[item.action]}.`,
               );
           const counts = built.contract.tableChecks.map(
             (item) => `- \`${item.name}\`: checked after each refresh.`,

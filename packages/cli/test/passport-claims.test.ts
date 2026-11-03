@@ -49,4 +49,20 @@ describe("passport claims", () => {
     expect(section("Who may use it")).not.toContain("name no roles");
     expect(section("Lineage")).toBe("Lineage\n\nNot built in this environment.");
   });
+
+  it("says plainly what happens to a row that fails a check", () => {
+    const resolved = model(project());
+    const customers = resolved.tables.find((item) => item.name === "customers")!;
+    const [check] = customers.expectations;
+    customers.expectations = (["drop", "warn", "fail"] as const).map((action) => ({
+      ...check!,
+      name: `check_${action}`,
+      action,
+    }));
+    const page = passports(resolved)["customers.md"]!;
+    expect(page).toContain("a row that fails is left out of the table.");
+    expect(page).toContain("a row that fails is kept, and the failure is recorded.");
+    expect(page).toContain("a row that fails stops the load.");
+    expect(page).not.toMatch(/rows that fail: (drop|warn|fail)/);
+  });
 });

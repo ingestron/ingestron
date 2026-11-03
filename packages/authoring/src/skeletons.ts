@@ -115,7 +115,7 @@ function productSkeleton(project: Project, base: string): Suggestion {
   return skeleton(
     "DataProduct",
     `apiVersion: v1.1.0\nkind: DataProduct\nid: \${1:${base}}\nname: $2\nstatus: draft\n` +
-      `description:\n  purpose: $4\nteam:\n  members:\n    - { username: $3, role: owner }\n` +
+      `team:\n  members:\n    - { username: $3, role: owner }\ndescription:\n  purpose: $4\n` +
       `outputPorts:\n  - { name: $5, contractId: ${contract} }\n`,
     "A data product: who owns it, what it is for, and the contracts whose tables it publishes. Add products/*.yaml to project.yaml's imports.",
   );
