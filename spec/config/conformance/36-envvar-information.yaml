@@ -1,0 +1,27 @@
+description: With missingEnvvars set to information, an unset variable is advice, not an error, and the reference stays as written.
+envvars: {}
+missingEnvvars: information
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    url: ${envvar:NOPE}
+expect:
+  documents:
+    - kind: Pipeline
+      id: a
+      value:
+        apiVersion: example.dev/v1
+        kind: Pipeline
+        id: a
+        url: "${envvar:NOPE}"
+  diagnostics:
+    - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 4 }

@@ -1,0 +1,61 @@
+description: ${envvar:NAME} reads the host environment, then .env.<environment>, then .env; empty counts as unset, and .env files are read literally.
+environment: dev
+envvars:
+  HOST_WINS: host
+  EMPTY_IN_HOST: ""
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    environments:
+      dev: {}
+      prod: {}
+    imports: ["*.pipeline.yaml"]
+  .env: |
+    # shared defaults
+    HOST_WINS=env
+    BASE=base
+    EMPTY_IN_HOST=fromfile
+    export EXPORTED=yes
+    QUOTED='a # b'
+    DQ="line\nnext"
+    LITERAL=$BASE
+    URL=https://x/y#frag
+    CS=a=b;c=d # note
+  .env.dev: |
+    BASE=dev
+  .env.prod: |
+    PROD_ONLY=p
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    host: ${envvar:HOST_WINS}
+    base: ${envvar:BASE}
+    empty: ${envvar:EMPTY_IN_HOST}
+    exported: ${envvar:EXPORTED}
+    quoted: ${envvar:QUOTED}
+    escaped: ${envvar:DQ}
+    literal: ${envvar:LITERAL}
+    url: ${envvar:URL}
+    pair: ${envvar:CS}
+expect:
+  documents:
+    - kind: Pipeline
+      id: a
+      value:
+        apiVersion: example.dev/v1
+        kind: Pipeline
+        id: a
+        host: host
+        base: dev
+        empty: fromfile
+        exported: "yes"
+        quoted: "a # b"
+        escaped: "line\nnext"
+        literal: "$BASE"
+        url: "https://x/y#frag"
+        pair: "a=b;c=d"
