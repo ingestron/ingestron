@@ -41,7 +41,7 @@ properties:
     description: The Databricks workspace host and root path.
   mode:
     enum: [development, production]
-    description: "Default: when every environment is generated together, as the CLI does from 2.0, production for every environment except one named dev, which is development; resolved one environment at a time, production for environments named prod or production, otherwise development."
+    description: "Default: production for every environment except dev, when every environment is generated together, as the CLI does from 2.0. Resolved one environment at a time: production for environments named prod or production, otherwise development."
     enumDescriptions:
       - "A copy for development: names carry the deploying user and schedules are paused."
       - The shared resources, as they run in production.

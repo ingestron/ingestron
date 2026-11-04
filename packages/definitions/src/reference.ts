@@ -6,6 +6,7 @@ import { kinds } from "./documents.js";
 import { isRecord } from "./merge.js";
 import type { PackInfo } from "./pack.js";
 import { branches, expand, type Schema } from "./schema-nodes.js";
+import { merged, typeWords } from "./type-words.js";
 
 /** One field: what it is, what it accepts, and the page that explains it. */
 export interface FieldInfo {
@@ -137,8 +138,9 @@ function walk(
 }
 
 /**
- * The values of a mapping, its `additionalProperties`, as the field `*`, when they have a
- * description or allowed values; otherwise the mapping's own field says all there is.
+ * The values of a mapping, its `additionalProperties`, as the field `*`, when they say
+ * something of their own: a description, allowed values, a range, a default or an example.
+ * Otherwise the mapping's own field says all there is.
  */
 function mappingValues(
   root: Schema,
@@ -148,7 +150,8 @@ function mappingValues(
 ): FieldInfo[] {
   if (!isRecord(values)) return [];
   const field = describe(root, values, path, false, anchor);
-  return field.description || field.values ? [field] : [];
+  const own = ["description", "values", "minimum", "maximum", "default", "example"] as const;
+  return own.some((key) => field[key] !== undefined) ? [field] : [];
 }
 
 /** What every form requires: the schema's own `required` and its `allOf` parts', not one alternative's. */
@@ -181,7 +184,7 @@ function describe(
   const pick = <T>(key: string) =>
     (schema[key] ?? parts.map((part) => part[key]).find((value) => value !== undefined)) as
       T | undefined;
-  const node = { ...Object.assign({}, ...[...parts].reverse()), ...schema } as Schema;
+  const node = merged(parts, schema);
   const values = valuesOf(node);
   const examples = pick<unknown[]>("examples");
   const description = pick<string>("description");
@@ -191,7 +194,7 @@ function describe(
   return {
     path,
     name: path.at(-1) ?? "",
-    type: typeOf(node),
+    type: typeWords(root, schema),
     required,
     docs: anchor(path),
     ...(description && { description }),
@@ -211,21 +214,4 @@ function valuesOf(node: Schema): FieldInfo["values"] {
     value,
     ...(meanings[index] && { description: meanings[index] }),
   }));
-}
-
-const words: Record<string, string> = {
-  object: "a mapping",
-  array: "a list",
-  string: "text",
-  number: "a number",
-  integer: "a whole number",
-  boolean: "true or false",
-};
-
-function typeOf(node: Schema): string {
-  if (node.const !== undefined) return String(node.const);
-  if (Array.isArray(node.enum)) return "one of the values";
-  const types = [node.type].flat().filter((type): type is string => typeof type === "string");
-  if (types.length > 0) return types.map((type) => words[type] ?? type).join(" or ");
-  return node.properties || node.additionalProperties ? "a mapping" : "any value";
 }
