@@ -4,6 +4,7 @@
 // notices and a value that cannot be supplied when deploying.
 import { generatedOutputs, type GeneratedOutputs } from "@ingestron/cli";
 import type { AnyDiagnostic } from "@ingestron/config";
+import { deployAdvice } from "./deploy-advice.js";
 import { resolved, type Project } from "./project.js";
 
 const generations = new WeakMap<Project, GeneratedOutputs>();
@@ -27,27 +28,35 @@ export function environmentName(environment: string | undefined): string {
 }
 
 /**
- * The problems generating finds for the environment, and every pack's, that resolving it
- * for the editor did not: the same code at the same place is shown once, as the editor
- * found it, so an unset variable stays information.
+ * The editor's problems for the environment: what resolving it found, with the advice
+ * for an unset variable that the deploying pipeline supplies made to say so, then what
+ * generating found for it, and every pack's report, that resolving did not. The same code
+ * at the same place is shown once, as the editor found it, so an unset variable that a
+ * local environment reads stays information.
  */
-export function generationDiagnostics(
+export function editorDiagnostics(
   project: Project,
   environment: string | undefined,
 ): AnyDiagnostic[] {
-  const { environmentReports, packReports } = generationOf(project);
+  const generation = generationOf(project);
   const name = environmentName(environment);
-  const found = [
-    ...environmentReports.filter((report) => report.name === name),
-    ...packReports,
+  const generated = [
+    ...generation.environmentReports.filter((report) => report.name === name),
+    ...generation.packReports,
   ].flatMap((report) => report.diagnostics);
+  const own = deployAdvice(resolved(project, environment).diagnostics, generation, {
+    name,
+    generated,
+    envFile: environment === undefined ? ".env" : `.env.${environment}`,
+  });
   const seen = new Set(resolved(project, environment).diagnostics.map(placeOf));
-  return found.filter((diagnostic) => {
+  const added = generated.filter((diagnostic) => {
     const place = placeOf(diagnostic);
     if (seen.has(place)) return false;
     seen.add(place);
     return true;
   });
+  return [...own, ...added];
 }
 
 function placeOf({ code, location }: AnyDiagnostic): string {

@@ -10,16 +10,13 @@ import { cleanEnvironment, fromFile, fromHost, landing, made, unset } from "./en
 cleanEnvironment();
 
 describe("a variable the editor cannot find", () => {
-  it("is information and the project still loads", () => {
+  it("is information that the deploying pipeline supplies it, and the project still loads", () => {
     const project = openProject(made(unset), new Map());
     const found = problems(project, "dev");
     expect(found.map((problem) => problem.code)).toEqual(["ENVVAR_MISSING"]);
     expect(found[0]).toMatchObject({ severity: "information" });
-    expect(found[0]?.message).toContain(
-      `${unset} isn't set; add it to .env.dev or set it before running Ingestron.`,
-    );
-    expect(found[0]?.message).toContain(
-      "Ingestron reads .env files in the project folder and the environment the editor started with.",
+    expect(found[0]?.message).toBe(
+      `${unset} is supplied when deploying, as \`BUNDLE_VAR_${unset.toLowerCase()}\` (databricks). Plan does not read it, so it needs no .env.dev entry.`,
     );
     expect(resolved(project, "dev").model).toBeDefined();
     expect(loadedDocuments(project, "dev")).toBeDefined();

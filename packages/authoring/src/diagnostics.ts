@@ -6,8 +6,8 @@ import { parseTemplate } from "@ingestron/cli";
 import { kinds } from "@ingestron/definitions";
 import { digestOf } from "@ingestron/generate";
 import type { Fix } from "@ingestron/config";
-import { generationDiagnostics } from "./generation.js";
-import { loadedDocuments, resolved, type Project } from "./project.js";
+import { editorDiagnostics } from "./generation.js";
+import { loadedDocuments, type Project } from "./project.js";
 import type { Position } from "./yaml.js";
 
 /** One problem in one file of the project. */
@@ -90,11 +90,7 @@ function kindOf(text: string): string | undefined {
 }
 
 function definitionProblems(project: Project, environment: string | undefined): Problem[] {
-  const diagnostics = [
-    ...resolved(project, environment).diagnostics,
-    ...generationDiagnostics(project, environment),
-  ];
-  return diagnostics.map((diagnostic) => {
+  return editorDiagnostics(project, environment).map((diagnostic) => {
     const file = diagnostic.location?.file ?? "project.yaml";
     const line = (diagnostic.location?.line ?? 1) - 1;
     const character = (diagnostic.location?.column ?? 1) - 1;
