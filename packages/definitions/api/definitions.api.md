@@ -192,14 +192,14 @@ export interface EnvironmentsBuild {
 }
 
 // @public
-export type EnvironmentsCode = Extract<DefinitionCode, "ENVIRONMENTS_DIFFER" | "DEPLOY_VALUE" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS" | "PACK_NOTICE">;
+export type EnvironmentsCode = Extract<DefinitionCode, "ENVIRONMENTS_DIFFER" | "DEPLOY_VALUE" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS">;
 
 // @public
 export function environmentsDiagnostics(problems: readonly (EnvironmentsProblem | PackNotice)[]): AnyDiagnostic[];
 
 // @public
 export interface EnvironmentsProblem {
-    code: Exclude<EnvironmentsCode, "PACK_NOTICE">;
+    code: EnvironmentsCode;
     file: string;
     hint?: string;
     line?: number;

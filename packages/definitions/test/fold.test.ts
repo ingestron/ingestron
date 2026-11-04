@@ -1,7 +1,13 @@
 // Deploy-time values in a text, and checking a fold (specification section 2.1): the
 // helpers every pack that builds environments together uses in its tests.
 import { describe, expect, it } from "vitest";
-import { checkFold, splitDeployText, type Pack, type ResolvedModel } from "../src/index.js";
+import {
+  checkFold,
+  splitDeployText,
+  type Pack,
+  type PackNotice,
+  type ResolvedModel,
+} from "../src/index.js";
 import { modelsOf, paths, project, test } from "./targets.js";
 
 describe("splitDeployText", () => {
@@ -33,14 +39,30 @@ const view = (files: Readonly<Record<string, string>>, target: string) => ({
   "path.txt": files["path.txt"]!.replace("{{path}}", files[`values/${target}.txt`] ?? ""),
 });
 
+/** A fold with a placeholder in the file and each target's value beside it. */
+const setsEachTarget = (models: Record<string, ResolvedModel>) => ({
+  "path.txt": "{{path}}\n",
+  ...Object.fromEntries(
+    Object.entries(models).map(([name, model]) => [`values/${name}.txt`, pathOf(model)]),
+  ),
+});
+
 describe("checkFold", () => {
   it("holds for a fold that sets each target's value, for one, two and three targets", () => {
-    const pack = toyPack((models) => ({
-      "path.txt": "{{path}}\n",
-      ...Object.fromEntries(
-        Object.entries(models).map(([name, model]) => [`values/${name}.txt`, pathOf(model)]),
-      ),
-    }));
+    const pack = toyPack(setsEachTarget);
+    expect(checkFold(pack, modelsOf(project(paths), true), { view })).toEqual([]);
+  });
+
+  it("counts a notice as a warning, whatever severity a pack written in JavaScript gives it", () => {
+    const folding = toyPack(setsEachTarget);
+    const notice = { code: "PACK_NOTICE", severity: "error", message: "A.", hint: "B." };
+    const pack: Pack = {
+      ...folding,
+      buildEnvironments: (models) => ({
+        ...folding.buildEnvironments!(models),
+        problems: [notice as unknown as PackNotice],
+      }),
+    };
     expect(checkFold(pack, modelsOf(project(paths), true), { view })).toEqual([]);
   });
 
