@@ -80,15 +80,19 @@ default for every environment except `dev`. Without it, `mode` is
 `production` only for `prod` and `production`, as before 1.8.
 
 `PackInfo.platformFields` lists the Platform fields a pack reads, such as
-`["mode", "schedule.paused"]`, for tools to show. Each is a dot path from the
-document's root, with `*` for any key of a mapping or any list item. Resolving
-throws when a path is not a field of the Platform schema, since the mistake is
-the pack's, not the project's.
+`["mode", "schedule.paused"]`, for tools to show. Each must be the path of an
+entry of `documentReference("Platform")`, its keys joined with `.`. Resolving
+throws when one is not, since the mistake is the pack's, not the project's.
+
+`buildEnvironments` returns its notices among its `problems`. To read one,
+narrow on `problem.code === "PACK_NOTICE"`: a notice may have no `file`.
 
 `documentReference(kind)` and `methodReference(pack, method)` describe every
 field once, each with its `minimum` and `maximum` when the schema gives them.
-The values of a mapping are described as the field `*` under it when they
-have a description or allowed values.
+The values of a mapping are described as the field `*` under it when their
+schema has a description, allowed values, a range, a default or an example.
+An `anyOf` or `oneOf` names each alternative in its type, such as
+`one of the values, or text`.
 
 `Connector.reading` optionally describes a native table reader's query support,
 accepted source options, landing format and required runtime. Packs derive this
