@@ -1,5 +1,6 @@
 // What a pack declares: its methods, its smart defaults and how it builds files.
 import type { JsonSchema } from "@ingestron/config";
+import type { EnvironmentsBuild } from "./environments.js";
 import type { Column, ResolvedModel, ResolvedTable } from "./model.js";
 
 /** The steps a table goes through. */
@@ -182,12 +183,23 @@ export interface RequestSection {
 
 /**
  * A complete pack: its information plus a build function that returns the
- * output files, path → text, for one resolved environment.
+ * output files, path → text, for one resolved environment, and optionally one
+ * that builds every environment together (specification section 2.1).
  * @example
  * const pack: Pack = { ...info, build: (model) => ({ "README.md": `# ${model.project.id}\n` }) };
  */
 export interface Pack extends PackInfo {
   build(model: ResolvedModel): Record<string, string>;
+  /**
+   * The files for every target at once: one artefact that the deploying pipeline promotes
+   * from environment to environment. `models` maps each target's name to its model, in
+   * project.yaml's order, each resolved with `deployTime`. A value is a parameter only
+   * where targets differ or where it is a deploy-time value; substituting a target's
+   * values into the files gives exactly that target's files alone.
+   * @example
+   * const { files, problems } = pack.buildEnvironments({ dev: devModel, prod: prodModel });
+   */
+  buildEnvironments?(models: Readonly<Record<string, ResolvedModel>>): EnvironmentsBuild;
   /** What the generated files expect of the platform, for `ingestron request`. Nothing here is checked. */
   request?(model: ResolvedModel): RequestSection[];
 }

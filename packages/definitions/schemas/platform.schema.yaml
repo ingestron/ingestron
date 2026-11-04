@@ -41,7 +41,7 @@ properties:
     description: The Databricks workspace host and root path.
   mode:
     enum: [development, production]
-    description: "Default: production for environments named prod or production, otherwise development."
+    description: "Default: development for the environment named dev (or default, when none is selected), otherwise production."
     enumDescriptions:
       - "A copy for development: names carry the deploying user and schedules are paused."
       - The shared resources, as they run in production.
@@ -190,7 +190,11 @@ properties:
           examples: [0 0 5 * * ?],
         }
       timezone: { type: string, description: "Default: UTC.", examples: [Europe/London] }
-      paused: { type: boolean, description: "Default: paused outside production." }
+      paused:
+        {
+          type: boolean,
+          description: "Default: running in prod or production, or where mode is set to production; otherwise paused.",
+        }
     description: When the refresh job runs (Quartz cron), its time zone, and whether it is paused.
     examples:
       - cron: 0 0 5 * * ?

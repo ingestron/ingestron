@@ -189,6 +189,26 @@ export interface ResolvedModel {
   tables: ResolvedTable[];
   /** The data products, by id; empty when there are none. */
   products: ResolvedProduct[];
+  /**
+   * Resolved with `deployTime` only: each `${envvar:…}` the pipeline that deploys the
+   * files supplies, once per name, in the order first resolved (specification section 1.1).
+   */
+  deployValues?: DeployValue[];
+}
+
+/**
+ * A value the deploying pipeline supplies. Wherever the model holds `text`, the value
+ * goes; a pack makes it a parameter of its files that no environment sets.
+ * @example
+ * { name: "LANDING", text: "${envvar:LANDING}", uses: [{ file: "project.yaml", pointer: "/values/landing" }] }
+ */
+export interface DeployValue {
+  /** The variable's name. */
+  name: string;
+  /** What stands for the value in the model's text: `${envvar:NAME}`. */
+  text: string;
+  /** Each value it feeds: the file, and the JSON Pointer of the value in that file's document. */
+  uses: { file: string; pointer: string }[];
 }
 
 /** A data product (ODPS) and the tables that build its outputs in this environment. */
