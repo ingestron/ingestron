@@ -50,7 +50,7 @@ export interface ResolveOptions {
   deployTime?: boolean;
   /**
    * True when every environment is generated together, as the CLI from 2.0 does: `mode`
-   * is then `production` by default for every environment except `dev` (and `default`).
+   * is then `production` by default for every environment except `dev`, `default` included.
    * Without it, `mode` defaults as before 1.8 (specification section 7).
    */
   environmentsTogether?: boolean;

@@ -63,6 +63,10 @@ export function checkFold(
 ): string[] {
   if (!pack.buildEnvironments) return ["The pack does not build environments together."];
   const targets = Object.keys(models);
+  // Without deploy-time values listed, rules 4 and 5 would hold with nothing to check.
+  const plain = targets.filter((target) => !models[target]!.deployValues);
+  if (plain.length > 0)
+    return [`The models of ${plain.join(", ")} were resolved without deployTime.`];
   return targets.flatMap((_, index) => {
     const some = Object.fromEntries(
       targets.slice(0, index + 1).map((name) => [name, models[name]!]),
