@@ -1,0 +1,6 @@
+description: "A mapping's values whose schema says nothing beyond the mapping are not an entry of the field reference, so a pack cannot list them."
+platformFields:
+  test: [tags, "tags.*"]
+files: {}
+expect:
+  refused: 'The pack "test" lists the platform field "tags.*", which the Platform document does not have.'

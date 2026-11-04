@@ -1,0 +1,57 @@
+description: "A mapping's values are an entry `*` under it when their schema says something of its own; the entries come in order, each property followed by what is under it."
+reference:
+  method: copy
+  settings:
+    type: object
+    properties:
+      audit_columns:
+        type: object
+        description: Columns added to every landed row, by name.
+        additionalProperties:
+          description: A run value, or other text written as it is.
+          anyOf:
+            - enum: [run.id, run.trigger_time]
+              enumDescriptions: ["The run's id.", When the run started.]
+            - { type: string, minLength: 1 }
+      labels:
+        type: object
+        description: Labels, by name.
+        additionalProperties: { type: string, minLength: 1 }
+      weights:
+        type: object
+        description: A weight per table.
+        additionalProperties: { type: integer, minimum: 1, maximum: 9 }
+      steps:
+        type: array
+        description: The steps, in order.
+        items:
+          enum: [copy, check]
+          enumDescriptions: [Copies., Checks.]
+      Folder Name: { type: string, description: A key with a space. }
+expect:
+  paths:
+    - audit_columns
+    - audit_columns.*
+    - labels
+    - weights
+    - weights.*
+    - steps
+    - Folder Name
+  fields:
+    - path: audit_columns.*
+      name: "*"
+      type: one of the values, or text
+      required: false
+      description: A run value, or other text written as it is.
+      values:
+        - { value: run.id, description: "The run's id." }
+        - { value: run.trigger_time, description: When the run started. }
+      docs: /docs/reference/packs/reference#copy-audit-columns-item
+    - path: weights.*
+      type: a whole number
+      minimum: 1
+      maximum: 9
+      description: null
+    - path: Folder Name
+      docs: /docs/reference/packs/reference#copy-folder-name
+  absent: ["labels.*", "steps.*"]

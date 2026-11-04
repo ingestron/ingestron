@@ -1,4 +1,4 @@
-description: "A pack's problems become diagnostics: a notice is a warning with the pack's own hint, at its definition when it names one and with no location when it does not."
+description: "A pack's problems become diagnostics: a notice is a warning with the pack's own hint, at its definition when it names one and with no location when it does not, even with a line."
 packProblems:
   - code: PACK_NOTICE
     severity: warning
@@ -10,6 +10,7 @@ packProblems:
     severity: warning
     message: The deploying pipeline must supply SYNAPSE_SOURCE exactly as written, in the same case.
     hint: Map the variable with env in the pipeline.
+    line: 4
   - code: PACK_NOTICE
     severity: error
     message: A notice given as an error.
