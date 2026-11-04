@@ -20,6 +20,6 @@ function packLoadProblem(error: unknown): AnyDiagnostic {
     code: packLoadCode,
     severity: "error",
     message: error instanceof Error ? error.message : String(error),
-    hint: "Ingestron stops on this, so nothing is checked or generated. The project is not the cause: install a version of the pack, or of the editor extension, that fixes it.",
+    hint: "This is a mistake in the pack, not in the project, so nothing is checked or generated until a version that fixes it is installed.",
   };
 }
