@@ -412,6 +412,7 @@ export interface PackInfo {
     id: string;
     // (undocumented)
     methods: Record<string, Method>;
+    platformFields?: string[];
     rules: Partial<Record<Action, {
         default?: string;
         when?: Rule[];

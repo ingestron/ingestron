@@ -15,7 +15,7 @@ import type { Source } from "./diagnostics.js";
 import { checkDeployValues, deployValuesOf, resolutionReporter } from "./deploy-values.js";
 import { kinds } from "./documents.js";
 import { flowTables } from "./flows.js";
-import { placeholderWarnings } from "./placeholders.js";
+import { documentFiles, withPlaceholders } from "./placeholders.js";
 import { checkGovernance } from "./governance.js";
 import { resolveProducts } from "./products.js";
 import { runsOnProblems } from "./runs-on-pack.js";
@@ -27,6 +27,7 @@ import { checkDuplicateNames, createNamer, type TableNamer } from "./tables.js";
 import { transformTables } from "./transforms.js";
 import { holdsUnsetEnvvar } from "./unknown-values.js";
 import { recordOutputs, runPackCheck } from "./pack-checks.js";
+import { checkPlatformFields } from "./platform-fields.js";
 
 /** Options for {@link resolveDefinitions} and {@link loadDefinitions}. */
 export interface ResolveOptions {
@@ -78,10 +79,12 @@ function loadOptions(options: ResolveOptions) {
 
 /**
  * Loads definitions from any file source and resolves them with the packs its standard names.
+ * Throws when a pack lists a `platformFields` path that is not a field of the Platform schema.
  * @example
  * const result = resolveDefinitions(memoryFiles(files), { packs: [databricks], environment: "dev" });
  */
 export function resolveDefinitions(files: FileSource, options: ResolveOptions): ResolveResult {
+  checkPlatformFields(options.packs);
   const loaded = resolveProject(files, { ...loadOptions(options), envvars: options.envvars ?? {} });
   return withPlaceholders(
     files,
@@ -95,30 +98,14 @@ export function resolveDefinitions(files: FileSource, options: ResolveOptions): 
   );
 }
 
-/** The documents' files; every YAML file outside build/ when the project did not load. */
-function documentFiles(files: FileSource, documents?: readonly { file: string }[]): string[] {
-  if (documents) return documents.map((document) => document.file);
-  return files.list().filter((path) => /\.ya?ml$/.test(path) && !path.startsWith("build/"));
-}
-
-/** The result with a warning for each `{{ … }}` that stays as written. */
-function withPlaceholders(
-  files: FileSource,
-  result: ResolveResult,
-  documents: string[],
-): ResolveResult {
-  const warnings = placeholderWarnings(files, documents);
-  return warnings.length > 0
-    ? { ...result, diagnostics: [...result.diagnostics, ...warnings] }
-    : result;
-}
-
 /**
  * Loads definitions from a folder on disk and resolves them with the packs its standard names.
+ * Throws when a pack lists a `platformFields` path that is not a field of the Platform schema.
  * @example
  * const result = loadDefinitions("definitions", { packs: [databricks, adf], environment: "prod" });
  */
 export function loadDefinitions(folder: string, options: ResolveOptions): ResolveResult {
+  checkPlatformFields(options.packs);
   const loaded = loadProject(folder, loadOptions(options));
   return withPlaceholders(
     nodeFiles(folder),

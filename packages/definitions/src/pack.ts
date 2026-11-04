@@ -161,6 +161,13 @@ export interface PackInfo {
   methods: Record<string, Method>;
   /** The features that change shared objects, each turned on in the platform. */
   capabilities?: Capability[];
+  /**
+   * The Platform fields the pack reads, for tools to show: dot paths from the document's root,
+   * with `*` for any key of a mapping or any list item. Each must be a field of the Platform
+   * schema, or resolution refuses the pack.
+   * @example ["mode", "schedule.paused", "manage.checks"]
+   */
+  platformFields?: string[];
   /** What the pack does with each ODCS contract field, by field path (`*` for any item). */
   contract?: Record<string, ContractUse>;
   /** The connectors this pack's ingest methods read, for the documentation. */
