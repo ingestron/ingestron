@@ -44,22 +44,22 @@ describe("packs", () => {
   const head = "apiVersion: ingestron.io/v1\nkind: Standard\nid: s\n";
 
   it("offers the packs not yet listed as items", () => {
-    const text = `${head}packs: [databricks@1, ]`;
+    const text = `${head}packs: [databricks@2, ]`;
     expect(suggest("standard.yaml", text, text.length - 1)).toEqual([
-      "adf@1",
-      "synapse@1",
-      "duckdb@1",
+      "adf@2",
+      "synapse@2",
+      "duckdb@2",
     ]);
   });
 
   it("offers each pack that reads a source alone, then each storing pack with each landing pack", () => {
     expect(suggest("standard.yaml", `${head}packs:`)).toEqual([
-      " [databricks@1]",
-      " [adf@1]",
-      " [duckdb@1]",
-      " [databricks@1, adf@1]",
-      " [synapse@1, adf@1]",
-      " [duckdb@1, adf@1]",
+      " [databricks@2]",
+      " [adf@2]",
+      " [duckdb@2]",
+      " [databricks@2, adf@2]",
+      " [synapse@2, adf@2]",
+      " [duckdb@2, adf@2]",
     ]);
   });
 });
