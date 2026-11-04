@@ -51,7 +51,7 @@ describe("the duckdb starter", () => {
     const applied = ingestron("apply", "--no-diff", "--definitions", "demo", "--out", "demo/build");
     expect(applied.code, applied.output).toBe(0);
     const project = join(cwd, "demo");
-    const sql = readFileSync(join(project, "build/dev/run.sql"), "utf8");
+    const sql = readFileSync(join(project, "build/duckdb/dev/run.sql"), "utf8");
     const totals = "SELECT customer, orders, total FROM silver.customer_totals ORDER BY customer";
     const expected = [
       { customer: "Ana", orders: "2", total: 65.75 },
@@ -75,11 +75,11 @@ describe("the duckdb-local fixture", () => {
     const ingestron = session(project);
     const applied = ingestron("apply", "--no-diff", "--definitions", ".", "--out", "build");
     expect(applied.code, applied.output).toBe(0);
-    const cloud = readFileSync(join(project, "build/dev/duckdb/run.sql"), "utf8");
+    const cloud = readFileSync(join(project, "build/duckdb/dev/run.sql"), "utf8");
     expect(cloud).toContain(
       "FROM read_parquet('abfss://landing@salesdev.dfs.core.windows.net/erp/erp.dbo.Invoices/erp.dbo.Invoices.parquet');",
     );
-    const local = readFileSync(join(project, "build/local/duckdb/run.sql"), "utf8");
+    const local = readFileSync(join(project, "build/duckdb/local/run.sql"), "utf8");
     expect(local).toContain("FROM read_parquet('./samples/erp.dbo.Invoices/*.parquet');");
     expect(
       local.replaceAll("./samples/", "<landed>/").replaceAll("./published/", "<published>/"),
@@ -114,9 +114,12 @@ describe("the duckdb-local fixture", () => {
     const ingestron = session(project);
     const applied = ingestron("apply", "--no-diff", "--definitions", ".", "--out", "build");
     expect(applied.code, applied.output).toBe(0);
-    const adf = join(project, "build/dev/adf");
+    const adf = join(project, "build/adf/factory");
     expect(readdirSync(join(adf, "trigger"))).toEqual(["tr_sales_every_24_hour.json"]);
-    expect(existsSync(join(project, "build/local/adf/pipeline"))).toBe(false);
+    // local runs on DuckDB, so the factory covers dev alone, and local is DuckDB's folder only.
+    expect(readdirSync(join(project, "build/adf/parameters"))).toEqual(["dev.json"]);
+    expect(readdirSync(join(project, "build/duckdb"))).toEqual([".generated.json", "dev", "local"]);
+    expect(existsSync(join(project, "build/local"))).toBe(false);
     const parent = readFileSync(join(adf, "pipeline/pl_sales_every_24_hour.json"), "utf8");
     expect(parent).toContain("/jobs/sales-dev-duckdb/start?api-version=2026-07-01");
     const requested = ingestron("request", "--env", "dev", "--definitions", ".");

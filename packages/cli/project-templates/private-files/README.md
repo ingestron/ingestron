@@ -3,7 +3,7 @@
 Each store exports its sales and stock as CSV files to a share inside the
 corporate network, `\\fs01\exports`, which the workspace cannot reach
 (`connectivity: private`). The standard uses two packs,
-`[databricks@1, adf@1]`. Databricks' `files` method cannot reach a private
+`[databricks@2, adf@2]`. Databricks' `files` method cannot reach a private
 source, so the ADF pack's rule chooses `adf-files`:
 
 - **ADF** ([build/prod/adf](build/prod/adf/)), in the folder layout ADF

@@ -2,7 +2,7 @@
 
 The ERP of the sql-server starter, but now **unreachable** from the workspace
 (`connectivity: private`). The standard uses two packs,
-`[databricks@1, adf@1]`. Databricks' Lakeflow Connect rule is skipped
+`[databricks@2, adf@2]`. Databricks' Lakeflow Connect rule is skipped
 because it cannot reach a private source, and the ADF pack's rule chooses
 `adf-copy`:
 

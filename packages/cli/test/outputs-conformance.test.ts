@@ -68,9 +68,8 @@ function checkLines(output: string, lines: string[]): void {
 function diagnosticsShown(output: string): Record<string, unknown>[] {
   const shown: Record<string, unknown>[] = [];
   for (const line of output.split("\n")) {
-    const heading = /^(?:(.+):(\d+):(\d+)|\(project\)) {2}(error|warning|information) {2}(\S+)$/.exec(
-      line,
-    );
+    const heading =
+      /^(?:(.+):(\d+):(\d+)|\(project\)) {2}(error|warning|information) {2}(\S+)$/.exec(line);
     if (heading) {
       const [, file, at, column, severity, code] = heading;
       const where = file ? { file, line: Number(at), column: Number(column) } : {};
@@ -106,7 +105,9 @@ function foldersAfter(folder: string): Record<string, string[]> {
 }
 
 describe("output folder conformance", () => {
-  const names = readdirSync(cases).filter((name) => name.endsWith(".yaml")).sort();
+  const names = readdirSync(cases)
+    .filter((name) => name.endsWith(".yaml"))
+    .sort();
   it("has the cases", () => expect(names.length).toBeGreaterThanOrEqual(12));
   for (const name of names) {
     const testCase = parse(readFileSync(join(cases, name), "utf8")) as Case;

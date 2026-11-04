@@ -140,11 +140,11 @@ function trimSettings(
 
 /** Each route's packs, the pack that names and types the tables first, and its store choice. */
 const routeStandards: Record<string, { packs: string[]; store?: string }> = {
-  databricks: { packs: ["databricks@1"] },
-  "adf-databricks": { packs: ["databricks@1", "adf@1"] },
-  "adf-synapse": { packs: ["synapse@1", "adf@1"], store: "synapse-view" },
-  "adf-duckdb": { packs: ["duckdb@1", "adf@1"] },
-  "adf-landing": { packs: ["adf@1"], store: "none" },
+  databricks: { packs: ["databricks@2"] },
+  "adf-databricks": { packs: ["databricks@2", "adf@2"] },
+  "adf-synapse": { packs: ["synapse@2", "adf@2"], store: "synapse-view" },
+  "adf-duckdb": { packs: ["duckdb@1", "adf@2"] },
+  "adf-landing": { packs: ["adf@2"], store: "none" },
 };
 
 function trimStandard(

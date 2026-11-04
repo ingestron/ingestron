@@ -68,7 +68,12 @@ function fold(models: Readonly<Record<string, ResolvedModel>>, pack: string): En
     tables(all[0]!, pack),
   );
   return {
-    files: { "tables.txt": first, "targets.txt": Object.keys(models).map((name) => `${name}\n`).join("") },
+    files: {
+      "tables.txt": first,
+      "targets.txt": Object.keys(models)
+        .map((name) => `${name}\n`)
+        .join(""),
+    },
     deployValues: values.map((value) => ({ name: value.name, suppliedAs: [`FOLD_${value.name}`] })),
     problems: compareTargets(models).structural,
   };

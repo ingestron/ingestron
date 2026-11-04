@@ -12,21 +12,31 @@ const dev = "abfss://landing@envfiledev.dfs.core.windows.net/stores";
 const prod = "abfss://landing@envfileprod.dfs.core.windows.net/stores";
 
 /** A copy of the private-files starter whose landing folder comes from ${envvar:INGESTRON_TEST_LANDING}. */
-function workspace(files: Record<string, string>): string {
+function workspace(
+  files: Record<string, string>,
+  value = /abfss:\/\/landing@\w+\.dfs\.core\.windows\.net\/stores/g,
+): string {
   const folder = mkdtempSync(join(tmpdir(), "ingestron-env-files-"));
   cpSync(join(import.meta.dirname, "../project-templates/private-files"), folder, {
     recursive: true,
     filter: (path) => !path.includes("/build"),
   });
   const project = join(folder, "project.yaml");
-  writeFileSync(
-    project,
-    readFileSync(project, "utf8").replace(
-      /abfss:\/\/landing@\w+\.dfs\.core\.windows\.net\/stores/g,
-      `\${envvar:${name}}`,
-    ),
-  );
+  writeFileSync(project, readFileSync(project, "utf8").replace(value, `\${envvar:${name}}`));
   for (const [file, text] of Object.entries(files)) writeFileSync(join(folder, file), text);
+  return folder;
+}
+
+/** A copy of the duckdb starter, with `text` in its platform or standard read from the variable. */
+function duckdb(files: Record<string, string>, text = "published: ./published"): string {
+  const folder = mkdtempSync(join(tmpdir(), "ingestron-env-files-"));
+  cpSync(join(import.meta.dirname, "../project-templates/duckdb"), folder, { recursive: true });
+  const [key] = text.split(":");
+  for (const file of ["platform.yaml", "standard.yaml"]) {
+    const path = join(folder, file);
+    writeFileSync(path, readFileSync(path, "utf8").replace(text, `${key}: "\${envvar:${name}}"`));
+  }
+  for (const [file, value] of Object.entries(files)) writeFileSync(join(folder, file), value);
   return folder;
 }
 
@@ -55,20 +65,31 @@ afterEach(() => {
 });
 
 describe("ingestron and .env files", () => {
-  it("apply reads .env.dev", () => {
-    const folder = workspace({ ".env.dev": `${name}=${dev}\n` });
-    const { code, output } = ingestron(folder, "apply", "--env", "dev");
+  it("apply reads .env.dev for a pack that builds one environment at a time", () => {
+    const folder = duckdb({ ".env.dev": `${name}=./from-env-file\n` });
+    const { code, output } = ingestron(folder, "apply");
     expect(code, output).toBe(0);
-    expect(generated(join(folder, "build"))).toContain("envfiledev.dfs.core.windows.net");
+    expect(generated(join(folder, "build/duckdb/dev"))).toContain("./from-env-file");
   });
 
   it("apply reads .env, and the host environment wins", () => {
-    const folder = workspace({ ".env": `${name}=${dev}\n` });
-    process.env[name] = prod;
-    const { code, output } = ingestron(folder, "apply", "--env", "dev");
+    const folder = duckdb({ ".env": `${name}=./from-env-file\n` });
+    process.env[name] = "./from-host";
+    const { code, output } = ingestron(folder, "apply");
     expect(code, output).toBe(0);
-    expect(generated(join(folder, "build"))).toContain("envfileprod.dfs.core.windows.net");
-    expect(generated(join(folder, "build"))).not.toContain("envfiledev");
+    expect(generated(join(folder, "build"))).toContain("./from-host");
+    expect(generated(join(folder, "build"))).not.toContain("./from-env-file");
+  });
+
+  it("apply leaves the value to the deploying pipeline, and reads no .env, for packs that build every environment together", () => {
+    const vault = "https://kv-envfile.vault.azure.net";
+    const folder = workspace(
+      { ".env.prod": `${name}=${vault}\n` },
+      /https:\/\/kv-stores-prod[^\n]+/,
+    );
+    const { code, output } = ingestron(folder, "apply");
+    expect(code, output).toBe(0);
+    expect(generated(join(folder, "build"))).not.toContain("kv-envfile");
   });
 
   it("compare and request read .env too", () => {
@@ -96,9 +117,9 @@ describe("ingestron and .env files", () => {
     expect(requested.output).not.toContain("envfiledev");
   });
 
-  it("a missing variable is still an error for apply", () => {
-    const folder = workspace({});
-    const { code, output } = ingestron(folder, "apply", "--env", "dev");
+  it("a missing variable is still an error for apply, where a pack reads it when generating", () => {
+    const folder = duckdb({});
+    const { code, output } = ingestron(folder, "apply");
     expect(code).not.toBe(0);
     expect(output).toContain("ENVVAR_MISSING");
     expect(output).toContain("add it to .env.dev or .env");
@@ -107,10 +128,10 @@ describe("ingestron and .env files", () => {
   });
 
   it("an invalid value from .env is still reported, with the value", () => {
-    const folder = workspace({ ".env.dev": `${name}=/mnt/not-a-lake\n` });
-    const { code, output } = ingestron(folder, "apply", "--env", "dev");
+    const folder = duckdb({ ".env.dev": `${name}=xml\n` }, "format: csv");
+    const { code, output } = ingestron(folder, "apply");
     expect(code).not.toBe(0);
     expect(output).toContain("BAD_SETTING");
-    expect(output).toContain('"/mnt/not-a-lake"');
+    expect(output).toContain('"xml"');
   });
 });

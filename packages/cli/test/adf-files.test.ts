@@ -14,7 +14,7 @@ const base: Record<string, string> = {
     "apiVersion: ingestron.io/v1",
     "kind: Standard",
     "id: acme",
-    "packs: [databricks@1, adf@1]",
+    "packs: [databricks@2, adf@2]",
     "ingest:",
     "  settings:",
     "    adf-files:",

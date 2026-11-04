@@ -1,7 +1,7 @@
 # Serve files as SQL
 
 ADF copies the ERP's tables into storage, one file per table, and Synapse
-serverless SQL shows them to reports as views: `packs: [synapse@1, adf@1]` and
+serverless SQL shows them to reports as views: `packs: [synapse@2, adf@2]` and
 `store: { default: synapse-view }` in `standard.yaml`. Synapse is listed first
 even though ADF runs first: the first pack names and types the views; ADF only
 copies.
