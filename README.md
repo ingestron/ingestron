@@ -25,11 +25,16 @@ commands are on the right-click menu and in a Project view, and a variable that
 is not set yet shows as information, not an error.
 
 ```sh
-npx ingestron@1 init demo --template minimal --yes
-cd demo
+npx ingestron@1 init shop --template duckdb --yes
+cd shop
 npx ingestron@1 plan    # what would be written, with diffs
 npx ingestron@1 apply   # write it
 ```
+
+That creates a project from the DuckDB starter and writes its SQL, with no
+cloud account and no source. [Run your first project on your
+laptop](https://docs.ingestron.io/docs/start/first-project) runs that SQL with
+DuckDB, explains each file, then changes the project and breaks it on purpose.
 
 In CI, `ingestron check` fails when the generated files are out of date.
 Documentation: [docs.ingestron.io](https://docs.ingestron.io).
