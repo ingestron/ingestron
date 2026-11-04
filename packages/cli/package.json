@@ -1,6 +1,6 @@
 {
   "name": "@ingestron/cli",
-  "version": "1.10.1",
+  "version": "1.10.2",
   "description": "ingestron plan | apply | check | schemas: generate platform assets from definitions.",
   "license": "Apache-2.0",
   "author": "IntentLabs <hello@ingestron.io>",
