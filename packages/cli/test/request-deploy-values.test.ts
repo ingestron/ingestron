@@ -100,4 +100,36 @@ describe("ingestron request and values supplied when deploying", () => {
     );
     expect(output).not.toContain("BUNDLE_VAR_");
   });
+
+  it("says to run plan only for an environment a pack building them together deploys", () => {
+    // dev fails; test is deployed by ADF; lab reads a files connection, so only DuckDB has its tables.
+    const folder = workspace("test/fixtures/duckdb-local", [
+      [
+        "  dev: {}\n",
+        '  dev: { values: { key_vault: "not a vault" } }\n  test: {}\n  lab: { values: { source: shop } }\n',
+      ],
+      ["values:\n  landing:", "values:\n  source: erp\n  landing:"],
+      [
+        "  published: abfss://published@salesdev.dfs.core.windows.net",
+        "  published: ${envvar:SALES_PUBLISHED}/published",
+      ],
+    ]);
+    cpSync(
+      join(import.meta.dirname, "../project-templates/duckdb/connections/shop.yaml"),
+      join(folder, "connections/shop.yaml"),
+    );
+    const flow = join(folder, "flows/erp.yaml");
+    writeFileSync(
+      flow,
+      readFileSync(flow, "utf8").replace("source: erp", "source: ${values.source}"),
+    );
+    writeFileSync(join(folder, ".env.lab"), "SALES_PUBLISHED=./lab\n");
+    const runPlan = "Run `ingestron plan` to see why.";
+    expect(request(folder, "test").output).toContain(runPlan);
+    const lab = request(folder, "lab").output;
+    expect(lab).toContain(
+      "- `SALES_PUBLISHED`, used for `values.published` in `project.yaml`: set in `.env.lab`.",
+    );
+    expect(lab).not.toContain(runPlan);
+  });
 });
