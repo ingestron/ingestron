@@ -5,7 +5,13 @@ import { join } from "node:path";
 import { applyEdits, fixEdits, memoryFiles, type AnyDiagnostic } from "@ingestron/config";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
-import { resolveDefinitions, type Pack, type PackInfo, type ResolvedModel } from "../src/index.js";
+import {
+  resolveDefinitions,
+  type Method,
+  type Pack,
+  type PackInfo,
+  type ResolvedModel,
+} from "../src/index.js";
 
 interface Case {
   description: string;
@@ -27,18 +33,37 @@ interface Case {
 }
 
 const folder = join(import.meta.dirname, "../../../spec/definitions/conformance");
-const packs = ["pack.yaml", "pack-bridge.yaml", "pack-local.yaml", "pack-fold.yaml"].map((file) =>
+/** A pack file: a pack's information, with stand-ins for what is code. */
+type DataPack = PackInfo & { buildEnvironments?: true; checks?: string[] };
+
+const packs = [
+  "pack.yaml",
+  "pack-bridge.yaml",
+  "pack-local.yaml",
+  "pack-fold.yaml",
+  "pack-checked.yaml",
+].map((file) =>
   packOf(
     parse(readFileSync(join(folder, file), "utf8")) as PackInfo & { buildEnvironments?: true },
   ),
 );
 
-/** A data-only pack; `buildEnvironments: true` stands for a pack that builds environments together. */
-function packOf(data: PackInfo & { buildEnvironments?: true }): PackInfo | Pack {
-  if (!data.buildEnvironments) return data;
-  const build = () => ({});
+/**
+ * A data-only pack. `buildEnvironments: true` stands for a pack that builds environments
+ * together; `checks` on the pack or a method, for a `check` that returns those messages.
+ */
+function packOf(data: DataPack): PackInfo | Pack {
+  const methods = Object.fromEntries(
+    Object.entries(data.methods).map(([id, method]) => {
+      const { checks, ...rest } = method as Method & { checks?: string[] };
+      return [id, checks ? { ...rest, check: () => checks } : rest];
+    }),
+  );
+  const { checks, buildEnvironments: together, ...info } = data;
+  const pack: PackInfo = { ...info, methods, ...(checks && { check: () => checks }) };
+  if (!together) return pack;
   const buildEnvironments = () => ({ files: {}, deployValues: [], problems: [] });
-  return { ...data, build, buildEnvironments };
+  return { ...pack, build: () => ({}), buildEnvironments };
 }
 
 /** Tables with full names as text, as the cases write them. */

@@ -32,7 +32,13 @@ interface ConformanceCase {
     documents?: { kind: string; id: string; value: unknown }[];
     diagnostics?: Record<string, unknown>[];
     unsetEnvvars?: string[];
-    envvarReferences?: { name: string; file: string; pointer: string; setIn?: string }[];
+    envvarReferences?: {
+      name: string;
+      file: string;
+      pointer: string;
+      line?: number;
+      setIn?: string;
+    }[];
     fixed?: { diagnostic: number; title: string; files: Record<string, string> }[];
   };
 }

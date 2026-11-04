@@ -40,17 +40,20 @@ if (!result.model) {
 
 ## API
 
-| Export                               | Meaning                                                                                                                                        |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `loadDefinitions(folder, options)`   | Load from disk and resolve: `{ ok, model?, diagnostics }`                                                                                      |
-| `resolveDefinitions(files, options)` | The same from any `FileSource` (for example `memoryFiles`)                                                                                     |
-| `options`                            | `{ packs, environment?, envvars?, missingEnvvars?, deployTime?, environmentsTogether? }`: the available packs; the standard chooses among them |
-| `kinds`                              | The document kinds, for editor schemas or your own loading                                                                                     |
-| `ResolvedModel`, `ResolvedTable`, …  | The model's types; see `src/model.ts`                                                                                                          |
-| `Pack`, `PackInfo`, `Method`, `Rule` | What a pack declares; see `src/pack.ts`                                                                                                        |
-| `EnvironmentsBuild`                  | What a pack's optional `buildEnvironments(models)` returns: one set of files for every environment                                             |
-| `environmentsDiagnostics(problems)`  | The diagnostics for what `buildEnvironments` could not fold                                                                                    |
-| `fullNameText(name)`                 | `catalog.schema.table`                                                                                                                         |
+| Export                               | Meaning                                                                                                                                                     |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `loadDefinitions(folder, options)`   | Load from disk and resolve: `{ ok, model?, diagnostics }`                                                                                                   |
+| `resolveDefinitions(files, options)` | The same from any `FileSource` (for example `memoryFiles`)                                                                                                  |
+| `options`                            | `{ packs, environment?, envvars?, missingEnvvars?, deployTime?, environmentsTogether? }`: the available packs; the standard chooses among them              |
+| `kinds`                              | The document kinds, for editor schemas or your own loading                                                                                                  |
+| `ResolvedModel`, `ResolvedTable`, …  | The model's types; see `src/model.ts`                                                                                                                       |
+| `Pack`, `PackInfo`, `Method`, `Rule` | What a pack declares; see `src/pack.ts`                                                                                                                     |
+| `EnvironmentsBuild`                  | What a pack's optional `buildEnvironments(models)` returns: one set of files for every environment                                                          |
+| `environmentsDiagnostics(problems)`  | The diagnostics for what `buildEnvironments` could not fold                                                                                                 |
+| `compareTargets(models)`             | What differs between the targets of a pack that builds environments together: in more than values, with the standard messages, and every value that differs |
+| `splitDeployText(text, values)`      | A text split into its literal parts and the deploy-time values in it                                                                                        |
+| `checkFold(pack, models, { view })`  | For a pack's tests: whether its folded files give each target's own files, for one, two and more targets                                                    |
+| `fullNameText(name)`                 | `catalog.schema.table`                                                                                                                                      |
 
 `envvars` is the environment for `${envvar:…}`: `loadDefinitions` defaults
 to `process.env` and `resolveDefinitions` to none. `.env.<environment>` and

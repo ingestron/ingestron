@@ -19,6 +19,11 @@ export interface Context {
   owner: Map<string, string>;
   /** The selected environment, or `default`. */
   environment: string;
+  /**
+   * Resolving with `deployTime`: deploy-time values are opaque text that checks run over,
+   * not values left out of them (specification section 1.1).
+   */
+  deployTime: boolean;
   /** The pack the environment runs on, when it names one the standard lists. */
   runsOn?: PackInfo;
   /** Tables left out because the environment runs on a pack and they land no files. */
@@ -33,6 +38,7 @@ export function createContext(
   project: Project,
   available: PackInfo[],
   reporter: Reporter,
+  deployTime = false,
 ): Context | undefined {
   const standard = oneStandard(project, available, reporter);
   const packs = standard ? selectPacks(standard, available, reporter) : [];
@@ -51,6 +57,7 @@ export function createContext(
     pack: combine(packs),
     owner,
     environment,
+    deployTime,
     ...runsOnPack(project, packs),
     skipped: new Set<string>(),
     standard,

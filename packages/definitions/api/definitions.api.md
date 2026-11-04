@@ -31,6 +31,9 @@ export interface Capability {
 }
 
 // @public
+export function checkFold(pack: Pack, models: Readonly<Record<string, ResolvedModel>>, fold: FoldView): string[];
+
+// @public
 export interface ChosenBy {
     // (undocumented)
     by: "definition" | "standard-rule" | "standard-default" | "pack-rule" | "pack-default" | "runs-on";
@@ -64,6 +67,9 @@ export interface Column {
     tags?: string[];
     type?: string;
 }
+
+// @public
+export function compareTargets(models: Readonly<Record<string, ResolvedModel>>): TargetComparison;
 
 // @public
 export interface Connector {
@@ -160,7 +166,7 @@ export type ContractUse = {
 export function contractUseOf(pack: PackInfo, path: string): ContractUse | undefined;
 
 // @public
-export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "PACK_VERSION" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS" | "DEPLOY_VALUE" | "ENVIRONMENTS_DIFFER";
+export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "PACK_VERSION" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS" | "DEPLOY_VALUE" | "ENVIRONMENTS_DIFFER" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS";
 
 // @public
 export interface DeployValue {
@@ -169,6 +175,7 @@ export interface DeployValue {
     uses: {
         file: string;
         pointer: string;
+        line?: number;
     }[];
 }
 
@@ -185,14 +192,19 @@ export interface EnvironmentsBuild {
 }
 
 // @public
+export type EnvironmentsCode = Extract<DefinitionCode, "ENVIRONMENTS_DIFFER" | "DEPLOY_VALUE" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS">;
+
+// @public
 export function environmentsDiagnostics(problems: readonly EnvironmentsProblem[]): AnyDiagnostic[];
 
 // @public
 export interface EnvironmentsProblem {
-    code: "ENVIRONMENTS_DIFFER" | "DEPLOY_VALUE";
+    code: EnvironmentsCode;
     file: string;
+    hint?: string;
     line?: number;
     message: string;
+    severity: "error" | "warning";
 }
 
 // @public
@@ -229,6 +241,12 @@ export interface FieldInfo {
 }
 
 export { FileSource }
+
+// @public
+export interface FoldView {
+    same?(path: string, viewed: string, rendered: string): boolean;
+    view(files: Readonly<Record<string, string>>, target: string): Record<string, string>;
+}
 
 // @public
 export interface FullName {
@@ -629,6 +647,9 @@ export interface Schedule {
 }
 
 // @public
+export function splitDeployText(text: string, deployValues: readonly DeployValue[]): (string | DeployValue)[];
+
+// @public
 export interface Step {
     chosenBy: ChosenBy;
     // (undocumented)
@@ -668,6 +689,18 @@ export interface TableCheck {
     query?: string;
     unit: "rows" | "percent";
     value: unknown;
+}
+
+// @public
+export interface TargetComparison {
+    differing: TargetDifference[];
+    structural: EnvironmentsProblem[];
+}
+
+// @public
+export interface TargetDifference {
+    pointer: string;
+    values: Record<string, unknown>;
 }
 
 // Warnings were encountered during analysis:
