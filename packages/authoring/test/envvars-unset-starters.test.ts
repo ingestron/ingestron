@@ -1,5 +1,7 @@
 // On starters whose flow names no ingest method and writes settings only the real one
 // takes, a source read from ${envvar:…} is not known in the editor: no method is guessed.
+// Their packs build every environment together, so such a source is supplied only when
+// deploying, and the editor gives plan's error for it (DEPLOY_VALUE).
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -12,6 +14,7 @@ import { openProject } from "../src/project.js";
 const name = "INGT_SRC";
 let previous: string | undefined;
 const folders: string[] = [];
+const deployValue = { code: "DEPLOY_VALUE", severity: "error" };
 
 const starters = [
   { template: "sql-server", flow: "flows/erp.yaml", source: "erp", table: "customers" },
@@ -59,16 +62,18 @@ afterEach(() => {
 });
 
 describe.each(starters)("an unset source on the $template starter", (starter) => {
-  it("gives only the information", () => {
+  it("gives the information, and plan's error for a source supplied when deploying", () => {
     const found = problems(openProject(workspace(starter), new Map()), "dev");
     expect(found.map(({ code, severity }) => ({ code, severity }))).toEqual([
       { code: "ENVVAR_MISSING", severity: "information" },
+      deployValue,
     ]);
   });
 
   it("keeps the labels the written source gives when .env sets the variable", () => {
     const folder = workspace(starter, { ".env.dev": `${name}=${starter.source}\n` });
-    expect(problems(openProject(folder, new Map()), "dev")).toEqual([]);
+    const found = problems(openProject(folder, new Map()), "dev");
+    expect(found.map(({ code, severity }) => ({ code, severity }))).toEqual([deployValue]);
     const expected = labels(workspace(starter, {}, true), starter.flow);
     expect(expected.length).toBeGreaterThan(0);
     expect(labels(folder, starter.flow)).toEqual(expected);

@@ -1,5 +1,7 @@
 // A flow whose source and a setting of mixed types come from ${envvar:…}: an unset variable
-// is only information, and a set one never takes the labels and hovers away.
+// is only information, and a set one never takes the labels and hovers away. For a pack
+// that builds every environment together, a source supplied when deploying is the error
+// plan gives (DEPLOY_VALUE); DuckDB reads the variable when generating.
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -10,7 +12,8 @@ import { hoverAt } from "../src/hover.js";
 import { generatedFiles } from "../src/preview.js";
 import { openProject, resolvedForDisplay } from "../src/project.js";
 
-const template = join(import.meta.dirname, "../../cli/project-templates/minimal");
+const templates = join(import.meta.dirname, "../../cli/project-templates");
+const template = join(templates, "minimal");
 const names = ["INGT_SRC", "INGT_CLUSTER", "INGT_CONTRACT"];
 const saved = new Map<string, string | undefined>();
 const folders: string[] = [];
@@ -43,6 +46,21 @@ function workspace(files: Record<string, string> = {}, contract = "shop.orders")
 }
 
 const set = { ".env.dev": "INGT_SRC=shop\nINGT_CLUSTER=none\n" };
+const deployValue = { code: "DEPLOY_VALUE", severity: "error" };
+
+/** The DuckDB starter, whose flow reads its source from ${envvar:INGT_SRC}. */
+function duckdb(files: Record<string, string> = {}): string {
+  const folder = mkdtempSync(join(tmpdir(), "ingestron-authoring-unset-source-"));
+  folders.push(folder);
+  cpSync(join(templates, "duckdb"), folder, { recursive: true });
+  const orders = join(folder, "flows/orders.yaml");
+  writeFileSync(
+    orders,
+    readFileSync(orders, "utf8").replace("source: shop", "source: ${envvar:INGT_SRC}"),
+  );
+  for (const [file, text] of Object.entries(files)) writeFileSync(join(folder, file), text);
+  return folder;
+}
 
 beforeEach(() => {
   for (const name of names) {
@@ -60,10 +78,20 @@ afterEach(() => {
 });
 
 describe("an unset reference in a flow's source and in an anyOf setting", () => {
-  it("gives only the information for each unset variable", () => {
+  it("gives the information for each unset variable, and plan's error for the source", () => {
     const found = problems(openProject(workspace(), new Map()), "dev");
     expect(found.map(({ code, severity }) => ({ code, severity }))).toEqual([
       { code: "ENVVAR_MISSING", severity: "information" },
+      { code: "ENVVAR_MISSING", severity: "information" },
+      deployValue,
+    ]);
+    expect(found[2]?.file).toBe(flow);
+    expect(found[2]?.range.start.line).toBe(3);
+  });
+
+  it("gives only the information for an unset source DuckDB reads when generating", () => {
+    const found = problems(openProject(duckdb(), new Map()), "dev");
+    expect(found.map(({ code, severity }) => ({ code, severity }))).toEqual([
       { code: "ENVVAR_MISSING", severity: "information" },
     ]);
   });
@@ -75,10 +103,11 @@ describe("an unset reference in a flow's source and in an anyOf setting", () => 
     expect(labels.map((item) => item.label)).toContain("→ dev.bronze.orders");
   });
 
-  it("is clean, and keeps the labels and hovers, when .env sets the variables", () => {
+  it("keeps the labels and hovers when .env sets the variables, and still plan's error", () => {
     const folder = workspace(set);
     const project = openProject(folder, new Map());
-    expect(problems(project, "dev")).toEqual([]);
+    const found = problems(project, "dev").map(({ code, severity }) => ({ code, severity }));
+    expect(found).toEqual([deployValue]);
     const display = resolvedForDisplay(project, "dev");
     expect(display.diagnostics.map(({ code }) => code)).not.toContain("PACK_CHECK");
     const text = readFileSync(join(folder, flow), "utf8");
@@ -91,18 +120,35 @@ describe("an unset reference in a flow's source and in an anyOf setting", () => 
   it("does not say there is nothing to generate when a table is left out for one", () => {
     const folder = workspace(set, "${envvar:INGT_CONTRACT}");
     const found = problems(openProject(folder, new Map()), "dev");
+    // The source and the contract are each supplied only when deploying.
     expect(found.map(({ code, severity }) => ({ code, severity }))).toEqual([
       { code: "ENVVAR_MISSING", severity: "information" },
+      deployValue,
+      deployValue,
     ]);
   });
 
-  it("previews no files built from a source that is not known, and says why", () => {
-    const unset = generatedFiles(openProject(workspace(), new Map()), "dev");
+  it("previews no files built from a source that is not known, and says what plan says", () => {
+    const unset = generatedFiles(openProject(duckdb(), new Map()), "dev");
     expect(unset).toEqual({
-      problems:
-        'dev: the generated files are not shown while a flow\'s source is not known: "${envvar:INGT_SRC}" holds a variable that is not set.',
+      problems: [
+        "dev: the definitions have problems",
+        "flows/orders.yaml:4:9  error  ENVVAR_MISSING",
+        "  Environment variable INGT_SRC is not set.",
+        '  Set INGT_SRC, add it to .env.dev or .env, or remove "${envvar:INGT_SRC}".',
+      ].join("\n"),
     });
-    const built = generatedFiles(openProject(workspace(set), new Map()), "dev");
+    const built = generatedFiles(
+      openProject(duckdb({ ".env.dev": "INGT_SRC=shop\n" }), new Map()),
+      "dev",
+    );
     expect(Array.isArray(built) && built.length > 0).toBe(true);
+  });
+
+  it("previews no files for a source supplied when deploying, and says what plan says", () => {
+    const supplied = generatedFiles(openProject(workspace(set), new Map()), "dev");
+    expect(Array.isArray(supplied) ? "files" : supplied.problems).toMatch(
+      /^dev: the definitions have problems\nflows\/orders\.yaml:4:9 {2}error {2}DEPLOY_VALUE\n/,
+    );
   });
 });

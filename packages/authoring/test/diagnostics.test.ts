@@ -52,12 +52,12 @@ describe("problems", () => {
   it("warns on a generated file changed by hand", () => {
     const project = edited(
       retail,
-      "build/dev/src/retail/bronze/orders.sql",
+      "build/databricks/src/retail/bronze/orders.sql",
       (text) => `${text}-- mine\n`,
     );
     expect(problems(project, "dev")).toMatchObject([
       {
-        file: "build/dev/src/retail/bronze/orders.sql",
+        file: "build/databricks/src/retail/bronze/orders.sql",
         severity: "warning",
         code: "EDITED",
         message: expect.stringContaining("the next apply reports a conflict"),
