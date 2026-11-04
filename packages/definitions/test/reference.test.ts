@@ -113,3 +113,79 @@ describe("required fields", () => {
     expect(at("schema.*.properties.*.name")?.required).toBe(true);
   });
 });
+
+describe("ranges and the values of a mapping", () => {
+  const pack = {
+    id: "test",
+    methods: {
+      copy: {
+        action: "ingest",
+        description: "Copies.",
+        produces: "files",
+        settings: {
+          type: "object",
+          properties: {
+            parallel: { type: "integer", minimum: 1, maximum: 50, description: "At once." },
+            retries: { anyOf: [{ type: "integer", minimum: 0 }, { const: "never" }] },
+            audit: {
+              type: "object",
+              description: "Columns added to every row, by name.",
+              additionalProperties: {
+                anyOf: [
+                  {
+                    enum: ["run.id", "run.trigger_time"],
+                    enumDescriptions: ["The run's id.", "When the run started."],
+                  },
+                  { type: "string", minLength: 1 },
+                ],
+                description: "A run value, or other text written as it is.",
+              },
+            },
+            labels: {
+              type: "object",
+              description: "Labels, by name.",
+              additionalProperties: { type: "string", minLength: 1 },
+            },
+          },
+        },
+      },
+    },
+  } as unknown as PackInfo;
+  const fields = methodReference(pack, "copy");
+  const at = (path: string) => fields.find((field) => field.path.join(".") === path);
+
+  it("gives a setting's minimum and maximum from its schema, or from the branch that has them", () => {
+    expect(at("parallel")).toMatchObject({ minimum: 1, maximum: 50 });
+    expect(at("retries")).toMatchObject({ minimum: 0 });
+    expect(at("retries")).not.toHaveProperty("maximum");
+    expect(at("audit")).not.toHaveProperty("minimum");
+  });
+
+  it("describes a mapping's values as `*` when they have a description or allowed values", () => {
+    expect(at("audit.*")).toEqual({
+      path: ["audit", "*"],
+      name: "*",
+      type: "one of the values",
+      required: false,
+      description: "A run value, or other text written as it is.",
+      values: [
+        { value: "run.id", description: "The run's id." },
+        { value: "run.trigger_time", description: "When the run started." },
+      ],
+      placement: "definition",
+      docs: "/docs/reference/packs/test#copy-audit-item",
+    });
+  });
+
+  it("leaves out a mapping's values that say nothing beyond the mapping's own field", () => {
+    expect(at("labels")).toBeDefined();
+    expect(at("labels.*")).toBeUndefined();
+  });
+
+  it("gives the Platform's mode its default when environments are generated together", () => {
+    const mode = documentReference("Platform").find((field) => field.name === "mode");
+    expect(mode?.description).toMatch(
+      /^Default: when every environment is generated together, as the CLI does from 2\.0, production for every environment except one named dev, which is development;/,
+    );
+  });
+});
