@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fullNameText } from "@ingestron/definitions";
 import { describe, expect, it } from "vitest";
-import { generatedOutputs } from "../src/build-outputs.js";
+import { environmentOutputs } from "../src/build-outputs.js";
 import { passports } from "../src/passport.js";
 import { lineage } from "../src/passport-lineage.js";
 import { model, project, sales } from "./passport-fixtures.js";
@@ -16,12 +16,14 @@ describe("passports", () => {
   it("writes no products folder for a project without products", () => {
     const plain = mkdtempSync(join(tmpdir(), "ingestron-passport-"));
     cpSync(retail, plain, { recursive: true });
-    expect(generatedOutputs(model(plain), "dev").map(({ label }) => label)).toEqual(["databricks"]);
+    expect(environmentOutputs(model(plain), "dev").map(({ label }) => label)).toEqual([
+      "databricks",
+    ]);
   });
 
   it("names each output's table in this environment and where it lives", () => {
     const resolved = model(project());
-    expect(generatedOutputs(resolved, "dev").map(({ label }) => label)).toEqual([
+    expect(environmentOutputs(resolved, "dev").map(({ label }) => label)).toEqual([
       "databricks",
       "products/dev",
     ]);

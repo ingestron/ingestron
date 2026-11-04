@@ -25,6 +25,11 @@ export interface Output {
   /** The folder under the output folder, with `/` between its parts. */
   folder: string;
   targets: string[];
+  /**
+   * Whether each target's files are in a folder of its own, named after it: true for a pack
+   * that builds one environment at a time, and for the passports.
+   */
+  byEnvironment: boolean;
   files: Record<string, string>;
   /** For a pack that builds environments together: the names its files take each deploy-time value as. */
   deployValues?: SuppliedValue[];
@@ -111,7 +116,14 @@ function together(pack: Pack, targets: readonly ResolvedEnvironment[]): Result {
   if (failed) return { ...(report && { report }) };
   const names = targets.map((item) => item.name);
   return {
-    output: { name: pack.id, folder: pack.id, targets: names, files, deployValues },
+    output: {
+      name: pack.id,
+      folder: pack.id,
+      targets: names,
+      byEnvironment: false,
+      files,
+      deployValues,
+    },
     ...(report && { report }),
   };
 }
@@ -122,7 +134,7 @@ function apart(pack: Pack, targets: readonly ResolvedEnvironment[]): Result {
     targets.flatMap((item) => within(item.name, pack.build(item.host ?? item.model))),
   );
   const names = targets.map((item) => item.name);
-  return { output: { name: pack.id, folder: pack.id, targets: names, files } };
+  return { output: { name: pack.id, folder: pack.id, targets: names, byEnvironment: true, files } };
 }
 
 /** The passports, each environment's in a folder of its own. */
@@ -134,6 +146,7 @@ function productsOutput(environments: readonly ResolvedEnvironment[]): Output {
     name: "products",
     folder: "products",
     targets: environments.map((item) => item.name),
+    byEnvironment: true,
     files,
   };
 }
@@ -143,14 +156,12 @@ function within(folder: string, files: Record<string, string>): [string, string]
 }
 
 /**
- * The files each pack the standard names generates for one environment on its own, as
- * the editor previews them: `label` is the folder under the output folder, `<pack>` for
- * a pack that builds environments together (its files for this environment alone) and
- * `<pack>/<environment>` for any other; then the passports, under `products/<environment>`.
- * @example
- * for (const { label, files } of generatedOutputs(model, "dev")) console.log(label, Object.keys(files));
+ * The files each pack the standard names builds from one environment's model on its own:
+ * `label` is `<pack>` for a pack that builds environments together and `<pack>/<environment>`
+ * for any other, then `products/<environment>` for the passports. `request` reads the SQL
+ * to run once from it.
  */
-export function generatedOutputs(
+export function environmentOutputs(
   model: ResolvedModel,
   environment: string,
 ): { pack: string; label: string; files: Record<string, string> }[] {

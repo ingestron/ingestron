@@ -15,24 +15,37 @@ interface Group {
  * grouped by those environments, in the order of each group's first diagnostic.
  */
 export function printEnvironmentReports(io: Io, reports: readonly Report[]): void {
-  printGroups(io, groupsOf(reports));
+  write(io, environmentReportsText(reports));
 }
 
 /** Each pack's problems, or its warnings. */
 export function printPackReports(io: Io, reports: readonly Report[]): void {
-  printGroups(
-    io,
-    reports.map(({ name, diagnostics }) => ({ names: [name], diagnostics })),
-  );
+  write(io, packReportsText(reports));
 }
 
-function printGroups(io: Io, groups: readonly Group[]): void {
-  for (const { names, diagnostics } of groups) {
-    if (diagnostics.length === 0) continue;
-    const failed = diagnostics.some((diagnostic) => diagnostic.severity === "error");
-    const heading = failed ? "the definitions have problems" : "warnings";
-    io.write(`${names.join(", ")}: ${heading}\n${formatDiagnostics(diagnostics)}\n`);
-  }
+function write(io: Io, text: string): void {
+  if (text !== "") io.write(text);
+}
+
+/** What {@link printEnvironmentReports} prints. */
+export function environmentReportsText(reports: readonly Report[]): string {
+  return groupsText(groupsOf(reports));
+}
+
+/** What {@link printPackReports} prints. */
+export function packReportsText(reports: readonly Report[]): string {
+  return groupsText(reports.map(({ name, diagnostics }) => ({ names: [name], diagnostics })));
+}
+
+function groupsText(groups: readonly Group[]): string {
+  return groups
+    .filter(({ diagnostics }) => diagnostics.length > 0)
+    .map(({ names, diagnostics }) => {
+      const failed = diagnostics.some((diagnostic) => diagnostic.severity === "error");
+      const heading = failed ? "the definitions have problems" : "warnings";
+      return `${names.join(", ")}: ${heading}\n${formatDiagnostics(diagnostics)}\n`;
+    })
+    .join("");
 }
 
 /** Two diagnostics are the same when their code, file, line and message are. */
