@@ -165,6 +165,8 @@ function reportUnset(name: string, source: string, location: Location, walk: Wal
   const { environment, missingEnvvars } = walk.context;
   const files = environment === undefined ? ".env" : `.env.${environment}`;
   if (missingEnvvars === "information") {
+    // Keep the message starting "<name> isn't set;": authoring's deploy-advice.ts reads the
+    // variable's name from it, and authoring's envvar and deploy-advice tests pin it.
     walk.context.diagnostics.push(
       information(
         "ENVVAR_MISSING",
