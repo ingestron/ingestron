@@ -845,6 +845,9 @@ one entry per field. The schema's **branches** are the schema itself, then
 those of its `allOf`, `anyOf` and `oneOf` items, its `then` and its `else`,
 each in that order and each with a local `$ref` (`#/$defs/<name>`) replaced
 by what it names, with the schema's own keywords beside the `$ref` kept.
+Branches nest depth first: each branch is followed by its own branches
+before the next branch, so the properties of an `anyOf` inside the first
+`allOf` item come before those of the second `allOf` item.
 
 **Entries, in order.** At each schema, the properties are those of all its
 branches, in the order each first appears, a later branch's schema for a
@@ -890,11 +893,13 @@ which the implementation keeps beside the ODCS schema.
 
 **Type words.** When the schema, its `$ref` followed, has an `anyOf` or a
 `oneOf`, the words are those of each of its items, each taken
-together with the schema's own keywords other than `anyOf` and `oneOf`, each
-said once, in order, and joined with `, or `: for example
-`one of the values, or text`, and `a whole number, or never`. Otherwise, with
-the schema's branches merged, the schema itself first and then each branch
-in order, the first of these that applies:
+together with the schema's own keywords other than `anyOf` and `oneOf`, the
+item's keywords replacing the schema's own where both have one, each said
+once, in order, and joined with `, or `: for example
+`one of the values, or text`, and `a whole number, or never`. Otherwise the
+schema's branches are merged, each keyword taken from the first schema that
+has it: the schema itself, then each branch in order. The words are the
+first of these that applies to the merged schema:
 
 | The merged schema has                               | Words                               |
 | --------------------------------------------------- | ----------------------------------- |
