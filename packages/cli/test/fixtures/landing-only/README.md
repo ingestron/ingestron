@@ -10,7 +10,8 @@ ADF copies the ERP's tables into storage, and the flows end there:
 | `customers` | `<landing>/erp.dbo.Customers/erp.dbo.Customers.parquet` |
 | `invoices`  | `<landing>/erp.dbo.Invoices/erp.dbo.Invoices.parquet`   |
 
-`ingestron apply` writes the ADF resources under `build/<environment>/`:
+`ingestron apply` writes one factory for every environment in `build/adf/`:
+its parameter files in `build/adf/parameters/`, and in `build/adf/factory/`
 the SQL Server linked service through the `shir-erp` integration runtime, the
 pipeline with a copy per table, and a daily trigger. Nothing reads the files
 before the reports do, so nothing checks rows: neither the contract's quality
