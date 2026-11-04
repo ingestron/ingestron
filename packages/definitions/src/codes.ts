@@ -17,6 +17,11 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
     meaning: "The standard names another pack or version than the one available.",
     fix: "Change the standard's packs list to a version this tool provides.",
   },
+  PACK_LOAD: {
+    meaning:
+      "A pack given to Ingestron has a mistake of its own, such as a Platform field the Platform document does not have, so nothing is checked or generated.",
+    fix: "Install a version of Ingestron, or of the editor extension, that fixes the pack.",
+  },
   UNKNOWN_PACK: {
     meaning: "The standard names a pack that is not available.",
     fix: "Check the spelling in packs, or use a pack this tool provides.",
