@@ -1,6 +1,8 @@
 # The data-only pack every conformance case uses.
 id: test
 version: 1
+# The Platform fields it reads (section 7), each a field of the Platform schema.
+platformFields: [mode, compute.serverless, schedule.paused, manage.checks]
 defaults:
   naming:
     catalog: "{{ environment }}"
