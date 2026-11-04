@@ -60,7 +60,7 @@ describe("ingestron plan", () => {
     );
     const { code, output } = ingestron("plan");
     expect(code).toBe(1);
-    expect(output).toContain("dev: the definitions have problems");
+    expect(output).toContain("dev, prod: the definitions have problems\nflows/shop.yaml");
     expect(output).toContain("flows/shop.yaml:9:15  error  BROKEN_LINK");
     expect(output).not.toContain("databricks → ");
   });
@@ -83,7 +83,7 @@ describe("warnings", () => {
     writeFileSync(manifest, `${readFileSync(manifest, "utf8")}  - extra/*.yaml\n`);
     const { code, output } = ingestron("plan");
     expect(code).toBe(0);
-    expect(output).toContain("dev: warnings\nproject.yaml");
+    expect(output).toContain("dev, prod: warnings\nproject.yaml");
     expect(output).toContain("warning  NO_MATCH");
     expect(output).toContain("Ready to apply.");
   });

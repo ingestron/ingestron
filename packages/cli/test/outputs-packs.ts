@@ -18,16 +18,27 @@ const folder = join(import.meta.dirname, "../../../spec/definitions/conformance"
 /** A pack file: a pack's information, with stand-ins for what is code. */
 type DataPack = PackInfo & { buildEnvironments?: true; checks?: string[] };
 
-/** Every data-only pack, as the CLI is given them. */
-export const standInPacks: Pack[] = [
-  "pack.yaml",
-  "pack-bridge.yaml",
-  "pack-local.yaml",
-  "pack-fold.yaml",
-  "pack-checked.yaml",
-].map((file) => standIn(parse(readFileSync(join(folder, file), "utf8")) as DataPack));
+/** A case's notice: what the fold stand-in also gives as a `PACK_NOTICE`. */
+export interface Notice {
+  message: string;
+  hint: string;
+}
 
-function standIn(data: DataPack): Pack {
+/** Every data-only pack, as the CLI is given them; the fold stand-in also gives the notices. */
+export function standIns(notices: readonly Notice[] = []): Pack[] {
+  return [
+    "pack.yaml",
+    "pack-bridge.yaml",
+    "pack-local.yaml",
+    "pack-fold.yaml",
+    "pack-checked.yaml",
+  ].map((file) => standIn(parse(readFileSync(join(folder, file), "utf8")) as DataPack, notices));
+}
+
+/** The stand-ins of a case that gives no notices. */
+export const standInPacks: Pack[] = standIns();
+
+function standIn(data: DataPack, notices: readonly Notice[]): Pack {
   const methods = Object.fromEntries(
     Object.entries(data.methods).map(([id, method]) => {
       const { checks, ...rest } = method as Method & { checks?: string[] };
@@ -41,7 +52,8 @@ function standIn(data: DataPack): Pack {
     ...(checks && { check: () => checks }),
     build: (model) => ({ "tables.txt": tables(model, info.id) }),
   };
-  return together ? { ...pack, buildEnvironments: (models) => fold(models, info.id) } : pack;
+  if (!together) return pack;
+  return { ...pack, buildEnvironments: (models) => fold(models, info.id, notices) };
 }
 
 /** A line per table with a step of the pack: its name, and its connection's `settings.path`. */
@@ -58,7 +70,11 @@ function tables(model: ResolvedModel, pack: string): string {
 }
 
 /** The first target's tables with each deploy-time value as `$(FOLD_<name>)`, and the targets. */
-function fold(models: Readonly<Record<string, ResolvedModel>>, pack: string): EnvironmentsBuild {
+function fold(
+  models: Readonly<Record<string, ResolvedModel>>,
+  pack: string,
+  notices: readonly Notice[],
+): EnvironmentsBuild {
   const all = Object.values(models);
   const values = all
     .flatMap((model) => model.deployValues ?? [])
@@ -75,6 +91,14 @@ function fold(models: Readonly<Record<string, ResolvedModel>>, pack: string): En
         .join(""),
     },
     deployValues: values.map((value) => ({ name: value.name, suppliedAs: [`FOLD_${value.name}`] })),
-    problems: compareTargets(models).structural,
+    problems: [
+      ...compareTargets(models).structural,
+      ...notices.map(({ message, hint }) => ({
+        code: "PACK_NOTICE" as const,
+        severity: "warning" as const,
+        message,
+        hint,
+      })),
+    ],
   };
 }
