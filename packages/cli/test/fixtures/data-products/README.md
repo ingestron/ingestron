@@ -24,7 +24,7 @@ contracts/customers.yaml:13:17  error  COLUMN_UNCLASSIFIED
   Column "email" of the contract "shop.customers" has no classification; "customers" publishes it, and the standard requires one.
 ```
 
-`ingestron apply` writes, beside the pipelines, `build/<environment>/products/`:
+`ingestron apply` writes, beside the pipelines, `build/products/<environment>/`:
 a `README.md` listing the products, and a passport per product, `customers.md`
 and `sales.md`. A passport says, in plain words, who owns the product and what
 it is for, which table it is in this environment and where, its columns and
