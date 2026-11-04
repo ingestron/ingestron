@@ -1,6 +1,7 @@
 // Every output folder as plan builds it, writing nothing, with what resolving
 // and building found: for an editor to preview the files and show the problems.
-import type { FileSource } from "@ingestron/config";
+import { formatDiagnostics, type AnyDiagnostic, type FileSource } from "@ingestron/config";
+import { packLoadProblem, type Pack, type SuppliedValue } from "@ingestron/definitions";
 import { generateAll } from "./build-outputs.js";
 import { packs } from "./packs.js";
 import { environmentReportsText, packReportsText } from "./reports.js";
@@ -23,6 +24,19 @@ export interface GeneratedOutput {
   byEnvironment: boolean;
   /** Each file's text, by its path in the folder, with `/` between its parts. */
   files: Record<string, string>;
+  /**
+   * For a pack that builds environments together: each variable whose value the deploying
+   * pipeline supplies, and the names the files take it as, such as `BUNDLE_VAR_landing`.
+   */
+  deployValues?: SuppliedValue[];
+}
+
+/** What {@link generatedOutputs} reads besides the files. */
+export interface GeneratedOutputsOptions {
+  /** The variables to read, as the host's environment; default `process.env`. */
+  envvars?: Readonly<Record<string, string | undefined>>;
+  /** The packs a standard may name; default the CLI's own. */
+  packs?: readonly Pack[];
 }
 
 /** What plan would write, and what it found first. */
@@ -35,6 +49,8 @@ export interface GeneratedOutputs {
   environmentReports: Report[];
   /** What each pack that builds environments together reported, such as `PACK_NOTICE` warnings. */
   packReports: Report[];
+  /** The `PACK_LOAD` error when a pack cannot be loaded: then nothing is resolved or built. */
+  refused?: AnyDiagnostic;
   /**
    * The reports as plan prints them before planning: each environment's problems, then each
    * pack's problems or warnings. Empty when there are none.
@@ -43,21 +59,32 @@ export interface GeneratedOutputs {
 }
 
 /**
- * Resolves every environment and builds every output folder with the CLI's packs, as
- * `ingestron plan` does, and writes nothing. Variables come from the host's environment
- * and the project's `.env` files.
+ * Resolves every environment and builds every output folder, as `ingestron plan` does,
+ * and writes nothing. Variables come from `options.envvars` (default the host's
+ * environment) and the project's `.env` files; packs from `options.packs` (default the
+ * CLI's). A pack that cannot be loaded gives `refused` in place of throwing.
  * @example
  * const { outputs } = generatedOutputs(nodeFiles("definitions"));
  * for (const { folder, files } of outputs) console.log(folder, Object.keys(files));
  */
-export function generatedOutputs(files: FileSource): GeneratedOutputs {
-  const generated = generateAll(files, packs, process.env);
-  const outputs = generated.outputs.map(({ name, folder, targets, byEnvironment, files }) => ({
-    name,
-    folder,
-    targets,
-    byEnvironment,
-    files,
+export function generatedOutputs(
+  files: FileSource,
+  options: GeneratedOutputsOptions = {},
+): GeneratedOutputs {
+  const available = options.packs ?? packs;
+  const refused = packLoadProblem(available);
+  if (refused) {
+    const text = `${formatDiagnostics([refused])}\n`;
+    return { ok: false, outputs: [], environmentReports: [], packReports: [], refused, text };
+  }
+  const generated = generateAll(files, available, options.envvars ?? process.env);
+  const outputs = generated.outputs.map((output) => ({
+    name: output.name,
+    folder: output.folder,
+    targets: output.targets,
+    byEnvironment: output.byEnvironment,
+    files: output.files,
+    ...(output.deployValues && { deployValues: output.deployValues }),
   }));
   const text =
     environmentReportsText(generated.environmentReports) + packReportsText(generated.packReports);
