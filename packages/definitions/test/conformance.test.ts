@@ -14,6 +14,7 @@ import {
   type PackInfo,
   type ResolvedModel,
 } from "../src/index.js";
+import { checkReference, type ReferenceCase } from "./reference-cases.js";
 
 interface Case {
   description: string;
@@ -27,7 +28,12 @@ interface Case {
   files: Record<string, string>;
   /** In place of `files`: what a pack's `buildEnvironments` returns as its problems. */
   packProblems?: EnvironmentsBuild["problems"];
+  /** In place of `files`: a document kind, or a method of a data-only pack, to describe. */
+  reference?: ReferenceCase["reference"];
   expect: {
+    paths?: string[];
+    fields?: ({ path: string } & Record<string, unknown>)[];
+    absent?: string[];
     /** The message of the error that refuses the packs. */
     refused?: string;
     tables?: Record<string, unknown>[];
@@ -171,6 +177,7 @@ describe("conformance", () => {
     const testCase = parse(readFileSync(join(folder, name), "utf8")) as Case;
     it(`${name}: ${testCase.description}`, () => {
       if (testCase.packProblems) return checkPackProblems(testCase);
+      if (testCase.reference) return checkReference(testCase as ReferenceCase);
       if (testCase.expect.refused) {
         expect(() => resolveCase(testCase)).toThrow(new Error(testCase.expect.refused));
         return;

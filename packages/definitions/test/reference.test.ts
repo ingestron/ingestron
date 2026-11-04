@@ -158,6 +158,7 @@ describe("ranges and the values of a mapping", () => {
     expect(at("parallel")).toMatchObject({ minimum: 1, maximum: 50 });
     expect(at("retries")).toMatchObject({ minimum: 0 });
     expect(at("retries")).not.toHaveProperty("maximum");
+    expect(at("retries")?.type).toBe("a whole number, or never");
     expect(at("audit")).not.toHaveProperty("minimum");
   });
 
@@ -165,7 +166,7 @@ describe("ranges and the values of a mapping", () => {
     expect(at("audit.*")).toEqual({
       path: ["audit", "*"],
       name: "*",
-      type: "one of the values",
+      type: "one of the values, or text",
       required: false,
       description: "A run value, or other text written as it is.",
       values: [
@@ -184,8 +185,8 @@ describe("ranges and the values of a mapping", () => {
 
   it("gives the Platform's mode its default when environments are generated together", () => {
     const mode = documentReference("Platform").find((field) => field.name === "mode");
-    expect(mode?.description).toMatch(
-      /^Default: when every environment is generated together, as the CLI does from 2\.0, production for every environment except one named dev, which is development;/,
+    expect(mode?.description).toBe(
+      "Default: production for every environment except dev, when every environment is generated together, as the CLI does from 2.0. Resolved one environment at a time: production for environments named prod or production, otherwise development.",
     );
   });
 });
