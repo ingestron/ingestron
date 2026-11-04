@@ -32,7 +32,9 @@ problems; fix them first.", and no problem is listed; `ingestron plan`
 lists them. The command's exit code is 1 when any environment's definitions
 have errors, and 0 otherwise, including when the only problems are unset
 variables. The exit code comes from whether each environment resolved, not
-from the text.
+from the text. A pack that cannot be loaded gives the `PACK_LOAD` error and
+the exit code 2, as for every command ([output folders](outputs.md),
+section 4).
 
 ## Sections
 
