@@ -19,7 +19,20 @@ reference:
           - { const: never }
         description: How often a failed copy is tried again.
       name: { type: string, description: The copy's name. }
+      # Branches nest depth first: the anyOf inside the first allOf item comes
+      # before the second allOf item, and the schema's own anyOf after both.
+      nested:
+        type: object
+        description: Properties from nested branches.
+        properties: { a: { type: string, description: A. } }
+        allOf:
+          - anyOf:
+              - properties: { b: { type: string, description: B. } }
+          - properties: { c: { type: string, description: C. } }
+        anyOf:
+          - properties: { d: { type: string, description: D. } }
 expect:
+  paths: [parallel, retries, name, nested, nested.a, nested.b, nested.c, nested.d]
   fields:
     - path: parallel
       name: parallel
