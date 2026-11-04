@@ -20,7 +20,7 @@ import {
   type ResolvedModel,
 } from "@ingestron/definitions";
 import type { Options } from "./args.js";
-import { generateAll, generatedOutputs, type Generated } from "./build-outputs.js";
+import { environmentOutputs, generateAll, type Generated } from "./build-outputs.js";
 import { environmentsToGenerate } from "./environments.js";
 import type { Io } from "./io.js";
 import { packs } from "./packs.js";
@@ -185,7 +185,7 @@ function packSections(model: ResolvedModel): string[] {
 
 /** The first pack's SQL to run once: `prerequisites.sql`, or this environment's `prerequisites/<name>.sql`. */
 function sql(model: ResolvedModel, name: string): string | undefined {
-  const text = generatedOutputs(model, name)
+  const text = environmentOutputs(model, name)
     .map(({ files }) => files["prerequisites.sql"] ?? files[`prerequisites/${name}.sql`])
     .find(Boolean);
   return text && `## SQL to run once (review first)\n\n\`\`\`sql\n${text}\`\`\``;

@@ -4,9 +4,9 @@
 
 ```ts
 
+import { AnyDiagnostic } from '@ingestron/config';
 import { FileSource } from '@ingestron/config';
 import type { Pack } from '@ingestron/definitions';
-import { ResolvedModel } from '@ingestron/definitions';
 
 // @public
 export function builtInTemplates(): Template[];
@@ -90,11 +90,25 @@ export const flags: readonly [{
 }];
 
 // @public
-export function generatedOutputs(model: ResolvedModel, environment: string): {
-    pack: string;
-    label: string;
+export interface GeneratedOutput {
+    byEnvironment: boolean;
     files: Record<string, string>;
-}[];
+    folder: string;
+    name: string;
+    targets: string[];
+}
+
+// @public
+export interface GeneratedOutputs {
+    environmentReports: Report[];
+    ok: boolean;
+    outputs: GeneratedOutput[];
+    packReports: Report[];
+    text: string;
+}
+
+// @public
+export function generatedOutputs(files: FileSource): GeneratedOutputs;
 
 // @public
 export interface Io {
@@ -168,6 +182,13 @@ export function projectSources(): ProjectSource[];
 
 // @public
 export function readSample(folder: string, kind: Sample["kind"]): Sample;
+
+// @public
+export interface Report {
+    diagnostics: AnyDiagnostic[];
+    failed: boolean;
+    name: string;
+}
 
 // @public
 export function run(args: string[], io: Io): number;
