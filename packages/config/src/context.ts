@@ -16,6 +16,8 @@ export interface LoadContext {
   envvarsSetIn: Readonly<Record<string, NonNullable<EnvvarReference["setIn"]>>>;
   /** What an unset `${envvar:…}` is: an error, or information that lets the load go on. */
   missingEnvvars: "error" | "information";
+  /** True when every `${envvar:…}` is supplied when deploying, so it is left as `${envvar:NAME}`. */
+  deployEnvvars: boolean;
   /** The selected environment, for messages that tell a person which `.env` file to use. */
   environment?: string;
   diagnostics: Diagnostic[];

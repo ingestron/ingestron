@@ -38,9 +38,10 @@ export interface Project {
   values: unknown;
   /**
    * The text of each `${envvar:…}` reference left as written because its variable is set
-   * nowhere, each once, in the order first left. Only a load with `missingEnvvars:
-   * "information"` leaves any. A text value that contains one is not known yet, so checks
-   * leave it alone (spec/config/syntax.md §5.1).
+   * nowhere, or, with `deployEnvvars`, because it is supplied when deploying; each once, in
+   * the order first left. Only a load with `missingEnvvars: "information"` or `deployEnvvars`
+   * leaves any. A text value that contains one is not known yet, so checks leave it alone
+   * (spec/config/syntax.md §5.1).
    */
   unsetEnvvars: readonly string[];
   /**

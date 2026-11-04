@@ -144,9 +144,20 @@ function readEnvironmentVariable(
     return undefined;
   }
   recordReference(name, pointer, walk);
+  if (walk.context.deployEnvvars) return deployTimeText(name, walk);
   const value = walk.context.envvars[name];
   if (value !== undefined && value !== "") return value;
   return reportUnset(name, source, location, walk);
+}
+
+/**
+ * A value supplied when deploying: the reference's own text, written without spaces so each
+ * variable has one text, and an unset reference that later checks leave alone (spec §4.4).
+ */
+function deployTimeText(name: string, walk: Walk): string {
+  const text = `\${envvar:${name}}`;
+  walk.context.unsetEnvvars.add(text);
+  return text;
 }
 
 /** An unset variable: information that leaves the reference as written, or an error. */
