@@ -20,6 +20,8 @@ interface Definition {
   source?: string;
   settings?: Record<string, Record<string, unknown>>;
   ingest?: { uses?: string; with?: Record<string, unknown>; settings?: Record<string, unknown> };
+  tables?: Record<string, { contract?: string }>;
+  contract?: string;
 }
 /** One composed project before answers are applied or files written.
  * @example const recipe: ProjectRecipe = projectRecipe("files", "databricks", "public");
@@ -95,7 +97,26 @@ function selectSource(
     files[path] = stringify(value);
   }
   files[selected.path] = stringify(selected.value);
+  dropUnusedContracts(files, definitions, flows);
   return { connection: selected.path, flows };
+}
+/** Contracts that only the dropped flows used go with them; a transform's own contract stays. */
+function dropUnusedContracts(
+  files: Record<string, Content>,
+  definitions: { path: string; value: Definition }[],
+  flows: string[],
+): void {
+  const used = new Set([
+    ...definitions
+      .filter(({ path }) => flows.includes(path))
+      .flatMap(({ value }) => Object.values(value.tables ?? {}))
+      .map((table) => table.contract),
+    ...definitions
+      .filter(({ path, value }) => value?.kind === "Transform" && path in files)
+      .map(({ value }) => value.contract),
+  ]);
+  for (const { path, value } of definitions)
+    if (value?.kind === "DataContract" && !used.has(value.id)) delete files[path];
 }
 function trimSettings(
   files: Record<string, Content>,
