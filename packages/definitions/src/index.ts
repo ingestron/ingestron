@@ -10,6 +10,7 @@ export {
   type EnvironmentsBuild,
   type EnvironmentsCode,
   type EnvironmentsProblem,
+  type PackNotice,
   type SuppliedValue,
 } from "./environments.js";
 export { checkFold, splitDeployText, type FoldView } from "./fold.js";

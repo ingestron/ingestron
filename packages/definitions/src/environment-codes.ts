@@ -7,7 +7,8 @@ type EnvironmentCode =
   | "ENVIRONMENTS_DIFFER"
   | "DEPLOY_VALUE"
   | "ARM_PARAMETERS"
-  | "SECRET_NAME_DIFFERS";
+  | "SECRET_NAME_DIFFERS"
+  | "PACK_NOTICE";
 
 /** What each code means and how to fix it. */
 export const environmentCodeHelp: Record<
@@ -37,5 +38,10 @@ export const environmentCodeHelp: Record<
   SECRET_NAME_DIFFERS: {
     meaning: "A Key Vault secret's name differs between environments. A warning.",
     fix: "Give the secret the same name in every environment's Key Vault, so that only the vault differs.",
+  },
+  PACK_NOTICE: {
+    meaning:
+      "Something about the generated files that the people deploying them need to know, in the pack's words, such as a setting the pack cannot write that the platform keeps. A warning: the files are still written.",
+    fix: "Follow the hint the pack gives with it. The pack's documentation lists its notices.",
   },
 };
