@@ -24,7 +24,7 @@ export function unsetEnvvarAt(project: Project, at: Source): boolean {
 }
 
 /** The value at a JSON Pointer, or undefined when there is none. */
-function valueAt(value: unknown, pointer: string): unknown {
+export function valueAt(value: unknown, pointer: string): unknown {
   if (pointer === "") return value;
   let current = value;
   for (const key of pointer.slice(1).split("/")) {

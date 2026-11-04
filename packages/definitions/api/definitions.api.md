@@ -160,12 +160,40 @@ export type ContractUse = {
 export function contractUseOf(pack: PackInfo, path: string): ContractUse | undefined;
 
 // @public
-export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS";
+export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "PACK_VERSION" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS" | "DEPLOY_VALUE" | "ENVIRONMENTS_DIFFER";
+
+// @public
+export interface DeployValue {
+    name: string;
+    text: string;
+    uses: {
+        file: string;
+        pointer: string;
+    }[];
+}
 
 export { DiagnosticCode }
 
 // @public
 export function documentReference(kind: keyof typeof referenceKinds): FieldInfo[];
+
+// @public
+export interface EnvironmentsBuild {
+    deployValues: SuppliedValue[];
+    files: Record<string, string>;
+    problems: EnvironmentsProblem[];
+}
+
+// @public
+export function environmentsDiagnostics(problems: readonly EnvironmentsProblem[]): AnyDiagnostic[];
+
+// @public
+export interface EnvironmentsProblem {
+    code: "ENVIRONMENTS_DIFFER" | "DEPLOY_VALUE";
+    file: string;
+    line?: number;
+    message: string;
+}
 
 // @public
 export interface Expectation {
@@ -337,6 +365,7 @@ export interface Origin {
 export interface Pack extends PackInfo {
     // (undocumented)
     build(model: ResolvedModel): Record<string, string>;
+    buildEnvironments?(models: Readonly<Record<string, ResolvedModel>>): EnvironmentsBuild;
     request?(model: ResolvedModel): RequestSection[];
 }
 
@@ -405,6 +434,7 @@ export function resolveDefinitions(files: FileSource, options: ResolveOptions): 
 
 // @public
 export interface ResolvedModel {
+    deployValues?: DeployValue[];
     // (undocumented)
     layers: string[];
     names: {
@@ -554,6 +584,7 @@ export interface ResolvedTable {
 
 // @public
 export interface ResolveOptions {
+    deployTime?: boolean;
     environment?: string;
     envvars?: Readonly<Record<string, string | undefined>>;
     missingEnvvars?: "error" | "information";
@@ -616,6 +647,12 @@ export interface StepOutput {
     format: "parquet" | "json" | "csv" | "delta";
     loads: "replace" | "add";
     location: string;
+}
+
+// @public
+export interface SuppliedValue {
+    name: string;
+    suppliedAs: string[];
 }
 
 // @public

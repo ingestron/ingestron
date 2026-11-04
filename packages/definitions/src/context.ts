@@ -4,7 +4,7 @@
 import type { DefinitionDocument, Project } from "@ingestron/config";
 import type { Reporter } from "./diagnostics.js";
 import { kinds, type PlatformDoc, type StandardDoc } from "./documents.js";
-import type { Action, PackInfo } from "./pack.js";
+import type { Action, Pack, PackInfo } from "./pack.js";
 
 /** Shared by the resolution steps. */
 export interface Context {
@@ -98,15 +98,46 @@ function selectPacks(
       return [];
     }
     if (String(pack.version) !== version) {
-      reporter.error(
-        "WRONG_PACK",
-        `This standard is for "${reference}", but the pack is ${pack.id}@${pack.version}.`,
-        at,
-      );
+      reportVersion(reporter, reference, pack, at);
       return [];
     }
     return [pack];
   });
+}
+
+/**
+ * The standard names a version that is not available: `PACK_VERSION`, with a fix, when it
+ * names version 1 of a version 2 pack that builds environments together; else `WRONG_PACK`.
+ */
+function reportVersion(
+  reporter: Reporter,
+  reference: string,
+  pack: PackInfo,
+  at: { document: DefinitionDocument<StandardDoc>; pointer: string },
+): void {
+  if (!(reference === `${pack.id}@1` && pack.version === 2 && buildsTogether(pack))) {
+    const message = `This standard is for "${reference}", but the pack is ${pack.id}@${pack.version}.`;
+    reporter.error("WRONG_PACK", message, at);
+    return;
+  }
+  const next = `${pack.id}@2`;
+  reporter.error(
+    "PACK_VERSION",
+    `This standard is for "${reference}", but the pack is ${next}, which builds every environment into one output folder.`,
+    at,
+    `Change it to ${next}; the upgrade notes say what changes in the generated files.`,
+    [
+      {
+        title: `Change to "${next}"`,
+        edits: [{ file: at.document.file, pointer: at.pointer, set: next }],
+      },
+    ],
+  );
+}
+
+/** True for a pack with `buildEnvironments`: packs are given as their information, and may be more. */
+function buildsTogether(pack: PackInfo): boolean {
+  return typeof (pack as Partial<Pack>).buildEnvironments === "function";
 }
 
 /** Which pack each method belongs to; a name in two packs is a conflict. */

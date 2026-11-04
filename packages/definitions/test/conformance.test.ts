@@ -5,28 +5,40 @@ import { join } from "node:path";
 import { applyEdits, fixEdits, memoryFiles, type AnyDiagnostic } from "@ingestron/config";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
-import { resolveDefinitions, type PackInfo, type ResolvedModel } from "../src/index.js";
+import { resolveDefinitions, type Pack, type PackInfo, type ResolvedModel } from "../src/index.js";
 
 interface Case {
   description: string;
   environment?: string;
   envvars?: Record<string, string>;
   missingEnvvars?: "error" | "information";
+  deployTime?: boolean;
   files: Record<string, string>;
   expect: {
     tables?: Record<string, unknown>[];
     products?: Record<string, unknown>[];
     names?: Record<string, unknown>;
     platform?: Record<string, unknown>;
+    deployValues?: Record<string, unknown>[];
     diagnostics?: Record<string, unknown>[];
     fixed?: { diagnostic: number; title: string; files: Record<string, string> }[];
   };
 }
 
 const folder = join(import.meta.dirname, "../../../spec/definitions/conformance");
-const packs = ["pack.yaml", "pack-bridge.yaml", "pack-local.yaml"].map(
-  (file) => parse(readFileSync(join(folder, file), "utf8")) as PackInfo,
+const packs = ["pack.yaml", "pack-bridge.yaml", "pack-local.yaml", "pack-fold.yaml"].map((file) =>
+  packOf(
+    parse(readFileSync(join(folder, file), "utf8")) as PackInfo & { buildEnvironments?: true },
+  ),
 );
+
+/** A data-only pack; `buildEnvironments: true` stands for a pack that builds environments together. */
+function packOf(data: PackInfo & { buildEnvironments?: true }): PackInfo | Pack {
+  if (!data.buildEnvironments) return data;
+  const build = () => ({});
+  const buildEnvironments = () => ({ files: {}, deployValues: [], problems: [] });
+  return { ...data, build, buildEnvironments };
+}
 
 /** Tables with full names as text, as the cases write them. */
 function comparableTables(model: ResolvedModel) {
@@ -54,6 +66,15 @@ function checkTables(model: ResolvedModel, expected: Record<string, unknown>[]):
 function checkProducts(model: ResolvedModel, expected: Record<string, unknown>[]): void {
   expect(model.products).toHaveLength(expected.length);
   expected.forEach((wanted, index) => expect(model.products[index]).toMatchObject(wanted));
+}
+
+/** The parts of the model a case expects. */
+function checkModel(model: ResolvedModel, wanted: Case["expect"]): void {
+  if (wanted.tables) checkTables(model, wanted.tables);
+  if (wanted.products) checkProducts(model, wanted.products);
+  if (wanted.names) expect(model.names).toMatchObject(wanted.names);
+  if (wanted.platform) expect(model.platform).toMatchObject(wanted.platform);
+  if (wanted.deployValues) expect(model.deployValues).toEqual(wanted.deployValues);
 }
 
 /** Each named fix, applied to the case's files, gives the files expected. */
@@ -87,6 +108,7 @@ describe("conformance", () => {
         environment: testCase.environment,
         envvars: testCase.envvars ?? {},
         ...(testCase.missingEnvvars && { missingEnvvars: testCase.missingEnvvars }),
+        ...(testCase.deployTime && { deployTime: true }),
       });
       const { diagnostics } = testCase.expect;
       // A case that expects only information still resolves, so its tables can be checked too.
@@ -107,11 +129,7 @@ describe("conformance", () => {
         return;
       }
       expect(result.diagnostics).toEqual([]);
-      const model = result.model as ResolvedModel;
-      if (testCase.expect.tables) checkTables(model, testCase.expect.tables);
-      if (testCase.expect.products) checkProducts(model, testCase.expect.products);
-      if (testCase.expect.names) expect(model.names).toMatchObject(testCase.expect.names);
-      if (testCase.expect.platform) expect(model.platform).toMatchObject(testCase.expect.platform);
+      checkModel(result.model as ResolvedModel, testCase.expect);
     });
   }
 });

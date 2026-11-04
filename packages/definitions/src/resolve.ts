@@ -11,7 +11,8 @@ import { checkGrants } from "./capabilities.js";
 import { checkContractFields } from "./contract-use.js";
 import { checkSettingsKeys } from "./settings-keys.js";
 import { createContext, type Context } from "./context.js";
-import { createReporter, type Source } from "./diagnostics.js";
+import type { Source } from "./diagnostics.js";
+import { checkDeployValues, deployValuesOf, resolutionReporter } from "./deploy-values.js";
 import { kinds } from "./documents.js";
 import { flowTables } from "./flows.js";
 import { placeholderWarnings } from "./placeholders.js";
@@ -24,7 +25,7 @@ import type { PackInfo } from "./pack.js";
 import { resolvePlatform } from "./platform.js";
 import { checkDuplicateNames, createNamer, type TableNamer } from "./tables.js";
 import { transformTables } from "./transforms.js";
-import { holdsUnsetEnvvar, unsetEnvvarAt } from "./unknown-values.js";
+import { holdsUnsetEnvvar } from "./unknown-values.js";
 import { recordOutputs, runPackCheck } from "./pack-checks.js";
 
 /** Options for {@link resolveDefinitions} and {@link loadDefinitions}. */
@@ -40,6 +41,13 @@ export interface ResolveOptions {
    * information that leaves the project loading, for an editor.
    */
   missingEnvvars?: "error" | "information";
+  /**
+   * True for the packs that build environments together: every `${envvar:…}` is a
+   * deploy-time value, which the pipeline that deploys the files supplies. It is never read
+   * from the host environment or an environment file, and the model lists each in
+   * `deployValues` (specification section 1.1). `envvars` and `missingEnvvars` are not used.
+   */
+  deployTime?: boolean;
 }
 
 /** The model when there are no errors, and every diagnostic. */
@@ -62,11 +70,12 @@ export function resolveDefinitions(files: FileSource, options: ResolveOptions): 
     environment: options.environment,
     envvars: options.envvars ?? {},
     ...(options.missingEnvvars && { missingEnvvars: options.missingEnvvars }),
+    ...(options.deployTime && { deployEnvvars: true }),
   });
   return withPlaceholders(
     files,
     loaded.ok
-      ? resolveLoaded(loaded.project, options.packs, [
+      ? resolveLoaded(loaded.project, options, [
           ...loaded.diagnostics,
           ...runsOnProblems(files, loaded.project, options.packs),
         ])
@@ -104,11 +113,12 @@ export function loadDefinitions(folder: string, options: ResolveOptions): Resolv
     environment: options.environment,
     envvars: options.envvars,
     ...(options.missingEnvvars && { missingEnvvars: options.missingEnvvars }),
+    ...(options.deployTime && { deployEnvvars: true }),
   });
   return withPlaceholders(
     nodeFiles(folder),
     loaded.ok
-      ? resolveLoaded(loaded.project, options.packs, [
+      ? resolveLoaded(loaded.project, options, [
           ...loaded.diagnostics,
           ...runsOnProblems(nodeFiles(folder), loaded.project, options.packs),
         ])
@@ -119,18 +129,17 @@ export function loadDefinitions(folder: string, options: ResolveOptions): Resolv
 
 function resolveLoaded(
   project: Parameters<typeof createContext>[0],
-  packs: PackInfo[],
+  options: ResolveOptions,
   warnings: ResolveResult["diagnostics"],
 ): ResolveResult {
   // Loading succeeded, so what it reported are warnings, kept with the result.
   // A value that holds an unset reference is not known yet, so no problem is reported at
   // it, except a settings failure: the settings check has already left out what it causes.
-  const reporter = createReporter(
-    warnings,
-    (at, code) => code !== "BAD_SETTING" && unsetEnvvarAt(project, at),
-  );
-  const context = createContext(project, packs, reporter);
+  const deployTime = options.deployTime === true;
+  const reporter = resolutionReporter(project, warnings, deployTime);
+  const context = createContext(project, options.packs, reporter);
   if (!context) return { ok: false, diagnostics: reporter.diagnostics };
+  if (deployTime) checkDeployValues(context);
   checkSettingsKeys(context);
   checkGrants(context);
   const namer = createNamer(context);
@@ -145,7 +154,8 @@ function resolveLoaded(
   const products = resolveProducts(context, tables);
   checkGovernance(context, products);
   // Project-wide checks only make sense once every table resolved.
-  const model = reporter.failed() ? undefined : buildModel(context, namer, tables, products);
+  const built = reporter.failed() ? undefined : buildModel(context, namer, tables, products);
+  const model = built && deployTime ? { ...built, deployValues: deployValuesOf(project) } : built;
   if (model) runPackCheck(context, model);
   return model && !reporter.failed()
     ? { ok: true, model, diagnostics: reporter.diagnostics }
