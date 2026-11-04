@@ -10,16 +10,16 @@ capability and maturity come from the selected pack's existing metadata.
 non-interactively. `databricks` means direct ingestion and storage. Every ADF
 route lands the source's data with ADF, then:
 
-- `adf-databricks`: Databricks reads them into tables (`packs: [databricks@1,
-adf@1]`);
+- `adf-databricks`: Databricks reads them into tables (`packs: [databricks@2,
+adf@2]`);
 - `adf-synapse`: Synapse serverless SQL shows them as views (`packs:
-[synapse@1, adf@1]`, `store: { default: synapse-view }`, with
+[synapse@2, adf@2]`, `store: { default: synapse-view }`, with
   `synapse-view`'s data source at the landing storage);
 - `adf-duckdb`: DuckDB builds tables from them and publishes Parquet (`packs:
-[duckdb@1, adf@1]`, with `duckdb-table`'s `published` folder beside the
+[duckdb@1, adf@2]`, with `duckdb-table`'s `published` folder beside the
   landing), started after the copies by a Container Apps job when the user
   sets `after_copy`;
-- `adf-landing`: the flows end at the landed files (`packs: [adf@1]`, `store: {
+- `adf-landing`: the flows end at the landed files (`packs: [adf@2]`, `store: {
 default: none }`), for reports that read the files.
 
 Each ADF route is named for what reads the landed files, or for the landing

@@ -57,7 +57,8 @@ has something to say:
 
 The section lists each environment variable the environment's definitions
 reference (configuration specification, section 4.6), once, in the order
-first referenced. A project that references none has no such section.
+first referenced, then each value a pack's files take that no environment
+variable gives (below). An environment with neither has no such section.
 
 It starts with one sentence on where to set them: in the pipeline that runs
 Ingestron for this environment, or in `.env.<environment>` (`.env` when no
@@ -83,7 +84,20 @@ every environment as `plan` does, with each environment resolved for deploy;
 when that has problems, the names are left out and the section says to run
 `ingestron plan` to see why. A variable is still listed as set or not set yet
 on this computer, which matters only to the packs that read it when
-generating.
+generating. Only the packs this environment is a target of give names, and an
+environment that is resolved with the host's values only
+([output folders](outputs.md), section 1) has none: there each variable is
+read when generating.
+
+A pack's files may also take a value that no environment variable gives: an
+entry of the pack's `deployValues` whose `name` is not the name of a
+deploy-time value of any target's model, such as a secure ARM parameter that
+Microsoft's export adds to a Data Factory template. After the variables, the
+section gives one line for each such value of the packs this environment is a
+target of, in the pack's order: each of its `suppliedAs` names, with the
+pack's id, and that the deploying pipeline supplies it for each environment,
+since no environment variable gives it. It is never read when generating, so
+it has no "set" or "not set yet".
 
 The section MUST NOT print a variable's value, whether it came from the host
 environment or an environment file. Document ids and table names are names,
