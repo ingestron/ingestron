@@ -201,6 +201,15 @@ extends to the first `}}`, so that the hint shows the whole placeholder.
   severity `information`, and the reference resolves to its own text as
   written (`${envvar:NAME}`), so the load can continue. That text is an
   unset reference (section 5.1). A file for another environment is never read.
+- `envvar:NAME` when the caller asked for `deployEnvvars`: the value is
+  supplied later, by whatever deploys the result, so it is not read here. The
+  reference resolves to the text `${envvar:NAME}`, written without spaces
+  whatever spaces the reference had, and that text is an unset reference
+  (section 5.1), whether or not the host environment or an environment file
+  sets the variable. No diagnostic is reported for it, and `missingEnvvars` is
+  not used. NAME is still checked (`BAD_ARGUMENT`). Neither environment file
+  is read (section 4.5), and the host environment is not read for any
+  reference.
 - `secret:reference`: produces the mapping `{"$secret": "<reference>"}`
   unchanged. It is never resolved by this layer.
 
@@ -211,7 +220,8 @@ names are never added to `values`, and they are not imported. `.env` is read
 whenever it exists, and `.env.<environment>` whenever an environment is
 selected and the file exists, whether or not any reference needs them, so a
 malformed line is reported early. A file that does not exist is skipped
-without a diagnostic. Each file is read once per load.
+without a diagnostic. Each file is read once per load. A load with
+`deployEnvvars` reads neither file (section 4.4).
 
 Files are UTF-8; a byte order mark at the start is ignored. Lines end with
 `\n`, and a `\r` before it is removed. In this section **whitespace** is a
@@ -274,7 +284,7 @@ without quoting them. Each entry has:
 - `setIn`: where the variable's value came from (section 4.4): `host` for the
   host environment, `.env.<environment>` or `.env`. It is absent when the
   variable is set nowhere, which only a load with `missingEnvvars:
-information` allows.
+information` allows, and always with `deployEnvvars`, which reads no value.
 
 An entry never holds the variable's value. Each `name`, `file` and `pointer`
 appears once, in the order first resolved. A reference that is not resolved,
@@ -290,14 +300,16 @@ load, so no project lists it.
   `%{ }`, `$ref` and the like pass through as written.
 - No unresolved reference survives into a successful result. The one
   exception is an `envvar` reference that was resolved to its own text because
-  the caller asked for `missingEnvvars: information` (section 4.4). That text
-  is not scanned again, so `$${` handling does not apply to it.
+  the caller asked for `missingEnvvars: information` or `deployEnvvars`
+  (section 4.4). That text is not scanned again, so `$${` handling does not
+  apply to it.
 
 ### 5.1 Unset references
 
 With `missingEnvvars: information`, the text an unset variable's reference
 resolves to (section 4.4) is an **unset reference**: it stands for a value
-that is not known on this computer. A text value **holds an unset reference**
+that is not known on this computer. With `deployEnvvars`, the text of every
+`envvar` reference is one: it stands for a value supplied when deploying. A text value **holds an unset reference**
 when it contains the text of an unset reference left in the same load,
 wherever the value ends up: written in place, copied with `${values.…}` or
 `${file:…}`, or embedded in other text. Such a value causes no error or
@@ -323,8 +335,8 @@ warning by itself:
 The loaded project lists its unset references (`unsetEnvvars`), each once, in
 the order they were first left, so that the checks that follow the load can
 do the same. The `ENVVAR_MISSING` information says what is missing. With
-`missingEnvvars: error` there are no unset references, and nothing in this
-section applies.
+`missingEnvvars: error` and without `deployEnvvars` there are no unset
+references, and nothing in this section applies.
 
 ## 6. Diagnostics
 
@@ -383,6 +395,7 @@ description: What the case shows
 environment: prod # optional
 envvars: { NAME: value } # optional; the host environment
 missingEnvvars: information # optional; as the caller's option of that name (section 4.4)
+deployEnvvars: true # optional; as the caller's option of that name (section 4.4)
 limits: { maxIncludes: 3 } # optional overrides of the default limits
 kinds: # optional
   - apiVersion: example.dev/v1

@@ -1,13 +1,14 @@
 # Data product passports
 
 When a project has data products (definitions specification section 8),
-`plan`, `apply` and `check` also generate, for each environment, an output
-folder `<out>/<environment>/products/` with its own manifest. It sits beside
-the packs' output folders, or inside the one pack's folder when the standard
-names one pack; either way it is planned, applied, checked and retired like
-theirs. A project without data products has no such folder.
+`plan`, `apply` and `check` also generate the output folder `<out>/products/`,
+with its own manifest, beside the packs' output folders. It holds one folder
+per environment, `<out>/products/<environment>/`, each with that environment's
+passports ([output folders](outputs.md), section 2); it is planned, applied,
+checked and retired like the packs' folders. A project without data products
+has no such folder. CLI 1.x wrote `<out>/<environment>/products/`.
 
-The folder holds `README.md`, a table of every product (its name linking to
+Each environment's folder holds `README.md`, a table of every product (its name linking to
 its page, owners, status, and the first sentence of its purpose), and one page
 per product, named from its id (definitions specification section 8): its
 passport, written for someone who does not know the tools. Its sections, in order:

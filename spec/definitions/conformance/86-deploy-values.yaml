@@ -1,0 +1,61 @@
+description: Resolved for deploy, each ${envvar:…} is a deploy-time value, left unresolved even when it is set; the model lists each once with where it is used, and a check that depends on its value, such as an enum, is left to the platform.
+environment: dev
+deployTime: true
+envvars:
+  SHOP_PATH: /from/host
+files:
+  project.yaml: |
+    id: retail
+    values:
+      shop: ${envvar:SHOP_PATH}
+    environments: { dev: {}, prod: {} }
+    imports: ["*.yaml"]
+  .env.dev: |
+    FORMAT=csv
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: "${values.shop}/orders" }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    ingest:
+      with: { format: "${envvar:FORMAT}" }
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        description: One row per order.
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  tables:
+    - name: orders
+      ingest:
+        method: files
+        settings: { format: "${envvar:FORMAT}" }
+        connection: { id: shop, settings: { path: "${envvar:SHOP_PATH}/orders" } }
+  deployValues:
+    - name: SHOP_PATH
+      text: "${envvar:SHOP_PATH}"
+      uses: [{ file: project.yaml, pointer: /values/shop }]
+    - name: FORMAT
+      text: "${envvar:FORMAT}"
+      uses: [{ file: sales.yaml, pointer: /ingest/with/format }]
