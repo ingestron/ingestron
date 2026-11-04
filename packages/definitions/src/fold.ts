@@ -1,5 +1,6 @@
 // The fold property (specification section 2.1), as plain functions a pack's tests
 // call: deploy-time values in a text, and a check that folding changes nothing.
+import { environmentsDiagnostics } from "./environments.js";
 import type { DeployValue, ResolvedModel } from "./model.js";
 import type { Pack } from "./pack.js";
 
@@ -80,7 +81,10 @@ function checkTargets(pack: Pack, models: Record<string, ResolvedModel>, fold: F
   const targets = Object.keys(models);
   const label = `With ${targets.join(", ")}`;
   const built = pack.buildEnvironments!(models);
-  const errors = built.problems.filter((problem) => problem.severity === "error");
+  // Decided on the diagnostics, as a tool that writes the files decides: a notice is a warning.
+  const errors = environmentsDiagnostics(built.problems).filter(
+    (problem) => problem.severity === "error",
+  );
   if (errors.length > 0)
     return errors.map((problem) => `${label}: buildEnvironments reports "${problem.message}"`);
   const values = targets.flatMap((target) => models[target]!.deployValues ?? []);

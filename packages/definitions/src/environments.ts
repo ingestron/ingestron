@@ -4,10 +4,13 @@
 import type { AnyDiagnostic } from "@ingestron/config";
 import type { DefinitionCode } from "./diagnostics.js";
 
-/** The codes a pack may report from `buildEnvironments`, each documented in the code help. */
+/**
+ * The codes of the problems a pack may report from `buildEnvironments`, each documented in
+ * the code help. A notice, `PACK_NOTICE`, is a {@link PackNotice}.
+ */
 export type EnvironmentsCode = Extract<
   DefinitionCode,
-  "ENVIRONMENTS_DIFFER" | "DEPLOY_VALUE" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS" | "PACK_NOTICE"
+  "ENVIRONMENTS_DIFFER" | "DEPLOY_VALUE" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS"
 >;
 
 /**
@@ -19,8 +22,8 @@ export type EnvironmentsCode = Extract<
  * { code: "ENVIRONMENTS_DIFFER", severity: "error", message: 'Table "orders" is built in dev but not in prod.', file: "flows/sales.yaml" }
  */
 export interface EnvironmentsProblem {
-  /** The diagnostic's code; a notice is a {@link PackNotice}. */
-  code: Exclude<EnvironmentsCode, "PACK_NOTICE">;
+  /** The diagnostic's code. */
+  code: EnvironmentsCode;
   /** An error stops the files being written; a warning does not. */
   severity: "error" | "warning";
   /** One or more sentences, as the pack's specification gives them. */
@@ -51,7 +54,7 @@ export interface PackNotice {
   hint: string;
   /** The definition's file, relative to the project, when one definition causes it. */
   file?: string;
-  /** Its line, when the pack knows it. */
+  /** Its line, when the pack knows it; used only with `file`. */
   line?: number;
 }
 
@@ -74,12 +77,13 @@ export interface EnvironmentsBuild {
   deployValues: SuppliedValue[];
   /**
    * What the files cannot cover, and what the people deploying them need to know, each
-   * reported with {@link environmentsDiagnostics}.
+   * reported with {@link environmentsDiagnostics}. To read one, narrow on
+   * `code === "PACK_NOTICE"`: a notice may have no `file`.
    */
   problems: (EnvironmentsProblem | PackNotice)[];
 }
 
-const hints: Record<EnvironmentsProblem["code"], string> = {
+const hints: Record<EnvironmentsCode, string> = {
   ENVIRONMENTS_DIFFER:
     "Environments may differ only in values, such as names, paths and hosts; make the rest the same in every environment.",
   DEPLOY_VALUE:

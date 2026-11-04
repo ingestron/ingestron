@@ -1,60 +1,35 @@
 // A pack's notices (specification section 2.1): what the people deploying the files need
-// to know, returned with a pack's problems and shown as warnings when generating.
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-import { parse } from "yaml";
+// to know, returned with a pack's problems and shown as warnings when generating. The
+// diagnostics they become are conformance case 93.
 import { describe, expect, it } from "vitest";
-import { codeHelp, environmentsDiagnostics, type Pack, type PackNotice } from "../src/index.js";
-
-const conformance = join(import.meta.dirname, "../../../spec/definitions/conformance");
-const fold = parse(readFileSync(join(conformance, "pack-fold.yaml"), "utf8")) as Pack;
+import {
+  codeHelp,
+  environmentsDiagnostics,
+  type EnvironmentsBuild,
+  type EnvironmentsProblem,
+  type PackNotice,
+} from "../src/index.js";
 
 describe("a pack's notices", () => {
-  const noticing: Pack = {
-    ...fold,
-    build: () => ({}),
-    buildEnvironments: () => ({
-      files: { "views.sql": "SELECT 1;\n" },
-      deployValues: [{ name: "synapse_source", suppliedAs: ["synapse_source"] }],
-      problems: [
-        {
-          code: "PACK_NOTICE",
-          severity: "warning",
-          message:
-            'The deploying pipeline supplies "synapse_source" under that name, in that case.',
-          hint: "Set the variable with exactly that name in every pipeline stage.",
-          file: "shop.yaml",
-          line: 6,
-        },
-        {
-          code: "PACK_NOTICE",
-          severity: "warning",
-          message: "The runtimes are written with their name and type only.",
-          hint: "Check their other settings before the first deploy.",
-        },
-      ],
-    }),
-  };
-
-  it("become warnings with the pack's own hint, located only when the pack names a file", () => {
-    const { problems } = noticing.buildEnvironments!({});
-    const diagnostics = environmentsDiagnostics(problems);
-    expect(diagnostics).toEqual([
-      {
-        code: "PACK_NOTICE",
-        severity: "warning",
-        message: 'The deploying pipeline supplies "synapse_source" under that name, in that case.',
-        hint: "Set the variable with exactly that name in every pipeline stage.",
-        location: { file: "shop.yaml", line: 6, column: 1 },
-      },
-      {
-        code: "PACK_NOTICE",
-        severity: "warning",
-        message: "The runtimes are written with their name and type only.",
-        hint: "Check their other settings before the first deploy.",
-      },
-    ]);
-    expect(diagnostics.some((diagnostic) => diagnostic.severity === "error")).toBe(false);
+  it("are returned beside a pack's problems, and read by narrowing on the code", () => {
+    const problems: EnvironmentsProblem[] = [
+      { code: "SECRET_NAME_DIFFERS", severity: "warning", message: "A.", file: "a.yaml" },
+    ];
+    const notice: PackNotice = {
+      code: "PACK_NOTICE",
+      severity: "warning",
+      message: "The runtimes are written with their name and type only.",
+      hint: "Check their other settings before the first deploy.",
+    };
+    const built: EnvironmentsBuild = {
+      files: {},
+      deployValues: [],
+      problems: [...problems, notice],
+    };
+    const files = built.problems.map((problem) =>
+      problem.code === "PACK_NOTICE" ? (problem.file ?? "") : problem.file,
+    );
+    expect(files).toEqual(["a.yaml", ""]);
     expect(codeHelp.PACK_NOTICE.meaning).toMatch(/A warning: the files are still written\./);
   });
 
