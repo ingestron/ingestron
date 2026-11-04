@@ -813,13 +813,15 @@ with `fullName` written as `catalog.schema.table`, and `null` for a step the
 table does not have, such as `serve: null`), `products` (partial objects,
 in order), `platform`, `names`, `deployValues` (the model's, exactly) or
 `diagnostics` (matched in order on the fields given; `fixes` lists the fix
-titles), and optionally `fixed`, as in the config conformance cases. All cases use the
+titles, and `fixes: []` means the diagnostic has none), and optionally
+`fixed`, as in the config conformance cases. All cases use the
 data-only packs [conformance/pack.yaml](conformance/pack.yaml),
 [conformance/pack-bridge.yaml](conformance/pack-bridge.yaml),
 [conformance/pack-local.yaml](conformance/pack-local.yaml),
 [conformance/pack-fold.yaml](conformance/pack-fold.yaml),
-[conformance/pack-checked.yaml](conformance/pack-checked.yaml) and
-[conformance/pack-plain.yaml](conformance/pack-plain.yaml), all available. A
+[conformance/pack-checked.yaml](conformance/pack-checked.yaml),
+[conformance/pack-plain.yaml](conformance/pack-plain.yaml) and
+[conformance/pack-three.yaml](conformance/pack-three.yaml), all available. A
 pack file with `buildEnvironments: true` stands for a pack that builds
 environments together: the runner gives it a `buildEnvironments` member. A
 pack or a method with `checks`, a list of messages, stands for one with a
