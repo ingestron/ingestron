@@ -703,7 +703,12 @@ any other path is refused when it is given, before any file is read, with
 the error
 `The pack "<id>" lists the platform field "<path>", which the Platform document does not have.`,
 for the first such path in the order the packs are given. It is the pack's
-mistake, not the project's, so it is not a diagnostic: a tool stops with it.
+mistake, not the project's, so resolution does not report it among the
+project's diagnostics: resolution stops with it. A tool checks the packs
+first, without resolving, and reports a refused pack as `PACK_LOAD`, an error
+with no location, with that message and the hint
+`This is a mistake in the pack, not in the project, so nothing is checked or generated. Install a version of Ingestron, or of the editor extension, that fixes it.`
+It then reads, checks and generates nothing.
 The list changes nothing else; what a pack reads is still the model's
 `platform`.
 
@@ -823,7 +828,8 @@ pack or a method with `checks`, a list of messages, stands for one with a
 
 A case MAY give `platformFields`, by pack id, the paths that pack lists in
 this case only, in place of its own (section 7). When the packs are refused,
-`expect.refused` is the error's message, exactly.
+`expect.refused` is the error's message, exactly, and the message of the
+`PACK_LOAD` error the check before resolving gives.
 
 A case with `packProblems` in place of `files` gives the problems a pack's
 `buildEnvironments` returns (section 2.1). `expect.diagnostics` are then the
