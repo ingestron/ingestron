@@ -25,8 +25,9 @@ export const environmentCodeHelp: Record<
     fix: "Make the definitions the same in every environment, varying only values such as names, paths and hosts.",
   },
   DEPLOY_VALUE: {
-    meaning: "A ${envvar:…} supplied only when deploying would choose or name what is generated.",
-    fix: "Write the value in project.yaml, per environment; keep ${envvar:…} for values such as hosts, paths and accounts.",
+    meaning:
+      "A ${envvar:…} supplied only when deploying is where it cannot be: where it would choose or name what is generated; where two environments use different variable names at the same place; or inside a longer text where the platform's parameter must be the whole value, as in Data Factory's ARM parameters and Synapse's SQLCMD variables.",
+    fix: "Write the value in project.yaml, per environment; use one variable name in every environment and give it a different value in each pipeline stage; or make the variable hold the whole value. Keep ${envvar:…} for values such as hosts, paths and accounts.",
   },
   ARM_PARAMETERS: {
     meaning:
