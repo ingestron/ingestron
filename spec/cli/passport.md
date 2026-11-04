@@ -31,7 +31,7 @@ passport, written for someone who does not know the tools. Its sections, in orde
    column says when Databricks tags it in Unity Catalog. That is decided per
    table: the table is stored by the Databricks pack and the platform turns on
    `manage.tags`. A table stored by another pack makes no such claim, even when
-   the standard also names `databricks@1`.
+   the standard also names `databricks@2`.
 5. **Quality:** each row check and table check in words, with when it runs or
    why it does not. An output no table builds here says "Not built in this
    environment."

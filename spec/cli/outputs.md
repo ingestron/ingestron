@@ -105,10 +105,13 @@ build/
 ## 3. Building
 
 Each pack that builds environments together is given the models of its
-targets, resolved for deploy. When its result has problems, each is a
-diagnostic as the definitions specification, section 2.1, says; the output is
-the line `<pack id>: the definitions have problems`, then the diagnostics
-formatted; nothing is planned or written; and the exit code is 1.
+targets, resolved for deploy. Each problem in its result is a diagnostic as
+the definitions specification, section 2.1, says. When one is an error, the
+output is the line `<pack id>: the definitions have problems`, then the
+diagnostics formatted; nothing is planned or written; and the exit code is 1.
+Otherwise, when there are diagnostics, such as a `PACK_NOTICE`, the output is
+the line `<pack id>: warnings`, then the diagnostics formatted, and the pack's
+files are planned and written as usual.
 
 Each other pack's `build` is given the model of each of its targets, resolved
 with the host's values.
