@@ -43,6 +43,7 @@ expect:
       file: standard.yaml
       line: 4
       column: 17
+      message: This standard is for "fold@1", but the pack is fold@2, which builds every environment into one output folder.
       fixes: [Change to "fold@2"]
   fixed:
     - diagnostic: 0
