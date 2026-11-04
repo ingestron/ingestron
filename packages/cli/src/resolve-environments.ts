@@ -68,9 +68,7 @@ export function resolveEnvironments(
     reports: results.map(({ report }) => report),
     ok: results.every(({ report }) => !report.failed),
     together,
-    local: declared
-      .filter((item) => !together || local(item, available))
-      .map((item) => item.name),
+    local: declared.filter((item) => !together || local(item, available)).map((item) => item.name),
   };
 }
 
