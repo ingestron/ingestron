@@ -52,6 +52,12 @@ export interface GeneratedOutputs {
   /** The `PACK_LOAD` error when a pack cannot be loaded: then nothing is resolved or built. */
   refused?: AnyDiagnostic;
   /**
+   * The environments resolved for deploy, known before resolving: those not local when the
+   * standard names a pack that builds environments together (spec/cli/outputs.md,
+   * section 1). Their variables are read only when deploying, even when generating fails.
+   */
+  deployed: string[];
+  /**
    * The reports as plan prints them before planning: each environment's problems, then each
    * pack's problems or warnings. Empty when there are none.
    */
@@ -75,7 +81,8 @@ export function generatedOutputs(
   const refused = packLoadProblem(available);
   if (refused) {
     const text = `${formatDiagnostics([refused])}\n`;
-    return { ok: false, outputs: [], environmentReports: [], packReports: [], refused, text };
+    const nothing = { outputs: [], environmentReports: [], packReports: [], deployed: [] };
+    return { ok: false, ...nothing, refused, text };
   }
   const generated = generateAll(files, available, options.envvars ?? process.env);
   const outputs = generated.outputs.map((output) => ({
@@ -88,9 +95,15 @@ export function generatedOutputs(
   }));
   const text =
     environmentReportsText(generated.environmentReports) + packReportsText(generated.packReports);
+  const deployed = generated.together
+    ? generated.environmentReports
+        .map((report) => report.name)
+        .filter((name) => !generated.local.includes(name))
+    : [];
   return {
     ok: generated.ok,
     outputs,
+    deployed,
     environmentReports: generated.environmentReports,
     packReports: generated.packReports,
     text,

@@ -91,4 +91,15 @@ describe("generatedOutputs", () => {
     expect(generated.refused?.code).toBe("PACK_LOAD");
     expect(generated.text).toMatch(/^\(project\) {2}error {2}PACK_LOAD\n {2}The pack "broken"/);
   });
+
+  it("names the environments deployed by a pack that builds them together, even when one fails", () => {
+    const deployed = (example: string, change?: (root: string) => void) =>
+      generatedOutputs(nodeFiles(workspace(example, change).folder), { envvars: {} }).deployed;
+    expect(deployed("retail")).toEqual(["dev", "prod"]);
+    expect(deployed("test/fixtures/duckdb-local")).toEqual(["dev"]);
+    expect(deployed("duckdb")).toEqual([]);
+    const failing = (root: string) =>
+      edit(root, "flows/shop.yaml", "source: shop", "source: ${envvar:INGT_SRC}");
+    expect(deployed("retail", failing)).toEqual(["dev", "prod"]);
+  });
 });
