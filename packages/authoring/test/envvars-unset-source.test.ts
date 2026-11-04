@@ -78,15 +78,17 @@ afterEach(() => {
 });
 
 describe("an unset reference in a flow's source and in an anyOf setting", () => {
-  it("gives the information for each unset variable, and plan's error for the source", () => {
+  it("gives plan's error for the source in place of its advice, and says the setting is supplied when deploying", () => {
     const found = problems(openProject(workspace(), new Map()), "dev");
     expect(found.map(({ code, severity }) => ({ code, severity }))).toEqual([
       { code: "ENVVAR_MISSING", severity: "information" },
-      { code: "ENVVAR_MISSING", severity: "information" },
       deployValue,
     ]);
-    expect(found[2]?.file).toBe(flow);
-    expect(found[2]?.range.start.line).toBe(3);
+    expect(found[0]?.message).toBe(
+      "INGT_CLUSTER is supplied when deploying. Plan does not read it, so it needs no .env.dev entry.",
+    );
+    expect(found[1]?.file).toBe(flow);
+    expect(found[1]?.range.start.line).toBe(3);
   });
 
   it("gives only the information for an unset source DuckDB reads when generating", () => {
@@ -120,9 +122,8 @@ describe("an unset reference in a flow's source and in an anyOf setting", () => 
   it("does not say there is nothing to generate when a table is left out for one", () => {
     const folder = workspace(set, "${envvar:INGT_CONTRACT}");
     const found = problems(openProject(folder, new Map()), "dev");
-    // The source and the contract are each supplied only when deploying.
+    // The source and the contract are each supplied only when deploying: plan's errors alone.
     expect(found.map(({ code, severity }) => ({ code, severity }))).toEqual([
-      { code: "ENVVAR_MISSING", severity: "information" },
       deployValue,
       deployValue,
     ]);
