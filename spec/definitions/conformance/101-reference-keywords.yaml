@@ -1,0 +1,19 @@
+description: "Merging branches, each keyword comes from the schema itself, then the earliest branch; an anyOf item's own keywords replace the schema's when building type words."
+reference:
+  method: copy
+  settings:
+    type: object
+    properties:
+      own: { type: integer, allOf: [{ type: string }], description: The schema's own type wins. }
+      earliest:
+        allOf: [{ type: string }, { type: integer }]
+        description: The earliest branch's type wins.
+      item:
+        type: object
+        anyOf: [{ type: string }, { type: integer }]
+        description: Each anyOf item's type replaces the schema's own.
+expect:
+  fields:
+    - { path: own, type: a whole number }
+    - { path: earliest, type: text }
+    - { path: item, type: "text, or a whole number" }

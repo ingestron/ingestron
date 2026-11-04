@@ -1,3 +1,6 @@
+# This relies on the Platform schema: its tags' values are a bare string with no
+# description, so the field reference has no tags.* entry. If they are ever
+# described, tags.* becomes a valid path and this case must change.
 description: "A mapping's values whose schema says nothing beyond the mapping are not an entry of the field reference, so a pack cannot list them."
 platformFields:
   test: [tags, "tags.*"]
