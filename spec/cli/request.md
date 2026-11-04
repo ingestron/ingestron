@@ -9,7 +9,10 @@ environment.
 
 The definitions are resolved as an editor resolves them, with
 `missingEnvvars: information` (definitions specification, section 1): a
-`${envvar:…}` whose variable is set nowhere does not stop the request.
+`${envvar:…}` whose variable is set nowhere does not stop the request. From
+CLI 2.0 they are also resolved with `environmentsTogether: true`
+(definitions specification, section 7), so the request shows the `mode` the
+generated files have.
 
 Every other error is still found and stops the request: every loading
 error, and every resolution error at a value that holds no unset reference.

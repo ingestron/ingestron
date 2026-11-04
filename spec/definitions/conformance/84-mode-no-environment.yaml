@@ -1,4 +1,4 @@
-description: A project loaded without an environment is the environment default, deployed in development mode with its schedule paused, as an environment named dev is.
+description: With environmentsTogether, a project loaded without an environment is the environment default, deployed in production mode, as every environment but dev is; its schedule stays paused, as only prod and production run theirs.
 environmentsTogether: true
 files:
   project.yaml: |
@@ -43,7 +43,7 @@ files:
     schedule: { cron: '0 0 6 * * ?' }
 expect:
   platform:
-    mode: development
+    mode: production
     schedule:
       cron: 0 0 6 * * ?
       timezone: UTC

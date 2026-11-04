@@ -47,5 +47,5 @@ expect:
     build/fold: [tables.txt, targets.txt]
     build/local: [dev/tables.txt, prod/tables.txt]
   texts:
-    build/fold/tables.txt: "orders ${envvar:SHOP_PATH}\n"
+    build/fold/tables.txt: "orders $(FOLD_SHOP_PATH)\n"
     build/local/dev/tables.txt: "orders /data/from-host\n"
