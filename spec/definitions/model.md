@@ -243,17 +243,30 @@ by a tool that generates are resolved without it.
 - `problems`: what stops the files covering every target, or is worth
   knowing. Each has a `code`, a `severity` (`error` or `warning`), a
   `message` (one or more sentences), the `file`, and when known the `line`,
-  of the definition that causes it, and optionally a `hint` in place of the
-  code's. When there is an error, the files MUST NOT be written.
+  of the definition that causes it (for a `PACK_NOTICE`, only when one
+  does), and optionally a `hint` in place of the code's. When there is an
+  error, the files MUST NOT be written.
 
 A pack reports only these codes:
 
-| Code                  | Severity | When                                                                                |
-| --------------------- | -------- | ----------------------------------------------------------------------------------- |
-| `ENVIRONMENTS_DIFFER` | error    | Targets differ in more than values                                                  |
-| `DEPLOY_VALUE`        | error    | A deploy-time value is where the platform cannot take it                            |
-| `ARM_PARAMETERS`      | error    | The ARM template would have more than 256 parameters; the message gives the count   |
-| `SECRET_NAME_DIFFERS` | warning  | A Key Vault secret's name differs between environments, where only the vault should |
+| Code                  | Severity | When                                                                                  |
+| --------------------- | -------- | ------------------------------------------------------------------------------------- |
+| `ENVIRONMENTS_DIFFER` | error    | Targets differ in more than values                                                    |
+| `DEPLOY_VALUE`        | error    | A deploy-time value is where the platform cannot take it                              |
+| `ARM_PARAMETERS`      | error    | The ARM template would have more than 256 parameters; the message gives the count     |
+| `SECRET_NAME_DIFFERS` | warning  | A Key Vault secret's name differs between environments, where only the vault should   |
+| `PACK_NOTICE`         | warning  | Something about the files the people deploying them need to know, in the pack's words |
+
+**`PACK_NOTICE`.** A pack tells the people who generate and deploy its files
+something they need to know, such as a setting it cannot write that the
+platform keeps, or a deploy-time value whose name the deploying pipeline must
+supply exactly as written. It is always a warning: the files are still
+written, and, like every warning, it does not make generating or checking the
+definitions fail. It has the pack's `message`, one or more sentences, and a
+`hint`, what to do, which the pack MUST give, since the code has no hint of
+its own. Its `file` and `line` are optional: the pack gives them when one
+definition causes the notice, and leaves them out when it is about the files
+as a whole. Each pack's specification lists its notices, with each message.
 
 A pack that builds environments together MUST:
 
@@ -325,7 +338,9 @@ location is the `file` and `line` of the value's `uses`.
 
 Each problem is a diagnostic: its `code`, its `severity`, the pack's
 `message`, and the location `file`, `line` (1 when the pack gives none) and
-column 1. The hint is the problem's own, else the code's:
+column 1. A `PACK_NOTICE` is a warning whatever severity it gives, and has no
+location when it gives no `file`. The hint is the problem's own, else the
+code's:
 
 - `ENVIRONMENTS_DIFFER`:
   `Environments may differ only in values, such as names, paths and hosts; make the rest the same in every environment.`
@@ -673,6 +688,23 @@ so is `default`, the environment of a project that declares none.
 `production`, or a platform that sets `mode: production`, run their schedules
 unless `schedule.paused` says otherwise.
 
+A pack MAY list, as data (`platformFields`), the Platform fields it reads, so
+that tools can show them, such as each one with its default in the pack's
+reference. Each is a path from the document's root, its keys joined with `.`,
+such as `schedule.paused`, with `*` for any key of a mapping or any list item
+(`permissions.*.level`), as the field reference (section 10) writes paths. A path
+MUST name a field of the Platform schema. Following its keys from the root,
+each key is a property the schema gives at that point, in itself or any of
+its branches (`allOf`, `anyOf`, `oneOf`, `then` and `else`, each `$ref`
+followed); `*` is the schema's `additionalProperties`, when that is a schema,
+or a list's `items`. A pack that lists any other path is refused when it is
+given to resolution, before any file is read, with the error
+`The pack "<id>" lists the platform field "<path>", which the Platform document does not have.`,
+for the first such path in the order the packs are given. It is the pack's
+mistake, not the project's, so it is not a diagnostic: a tool stops with it.
+The list changes nothing else; what a pack reads is still the model's
+`platform`.
+
 ### 7.1 Capabilities
 
 Some features change shared objects on the platform, such as schemas, tags
@@ -785,6 +817,37 @@ environments together: the runner gives it a `buildEnvironments` member. A
 pack or a method with `checks`, a list of messages, stands for one with a
 `check` that returns them, for every model or table it is given. The pack
 [conformance/pack-checked.yaml](conformance/pack-checked.yaml) has both.
+
+A case MAY give `platformFields`, by pack id, the paths that pack lists in
+this case only, in place of its own (section 7). When the packs are refused,
+`expect.refused` is the error's message, exactly.
+
+A case with `packProblems` in place of `files` gives the problems a pack's
+`buildEnvironments` returns (section 2.1). `expect.diagnostics` are then the
+diagnostics they become, exactly and in order, each written with its `code`,
+`severity`, `message` and `hint`, and, when it has a location, its `file`,
+`line` and `column`.
+
+## 10. Field reference
+
+Tools describe each field of a document kind, and each setting of a pack's
+method, from its JSON Schema, for the editor and the documentation alike:
+one entry per field, depth first. An entry has the field's `path` (keys from
+the root, `*` for any key of a mapping or any list item), its `name`, its
+`description`, its type in words, whether it is `required`, its allowed
+`values` (an `enum`, each with its meaning from `enumDescriptions`, or a
+`const`), its `default` and its first example. It has `minimum` and
+`maximum` when the schema gives them, so that a range can be shown from the
+schema rather than from the description's words. Each is taken from the
+field's schema, else from the first of its branches that gives it.
+
+The fields under a mapping's `additionalProperties` schema, and under a
+list's `items`, are entries under `*`. The `additionalProperties` schema
+itself is an entry, `*` under the mapping, when it has a description or
+allowed values, in itself or any of its branches: for example a mapping whose
+every value is one of a list of names, each with its meaning, or other text.
+Otherwise it says nothing that the mapping's own entry does not, and is not
+an entry.
 
 ## Connector authoring metadata
 

@@ -1,0 +1,49 @@
+description: "A pack's problems become diagnostics: a notice is a warning with the pack's own hint, at its definition when it names one and with no location when it does not."
+packProblems:
+  - code: PACK_NOTICE
+    severity: warning
+    message: 'The integration runtime "shir" is written with its name and type only.'
+    hint: Check its other settings with a what-if deployment before the first deploy.
+    file: connections/erp.yaml
+    line: 4
+  - code: PACK_NOTICE
+    severity: warning
+    message: The deploying pipeline must supply SYNAPSE_SOURCE exactly as written, in the same case.
+    hint: Map the variable with env in the pipeline.
+  - code: PACK_NOTICE
+    severity: error
+    message: A notice given as an error.
+    hint: Nothing to do.
+    file: flows/sales.yaml
+  - code: SECRET_NAME_DIFFERS
+    severity: warning
+    message: The secret's name differs.
+    file: connections/erp.yaml
+    line: 9
+expect:
+  diagnostics:
+    - code: PACK_NOTICE
+      severity: warning
+      message: 'The integration runtime "shir" is written with its name and type only.'
+      hint: Check its other settings with a what-if deployment before the first deploy.
+      file: connections/erp.yaml
+      line: 4
+      column: 1
+    - code: PACK_NOTICE
+      severity: warning
+      message: The deploying pipeline must supply SYNAPSE_SOURCE exactly as written, in the same case.
+      hint: Map the variable with env in the pipeline.
+    - code: PACK_NOTICE
+      severity: warning
+      message: A notice given as an error.
+      hint: Nothing to do.
+      file: flows/sales.yaml
+      line: 1
+      column: 1
+    - code: SECRET_NAME_DIFFERS
+      severity: warning
+      message: The secret's name differs.
+      hint: Give the secret the same name in every environment's Key Vault, so that only the vault differs.
+      file: connections/erp.yaml
+      line: 9
+      column: 1
