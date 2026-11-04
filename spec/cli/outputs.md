@@ -100,7 +100,7 @@ output folder is inside another. The layout is the same with one pack or
 several, so adding a pack does not move another pack's files.
 
 For example, a standard naming `databricks@2` and `adf@2`, with a `local`
-environment that runs on `duckdb@1`:
+environment that runs on `duckdb@2`:
 
 ```text
 build/
@@ -205,8 +205,8 @@ CLI 1.x wrote `<out>/<environment>/`, with each pack under
 `<out>/<environment>/<pack id>/` when the standard named several, and the
 passports under `<out>/<environment>/products/`. In 2.0 those folders are
 retired folders (section 4): `apply` reports each, and `check` fails until
-they are deleted. A standard that names version 1 of a pack whose version 2
-builds environments together gets `PACK_VERSION`, with a fix
+they are deleted. Every pack the CLI 2.0 uses is version 2, so a standard
+that names version 1 of a pack gets `PACK_VERSION`, with a fix to version 2
 (definitions specification, section 1).
 
 ## 8. Conformance

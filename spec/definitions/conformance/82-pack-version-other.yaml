@@ -1,4 +1,4 @@
-description: Only version 1 of a version 2 pack that builds environments together is PACK_VERSION; any other version that is not available is WRONG_PACK, with no fix.
+description: Only version 1 of a version 2 pack is PACK_VERSION; any other version that is not available is WRONG_PACK, with no fix.
 environment: dev
 files:
   project.yaml: |

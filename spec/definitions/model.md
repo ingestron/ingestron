@@ -31,14 +31,16 @@ names the packs to use, `<id>@<version>`. Each MUST be available
 (`UNKNOWN_PACK`) in that major version (`WRONG_PACK`), and two packs MUST NOT
 have a method of the same name (`METHOD_CONFLICT`).
 
-A standard that names version 1 of a pack available as version 2, where
-version 2 builds environments together (section 2.1), is `PACK_VERSION`
-instead of `WRONG_PACK`: an error at the reference, with the message
-`This standard is for "<id>@1", but the pack is <id>@2, which builds every environment into one output folder.`,
-the hint `Change it to <id>@2; the upgrade notes say what changes in the generated files.`
+A standard that names version 1 of a pack available as version 2 is
+`PACK_VERSION` instead of `WRONG_PACK`: an error at the reference, with the
+message
+`This standard is for "<id>@1", but the pack is <id>@2, which builds every environment into one output folder.`
+when version 2 builds environments together (section 2.1), and
+`This standard is for "<id>@1", but the pack is <id>@2.` when it does not;
+the hint `Change it to <id>@2; the upgrade notes say what changes in the generated files.`;
 and one fix, `Change to "<id>@2"`, which sets the reference to `<id>@2`. Any
-other version that is not available stays `WRONG_PACK`, including version 1
-of a version 2 pack that does not build environments together.
+other version that is not available stays `WRONG_PACK`, such as version 3 of
+a version 2 pack, or version 1 of a version 3 pack.
 
 Two placeholder forms exist. A `${…}` reference is replaced wherever text is
 written, project.yaml's values included, by the `@ingestron/config` syntax.
@@ -810,8 +812,9 @@ titles), and optionally `fixed`, as in the config conformance cases. All cases u
 data-only packs [conformance/pack.yaml](conformance/pack.yaml),
 [conformance/pack-bridge.yaml](conformance/pack-bridge.yaml),
 [conformance/pack-local.yaml](conformance/pack-local.yaml),
-[conformance/pack-fold.yaml](conformance/pack-fold.yaml) and
-[conformance/pack-checked.yaml](conformance/pack-checked.yaml), all available. A
+[conformance/pack-fold.yaml](conformance/pack-fold.yaml),
+[conformance/pack-checked.yaml](conformance/pack-checked.yaml) and
+[conformance/pack-plain.yaml](conformance/pack-plain.yaml), all available. A
 pack file with `buildEnvironments: true` stands for a pack that builds
 environments together: the runner gives it a `buildEnvironments` member. A
 pack or a method with `checks`, a list of messages, stands for one with a

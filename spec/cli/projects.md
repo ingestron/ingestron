@@ -16,7 +16,7 @@ adf@2]`);
 [synapse@2, adf@2]`, `store: { default: synapse-view }`, with
   `synapse-view`'s data source at the landing storage);
 - `adf-duckdb`: DuckDB builds tables from them and publishes Parquet (`packs:
-[duckdb@1, adf@2]`, with `duckdb-table`'s `published` folder beside the
+[duckdb@2, adf@2]`, with `duckdb-table`'s `published` folder beside the
   landing), started after the copies by a Container Apps job when the user
   sets `after_copy`;
 - `adf-landing`: the flows end at the landed files (`packs: [adf@2]`, `store: {
