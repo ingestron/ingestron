@@ -1,9 +1,10 @@
 // Skeletons for a new, empty file: one document of the kind its folder holds,
 // with the id from the file name and the project's ids to choose from.
 import { basename } from "node:path";
-import { packs, projectId } from "@ingestron/cli";
+import { projectId } from "@ingestron/cli";
 import type { Suggestion } from "./completion.js";
 import { occurrences } from "./navigation.js";
+import { packIds } from "./pack-lists.js";
 import type { Project } from "./project.js";
 import { idsOf } from "./context.js";
 import { objectOf, standardPacks, unusedContracts } from "./smart.js";
@@ -48,8 +49,9 @@ const rootSkeletons: Record<string, (project: Project) => Suggestion> = {
       "Standard",
       `${header("Standard", projectId(basename(project.folder)))}packs: [${stop(
         2,
-        packs.map((pack) => `${pack.id}@${pack.version}`),
-        "databricks@1",
+        packIds(),
+        // Never used: the CLI always has packs.
+        "pack",
       )}]\n$0`,
       "How the organisation builds data products: the packs, and its naming, rules and settings.",
     ),

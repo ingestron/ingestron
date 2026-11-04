@@ -76,7 +76,7 @@ describe("quick fixes", () => {
     expect(fix?.title).toBe('Create "standard.yaml"');
     expect(fix?.create?.file).toBe("standard.yaml");
     expect(fix?.create?.text).toMatch(
-      /^apiVersion: ingestron.io\/v1\nkind: Standard\nid: \S+\npacks: \[databricks@1\]\n$/,
+      /^apiVersion: ingestron.io\/v1\nkind: Standard\nid: \S+\npacks: \[databricks@2\]\n$/,
     );
     expect(fix?.edits).toEqual([
       expect.objectContaining({ file: "project.yaml", text: ", standard.yaml" }),

@@ -80,7 +80,7 @@ describe.each(
   packs.flatMap((pack) => Object.keys(pack.methods).map((id) => [`${pack.id}:${id}`, pack, id])),
 )("method %s", (_, pack, id) => {
   const method = (pack as (typeof packs)[number]).methods[id as string]!;
-  const head = `apiVersion: ingestron.io/v1\nkind: Standard\npacks: [databricks@1, adf@1]\n${method.action}:\n  settings:\n    ${id as string}:\n      `;
+  const head = `apiVersion: ingestron.io/v1\nkind: Standard\npacks: [databricks@2, adf@2]\n${method.action}:\n  settings:\n    ${id as string}:\n      `;
   const settings = methodReference(pack as (typeof packs)[number], id as string).filter(
     (field) => field.path.length === 1,
   );
