@@ -79,7 +79,7 @@ function loadOptions(options: ResolveOptions) {
 
 /**
  * Loads definitions from any file source and resolves them with the packs its standard names.
- * Throws when a pack lists a `platformFields` path that is not a field of the Platform schema.
+ * Throws when a pack lists a `platformFields` path the Platform's field reference does not have.
  * @example
  * const result = resolveDefinitions(memoryFiles(files), { packs: [databricks], environment: "dev" });
  */
@@ -100,7 +100,7 @@ export function resolveDefinitions(files: FileSource, options: ResolveOptions): 
 
 /**
  * Loads definitions from a folder on disk and resolves them with the packs its standard names.
- * Throws when a pack lists a `platformFields` path that is not a field of the Platform schema.
+ * Throws when a pack lists a `platformFields` path the Platform's field reference does not have.
  * @example
  * const result = loadDefinitions("definitions", { packs: [databricks, adf], environment: "prod" });
  */
