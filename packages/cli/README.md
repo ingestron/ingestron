@@ -4,7 +4,7 @@ The `ingestron` command: generates platform assets from definitions, as the
 organisation's standard says, safely.
 
 ```sh
-ingestron plan      # what would change in each environment's output, with diffs
+ingestron plan      # what would change in each pack's output folder, with diffs
 ingestron apply     # write it; files edited by hand are never overwritten
 ingestron check     # for CI: fail when the output is not up to date
 ingestron schemas   # editor schemas for VS Code's YAML extension
@@ -13,8 +13,13 @@ ingestron schemas   # editor schemas for VS Code's YAML extension
 It loads the definitions with [`@ingestron/definitions`](../definitions/README.md),
 builds the files with the packs its standard names, such as the
 [Databricks pack](https://github.com/ingestron/pack-databricks), and
-writes them with [`@ingestron/generate`](../generate/README.md), into
-`build/<environment>/`.
+writes them with [`@ingestron/generate`](../generate/README.md). Every
+environment is generated together, into one folder per pack: `build/<pack>/`.
+A pack that builds every environment into one artefact, such as one
+Databricks bundle with a target per environment, writes it there; any other
+pack, such as DuckDB, writes each environment's files in
+`build/<pack>/<environment>/`. Data product passports go in
+`build/products/<environment>/`.
 
 ## In code
 

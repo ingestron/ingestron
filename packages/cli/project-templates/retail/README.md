@@ -17,6 +17,7 @@ from change records, and a silver table of daily sales.
 pnpm ingestron plan --definitions examples/08-retail --out examples/08-retail/build
 ```
 
-The generated files for both environments are in [build/](build/).
+The generated files are in [build/databricks](build/databricks/): one bundle
+with a target for each environment.
 For editor help, run `ingestron schemas` in this folder and add the printed
 setting to VS Code.
