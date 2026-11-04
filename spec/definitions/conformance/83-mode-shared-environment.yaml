@@ -1,5 +1,6 @@
-description: A shared environment other than dev, such as test, is deployed in production mode by default, and its schedule stays paused, as only prod and production run theirs.
+description: With environmentsTogether, a shared environment other than dev, such as test, is deployed in production mode by default, and its schedule stays paused, as only prod and production run theirs.
 environment: test
+environmentsTogether: true
 files:
   project.yaml: |
     id: retail

@@ -544,28 +544,31 @@ standard's packs declares `used`, and at least one declares `not-yet`, is
 
 ## 7. Platform defaults
 
-| Setting              | Default                                                                                                              |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `mode`               | `development` when the environment is `dev` or `default`, else `production`                                          |
-| `compute.serverless` | `true`                                                                                                               |
-| `schedule.timezone`  | `UTC`                                                                                                                |
-| `schedule.paused`    | `false` when `mode` is set to `production`, or is not set and the environment is `prod` or `production`; else `true` |
-| `manage.schemas`     | `false`                                                                                                              |
-| `manage.tags`        | `false`                                                                                                              |
-| `manage.comments`    | `false`                                                                                                              |
-| `manage.checks`      | `false`                                                                                                              |
-| everything else      | empty                                                                                                                |
+| Setting              | Default                                                                                                                                                                                   |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mode`               | `production` when the environment is `prod` or `production`, else `development`; with `environmentsTogether`, `development` when the environment is `dev` or `default`, else `production` |
+| `compute.serverless` | `true`                                                                                                                                                                                    |
+| `schedule.timezone`  | `UTC`                                                                                                                                                                                     |
+| `schedule.paused`    | `false` when `mode` is set to `production`, or is not set and the environment is `prod` or `production`; else `true`                                                                      |
+| `manage.schemas`     | `false`                                                                                                                                                                                   |
+| `manage.tags`        | `false`                                                                                                                                                                                   |
+| `manage.comments`    | `false`                                                                                                                                                                                   |
+| `manage.checks`      | `false`                                                                                                                                                                                   |
+| everything else      | empty                                                                                                                                                                                     |
 
 Loading without an environment uses the environment name `default`.
 
-`development` mode is for a personal copy: on Databricks it prefixes names
-with the deploying user and turns off the deployment lock. A shared
-environment that a pipeline deploys, such as `test`, is therefore
-`production` unless the platform sets `mode`. Its schedule stays paused, as
-before definitions 1.8: only `prod` and `production`, or a platform that sets
-`mode: production`, run their schedules unless `schedule.paused` says
-otherwise. Before definitions 1.8, `mode` was `production` only for `prod`
-and `production`.
+A project is resolved with `environmentsTogether: true` when every
+environment is generated together, as the CLI from version 2.0 does
+([output folders](../cli/outputs.md), section 1). Without it, `mode` defaults
+as it did before definitions 1.8, so a tool that resolves one environment at a
+time sees no change. `development` mode is for a personal copy: on Databricks
+it prefixes names with the deploying user and turns off the deployment lock.
+With `environmentsTogether`, a shared environment that a pipeline deploys,
+such as `test`, is therefore `production` unless the platform sets `mode`.
+`schedule.paused` is the same with or without the option: only `prod` and
+`production`, or a platform that sets `mode: production`, run their schedules
+unless `schedule.paused` says otherwise.
 
 ### 7.1 Capabilities
 
@@ -661,7 +664,8 @@ reported in one run:
 
 Each case in [conformance/](conformance/) gives `files` (the project), an
 optional `environment`, optional `envvars` and `missingEnvvars` (as in the
-config conformance cases), an optional `deployTime: true` (section 1.1), and
+config conformance cases), an optional `deployTime: true` (section 1.1), an
+optional `environmentsTogether: true` (section 7), and
 `expect`: `tables` (partial objects, in order,
 with `fullName` written as `catalog.schema.table`, and `null` for a step the
 table does not have, such as `serve: null`), `products` (partial objects,

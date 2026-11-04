@@ -13,6 +13,7 @@ interface Case {
   envvars?: Record<string, string>;
   missingEnvvars?: "error" | "information";
   deployTime?: boolean;
+  environmentsTogether?: boolean;
   files: Record<string, string>;
   expect: {
     tables?: Record<string, unknown>[];
@@ -109,6 +110,7 @@ describe("conformance", () => {
         envvars: testCase.envvars ?? {},
         ...(testCase.missingEnvvars && { missingEnvvars: testCase.missingEnvvars }),
         ...(testCase.deployTime && { deployTime: true }),
+        ...(testCase.environmentsTogether && { environmentsTogether: true }),
       });
       const { diagnostics } = testCase.expect;
       // A case that expects only information still resolves, so its tables can be checked too.

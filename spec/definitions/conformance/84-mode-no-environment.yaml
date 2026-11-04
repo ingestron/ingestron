@@ -1,4 +1,5 @@
 description: A project loaded without an environment is the environment default, deployed in development mode with its schedule paused, as an environment named dev is.
+environmentsTogether: true
 files:
   project.yaml: |
     id: retail
