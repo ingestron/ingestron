@@ -74,7 +74,7 @@ selected standard is checked during creation, before any files are written.
 
 ## Checking generated bundles
 
-`pnpm check:bundle <schema.json>` checks the Databricks YAML generated for every
+`pnpm check:bundle <schema.json>` checks the Databricks bundle generated for every
 project template and test fixture against the output of `databricks bundle
 schema`, from the Databricks CLI you deploy with.
 
