@@ -7,6 +7,7 @@ import {
   type ResolvedProduct,
 } from "@ingestron/definitions";
 import { lineage } from "./passport-lineage.js";
+import { supplied } from "./passport-supplied.js";
 import { access, columns, freshness, provides, quality, table } from "./passport-sections.js";
 
 /**
@@ -20,15 +21,6 @@ export function passports(model: ResolvedModel): Record<string, string> {
       ["README.md", index(model)],
       ...model.products.map((product) => [passportFile(product.id), page(model, product)]),
     ].map(([path, text]) => [path, supplied(model, text!)]),
-  );
-}
-
-/** The text with each deploy-time value's `${envvar:NAME}` written as `` `NAME` (supplied when deploying) ``. */
-function supplied(model: ResolvedModel, text: string): string {
-  return (model.deployValues ?? []).reduce(
-    (written, value) =>
-      written.replaceAll(value.text, `\`${value.name}\` (supplied when deploying)`),
-    text,
   );
 }
 
