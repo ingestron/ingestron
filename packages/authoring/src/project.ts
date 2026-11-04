@@ -11,6 +11,7 @@ import {
 import { packs } from "@ingestron/cli";
 import { kinds, resolveDefinitions } from "@ingestron/definitions";
 import { parse } from "yaml";
+import { unlessPackThrows } from "./pack-load.js";
 import { withoutEnvFiles } from "./without-env-files.js";
 
 /** A project folder, its files and the environments it declares. */
@@ -77,7 +78,11 @@ function environmentsOf(files: FileSource): string[] {
 
 const resolutions = new WeakMap<Project, Map<string, ReturnType<typeof resolveDefinitions>>>();
 
-/** The project resolved for an environment with the CLI's packs, once per project snapshot. */
+/**
+ * The project resolved for an environment with the CLI's packs, once per project snapshot,
+ * as `ingestron plan` resolves it: every environment generated together. A pack that cannot
+ * be loaded gives a `PACK_LOAD` error in place of the model.
+ */
 export function resolved(
   project: Project,
   environment: string | undefined,
@@ -87,13 +92,8 @@ export function resolved(
   const key = environment ?? "";
   let result = byEnvironment.get(key);
   if (!result) {
-    result = resolveDefinitions(project.files, {
-      packs,
-      ...(environment && { environment }),
-      // VS Code's environment, which the extension host shares; unset variables are advice.
-      envvars: process.env,
-      missingEnvvars: "information",
-    });
+    // VS Code's environment, which the extension host shares; unset variables are advice.
+    result = resolve(project.files, environment, process.env);
     byEnvironment.set(key, result);
   }
   return result;
@@ -115,15 +115,29 @@ export function resolvedForDisplay(
   const key = environment ?? "";
   let result = byEnvironment.get(key);
   if (!result) {
-    result = resolveDefinitions(withoutEnvFiles(project.files), {
-      packs,
-      ...(environment && { environment }),
-      envvars: {},
-      missingEnvvars: "information",
-    });
+    result = resolve(withoutEnvFiles(project.files), environment, {});
     byEnvironment.set(key, result);
   }
   return result;
+}
+
+/** Resolves as the CLI does, with every environment generated together; unset variables are information. */
+function resolve(
+  files: FileSource,
+  environment: string | undefined,
+  envvars: Readonly<Record<string, string | undefined>>,
+): ReturnType<typeof resolveDefinitions> {
+  return unlessPackThrows(
+    () =>
+      resolveDefinitions(files, {
+        packs,
+        ...(environment && { environment }),
+        envvars,
+        missingEnvvars: "information",
+        environmentsTogether: true,
+      }),
+    (problem) => ({ ok: false, diagnostics: [problem] }),
+  );
 }
 
 const loads = new WeakMap<Project, Map<string, DefinitionDocument[]>>();
