@@ -15,6 +15,11 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
     meaning: "The standard names another pack or version than the one available.",
     fix: "Change the standard's packs list to a version this tool provides.",
   },
+  PACK_VERSION: {
+    meaning:
+      "The standard names version 1 of a pack that is now version 2, which builds every environment into one output folder.",
+    fix: "Change the standard's packs list to version 2, and read the upgrade notes for what changes in the generated files.",
+  },
   UNKNOWN_PACK: {
     meaning: "The standard names a pack that is not available.",
     fix: "Check the spelling in packs, or use a pack this tool provides.",
@@ -124,6 +129,15 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
   METHOD_CHECK: {
     meaning: "The method found a problem with this table, such as change data without a key.",
     fix: "Follow the message; it names what the method needs.",
+  },
+  ENVIRONMENTS_DIFFER: {
+    meaning:
+      "The pack builds every environment into one artefact, and the environments differ in more than values, such as a table built in some environments only or a method that differs.",
+    fix: "Make the definitions the same in every environment, varying only values such as names, paths and hosts.",
+  },
+  DEPLOY_VALUE: {
+    meaning: "A ${envvar:…} supplied only when deploying would choose or name what is generated.",
+    fix: "Write the value in project.yaml, per environment; keep ${envvar:…} for values such as hosts, paths and accounts.",
   },
   PACK_CHECK: {
     meaning:

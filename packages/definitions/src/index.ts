@@ -4,6 +4,12 @@ export { NO_STORE } from "./choose.js";
 export { codeHelp } from "./codes.js";
 export { contractReads } from "./contract-notes.js";
 export { contractCommon, contractUseOf } from "./contract-use.js";
+export {
+  environmentsDiagnostics,
+  type EnvironmentsBuild,
+  type EnvironmentsProblem,
+  type SuppliedValue,
+} from "./environments.js";
 export { loadingCodeHelp, type LoadingStage } from "./loading-codes.js";
 export { kinds, packageSchema, type GovernanceDoc } from "./documents.js";
 export { passportFile } from "./products.js";
@@ -12,6 +18,7 @@ export type {
   Column,
   Contract,
   ContractRole,
+  DeployValue,
   Expectation,
   FullName,
   Grant,

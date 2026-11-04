@@ -3,14 +3,19 @@ import type { Context } from "./context.js";
 import type { PlatformDoc } from "./documents.js";
 import type { ResolvedPlatform, Schedule } from "./model.js";
 
+/** Environments that are personal copies: `dev`, and `default` when none is selected. */
+const developmentNames = new Set(["dev", "default"]);
+/** Environments whose schedules run unless the platform says otherwise. */
 const productionNames = new Set(["prod", "production"]);
 
 /** The platform for the selected environment; the defaults apply when there is no Platform document. */
 export function resolvePlatform(context: Context): ResolvedPlatform {
   const doc: PlatformDoc = context.platform?.value ?? { id: "default" };
+  // A shared environment such as test is deployed by a pipeline, so it is production.
   const mode =
-    doc.mode ?? (productionNames.has(context.environment) ? "production" : "development");
-  const schedule = scheduleOf(doc, mode);
+    doc.mode ?? (developmentNames.has(context.environment) ? "development" : "production");
+  const runs = doc.mode === "production" || (!doc.mode && productionNames.has(context.environment));
+  const schedule = scheduleOf(doc, runs);
   return {
     mode,
     workspace: { ...doc.workspace },
@@ -34,9 +39,12 @@ function collectionsOf(
   };
 }
 
-/** Schedules run in UTC unless told otherwise, and stay paused outside production. */
-function scheduleOf(doc: PlatformDoc, mode: ResolvedPlatform["mode"]): Schedule | undefined {
+/**
+ * Schedules run in UTC unless told otherwise, and stay paused unless they `run`: the
+ * platform sets production mode, or leaves mode unset in prod or production.
+ */
+function scheduleOf(doc: PlatformDoc, run: boolean): Schedule | undefined {
   if (!doc.schedule) return undefined;
-  const { cron, timezone = "UTC", paused = mode !== "production" } = doc.schedule;
+  const { cron, timezone = "UTC", paused = !run } = doc.schedule;
   return { cron, timezone, paused };
 }

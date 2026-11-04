@@ -7,6 +7,7 @@ export type DefinitionCode =
   | "NO_STANDARD"
   | "MANY_STANDARDS"
   | "WRONG_PACK"
+  | "PACK_VERSION"
   | "UNKNOWN_PACK"
   | "METHOD_CONFLICT"
   | "MANY_PLATFORMS"
@@ -45,7 +46,9 @@ export type DefinitionCode =
   | "PRODUCT_INCOMPLETE"
   | "COLUMN_UNCLASSIFIED"
   | "CLASSIFICATION_UNKNOWN"
-  | "SENSITIVE_ACCESS";
+  | "SENSITIVE_ACCESS"
+  | "DEPLOY_VALUE"
+  | "ENVIRONMENTS_DIFFER";
 
 /** Where a value was written: a document and a JSON Pointer into it. */
 export interface Source {
@@ -74,7 +77,8 @@ export interface Reporter {
  */
 export function createReporter(
   start: readonly AnyDiagnostic[] = [],
-  unknown: (at: Source, code: DefinitionCode) => boolean = () => false,
+  unknown: (at: Source, code: DefinitionCode, severity: "error" | "warning") => boolean = () =>
+    false,
 ): Reporter {
   const diagnostics: AnyDiagnostic[] = [...start];
   const seen = new Set<string>();
@@ -87,7 +91,7 @@ export function createReporter(
     hint?: string,
     fixes?: Fix[],
   ) => {
-    if (at && unknown(at, code)) {
+    if (at && unknown(at, code, severity)) {
       leftOut = true;
       return;
     }
