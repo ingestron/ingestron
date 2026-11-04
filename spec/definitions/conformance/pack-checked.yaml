@@ -1,0 +1,40 @@
+# A data-only pack whose method and pack checks always fail (section 9), for
+# the checks that run on what holds a deploy-time value (section 1.1). Its
+# connector is its own, so it offers no fixes in the other cases.
+id: checked
+version: 1
+checks: [the platform needs classic compute]
+defaults:
+  naming:
+    catalog: "{{ environment }}"
+    schema: "{{ layer }}"
+    table: "{{ table }}"
+    pipeline: "{{ project }}"
+    job: "{{ project }}_refresh"
+  layers: [bronze, silver, gold]
+  types:
+    {
+      string: STRING,
+      integer: BIGINT,
+      number: DOUBLE,
+      boolean: BOOLEAN,
+      date: DATE,
+      timestamp: TIMESTAMP,
+    }
+  quality: { required: warn, default: warn }
+rules:
+  ingest: { default: checked-copy }
+methods:
+  checked-copy:
+    action: ingest
+    description: Writes a table from the source, and needs a key.
+    connectors: [checked]
+    produces: table
+    checks: [needs a key]
+    settings: { type: object }
+  checked-read:
+    action: ingest
+    description: Writes a table from the source.
+    connectors: [checked]
+    produces: table
+    settings: { type: object }

@@ -55,7 +55,7 @@ expect:
   deployValues:
     - name: SHOP_PATH
       text: "${envvar:SHOP_PATH}"
-      uses: [{ file: project.yaml, pointer: /values/shop }]
+      uses: [{ file: project.yaml, pointer: /values/shop, line: 3 }]
     - name: FORMAT
       text: "${envvar:FORMAT}"
-      uses: [{ file: sales.yaml, pointer: /ingest/with/format }]
+      uses: [{ file: sales.yaml, pointer: /ingest/with/format, line: 6 }]

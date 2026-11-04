@@ -40,5 +40,5 @@ args: [--env, dev]
 expect:
   exit: 2
   lines:
-    - Every environment is generated together, so plan does not take --env. Use compare or request for one environment.
+    - Every environment is generated together, so plan does not take --env. Use compare for two environments, or request for one.
   folders: {}

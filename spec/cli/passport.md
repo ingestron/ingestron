@@ -50,5 +50,7 @@ passport, written for someone who does not know the tools. Its sections, in orde
    product that broke one would have stopped generation.
 
 Text from the definitions is written as it is, except that in table cells a
-`|` is escaped and line breaks become spaces. The same definitions always give
+`|` is escaped and line breaks become spaces. A passport built from a model
+resolved for deploy ([output folders](outputs.md), section 1) writes each
+deploy-time value's text, `${envvar:NAME}`, as `` `NAME` (supplied when deploying) ``. The same definitions always give
 the same files: nothing depends on the date, the time or the repository.

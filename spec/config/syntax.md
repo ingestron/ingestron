@@ -281,13 +281,16 @@ without quoting them. Each entry has:
   manifest it is the pointer in the merged values: a selected environment's
   override at `environments.<name>.values.region` is `/values/region`, as is
   the default it overrides, never `/environments/…`;
+- `line`: the line of the reference, when it is written in `file` itself;
+  absent for one in a file read with `${file:…}`;
 - `setIn`: where the variable's value came from (section 4.4): `host` for the
   host environment, `.env.<environment>` or `.env`. It is absent when the
   variable is set nowhere, which only a load with `missingEnvvars:
 information` allows, and always with `deployEnvvars`, which reads no value.
 
 An entry never holds the variable's value. Each `name`, `file` and `pointer`
-appears once, in the order first resolved. A reference that is not resolved,
+appears once, in the order first resolved, with the `line` of the first
+reference. A reference that is not resolved,
 such as one with a `BAD_ARGUMENT`, one in another environment's values, one
 in a file the manifest does not import, or text kept as written with `$${`,
 is not listed. With `missingEnvvars: error`, a variable set nowhere stops the
@@ -413,7 +416,7 @@ expect:
     - { code: ENVVAR_MISSING, severity: information, file: a.yaml, line: 4 }
   unsetEnvvars: ["${envvar:NOPE}"] # optional: the loaded project's unset references (section 5.1)
   envvarReferences: # optional: when given, the loaded project's variable references (section 4.6)
-    - { name: NOPE, file: a.yaml, pointer: /url } # setIn absent: set nowhere
+    - { name: NOPE, file: a.yaml, pointer: /url, line: 4 } # setIn absent: set nowhere
   fixed: # optional: each fix's title, and the files after applying it
     - diagnostic: 0
       title: Change to "shop"

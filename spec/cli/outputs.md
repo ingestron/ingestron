@@ -15,33 +15,54 @@ MAY are used as in RFC 2119.
 The environments are those project.yaml declares, in its order, or the one
 environment `default` when it declares none. Before anything is planned, each
 environment is resolved, always with `environmentsTogether: true`
-(definitions specification, section 7):
+(definitions specification, section 7). There are two ways:
 
 - **for deploy**, with `deployTime: true` (definitions specification, section
-  1.1), when the standard names a pack that builds environments together.
-  Each `${envvar:…}` is then a deploy-time value: it is not read from the host
-  environment or an environment file, so an environment whose only unknown
-  values are such references still resolves;
+  1.1). Each `${envvar:…}` is then a deploy-time value: it is not read from
+  the host environment or an environment file, so an environment whose only
+  unknown values are such references still resolves, and a computer without
+  the deploying pipeline's values can plan;
 - **with the host's values**, with the host environment and the environment
-  files, and `missingEnvvars: error`, when the environment is a target of a
-  pack that does not build environments together, or the project has data
-  products. With no pack that builds environments together, this is the only
-  resolution, and it decides the targets.
+  files, and `missingEnvvars: error`, as in CLI 1.x.
+
+When the standard names no pack that builds environments together, each
+environment is resolved with the host's values only, and that model is used
+for everything. Otherwise each environment is first resolved for deploy, and
+then:
+
+1. When that resolves, and the environment is a target of a pack that builds
+   environments together, it is a **deployed environment**. Its model resolved
+   for deploy is given to those packs and to the passports. When it is also a
+   target of a pack that does not build environments together, it is resolved
+   with the host's values too, for that pack.
+2. When that resolves, and the environment is a target of no pack that builds
+   environments together, such as one that runs on DuckDB, it is a **local
+   environment**. It is resolved with the host's values, and that model is
+   used for everything, the passports included.
+3. When that fails, the environment is resolved with the host's values. When
+   that resolves and the environment is a target of no pack that builds
+   environments together, it is a local environment, as in 2, so a
+   `${envvar:…}` in an environment no deployed artefact covers never fails
+   the run. Otherwise the problems of the resolution for deploy are the
+   environment's.
 
 Targets are as the definitions specification, section 2.1, defines them,
-from the models resolved for deploy when there are any.
+from the model each step above uses.
 
 For each environment that has problems, the output is the line
 `<environment>: the definitions have problems`, then the problems formatted
-as the configuration package formats them. When the resolution for deploy
-fails, its problems are shown and the environment is not resolved with the
-host's values. For each environment that resolves with warnings or
-information, the output is `<environment>: warnings`, then those diagnostics,
-each shown once even when both resolutions found it.
+as the configuration package formats them. For each environment that resolves
+with warnings or information, the output is `<environment>: warnings`, then
+those diagnostics. A diagnostic that both resolutions of an environment found
+is shown once: two are the same when their code, file, line and message are.
 
 When any environment has problems, nothing is planned or written, no output
 folder is checked, and the exit code is 1: a bundle cannot be written with one
 target missing.
+
+In CLI 2.0, `compare`, `request` and the editor also resolve with
+`environmentsTogether: true`, so they show the same `mode` as the generated
+files.
 
 ## 2. Folders
 
@@ -137,7 +158,7 @@ line and the usage, as for any usage mistake, with the exit code 2. The
 mistake is:
 
 ```text
-Every environment is generated together, so <command> does not take --env. Use compare or request for one environment.
+Every environment is generated together, so <command> does not take --env. Use compare for two environments, or request for one.
 ```
 
 `compare` and `request` keep `--env`, and `init` keeps it for the environments
@@ -153,9 +174,12 @@ Databricks CLI reads from `BUNDLE_VAR_<name>`, and no target sets it.
 `plan`, `apply` and `check` give the same files on every computer, whether or
 not the variable is set.
 
-A pack that does not build environments together, and the passports, still
-read the variable from the host environment and the environment files when
-generating (section 1), as in CLI 1.x.
+In a deployed environment (section 1), the passports are built from the
+model resolved for deploy, and show each deploy-time value as supplied when
+deploying ([passport specification](passport.md)). A pack that does not build
+environments together, and everything in a local environment, still read the
+variable from the host environment and the environment files when
+generating, as in CLI 1.x.
 
 `request` lists these values with the names each pack's files take them as
 ([request specification](request.md), "Values to provide").
@@ -204,12 +228,9 @@ cases test where files go, not what a real pack writes:
   table's name; for a table with an ingest step whose connection's
   `settings.path` is text, a space and that text follow.
 - For a pack file with `buildEnvironments: true`, `buildEnvironments(models)`
-  gives `tables.txt`, as `build` gives it for the first target, and
-  `targets.txt`, a line for each target's name. Its `deployValues` give each
-  of the first model's deploy-time values with `suppliedAs` `[FOLD_<name>]`.
-  It has a problem `ENVIRONMENTS_DIFFER` for each table of the first target
-  and each other target in which the table's methods of the pack, in the
-  order ingest, transform, store, serve, are not the same:
-  `Table "<name>" uses <methods> in <first> and <methods> in <other>.`, where
-  `<methods>` are the method names quoted with `"` and joined with `, `, at
-  the table's file.
+  gives `tables.txt`, as `build` gives it for the first target but with each
+  deploy-time value's text written as `$(FOLD_<name>)`, and `targets.txt`, a
+  line for each target's name. Its `deployValues` give each deploy-time value
+  of the models, in the order they first appear in target order, with
+  `suppliedAs` `[FOLD_<name>]`. Its problems are the `structural` problems of
+  `compareTargets(models)` (definitions specification, section 2.1).

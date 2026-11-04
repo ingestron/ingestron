@@ -1,4 +1,4 @@
-description: The loaded project lists each ${envvar:…} it resolved, with the value it feeds and where the variable was set, never the value; an included file's reference feeds the document that reads it, and a reference used twice in one value is listed once; text kept with $${ and a file not imported are not listed.
+description: The loaded project lists each ${envvar:…} it resolved, with the value it feeds, the line of a reference written in that file, and where the variable was set, never the value; an included file's reference feeds the document that reads it, and a reference used twice in one value is listed once; text kept with $${ and a file not imported are not listed.
 environment: dev
 envvars:
   FROM_HOST: host-value
@@ -60,9 +60,9 @@ expect:
     - { code: ENVVAR_MISSING, severity: information, file: a.pipeline.yaml, line: 8 }
   unsetEnvvars: ["${envvar:LANDING}"]
   envvarReferences:
-    - { name: LANDING, file: project.yaml, pointer: /values/landing }
-    - { name: FROM_ENV, file: project.yaml, pointer: /values/region, setIn: .env }
-    - { name: FROM_DEV, file: project.yaml, pointer: /values/region, setIn: .env.dev }
+    - { name: LANDING, file: project.yaml, pointer: /values/landing, line: 3 }
+    - { name: FROM_ENV, file: project.yaml, pointer: /values/region, line: 4, setIn: .env }
+    - { name: FROM_DEV, file: project.yaml, pointer: /values/region, line: 8, setIn: .env.dev }
     - { name: FROM_HOST, file: a.pipeline.yaml, pointer: /server/host, setIn: host }
-    - { name: LANDING, file: a.pipeline.yaml, pointer: /copy }
-    - { name: LANDING, file: a.pipeline.yaml, pointer: /twice }
+    - { name: LANDING, file: a.pipeline.yaml, pointer: /copy, line: 6 }
+    - { name: LANDING, file: a.pipeline.yaml, pointer: /twice, line: 8 }

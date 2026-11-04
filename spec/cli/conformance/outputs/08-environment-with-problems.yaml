@@ -2,11 +2,7 @@ description: "When any environment has problems, nothing is planned or written, 
 files:
   project.yaml: |
     id: retail
-    environments:
-      dev: {}
-      prod:
-        values:
-          region: ${values.missing}
+    environments: { dev: { values: { layer: bronze } }, prod: { values: { layer: platinum } } }
     imports: ["*.yaml"]
   standard.yaml: |
     apiVersion: ingestron.io/v1
@@ -25,6 +21,7 @@ files:
     kind: Flow
     id: sales
     source: shop
+    layer: ${values.layer}
     tables:
       orders: { object: orders, contract: orders }
   orders.odcs.yaml: |
@@ -45,5 +42,5 @@ expect:
   lines:
     - "prod: the definitions have problems"
   diagnostics:
-    - { code: UNKNOWN_VALUE, severity: error, file: project.yaml }
+    - { code: UNKNOWN_LAYER, severity: error, file: sales.yaml, line: 5 }
   folders: {}

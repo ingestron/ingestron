@@ -123,13 +123,20 @@ configuration option `deployEnvvars` (configuration specification, section
 4.4). Every `${envvar:NAME}` reference is then a **deploy-time value**: a value
 that the pipeline deploying the generated files supplies. It is never read
 from the host environment or an environment file, so the files are the same
-on every computer and in CI. Its text in the model is `${envvar:NAME}`,
-written without spaces: an unset reference, so section 1's rules apply to it.
-A problem at a value that holds one is left out, so validation that depends
-on the value, such as a pattern, is the platform's when deploying; a `type`
-failure in a method's settings is still `BAD_SETTING`; a method's `check` and
-a pack's `check` are not run where section 1 says. No `ENVVAR_MISSING` is
-reported.
+on every computer and in CI. No `ENVVAR_MISSING` is reported. Its text in the
+model is `${envvar:NAME}`, written without spaces: an unset reference, so
+section 1's rules apply to it, except where this section says otherwise.
+
+What it holds is known only when deploying, so a check MUST NOT judge a
+deploy-time value's content: a problem at a value that holds one is left out,
+so validation that depends on the value, such as a pattern, is the platform's
+when deploying. A `type` failure in a method's settings is still
+`BAD_SETTING`. Every other check runs, treating the text as it is: each
+method's `check` runs on every table, and each pack's `check` on the model,
+whatever deploy-time values they hold, and a pack's or method's `check` MUST
+NOT judge the content of a deploy-time value's text. A setting that holds a
+deploy-time value where the standard fixes the key is `FIXED_SETTING`, as any
+other value that differs from the fixed one.
 
 What is generated, and every name, are decided when generating. So a
 deploy-time value MUST NOT be in these values: it is `DEPLOY_VALUE`, an error
@@ -147,20 +154,21 @@ at the value, for each one that holds a deploy-time value:
 - a DataProduct's output ports' `contractId`.
 
 Any other error that section 1 would leave out at a value that holds a
-deploy-time value is `DEPLOY_VALUE` at that value too, except a method
-settings' schema failure. A warning there is left out, as in section 1. The
+deploy-time value is `DEPLOY_VALUE` at that value too, except `BAD_SETTING`
+and `FIXED_SETTING`. A warning there is left out, as in section 1. The
 message is `"${envvar:NAME}" is supplied only when deploying, so it cannot decide what is generated or what it is called.`,
 naming the first deploy-time value the value holds, and the hint is
 `Write this value in project.yaml, per environment; keep ${envvar:…} for values the deploying pipeline supplies, such as hosts, paths and accounts.`
 
 The model lists its deploy-time values in `deployValues`, one per `NAME`, in
 the order first resolved. Each has its `name`, its `text` (`${envvar:NAME}`)
-and its `uses`: the `file` and `pointer` of each value it feeds, as the
-loaded project's `envvarReferences` give them (configuration specification,
-section 4.6). A model resolved without `deployTime` has no `deployValues`,
-and reads `${envvar:…}` as the rest of this specification says. As for any
-unset reference, text is matched as written: text kept with `$${envvar:NAME}`
-for a `NAME` that is also a deploy-time value reads as that value.
+and its `uses`: the `file`, `pointer` and, when known, `line` of each value it
+feeds, as the loaded project's `envvarReferences` give them (configuration
+specification, section 4.6). A model resolved without `deployTime` has no
+`deployValues`, and reads `${envvar:…}` as the rest of this specification
+says. As for any unset reference, text is matched as written: text kept with
+`$${envvar:NAME}` for a `NAME` that is also a deploy-time value reads as that
+value.
 
 ## 2. Packs
 
@@ -204,7 +212,10 @@ A pack builds files from resolved models: path → text, relative to the pack's
 output folder, each path as the generation specification requires
 ([section 2](../generate/behaviour.md#2-paths)).
 
-- `build(model)` gives the files for one environment. Every pack has it.
+- `build(model)` gives the files for one environment. Every pack has it. A
+  pack that builds environments together MUST also accept a model resolved
+  with `deployTime` (section 1.1), writing each deploy-time value's `text` as
+  it is.
 - `buildEnvironments(models)` is optional. It gives the files for every
   environment at once: one artefact that covers them all, such as one
   Databricks bundle with a target per environment. A pack that has it
@@ -216,50 +227,86 @@ environment that runs on another pack (section 4, "Runs on") is usually not a
 target. A pack with no target builds nothing. `models` maps the name of each
 target to its model, in the order project.yaml declares the environments,
 each resolved with `deployTime` (section 1.1). The models given to `build`
-are resolved without it.
+by a tool that generates are resolved without it.
 
 `buildEnvironments` returns:
 
 - `files`: the files, covering every target;
 - `deployValues`: for each deploy-time value the files take, its `name` and
   `suppliedAs`, the names under which the deploying pipeline supplies it,
-  such as `BUNDLE_VAR_landing`. They are in the order of the models'
-  `deployValues`, and a value the files do not use is left out;
-- `problems`: what stops the files covering every target. Each has a `code`,
-  `ENVIRONMENTS_DIFFER` or `DEPLOY_VALUE`, a `message` (one or more
-  sentences) and the `file`, and when known the `line`, of the definition
-  that causes it. When there is any problem, the files MUST NOT be written.
+  such as `BUNDLE_VAR_landing`. They are in the order the values first appear
+  in the models, taken in target order, and a value the files do not use is
+  left out;
+- `problems`: what stops the files covering every target, or is worth
+  knowing. Each has a `code`, a `severity` (`error` or `warning`), a
+  `message` (one or more sentences), the `file`, and when known the `line`,
+  of the definition that causes it, and optionally a `hint` in place of the
+  code's. When there is an error, the files MUST NOT be written.
+
+A pack reports only these codes:
+
+| Code                  | Severity | When                                                                                |
+| --------------------- | -------- | ----------------------------------------------------------------------------------- |
+| `ENVIRONMENTS_DIFFER` | error    | Targets differ in more than values                                                  |
+| `DEPLOY_VALUE`        | error    | A deploy-time value is where the platform cannot take it                            |
+| `ARM_PARAMETERS`      | error    | The ARM template would have more than 256 parameters; the message gives the count   |
+| `SECRET_NAME_DIFFERS` | warning  | A Key Vault secret's name differs between environments, where only the vault should |
 
 A pack that builds environments together MUST:
 
-1. write each value that is the same in every target as it is, and make a
-   value a parameter of the artefact only where the targets differ, or where
-   it is a deploy-time value;
-2. set every parameter in every target, except deploy-time values, which no
-   target sets: the deploying pipeline supplies them;
-3. give the same files for the same models, whatever the computer, the time
+1. write each value that is the same in every target as it is;
+2. make a value a parameter of the artefact only where it is a deploy-time
+   value in some target, or has at least two different values among the
+   targets (**minimality**);
+3. set every parameter in every target where it is not a deploy-time value,
+   and leave it, in the targets where it is one, for the deploying pipeline;
+4. write no deploy-time value's `text` in any file it returns;
+5. list in `deployValues`, with at least one name in `suppliedAs`, every
+   deploy-time value whose `text` is in any target's `render`;
+6. give the same files for the same models, whatever the computer, the time
    and the host environment;
-4. give valid files for a single target.
+7. give valid files for a single target.
+
+**Deploy-time values and parameters.**
+
+- A value that is literal in some targets and a deploy-time value in others
+  is one parameter: set as written in the targets where it is literal, and
+  left for the deploying pipeline where it is a deploy-time value.
+- Different deploy-time values at the same place in two targets, such as
+  `${envvar:DEV_HOST}` in dev and `${envvar:PROD_HOST}` in prod, are
+  `DEPLOY_VALUE`, with the hint
+  `Use one variable name and give it a different value in each pipeline stage.`
+- A deploy-time value inside a longer text, such as
+  `${envvar:ACCOUNT}.dfs.core.windows.net`, is a parameter for the value
+  alone, with the rest of the text literal, where the platform can put a
+  parameter inside a text (as Databricks does with `${var.account}`). Where a
+  parameter must be a whole value, as an ARM parameter or a SQLCMD variable's
+  value is, the pack refuses it with `DEPLOY_VALUE`. Each pack's
+  specification says which it does.
 
 **The fold property.** For each target, substituting that target's values into
 the folded files gives exactly the files of that target alone, with every
 value written as it is. A pack's specification defines, for a target `e`:
 
-- `render(e)`: the files for `e` alone, every value literal, as the platform
-  deploys them for `e`; for example, a bundle with the one target `e`;
+- `render(e)`: `build(models[e])`, on the model resolved with `deployTime`:
+  the files for `e` alone, every value literal and each deploy-time value as
+  its `text`. It is built by `build`, a code path apart from
+  `buildEnvironments`, so the property compares two independent results;
 - `view(files, e)`: what the platform makes of the folded files for `e` by
-  its own deploy-time mechanism; for example, the bundle's target `e` with
-  each `${var.…}` replaced by `e`'s value, an ARM template with
-  `parameters/e.json` applied, or `views.sql` with the `:setvar` lines of
-  `environments/e.sql`. A deploy-time value's parameter is replaced by the
-  value's `text`;
-- how two sets of files are compared, if not as text; for example YAML and
-  JSON as data.
+  its own deploy-time mechanism, in the layout `build` gives; for example,
+  the bundle's target `e` with each `${var.…}` replaced by `e`'s value, an ARM
+  template with `parameters/e.json` applied, or `views.sql` with the
+  `:setvar` lines of `environments/e.sql`. Each parameter left for the
+  deploying pipeline is replaced by its deploy-time value's `text`;
+- how two texts at the same path are compared, if not as text; for example
+  YAML and JSON as data.
 
-Then, for every set of models and each of their targets `e`,
-`view(buildEnvironments(models).files, e)` MUST equal `render(e)`. Each pack
-tests this on fixtures of one, two and three targets, with a value that is the
-same in two targets and different in the third.
+Then, for every set of models, every target `e`, and the models of every
+first one, two or more targets in order, `view(buildEnvironments(models).files, e)`
+MUST equal `render(e)`, and rules 4 and 5 hold. Each pack tests this on
+fixtures of three targets, so of one, two and three, with a value that is the
+same in two targets and different in the third. Minimality (rule 2) is
+tested in each pack's own terms.
 
 **`ENVIRONMENTS_DIFFER`.** Environments may differ only in values. A pack
 reports `ENVIRONMENTS_DIFFER` for each resource that some targets build and
@@ -270,13 +317,55 @@ each message.
 
 **`DEPLOY_VALUE`.** A pack that cannot take a deploy-time value where it is
 used, such as in a name the platform requires to be the same in every
-environment, reports `DEPLOY_VALUE`. Its specification lists where.
+environment, reports `DEPLOY_VALUE`. Its specification lists where. Its
+location is the `file` and `line` of the value's `uses`.
 
-Each problem is a diagnostic: its `code`, the severity `error`, the pack's
+Each problem is a diagnostic: its `code`, its `severity`, the pack's
 `message`, and the location `file`, `line` (1 when the pack gives none) and
-column 1. The hint is, for `ENVIRONMENTS_DIFFER`,
-`Environments may differ only in values, such as names, paths and hosts; make the rest the same in every environment.`,
-and for `DEPLOY_VALUE` the hint of section 1.1.
+column 1. The hint is the problem's own, else the code's:
+
+- `ENVIRONMENTS_DIFFER`:
+  `Environments may differ only in values, such as names, paths and hosts; make the rest the same in every environment.`
+- `DEPLOY_VALUE`: the hint of section 1.1.
+- `ARM_PARAMETERS`:
+  `Make fewer values differ between environments, or split the definitions into more than one factory.`
+- `SECRET_NAME_DIFFERS`:
+  `Give the secret the same name in every environment's Key Vault, so that only the vault differs.`
+
+**Comparing targets.** Every pack compares its targets' models the same way,
+so the definitions package provides it, as `compareTargets(models)`. The
+models are compared as data, leaving out each step's `origins` and
+`chosenBy` and the model's `deployValues`. Tables are matched by name. It
+gives:
+
+- `structural`: an `ENVIRONMENTS_DIFFER` error, in table order then target
+  order, for each of these, against the first target that has the table:
+  - a table that some targets do not have:
+    `Table "<name>" is built in <targets with it> but not in <targets without it>.`,
+    at the table's file;
+  - a step that some targets do not have:
+    `Table "<name>" has a <step> step in <targets with it> but not in <targets without it>.`,
+    at the table's file;
+  - a step whose method differs:
+    `Table "<name>" uses "<method>" for <step> in <first target> and "<method>" in <target>.`,
+    at the file and line where the second target's step was chosen, when it
+    records one, else at the table's file;
+  - a `DEPLOY_VALUE` error with the hint above for each place where two
+    targets hold different deploy-time values:
+    `This value is ${envvar:<NAME>} in <target> and ${envvar:<NAME>} in <target>.`,
+    at the first use of the second value;
+- `differing`: every other place, by JSON Pointer into the first target's
+  model, where the targets' values are not all the same, with the value in
+  each target that has one. A list whose length differs is one place; so is
+  a key that some targets do not have.
+
+Target lists are joined with `, `, the last two with `and`.
+
+`splitDeployText(text, deployValues)` splits a text into its literal parts
+and the deploy-time values in it, in order, leaving out empty parts.
+`checkFold(pack, models, { view, same? })` checks the fold property and
+rules 4 and 5 for the models of the first one, two and more targets, and
+returns a sentence for each failure; none when it holds.
 
 ## 3. Values from the standard, platform and definitions
 
@@ -544,17 +633,17 @@ standard's packs declares `used`, and at least one declares `not-yet`, is
 
 ## 7. Platform defaults
 
-| Setting              | Default                                                                                                                                                                                   |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `mode`               | `production` when the environment is `prod` or `production`, else `development`; with `environmentsTogether`, `development` when the environment is `dev` or `default`, else `production` |
-| `compute.serverless` | `true`                                                                                                                                                                                    |
-| `schedule.timezone`  | `UTC`                                                                                                                                                                                     |
-| `schedule.paused`    | `false` when `mode` is set to `production`, or is not set and the environment is `prod` or `production`; else `true`                                                                      |
-| `manage.schemas`     | `false`                                                                                                                                                                                   |
-| `manage.tags`        | `false`                                                                                                                                                                                   |
-| `manage.comments`    | `false`                                                                                                                                                                                   |
-| `manage.checks`      | `false`                                                                                                                                                                                   |
-| everything else      | empty                                                                                                                                                                                     |
+| Setting              | Default                                                                                                                                                                      |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mode`               | `production` when the environment is `prod` or `production`, else `development`; with `environmentsTogether`, `development` when the environment is `dev`, else `production` |
+| `compute.serverless` | `true`                                                                                                                                                                       |
+| `schedule.timezone`  | `UTC`                                                                                                                                                                        |
+| `schedule.paused`    | `false` when `mode` is set to `production`, or is not set and the environment is `prod` or `production`; else `true`                                                         |
+| `manage.schemas`     | `false`                                                                                                                                                                      |
+| `manage.tags`        | `false`                                                                                                                                                                      |
+| `manage.comments`    | `false`                                                                                                                                                                      |
+| `manage.checks`      | `false`                                                                                                                                                                      |
+| everything else      | empty                                                                                                                                                                        |
 
 Loading without an environment uses the environment name `default`.
 
@@ -565,7 +654,8 @@ as it did before definitions 1.8, so a tool that resolves one environment at a
 time sees no change. `development` mode is for a personal copy: on Databricks
 it prefixes names with the deploying user and turns off the deployment lock.
 With `environmentsTogether`, a shared environment that a pipeline deploys,
-such as `test`, is therefore `production` unless the platform sets `mode`.
+such as `test`, is therefore `production` unless the platform sets `mode`, and
+so is `default`, the environment of a project that declares none.
 `schedule.paused` is the same with or without the option: only `prod` and
 `production`, or a platform that sets `mode: production`, run their schedules
 unless `schedule.paused` says otherwise.
@@ -674,10 +764,14 @@ in order), `platform`, `names`, `deployValues` (the model's, exactly) or
 titles), and optionally `fixed`, as in the config conformance cases. All cases use the
 data-only packs [conformance/pack.yaml](conformance/pack.yaml),
 [conformance/pack-bridge.yaml](conformance/pack-bridge.yaml),
-[conformance/pack-local.yaml](conformance/pack-local.yaml) and
-[conformance/pack-fold.yaml](conformance/pack-fold.yaml), all available. A
+[conformance/pack-local.yaml](conformance/pack-local.yaml),
+[conformance/pack-fold.yaml](conformance/pack-fold.yaml) and
+[conformance/pack-checked.yaml](conformance/pack-checked.yaml), all available. A
 pack file with `buildEnvironments: true` stands for a pack that builds
-environments together: the runner gives it a `buildEnvironments` member.
+environments together: the runner gives it a `buildEnvironments` member. A
+pack or a method with `checks`, a list of messages, stands for one with a
+`check` that returns them, for every model or table it is given. The pack
+[conformance/pack-checked.yaml](conformance/pack-checked.yaml) has both.
 
 ## Connector authoring metadata
 
