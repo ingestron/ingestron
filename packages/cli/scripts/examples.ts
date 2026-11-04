@@ -2,9 +2,8 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { nodeFiles } from "@ingestron/config";
-import type { Output } from "../src/build-outputs.js";
+import { generateAll, type Output } from "../src/build-outputs.js";
 import { packs } from "../src/packs.js";
-import { generateAll } from "../src/request-supplied.js";
 
 const samplesFolder = join(import.meta.dirname, "..");
 
