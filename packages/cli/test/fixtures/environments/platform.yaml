@@ -8,6 +8,6 @@ workspace:
   root_path: /Workspace/Shared/.bundle/finance/${environment.name}
 schedule:
   cron: 0 30 6 * * ?
-  timezone: Pacific/Auckland
+  timezone: Europe/London
 tags:
   environment: ${environment.name}
