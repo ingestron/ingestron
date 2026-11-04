@@ -1,9 +1,8 @@
 // The generated files, in memory, exactly as the CLI would write them, and
 // the ones that belong to the table at the cursor.
 import { kindOf } from "./context.js";
-import { formatDiagnostics } from "@ingestron/config";
-import { generatedOutputs } from "@ingestron/cli";
-import { resolved, type Project } from "./project.js";
+import { environmentName, generationOf } from "./generation.js";
+import type { Project } from "./project.js";
 import { keyPath } from "./yaml.js";
 
 /** One generated file, at its path in the project (under build/). */
@@ -15,7 +14,13 @@ export interface Generated {
 type Files = Generated[] | { problems: string };
 const built = new WeakMap<Project, Map<string, Files>>();
 
-/** Every file `apply` would write for the environment, or the problems that stop it; once per project snapshot. */
+/**
+ * Every file `apply` writes that the environment uses, at its path under build/, or what
+ * stops plan, as plan prints it; once per project snapshot. Every environment is generated
+ * together: a pack that builds them together has one folder for all its environments, such
+ * as `build/adf/factory/…`, and the passports and any other pack have a folder for each,
+ * such as `build/duckdb/dev/…`, of which only the environment's own is given.
+ */
 export function generatedFiles(project: Project, environment: string | undefined): Files {
   let byEnvironment = built.get(project);
   if (!byEnvironment) built.set(project, (byEnvironment = new Map()));
@@ -26,21 +31,16 @@ export function generatedFiles(project: Project, environment: string | undefined
 }
 
 function build(project: Project, environment: string | undefined): Files {
-  const name = environment ?? "default";
-  const { model, diagnostics } = resolved(project, environment);
-  if (!model)
-    return {
-      problems: `${name}: the definitions have problems\n${formatDiagnostics(diagnostics)}`,
-    };
-  // A source not known yet gives a stand-in connection and no steps: nothing to build from.
-  const source = model.tables.find((table) => table.sourceNotKnown)?.sourceNotKnown;
-  if (source)
-    return {
-      problems: `${name}: the generated files are not shown while a flow's source is not known: "${source}" holds a variable that is not set.`,
-    };
-  return generatedOutputs(model, name).flatMap(({ label, files }) =>
-    Object.entries(files).map(([path, text]) => ({ path: `build/${label}/${path}`, text })),
-  );
+  const generation = generationOf(project);
+  if (!generation.ok) return { problems: generation.text.trimEnd() };
+  const name = environmentName(environment);
+  return generation.outputs
+    .filter((output) => output.targets.includes(name))
+    .flatMap(({ folder, byEnvironment, files }) =>
+      Object.entries(files)
+        .filter(([path]) => !byEnvironment || path.startsWith(`${name}/`))
+        .map(([path, text]) => ({ path: `build/${folder}/${path}`, text })),
+    );
 }
 
 /**
@@ -62,7 +62,7 @@ export function generatedForTable(
       new RegExp(`^\\s*destination_table: ${physical}$`, "m").test(file.text) ||
       file.text.includes(`.[${physical.replaceAll("]", "]]")}] AS\n`) ||
       (file.path.endsWith(schema ? `/${schema}.${physical}.sql` : `.${physical}.sql`) &&
-        /\/duckdb\/tables\/|^build\/[^/]+\/tables\//.test(file.path)),
+        /^build\/duckdb\/[^/]+\/tables\//.test(file.path)),
   );
 }
 

@@ -9,7 +9,7 @@ import { openProject } from "../src/project.js";
 import { appliedSample } from "./applied.js";
 
 const retail = appliedSample("retail");
-const generated = "build/dev/src/retail/bronze/orders.sql";
+const generated = "build/databricks/src/retail/bronze/orders.sql";
 
 describe("diagnostic snapshots", () => {
   it("does not scan or read files again for repeated diagnostic requests", () => {

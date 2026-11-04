@@ -1,10 +1,12 @@
 // Problems as the CLI finds them, for one environment, at their file and
-// line: loading and resolving with the CLI's packs, template.yaml, and
+// line: loading and resolving with the CLI's packs, what generating every
+// environment together finds (such as a pack's notices), template.yaml, and
 // generated files changed by hand.
 import { parseTemplate } from "@ingestron/cli";
 import { kinds } from "@ingestron/definitions";
 import { digestOf } from "@ingestron/generate";
 import type { Fix } from "@ingestron/config";
+import { generationDiagnostics } from "./generation.js";
 import { loadedDocuments, resolved, type Project } from "./project.js";
 import type { Position } from "./yaml.js";
 
@@ -88,7 +90,10 @@ function kindOf(text: string): string | undefined {
 }
 
 function definitionProblems(project: Project, environment: string | undefined): Problem[] {
-  const { diagnostics } = resolved(project, environment);
+  const diagnostics = [
+    ...resolved(project, environment).diagnostics,
+    ...generationDiagnostics(project, environment),
+  ];
   return diagnostics.map((diagnostic) => {
     const file = diagnostic.location?.file ?? "project.yaml";
     const line = (diagnostic.location?.line ?? 1) - 1;

@@ -135,14 +135,14 @@ describe("generatedLenses", () => {
     expect(orders?.line).toBe(text.split("\n").indexOf("  orders:"));
     expect(orders?.methods).toBe("files → streaming-table");
     expect(orders?.chosen).toMatch(/store: streaming-table, chosen by the pack's default/);
-    expect(orders?.files).toContain("build/dev/src/retail/bronze/orders.sql");
+    expect(orders?.files).toContain("build/databricks/src/retail/bronze/orders.sql");
   });
 
   it("links a contract object to what is generated from it", () => {
     const project = openProject(retail, new Map());
     const text = read("contracts/orders.yaml");
     const lenses = generatedLenses(project, "contracts/orders.yaml", text, "dev");
-    expect(lenses[0]?.files).toContain("build/dev/src/retail/bronze/orders.sql");
+    expect(lenses[0]?.files).toContain("build/databricks/src/retail/bronze/orders.sql");
   });
 });
 
