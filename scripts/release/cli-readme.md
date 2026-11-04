@@ -17,7 +17,9 @@ npm install -g ingestron
 ingestron --help
 ```
 
-Or run it without installing: `npx ingestron@1 --help`.
+If the shell then cannot find `ingestron`, npm's global folder is not on your
+`PATH`: `npm prefix -g` prints it, and the command is in its `bin` folder
+(on Windows, the folder itself).
 
 ## Quick start
 
