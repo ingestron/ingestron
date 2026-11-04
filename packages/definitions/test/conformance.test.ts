@@ -6,7 +6,9 @@ import { applyEdits, fixEdits, memoryFiles, type AnyDiagnostic } from "@ingestro
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
 import {
+  environmentsDiagnostics,
   resolveDefinitions,
+  type EnvironmentsBuild,
   type Method,
   type Pack,
   type PackInfo,
@@ -21,6 +23,8 @@ interface Case {
   deployTime?: boolean;
   environmentsTogether?: boolean;
   files: Record<string, string>;
+  /** In place of `files`: what a pack's `buildEnvironments` returns as its problems. */
+  packProblems?: EnvironmentsBuild["problems"];
   expect: {
     tables?: Record<string, unknown>[];
     products?: Record<string, unknown>[];
@@ -122,6 +126,31 @@ function checkFixed(found: AnyDiagnostic[], testCase: Case): void {
   }
 }
 
+/** The diagnostics a pack's problems become, each flattened as the cases write them. */
+function checkPackProblems(testCase: Case): void {
+  const actual = environmentsDiagnostics(testCase.packProblems!).map(
+    ({ code, severity, message, hint, location }) => ({
+      code,
+      severity,
+      message,
+      hint,
+      ...location,
+    }),
+  );
+  expect(actual).toEqual(testCase.expect.diagnostics);
+}
+
+function resolveCase(testCase: Case) {
+  return resolveDefinitions(memoryFiles(testCase.files), {
+    packs,
+    environment: testCase.environment,
+    envvars: testCase.envvars ?? {},
+    ...(testCase.missingEnvvars && { missingEnvvars: testCase.missingEnvvars }),
+    ...(testCase.deployTime && { deployTime: true }),
+    ...(testCase.environmentsTogether && { environmentsTogether: true }),
+  });
+}
+
 describe("conformance", () => {
   const names = readdirSync(folder)
     .filter((name) => /^\d/.test(name))
@@ -129,14 +158,8 @@ describe("conformance", () => {
   for (const name of names) {
     const testCase = parse(readFileSync(join(folder, name), "utf8")) as Case;
     it(`${name}: ${testCase.description}`, () => {
-      const result = resolveDefinitions(memoryFiles(testCase.files), {
-        packs,
-        environment: testCase.environment,
-        envvars: testCase.envvars ?? {},
-        ...(testCase.missingEnvvars && { missingEnvvars: testCase.missingEnvvars }),
-        ...(testCase.deployTime && { deployTime: true }),
-        ...(testCase.environmentsTogether && { environmentsTogether: true }),
-      });
+      if (testCase.packProblems) return checkPackProblems(testCase);
+      const result = resolveCase(testCase);
       const { diagnostics } = testCase.expect;
       // A case that expects only information still resolves, so its tables can be checked too.
       if (diagnostics && testCase.expect.tables) {

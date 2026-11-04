@@ -50,7 +50,8 @@ export type DefinitionCode =
   | "DEPLOY_VALUE"
   | "ENVIRONMENTS_DIFFER"
   | "ARM_PARAMETERS"
-  | "SECRET_NAME_DIFFERS";
+  | "SECRET_NAME_DIFFERS"
+  | "PACK_NOTICE";
 
 /** Where a value was written: a document and a JSON Pointer into it. */
 export interface Source {
