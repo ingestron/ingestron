@@ -22,10 +22,14 @@ interface Case {
   missingEnvvars?: "error" | "information";
   deployTime?: boolean;
   environmentsTogether?: boolean;
+  /** The paths each pack lists as `platformFields` in this case, by pack id. */
+  platformFields?: Record<string, string[]>;
   files: Record<string, string>;
   /** In place of `files`: what a pack's `buildEnvironments` returns as its problems. */
   packProblems?: EnvironmentsBuild["problems"];
   expect: {
+    /** The message of the error that refuses the packs. */
+    refused?: string;
     tables?: Record<string, unknown>[];
     products?: Record<string, unknown>[];
     names?: Record<string, unknown>;
@@ -126,6 +130,14 @@ function checkFixed(found: AnyDiagnostic[], testCase: Case): void {
   }
 }
 
+/** The packs, each with the case's `platformFields` in place of its own. */
+function packsFor(testCase: Case): PackInfo[] {
+  const fields = testCase.platformFields ?? {};
+  return packs.map((pack) =>
+    Object.hasOwn(fields, pack.id) ? { ...pack, platformFields: fields[pack.id] } : pack,
+  );
+}
+
 /** The diagnostics a pack's problems become, each flattened as the cases write them. */
 function checkPackProblems(testCase: Case): void {
   const actual = environmentsDiagnostics(testCase.packProblems!).map(
@@ -142,7 +154,7 @@ function checkPackProblems(testCase: Case): void {
 
 function resolveCase(testCase: Case) {
   return resolveDefinitions(memoryFiles(testCase.files), {
-    packs,
+    packs: packsFor(testCase),
     environment: testCase.environment,
     envvars: testCase.envvars ?? {},
     ...(testCase.missingEnvvars && { missingEnvvars: testCase.missingEnvvars }),
@@ -159,6 +171,10 @@ describe("conformance", () => {
     const testCase = parse(readFileSync(join(folder, name), "utf8")) as Case;
     it(`${name}: ${testCase.description}`, () => {
       if (testCase.packProblems) return checkPackProblems(testCase);
+      if (testCase.expect.refused) {
+        expect(() => resolveCase(testCase)).toThrow(new Error(testCase.expect.refused));
+        return;
+      }
       const result = resolveCase(testCase);
       const { diagnostics } = testCase.expect;
       // A case that expects only information still resolves, so its tables can be checked too.

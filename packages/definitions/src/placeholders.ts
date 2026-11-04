@@ -21,6 +21,27 @@ export function placeholderWarnings(source: FileSource, files: readonly string[]
   });
 }
 
+/** The documents' files; every YAML file outside build/ when the project did not load. */
+export function documentFiles(
+  files: FileSource,
+  documents?: readonly { file: string }[],
+): string[] {
+  if (documents) return documents.map((document) => document.file);
+  return files.list().filter((path) => /\.ya?ml$/.test(path) && !path.startsWith("build/"));
+}
+
+/** The result with a warning for each `{{ … }}` that stays as written. */
+export function withPlaceholders<Result extends { diagnostics: AnyDiagnostic[] }>(
+  files: FileSource,
+  result: Result,
+  documents: string[],
+): Result {
+  const warnings = placeholderWarnings(files, documents);
+  return warnings.length > 0
+    ? { ...result, diagnostics: [...result.diagnostics, ...warnings] }
+    : result;
+}
+
 function inFile(file: string, text: string): AnyDiagnostic[] {
   const lines = new LineCounter();
   const document = parseDocument(text, { lineCounter: lines });
