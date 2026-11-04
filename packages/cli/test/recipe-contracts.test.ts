@@ -36,6 +36,10 @@ describe("contracts in a project made from a recipe", () => {
     ["azure-blob", "adf-landing", "public"],
     ["salesforce", "adf-databricks", "public"],
     ["sqlserver", "databricks", "public"],
+    ["files", "databricks", "public"],
+    ["kafka", "databricks", "public"],
+    ["salesforce", "databricks", "public"],
+    ["microsoft-365", "adf-databricks", "public"],
   ])(
     "%s via %s writes exactly the contracts its flows and transforms use",
     (connector, via, connectivity) => {
