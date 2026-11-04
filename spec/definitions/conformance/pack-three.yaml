@@ -1,0 +1,32 @@
+# A data-only pack at version 3, for WRONG_PACK: version 1 of it is not
+# PACK_VERSION, which is only for version 1 of a version 2 pack. Its connector
+# is its own, so it offers no fixes in the cases that use the other packs.
+id: three
+version: 3
+defaults:
+  naming:
+    catalog: "{{ environment }}"
+    schema: "{{ layer }}"
+    table: "{{ table }}"
+    pipeline: "{{ project }}"
+    job: "{{ project }}_refresh"
+  layers: [bronze, silver, gold]
+  types:
+    {
+      string: STRING,
+      integer: BIGINT,
+      number: DOUBLE,
+      boolean: BOOLEAN,
+      date: DATE,
+      timestamp: TIMESTAMP,
+    }
+  quality: { required: warn, default: warn }
+rules:
+  ingest: { default: three-copy }
+methods:
+  three-copy:
+    action: ingest
+    description: Copies a source's files to a landing folder.
+    connectors: [three]
+    produces: files
+    settings: { type: object }
