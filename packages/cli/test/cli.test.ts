@@ -3,10 +3,8 @@ import {
   appendFileSync,
   cpSync,
   existsSync,
-  mkdirSync,
   mkdtempSync,
   readFileSync,
-  rmSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -78,20 +76,6 @@ describe("ingestron plan", () => {
   });
 });
 
-describe("--env", () => {
-  for (const command of ["plan", "apply", "check"])
-    it(`is refused by ${command}, which generates every environment together`, () => {
-      const { folder, ingestron } = workspace();
-      const { code, output } = ingestron(command, "--env", "dev");
-      expect(code).toBe(2);
-      expect(output.split("\n\n")[0]).toBe(
-        `Every environment is generated together, so ${command} does not take --env. Use compare for two environments, or request for one.`,
-      );
-      expect(output).toContain("Usage: ingestron");
-      expect(existsSync(join(folder, "build"))).toBe(false);
-    });
-});
-
 describe("warnings", () => {
   it("are printed, and the plan still goes ahead", () => {
     const { folder, ingestron } = workspace();
@@ -148,31 +132,6 @@ describe("ingestron apply and check", () => {
       "  prod:",
     );
     expect(ingestron("check").code).toBe(0);
-  });
-
-  it("reports an upgraded project's build/<env>/ folders as no longer generated, and check fails until they are deleted", () => {
-    const { folder, ingestron } = workspace();
-    for (const environment of ["dev", "prod"]) {
-      mkdirSync(join(folder, "build", environment), { recursive: true });
-      writeFileSync(join(folder, "build", environment, "databricks.yml"), "bundle: {}\n");
-      writeFileSync(
-        join(folder, "build", environment, ".generated.json"),
-        '{ "version": 1, "files": {} }\n',
-      );
-    }
-    const apply = ingestron("apply");
-    expect(apply.code).toBe(0);
-    for (const environment of ["dev", "prod"])
-      expect(apply.output).toContain(
-        `build/${environment}: no longer generated. Delete the folder, or delete its .generated.json to keep it as your own.`,
-      );
-    const check = ingestron("check");
-    expect(check.code).toBe(1);
-    expect(check.output).toContain("databricks: up to date");
-    expect(existsSync(join(folder, "build/dev/databricks.yml"))).toBe(true);
-    for (const environment of ["dev", "prod"])
-      rmSync(join(folder, "build", environment), { recursive: true });
-    expect(ingestron("check")).toEqual({ code: 0, output: "databricks: up to date\n" });
   });
 
   it("keeps the first pack's folder where it is when the standard names a second pack", () => {

@@ -37,6 +37,8 @@ export interface Resolution {
   ok: boolean;
   /** Whether the standard names a pack that builds environments together. */
   together: boolean;
+  /** The environments resolved with the host's values only, known before resolving. */
+  local: string[];
 }
 
 /** Resolves every environment project.yaml declares, as `plan` does. */
@@ -66,6 +68,9 @@ export function resolveEnvironments(
     reports: results.map(({ report }) => report),
     ok: results.every(({ report }) => !report.failed),
     together,
+    local: declared
+      .filter((item) => !together || local(item, available))
+      .map((item) => item.name),
   };
 }
 
