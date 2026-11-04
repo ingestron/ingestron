@@ -19,6 +19,8 @@ export interface EnvvarReference {
    * environment's override alike, never `/environments/…`.
    */
   pointer: string;
+  /** The line of the reference, when it is written in `file` itself, not in a `${file:…}`. */
+  line?: number;
   /**
    * Where the value came from: `host` for the environment Ingestron runs in,
    * `.env.<environment>` or `.env`. Absent when the variable is set nowhere.

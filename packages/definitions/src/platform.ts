@@ -3,8 +3,8 @@ import type { Context } from "./context.js";
 import type { PlatformDoc } from "./documents.js";
 import type { ResolvedPlatform, Schedule } from "./model.js";
 
-/** Environments that are personal copies: `dev`, and `default` when none is selected. */
-const developmentNames = new Set(["dev", "default"]);
+/** Environments that are personal copies, when every environment is generated together. */
+const developmentNames = new Set(["dev"]);
 /** Environments whose schedules run unless the platform says otherwise. */
 const productionNames = new Set(["prod", "production"]);
 

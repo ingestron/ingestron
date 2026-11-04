@@ -69,7 +69,7 @@ describe("deploy-time values", () => {
       {
         name: "SHOP_PATH",
         text: "${envvar:SHOP_PATH}",
-        uses: [{ file: "shop.yaml", pointer: "/settings/path" }],
+        uses: [{ file: "shop.yaml", pointer: "/settings/path", line: 6 }],
       },
     ]);
   });
@@ -129,10 +129,28 @@ describe("the mode default", () => {
 });
 
 describe("a pack's problems", () => {
-  it("become errors at the definition, with the hint for their code, at line 1 when no line is known", () => {
+  it("become diagnostics at the definition, with their severity and the hint for their code, at line 1 when no line is known", () => {
     const diagnostics = environmentsDiagnostics([
-      { code: "ENVIRONMENTS_DIFFER", message: "Table x differs.", file: "a.yaml" },
-      { code: "DEPLOY_VALUE", message: "Name y varies.", file: "b.yaml", line: 7 },
+      {
+        code: "ENVIRONMENTS_DIFFER",
+        severity: "error",
+        message: "Table x differs.",
+        file: "a.yaml",
+      },
+      {
+        code: "SECRET_NAME_DIFFERS",
+        severity: "warning",
+        message: "Secret y.",
+        file: "b.yaml",
+        line: 7,
+      },
+      {
+        code: "DEPLOY_VALUE",
+        severity: "error",
+        message: "Two names.",
+        hint: "Use one.",
+        file: "c.yaml",
+      },
     ]);
     expect(diagnostics).toEqual([
       {
@@ -143,13 +161,20 @@ describe("a pack's problems", () => {
         location: { file: "a.yaml", line: 1, column: 1 },
       },
       {
-        code: "DEPLOY_VALUE",
-        severity: "error",
-        message: "Name y varies.",
-        hint: "Write this value in project.yaml, per environment; keep ${envvar:…} for values the deploying pipeline supplies, such as hosts, paths and accounts.",
+        code: "SECRET_NAME_DIFFERS",
+        severity: "warning",
+        message: "Secret y.",
+        hint: "Give the secret the same name in every environment's Key Vault, so that only the vault differs.",
         location: { file: "b.yaml", line: 7, column: 1 },
       },
+      {
+        code: "DEPLOY_VALUE",
+        severity: "error",
+        message: "Two names.",
+        hint: "Use one.",
+        location: { file: "c.yaml", line: 1, column: 1 },
+      },
     ]);
-    expect(codeHelp.ENVIRONMENTS_DIFFER.meaning).toMatch(/^The pack builds every environment/);
+    expect(codeHelp.ARM_PARAMETERS.meaning).toMatch(/more than 256 parameters/);
   });
 });

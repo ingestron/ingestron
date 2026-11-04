@@ -142,7 +142,7 @@ function resolveLoaded(
   // it, except a settings failure: the settings check has already left out what it causes.
   const deployTime = options.deployTime === true;
   const reporter = resolutionReporter(project, warnings, deployTime);
-  const context = createContext(project, options.packs, reporter);
+  const context = createContext(project, options.packs, reporter, deployTime);
   if (!context) return { ok: false, diagnostics: reporter.diagnostics };
   if (deployTime) checkDeployValues(context);
   checkSettingsKeys(context);
@@ -160,11 +160,10 @@ function resolveLoaded(
   checkGovernance(context, products);
   // Project-wide checks only make sense once every table resolved.
   const together = options.environmentsTogether === true;
-  const built = reporter.failed()
-    ? undefined
-    : buildModel(context, namer, together, tables, products);
+  const built = !reporter.failed() && buildModel(context, namer, together, tables, products);
+  // The pack checks see the model the packs get, before the deploy-time values are listed.
+  if (built) runPackCheck(context, built);
   const model = built && deployTime ? { ...built, deployValues: deployValuesOf(project) } : built;
-  if (model) runPackCheck(context, model);
   return model && !reporter.failed()
     ? { ok: true, model, diagnostics: reporter.diagnostics }
     : { ok: false, diagnostics: reporter.diagnostics };
@@ -220,11 +219,14 @@ function checkServeInputs(context: Context, tables: ResolvedTable[]): void {
 
 /**
  * Runs each chosen method's own check on its table (`METHOD_CHECK`), except on a table
- * that holds an unset reference: what a check judges cannot be told apart.
+ * that holds an unset reference: what a check judges cannot be told apart. Deploy-time
+ * values are opaque text, so with `deployTime` every table is checked.
  */
 function runMethodChecks(context: Context, tables: ResolvedTable[]): void {
+  const unknown = (table: ResolvedTable) =>
+    !context.deployTime && holdsUnsetEnvvar(context.project, table);
   for (const table of tables) {
-    if (holdsUnsetEnvvar(context.project, table)) continue;
+    if (unknown(table)) continue;
     for (const step of [table.ingest, table.transform, table.store, table.serve]) {
       const method = step && context.pack.methods[step.method];
       for (const message of method?.check?.(table) ?? []) {

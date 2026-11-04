@@ -48,7 +48,9 @@ export type DefinitionCode =
   | "CLASSIFICATION_UNKNOWN"
   | "SENSITIVE_ACCESS"
   | "DEPLOY_VALUE"
-  | "ENVIRONMENTS_DIFFER";
+  | "ENVIRONMENTS_DIFFER"
+  | "ARM_PARAMETERS"
+  | "SECRET_NAME_DIFFERS";
 
 /** Where a value was written: a document and a JSON Pointer into it. */
 export interface Source {

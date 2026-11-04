@@ -4,12 +4,15 @@ export { NO_STORE } from "./choose.js";
 export { codeHelp } from "./codes.js";
 export { contractReads } from "./contract-notes.js";
 export { contractCommon, contractUseOf } from "./contract-use.js";
+export { compareTargets, type TargetComparison, type TargetDifference } from "./compare-targets.js";
 export {
   environmentsDiagnostics,
   type EnvironmentsBuild,
+  type EnvironmentsCode,
   type EnvironmentsProblem,
   type SuppliedValue,
 } from "./environments.js";
+export { checkFold, splitDeployText, type FoldView } from "./fold.js";
 export { loadingCodeHelp, type LoadingStage } from "./loading-codes.js";
 export { kinds, packageSchema, type GovernanceDoc } from "./documents.js";
 export { passportFile } from "./products.js";
