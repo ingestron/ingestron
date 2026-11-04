@@ -14,7 +14,7 @@ export function builtInTemplates(): Template[];
 // @public
 export const commands: readonly [{
     readonly name: "plan";
-    readonly summary: "Show what would change in each environment's output folder.";
+    readonly summary: "Show what would change in each pack's output folder.";
 }, {
     readonly name: "apply";
     readonly summary: "Write the changes. Files edited by hand are never overwritten.";
@@ -56,7 +56,7 @@ export const flags: readonly [{
     readonly summary: "init: the route: Databricks directly, or ADF into Databricks, Synapse views, DuckDB tables or the landed files alone.";
 }, {
     readonly flag: "--env <name>";
-    readonly summary: "Only this environment (repeatable). Default: all in project.yaml. init: the environments.";
+    readonly summary: "compare and request: only this environment (repeatable). Default: all in project.yaml. init: the environments.";
 }, {
     readonly flag: "--definitions <dir>";
     readonly summary: "Folder with project.yaml. Default: .";
