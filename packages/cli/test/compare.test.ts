@@ -23,6 +23,13 @@ describe("compareEnvironments", () => {
     expect(text).toContain("- `ingest.connection.settings.path`:");
   });
 
+  it("resolves every environment together, so test has the bundle's production mode", () => {
+    const environments = join(import.meta.dirname, "fixtures/environments");
+    expect(compareEnvironments(nodeFiles(environments), "dev", "test")).toContain(
+      "- `mode`: `development` → `production`",
+    );
+  });
+
   it("leaves out what is the same", () => {
     expect(text).not.toContain("`run_as");
     expect(text).not.toContain("ingest.method");
