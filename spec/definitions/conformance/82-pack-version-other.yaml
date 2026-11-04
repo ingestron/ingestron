@@ -1,4 +1,4 @@
-description: Only version 1 of a version 2 pack is PACK_VERSION; any other version that is not available is WRONG_PACK, with no fix.
+description: Only version 1 of a version 2 pack is PACK_VERSION; any other version that is not available is WRONG_PACK, with no fix, such as version 3 of a version 2 pack or version 1 of a version 3 pack.
 environment: dev
 files:
   project.yaml: |
@@ -9,7 +9,7 @@ files:
     apiVersion: ingestron.io/v1
     kind: Standard
     id: acme
-    packs: [test@1, fold@3]
+    packs: [test@1, fold@3, three@1]
   shop.yaml: |
     apiVersion: ingestron.io/v1
     kind: Connection
@@ -38,4 +38,5 @@ files:
           - { name: id, logicalType: integer, required: true, primaryKey: true }
 expect:
   diagnostics:
-    - { code: WRONG_PACK, severity: error, file: standard.yaml, line: 4, column: 17 }
+    - { code: WRONG_PACK, severity: error, file: standard.yaml, line: 4, column: 17, fixes: [] }
+    - { code: WRONG_PACK, severity: error, file: standard.yaml, line: 4, column: 25, fixes: [] }

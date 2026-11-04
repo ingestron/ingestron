@@ -58,6 +58,7 @@ const packs = [
   "pack-fold.yaml",
   "pack-checked.yaml",
   "pack-plain.yaml",
+  "pack-three.yaml",
 ].map((file) =>
   packOf(
     parse(readFileSync(join(folder, file), "utf8")) as PackInfo & { buildEnvironments?: true },
@@ -200,7 +201,8 @@ describe("conformance", () => {
             message,
             hint,
             ...location,
-            fixes: fixes?.map((fix) => fix.title),
+            // A diagnostic without fixes has none, so a case can say `fixes: []`.
+            fixes: (fixes ?? []).map((fix) => fix.title),
           }),
         );
         expect(actual).toHaveLength(diagnostics.length);
