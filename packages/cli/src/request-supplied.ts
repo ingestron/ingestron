@@ -10,6 +10,8 @@ import { resolveEnvironments, type ResolvedEnvironment } from "./resolve-environ
 export interface Generated {
   /** Whether the standard names a pack that builds environments together. */
   together: boolean;
+  /** The environments resolved with the host's values only, known before resolving. */
+  local: string[];
   ok: boolean;
   environments: ResolvedEnvironment[];
   outputs: Output[];
@@ -32,15 +34,15 @@ export function generateAll(
   envvars: Readonly<Record<string, string | undefined>>,
 ): Generated {
   const resolution = resolveEnvironments(files, available, envvars);
-  const { together, environments } = resolution;
-  if (!resolution.ok) return { together, ok: false, environments: [], outputs: [] };
+  const { together, local, environments } = resolution;
+  if (!resolution.ok) return { together, local, ok: false, environments: [], outputs: [] };
   const built = buildOutputs(environments, available);
-  return { together, ok: built.ok, environments, outputs: built.outputs };
+  return { together, local, ok: built.ok, environments, outputs: built.outputs };
 }
 
 /** The names for one environment; none when no pack builds environments together, or it is local. */
 export function suppliedFor(generated: Generated, name: string): Supplied | undefined {
-  if (!generated.together) return undefined;
+  if (!generated.together || generated.local.includes(name)) return undefined;
   if (!generated.ok) return { variables: new Map(), own: [], unknown: true };
   const environment = generated.environments.find((item) => item.name === name);
   if (!environment?.deploy) return undefined;
