@@ -87,7 +87,7 @@ export const contractNotes: Record<string, ContractNote> = {
     ingestron: "Primary key columns are the keys for `upsert` and `history`.",
   },
   [`${column}.description`]: {
-    example: "Order total in NZD, including GST.",
+    example: "Order total in GBP, including VAT.",
   },
   price: { description: "What the data product costs: amount, currency and unit." },
   [`${column}.logicalTypeOptions`]: {

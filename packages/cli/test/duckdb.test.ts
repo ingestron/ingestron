@@ -54,7 +54,7 @@ describe("the duckdb starter", () => {
     const sql = readFileSync(join(project, "build/dev/run.sql"), "utf8");
     const totals = "SELECT customer, orders, total FROM silver.customer_totals ORDER BY customer";
     const expected = [
-      { customer: "Aroha", orders: "2", total: 65.75 },
+      { customer: "Ana", orders: "2", total: 65.75 },
       { customer: "Ben", orders: "2", total: 42 },
       { customer: "Chen", orders: "1", total: 8.75 },
     ];
