@@ -45,6 +45,6 @@ expect:
   diagnostics: []
   unsetEnvvars: ["${envvar:LANDING}", "${envvar:FROM_DEV}", "${envvar:FROM_HOST}"]
   envvarReferences:
-    - { name: LANDING, file: project.yaml, pointer: /values/landing }
-    - { name: FROM_DEV, file: project.yaml, pointer: /values/region }
-    - { name: FROM_HOST, file: a.pipeline.yaml, pointer: /host }
+    - { name: LANDING, file: project.yaml, pointer: /values/landing, line: 3 }
+    - { name: FROM_DEV, file: project.yaml, pointer: /values/region, line: 7 }
+    - { name: FROM_HOST, file: a.pipeline.yaml, pointer: /host, line: 6 }

@@ -1,4 +1,4 @@
-description: "check fails while a folder that is no longer generated is still there."
+description: "check fails while a folder that is no longer generated is still there, even when every output folder is up to date."
 files:
   project.yaml: |
     id: retail
@@ -35,10 +35,17 @@ files:
         description: One row per order.
         properties:
           - { name: id, logicalType: integer, primaryKey: true }
+  build/fold/.generated.json: |
+    { "version": 1, "files": { "tables.txt": "sha256:e3f7f152fbb1e26e92fd7e7e2a1dddbe616299a7b9078eea54aa5d8c2a5d170a", "targets.txt": "sha256:9c5955fc99a60b8f6dee6cf582c4420d91e1b3e2a201f532c91e2cbdfce7fa51" } }
+  build/fold/tables.txt: |
+    orders /data/shop
+  build/fold/targets.txt: |
+    dev
   build/prod/.generated.json: |
     { "version": 1, "files": {} }
 command: check
 expect:
   exit: 1
   lines:
+    - "fold: up to date"
     - "build/prod: no longer generated. Delete the folder, or delete its .generated.json to keep it as your own."
