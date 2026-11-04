@@ -84,7 +84,7 @@ describe("an environment that runs on DuckDB beside cloud environments", () => {
         "      key_vault: https://kv-stores-prod.vault.azure.net\n",
         "      key_vault: https://kv-stores-prod.vault.azure.net\n  laptop:\n    runs-on: duckdb\n    values: { store: duckdb-table }\n",
       );
-      edit(root, "standard.yaml", "[databricks@2, adf@2]", "[databricks@2, adf@2, duckdb@1]");
+      edit(root, "standard.yaml", "[databricks@2, adf@2]", "[databricks@2, adf@2, duckdb@2]");
       edit(
         root,
         "standard.yaml",

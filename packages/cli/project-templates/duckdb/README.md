@@ -6,7 +6,7 @@ line.
 
 | File                              | What it shows                                          |
 | --------------------------------- | ------------------------------------------------------ |
-| `standard.yaml`                   | `packs: [duckdb@1]`, and CSV files                     |
+| `standard.yaml`                   | `packs: [duckdb@2]`, and CSV files                     |
 | `platform.yaml`                   | `published`: the folder each table is published to     |
 | `connections/shop.yaml`           | A files source in the project folder, `./samples`      |
 | `flows/orders.yaml`               | `samples/orders.csv` becomes the table `bronze.orders` |
