@@ -227,6 +227,8 @@ export interface FieldInfo {
     docs: string;
     // (undocumented)
     example?: unknown;
+    maximum?: number;
+    minimum?: number;
     // (undocumented)
     name: string;
     path: string[];

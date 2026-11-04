@@ -5,6 +5,7 @@ import { contractNotes } from "./contract-notes.js";
 import { kinds } from "./documents.js";
 import { isRecord } from "./merge.js";
 import type { PackInfo } from "./pack.js";
+import { branches, expand, type Schema } from "./schema-nodes.js";
 
 /** One field: what it is, what it accepts, and the page that explains it. */
 export interface FieldInfo {
@@ -18,6 +19,10 @@ export interface FieldInfo {
   /** The allowed values, each with its meaning when the schema gives one. */
   values?: { value: unknown; description?: string }[];
   default?: unknown;
+  /** The least number allowed, from the schema's `minimum`. */
+  minimum?: number;
+  /** The greatest number allowed, from the schema's `maximum`. */
+  maximum?: number;
   example?: unknown;
   /** For a method setting: the file it belongs in. */
   placement?: "platform" | "standard" | "definition";
@@ -101,8 +106,6 @@ export function anchorOf(parts: string[]): string {
     .join("-");
 }
 
-type Schema = Record<string, unknown>;
-
 function walk(
   root: Schema,
   schema: Schema,
@@ -124,25 +127,28 @@ function walk(
     const field = describe(root, child, [...path, name], required.includes(name), anchor);
     return [field, ...walk(root, child, [...path, name], anchor, inside)];
   });
-  const nested = parts.flatMap((part) =>
-    [part.items, part.additionalProperties]
+  const nested = parts.flatMap((part) => [
+    ...mappingValues(root, part.additionalProperties, [...path, "*"], anchor),
+    ...[part.items, part.additionalProperties]
       .filter(isRecord)
       .flatMap((child) => walk(root, child, [...path, "*"], anchor, inside)),
-  );
+  ]);
   return [...own, ...unique(nested)];
 }
 
-/** The schema and the branches of its `allOf`, `anyOf`, `oneOf`, `then` and `else`, each with `$ref` followed. */
-function branches(root: Schema, schema: Schema): Schema[] {
-  const node = expand(root, schema);
-  // A conditional's `then` and `else` add fields too, such as an ODCS rule's metric.
-  const more = [
-    ...["allOf", "anyOf", "oneOf"].flatMap((key) =>
-      Array.isArray(node[key]) ? (node[key] as Schema[]) : [],
-    ),
-    ...["then", "else"].map((key) => node[key]).filter(isRecord),
-  ];
-  return [node, ...more.flatMap((branch) => (isRecord(branch) ? branches(root, branch) : []))];
+/**
+ * The values of a mapping, its `additionalProperties`, as the field `*`, when they have a
+ * description or allowed values; otherwise the mapping's own field says all there is.
+ */
+function mappingValues(
+  root: Schema,
+  values: unknown,
+  path: string[],
+  anchor: (path: string[]) => string,
+): FieldInfo[] {
+  if (!isRecord(values)) return [];
+  const field = describe(root, values, path, false, anchor);
+  return field.description || field.values ? [field] : [];
 }
 
 /** What every form requires: the schema's own `required` and its `allOf` parts', not one alternative's. */
@@ -180,6 +186,8 @@ function describe(
   const examples = pick<unknown[]>("examples");
   const description = pick<string>("description");
   const fallback = pick<unknown>("default");
+  const minimum = pick<number>("minimum");
+  const maximum = pick<number>("maximum");
   return {
     path,
     name: path.at(-1) ?? "",
@@ -189,6 +197,8 @@ function describe(
     ...(description && { description }),
     ...(values && { values }),
     ...(fallback !== undefined && { default: fallback }),
+    ...(typeof minimum === "number" && { minimum }),
+    ...(typeof maximum === "number" && { maximum }),
     ...(examples?.length && { example: examples[0] }),
   };
 }
@@ -218,12 +228,4 @@ function typeOf(node: Schema): string {
   const types = [node.type].flat().filter((type): type is string => typeof type === "string");
   if (types.length > 0) return types.map((type) => words[type] ?? type).join(" or ");
   return node.properties || node.additionalProperties ? "a mapping" : "any value";
-}
-
-/** The schema with a local `$ref` (`#/$defs/<name>`) replaced by what it names. */
-function expand(root: Schema, schema: Schema): Schema {
-  const reference = typeof schema.$ref === "string" ? schema.$ref : undefined;
-  const name = reference && /^#\/\$defs\/(.+)$/.exec(reference)?.[1];
-  const target = name ? (root.$defs as Record<string, Schema> | undefined)?.[name] : undefined;
-  return target ? { ...expand(root, target), ...schema, $ref: undefined } : schema;
 }
