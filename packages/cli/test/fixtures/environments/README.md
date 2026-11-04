@@ -10,10 +10,9 @@ Compare the three folders:
 | Catalog (`finance_{{ environment }}`) | `finance_dev`     | `finance_test`      | `finance_prod`      |
 | Workspace                             | shared            | shared              | its own             |
 | Landing path                          | `dev_landing`     | `test_landing`      | `prod_landing`      |
-| Bundle mode                           | development       | production          | production          |
+| Bundle mode                           | development       | development         | production          |
 | Daily refresh job                     | paused            | paused              | running             |
 
-Mode and pause follow the environment's name by default: `dev` is
-development and every other environment production, and only `prod` or
-`production` runs its schedule. A platform can set `mode` and
+Mode and pause follow the environment's name by default (`prod` or
+`production` is production); a platform can set `mode` and
 `schedule.paused` itself, from values if they differ per environment.

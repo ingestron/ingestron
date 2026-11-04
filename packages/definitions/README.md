@@ -40,17 +40,17 @@ if (!result.model) {
 
 ## API
 
-| Export                               | Meaning                                                                                                                 |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `loadDefinitions(folder, options)`   | Load from disk and resolve: `{ ok, model?, diagnostics }`                                                               |
-| `resolveDefinitions(files, options)` | The same from any `FileSource` (for example `memoryFiles`)                                                              |
-| `options`                            | `{ packs, environment?, envvars?, missingEnvvars?, deployTime? }`: the available packs; the standard chooses among them |
-| `kinds`                              | The document kinds, for editor schemas or your own loading                                                              |
-| `ResolvedModel`, `ResolvedTable`, …  | The model's types; see `src/model.ts`                                                                                   |
-| `Pack`, `PackInfo`, `Method`, `Rule` | What a pack declares; see `src/pack.ts`                                                                                 |
-| `EnvironmentsBuild`                  | What a pack's optional `buildEnvironments(models)` returns: one set of files for every environment                      |
-| `environmentsDiagnostics(problems)`  | The diagnostics for what `buildEnvironments` could not fold                                                             |
-| `fullNameText(name)`                 | `catalog.schema.table`                                                                                                  |
+| Export                               | Meaning                                                                                                                                        |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `loadDefinitions(folder, options)`   | Load from disk and resolve: `{ ok, model?, diagnostics }`                                                                                      |
+| `resolveDefinitions(files, options)` | The same from any `FileSource` (for example `memoryFiles`)                                                                                     |
+| `options`                            | `{ packs, environment?, envvars?, missingEnvvars?, deployTime?, environmentsTogether? }`: the available packs; the standard chooses among them |
+| `kinds`                              | The document kinds, for editor schemas or your own loading                                                                                     |
+| `ResolvedModel`, `ResolvedTable`, …  | The model's types; see `src/model.ts`                                                                                                          |
+| `Pack`, `PackInfo`, `Method`, `Rule` | What a pack declares; see `src/pack.ts`                                                                                                        |
+| `EnvironmentsBuild`                  | What a pack's optional `buildEnvironments(models)` returns: one set of files for every environment                                             |
+| `environmentsDiagnostics(problems)`  | The diagnostics for what `buildEnvironments` could not fold                                                                                    |
+| `fullNameText(name)`                 | `catalog.schema.table`                                                                                                                         |
 
 `envvars` is the environment for `${envvar:…}`: `loadDefinitions` defaults
 to `process.env` and `resolveDefinitions` to none. `.env.<environment>` and
@@ -69,6 +69,11 @@ pipeline deploying the files supplies: it is never read from `envvars` or a
 `model.deployValues` lists each one with the values it feeds. Such a value
 cannot choose or name what is generated, such as a flow's `source` or a naming
 pattern; there it is a `DEPLOY_VALUE` error.
+
+`environmentsTogether: true` is for tools that generate every environment at
+once, as the CLI from 2.0 does. The platform's `mode` is then `production` by
+default for every environment except `dev`. Without it, `mode` is
+`production` only for `prod` and `production`, as before 1.8.
 
 `Connector.reading` optionally describes a native table reader's query support,
 accepted source options, landing format and required runtime. Packs derive this

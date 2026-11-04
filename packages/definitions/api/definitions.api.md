@@ -586,6 +586,7 @@ export interface ResolvedTable {
 export interface ResolveOptions {
     deployTime?: boolean;
     environment?: string;
+    environmentsTogether?: boolean;
     envvars?: Readonly<Record<string, string | undefined>>;
     missingEnvvars?: "error" | "information";
     packs: PackInfo[];
