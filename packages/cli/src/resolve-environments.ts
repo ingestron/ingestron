@@ -23,10 +23,13 @@ export interface ResolvedEnvironment {
   host?: ResolvedModel;
 }
 
-/** What resolving one environment found, to print before anything is planned. */
+/** What resolving one environment, or building one pack's files, found, to print before anything is planned. */
 export interface Report {
+  /** The environment's name, `default` when project.yaml declares none, or the pack's id. */
   name: string;
+  /** Whether it failed: an environment that did not resolve, or a pack that reported an error. */
   failed: boolean;
+  /** The problems and warnings it found, each once. */
   diagnostics: AnyDiagnostic[];
 }
 
