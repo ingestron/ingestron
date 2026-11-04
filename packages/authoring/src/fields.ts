@@ -139,7 +139,7 @@ function connectorFields(place: Place, project: Project, environment?: string): 
   }));
 }
 
-/** The fields directly inside the mapping at `path`. */
+/** The fields directly inside the mapping at `path`: the keys to write there. */
 export function fieldsIn(
   project: Project,
   place: Place,
@@ -151,8 +151,12 @@ export function fieldsIn(
     ? [methodFields(settings.method), settings.rest]
     : [[...connectorFields(place, project, environment), ...documentFields(place)], path];
   if (!settings && !(place.kind && place.kind in referenceKinds)) return undefined;
+  // A mapping's values (`*`) describe any key, so they are not a key to write.
   return all.filter(
-    (field) => field.path.length === base.length + 1 && matches(field.path.slice(0, -1), base),
+    (field) =>
+      field.name !== "*" &&
+      field.path.length === base.length + 1 &&
+      matches(field.path.slice(0, -1), base),
   );
 }
 
