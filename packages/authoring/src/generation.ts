@@ -3,26 +3,19 @@
 // finds that resolving one environment for the editor does not, such as a pack's
 // notices and a value that cannot be supplied when deploying.
 import { generatedOutputs, type GeneratedOutputs } from "@ingestron/cli";
-import { formatDiagnostics, type AnyDiagnostic } from "@ingestron/config";
-import { unlessPackThrows } from "./pack-load.js";
+import type { AnyDiagnostic } from "@ingestron/config";
 import { resolved, type Project } from "./project.js";
 
 const generations = new WeakMap<Project, GeneratedOutputs>();
 
-/** Every output folder as plan builds it, with open editors read first; nothing when a pack cannot be loaded. */
+/**
+ * Every output folder as plan builds it, with open editors read first; nothing, and the
+ * PACK_LOAD error, when a pack cannot be loaded.
+ */
 export function generationOf(project: Project): GeneratedOutputs {
   let generation = generations.get(project);
   if (!generation) {
-    generation = unlessPackThrows(
-      () => generatedOutputs(project.files),
-      (problem) => ({
-        ok: false,
-        outputs: [],
-        environmentReports: [],
-        packReports: [],
-        text: `${formatDiagnostics([problem])}\n`,
-      }),
-    );
+    generation = generatedOutputs(project.files);
     generations.set(project, generation);
   }
   return generation;

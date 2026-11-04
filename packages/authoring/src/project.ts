@@ -11,7 +11,7 @@ import {
 import { packs } from "@ingestron/cli";
 import { kinds, resolveDefinitions } from "@ingestron/definitions";
 import { parse } from "yaml";
-import { unlessPackThrows } from "./pack-load.js";
+import { refusedPacks } from "./pack-load.js";
 import { withoutEnvFiles } from "./without-env-files.js";
 
 /** A project folder, its files and the environments it declares. */
@@ -127,17 +127,15 @@ function resolve(
   environment: string | undefined,
   envvars: Readonly<Record<string, string | undefined>>,
 ): ReturnType<typeof resolveDefinitions> {
-  return unlessPackThrows(
-    () =>
-      resolveDefinitions(files, {
-        packs,
-        ...(environment && { environment }),
-        envvars,
-        missingEnvvars: "information",
-        environmentsTogether: true,
-      }),
-    (problem) => ({ ok: false, diagnostics: [problem] }),
-  );
+  const refused = refusedPacks();
+  if (refused) return { ok: false, diagnostics: [refused] };
+  return resolveDefinitions(files, {
+    packs,
+    ...(environment && { environment }),
+    envvars,
+    missingEnvvars: "information",
+    environmentsTogether: true,
+  });
 }
 
 const loads = new WeakMap<Project, Map<string, DefinitionDocument[]>>();

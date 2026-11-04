@@ -1,25 +1,12 @@
-// A pack that cannot be loaded: resolution throws for a pack's own mistake, such
-// as a `platformFields` path the Platform does not have. The editor shows it as a
-// problem in place of stopping.
+// A pack that cannot be loaded: resolution refuses a pack's own mistake, such as a
+// `platformFields` path the Platform does not have (definitions specification,
+// section 7). The editor checks first, as the CLI does, and shows the PACK_LOAD
+// error in place of resolving; any other error is not caught here.
+import { packs } from "@ingestron/cli";
 import type { AnyDiagnostic } from "@ingestron/config";
+import { packLoadProblem } from "@ingestron/definitions";
 
-/** The code of the problem shown when resolution stops on a pack's mistake. */
-export const packLoadCode = "PACK_LOAD";
-
-/** What `work` gives, or, when it throws, what `fallback` makes of the problem. */
-export function unlessPackThrows<T>(work: () => T, fallback: (problem: AnyDiagnostic) => T): T {
-  try {
-    return work();
-  } catch (error) {
-    return fallback(packLoadProblem(error));
-  }
-}
-
-function packLoadProblem(error: unknown): AnyDiagnostic {
-  return {
-    code: packLoadCode,
-    severity: "error",
-    message: error instanceof Error ? error.message : String(error),
-    hint: "This is a mistake in the pack, not in the project, so nothing is checked or generated until a version that fixes it is installed.",
-  };
+/** The PACK_LOAD error when one of the CLI's packs cannot be loaded, else undefined. */
+export function refusedPacks(): AnyDiagnostic | undefined {
+  return packLoadProblem(packs);
 }
