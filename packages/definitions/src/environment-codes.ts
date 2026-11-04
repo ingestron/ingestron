@@ -17,7 +17,7 @@ export const environmentCodeHelp: Record<
 > = {
   PACK_VERSION: {
     meaning:
-      "The standard names version 1 of a pack that is now version 2, which builds every environment into one output folder.",
+      "The standard names version 1 of a pack that is now version 2, such as a pack that builds every environment into one output folder.",
     fix: "Change the standard's packs list to version 2, and read the upgrade notes for what changes in the generated files.",
   },
   ENVIRONMENTS_DIFFER: {

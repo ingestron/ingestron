@@ -56,6 +56,7 @@ const packs = [
   "pack-local.yaml",
   "pack-fold.yaml",
   "pack-checked.yaml",
+  "pack-plain.yaml",
 ].map((file) =>
   packOf(
     parse(readFileSync(join(folder, file), "utf8")) as PackInfo & { buildEnvironments?: true },
@@ -190,12 +191,16 @@ describe("conformance", () => {
         checkTables(result.model!, testCase.expect.tables);
       }
       if (diagnostics) {
-        const actual = result.diagnostics.map(({ code, severity, location, fixes }) => ({
-          code,
-          severity,
-          ...location,
-          fixes: fixes?.map((fix) => fix.title),
-        }));
+        const actual = result.diagnostics.map(
+          ({ code, severity, message, hint, location, fixes }) => ({
+            code,
+            severity,
+            message,
+            hint,
+            ...location,
+            fixes: fixes?.map((fix) => fix.title),
+          }),
+        );
         expect(actual).toHaveLength(diagnostics.length);
         diagnostics.forEach((wanted, index) => expect(actual[index]).toMatchObject(wanted));
         checkFixed(result.diagnostics, testCase);
