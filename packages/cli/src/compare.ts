@@ -33,8 +33,10 @@ export function compare(options: Options, io: Io): number {
  * console.log(compareEnvironments(nodeFiles("definitions"), "dev", "prod"));
  */
 export function compareEnvironments(files: FileSource, a: string, b: string): string {
-  const left = resolveDefinitions(files, { packs, environment: a, envvars: process.env });
-  const right = resolveDefinitions(files, { packs, environment: b, envvars: process.env });
+  // As plan resolves them, so the platform's mode is the generated files' (spec/cli/outputs.md).
+  const options = { packs, envvars: process.env, environmentsTogether: true };
+  const left = resolveDefinitions(files, { ...options, environment: a });
+  const right = resolveDefinitions(files, { ...options, environment: b });
   for (const [name, result] of [
     [a, left],
     [b, right],
