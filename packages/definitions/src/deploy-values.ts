@@ -78,15 +78,31 @@ export function resolutionReporter(
   return context.reporter;
 }
 
-/** The model's deploy-time values, one per name, from the references the load resolved. */
+/**
+ * The model's deploy-time values, one per name, from the references the load resolved.
+ * A reference whose value the environment overrides is not a use, so a value with no
+ * use left, such as a default every environment replaces, is not listed.
+ */
 export function deployValuesOf(project: Project): DeployValue[] {
   const byName = new Map<string, DeployValue>();
   for (const { name, file, pointer, line } of project.envvarReferences) {
-    const value = byName.get(name) ?? { name, text: `\${envvar:${name}}`, uses: [] };
+    const text = `\${envvar:${name}}`;
+    if (!feeds(project, file, pointer, text)) continue;
+    const value = byName.get(name) ?? { name, text, uses: [] };
     value.uses.push({ file, pointer, ...(line !== undefined && { line }) });
     byName.set(name, value);
   }
   return [...byName.values()];
+}
+
+/** True when the resolved value at the pointer, in the file's documents or values, holds the text. */
+function feeds(project: Project, file: string, pointer: string, text: string): boolean {
+  const documents = project.documents.filter((document) => document.file === file);
+  const values = documents.length > 0 ? documents.map((document) => document.value) : [project];
+  return values.some((value) => {
+    const found = valueAt(value, pointer);
+    return typeof found === "string" && found.includes(text);
+  });
 }
 
 /** The deploy-time value that comes first in the text. */

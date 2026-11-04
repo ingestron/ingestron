@@ -2,6 +2,7 @@
 // section 2.1): what differs in more than a value, with the standard messages, and
 // every place where only a value differs, so that each pack folds the same way.
 import type { EnvironmentsProblem } from "./environments.js";
+import { checkDeployNames } from "./deploy-names.js";
 import type { ResolvedModel, ResolvedTable } from "./model.js";
 
 /** One place where the targets' values are not all the same. */
@@ -20,7 +21,8 @@ export interface TargetComparison {
   differing: TargetDifference[];
 }
 
-type Models = Readonly<Record<string, ResolvedModel>>;
+/** The targets' models, by target name. */
+export type Models = Readonly<Record<string, ResolvedModel>>;
 const steps = ["ingest", "transform", "store", "serve"] as const;
 /** Where a value was written or how a method was chosen: not values that reach files. */
 const metadata = new Set(["origins", "chosenBy"]);
@@ -44,7 +46,7 @@ export function compareTargets(models: Readonly<Record<string, ResolvedModel>>):
     byTarget(targets, (target) => rest(models[target]!)),
     walk,
   );
-  return { structural, differing };
+  return { structural: once(structural), differing };
 }
 
 /** The parts of a model compared as values, apart from its tables, compared by name. */
@@ -67,7 +69,8 @@ function byTarget(targets: string[], value: (target: string) => unknown): Record
   return Object.fromEntries(targets.map((target) => [target, value(target)]));
 }
 
-interface Found {
+/** What the comparison has found so far. */
+export interface Found {
   structural: EnvironmentsProblem[];
   differing: TargetDifference[];
 }
@@ -141,7 +144,8 @@ function methodsMatch(
   return match;
 }
 
-interface Walk {
+/** The comparison in progress. */
+export interface Walk {
   models: Models;
   found: Found;
 }
@@ -183,34 +187,15 @@ function childValues(values: Record<string, unknown>, key: string): Record<strin
   );
 }
 
-/** Two targets holding different deploy-time values at one place is `DEPLOY_VALUE`. */
-function checkDeployNames(values: Record<string, unknown>, walk: Walk): void {
-  const held = Object.entries(values).flatMap(([target, value]) => {
-    const names = deployNames(walk.models[target], value);
-    return names.length > 0 ? [{ target, names: names.join(",") }] : [];
+/** Each problem once: a value two tables share is found for each. */
+function once(problems: EnvironmentsProblem[]): EnvironmentsProblem[] {
+  const seen = new Set<string>();
+  return problems.filter((problem) => {
+    const key = JSON.stringify([problem.code, problem.message, problem.file, problem.line]);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
   });
-  const first = held[0];
-  const other = held.find((entry) => entry.names !== first?.names);
-  if (!first || !other) return;
-  const name = other.names.split(",")[0]!;
-  const use = walk.models[other.target]?.deployValues?.find((value) => value.name === name)
-    ?.uses[0];
-  walk.found.structural.push({
-    code: "DEPLOY_VALUE",
-    severity: "error",
-    message: `This value is \${envvar:${first.names.split(",")[0]}} in ${first.target} and \${envvar:${name}} in ${other.target}.`,
-    hint: "Use one variable name and give it a different value in each pipeline stage.",
-    file: use?.file ?? "project.yaml",
-    ...(use?.line !== undefined && { line: use.line }),
-  });
-}
-
-/** The names of the deploy-time values a text holds, in the model's order. */
-function deployNames(model: ResolvedModel | undefined, value: unknown): string[] {
-  if (typeof value !== "string") return [];
-  return (model?.deployValues ?? [])
-    .filter((deploy) => value.includes(deploy.text))
-    .map((deploy) => deploy.name);
 }
 
 function differ(message: string, file: string, line?: number): EnvironmentsProblem {
