@@ -1,29 +1,24 @@
-// Every example project and its environments, for the checks in this folder.
-import { readdirSync, readFileSync } from "node:fs";
+// Every example project, generated as plan generates it, for the checks in this folder.
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import { loadDefinitions, type ResolvedModel } from "@ingestron/definitions";
-import { parse } from "yaml";
+import { nodeFiles } from "@ingestron/config";
+import type { Output } from "../src/build-outputs.js";
 import { packs } from "../src/packs.js";
+import { generateAll } from "../src/request-supplied.js";
 
 const samplesFolder = join(import.meta.dirname, "..");
 
-/** Each example's resolved model per environment. Throws when a example does not resolve. */
-export function exampleModels(): { name: string; model: ResolvedModel }[] {
+/** Each example's output folders. Throws when an example does not generate. */
+export function exampleOutputs(): { name: string; outputs: Output[] }[] {
   return ["project-templates", "test/fixtures"]
     .flatMap((kind) =>
       readdirSync(join(samplesFolder, kind), { withFileTypes: true })
         .filter((entry) => entry.isDirectory())
-        .map((entry) => ({ name: `${kind}/${entry.name}` })),
+        .map((entry) => `${kind}/${entry.name}`),
     )
-    .flatMap((entry) => {
-      const folder = join(samplesFolder, entry.name);
-      const manifest = parse(readFileSync(join(folder, "project.yaml"), "utf8")) as {
-        environments?: object;
-      };
-      return Object.keys(manifest.environments ?? { default: {} }).map((environment) => {
-        const result = loadDefinitions(folder, { packs, environment });
-        if (!result.model) throw new Error(`${entry.name} (${environment}) does not resolve.`);
-        return { name: `${entry.name} ${environment}`, model: result.model };
-      });
+    .map((name) => {
+      const generated = generateAll(nodeFiles(join(samplesFolder, name)), packs, process.env);
+      if (!generated.ok) throw new Error(`${name} does not generate.`);
+      return { name, outputs: generated.outputs };
     });
 }
