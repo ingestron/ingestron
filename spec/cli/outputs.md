@@ -48,7 +48,7 @@ Every other environment is first resolved for deploy, and then:
    environments together, it is a local environment as well: it is resolved
    with the host's values, that model is used for everything, and when that
    resolution fails, its problems are the environment's.
-3. When that fails, its problems are the environment's.
+3. When resolving for deploy fails, its problems are the environment's.
 
 Targets are as the definitions specification, section 2.1, defines them,
 from the model each step above uses.
