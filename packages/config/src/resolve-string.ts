@@ -143,7 +143,7 @@ function readEnvironmentVariable(
     );
     return undefined;
   }
-  recordReference(name, pointer, walk);
+  recordReference(name, pointer, location, walk);
   if (walk.context.deployEnvvars) return deployTimeText(name, walk);
   const value = walk.context.envvars[name];
   if (value !== undefined && value !== "") return value;
@@ -192,11 +192,12 @@ function reportUnset(name: string, source: string, location: Location, walk: Wal
  * Notes that the value at `pointer` reads the variable (spec §4.6). The outermost file being
  * resolved is the document's own, even inside a `${file:…}`; the value is never kept.
  */
-function recordReference(name: string, pointer: string, walk: Walk): void {
+function recordReference(name: string, pointer: string, location: Location, walk: Walk): void {
   const document = walk.includeStack[0] ?? "";
   const file = document.slice(0, document.lastIndexOf("#"));
   const key = JSON.stringify([name, file, pointer]);
   if (walk.context.envvarReferences.has(key)) return;
   const setIn = walk.context.envvarsSetIn[name];
-  walk.context.envvarReferences.set(key, { name, file, pointer, ...(setIn && { setIn }) });
+  const line = location.file === file ? { line: location.line } : {};
+  walk.context.envvarReferences.set(key, { name, file, pointer, ...line, ...(setIn && { setIn }) });
 }

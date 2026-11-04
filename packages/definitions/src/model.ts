@@ -207,8 +207,11 @@ export interface DeployValue {
   name: string;
   /** What stands for the value in the model's text: `${envvar:NAME}`. */
   text: string;
-  /** Each value it feeds: the file, and the JSON Pointer of the value in that file's document. */
-  uses: { file: string; pointer: string }[];
+  /**
+   * Each value it feeds: the file, the JSON Pointer of the value in that file's document,
+   * and the line of the reference when it is written in that file.
+   */
+  uses: { file: string; pointer: string; line?: number }[];
 }
 
 /** A data product (ODPS) and the tables that build its outputs in this environment. */

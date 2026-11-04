@@ -70,8 +70,8 @@ export function resolutionReporter(
 ): Reporter {
   const context = {} as { reporter: Reporter };
   context.reporter = createReporter(start, (at, code, severity) => {
-    if (code === "BAD_SETTING" || code === "DEPLOY_VALUE" || !unsetEnvvarAt(project, at))
-      return false;
+    if (["BAD_SETTING", "DEPLOY_VALUE", "FIXED_SETTING"].includes(code)) return false;
+    if (!unsetEnvvarAt(project, at)) return false;
     if (deployTime && severity === "error") reportDeployValue(project, context, at);
     return true;
   });
@@ -81,9 +81,9 @@ export function resolutionReporter(
 /** The model's deploy-time values, one per name, from the references the load resolved. */
 export function deployValuesOf(project: Project): DeployValue[] {
   const byName = new Map<string, DeployValue>();
-  for (const { name, file, pointer } of project.envvarReferences) {
+  for (const { name, file, pointer, line } of project.envvarReferences) {
     const value = byName.get(name) ?? { name, text: `\${envvar:${name}}`, uses: [] };
-    value.uses.push({ file, pointer });
+    value.uses.push({ file, pointer, ...(line !== undefined && { line }) });
     byName.set(name, value);
   }
   return [...byName.values()];

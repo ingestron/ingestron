@@ -98,7 +98,9 @@ function fixedRespected(
 ): boolean {
   let respected = true;
   for (const layer of layers.filter((candidate) => candidate.definition)) {
-    const unknown = (value: unknown) => holdsUnsetEnvvar(context.project, value);
+    // A deploy-time value differs from any fixed value (specification section 1.1).
+    const unknown = (value: unknown) =>
+      !context.deployTime && holdsUnsetEnvvar(context.project, value);
     for (const { path, value } of changedFixed(fixed, layer.value, [], unknown)) {
       const pointer = path.map((key) => `/${key.replaceAll("~", "~0").replaceAll("/", "~1")}`);
       const at = layer.at && {

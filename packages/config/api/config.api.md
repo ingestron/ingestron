@@ -50,6 +50,7 @@ export type DiagnosticCode = "YAML_SYNTAX" | "UNSAFE_KEY" | "MISSING_FILE" | "FI
 // @public
 export interface EnvvarReference {
     file: string;
+    line?: number;
     name: string;
     pointer: string;
     setIn?: "host" | ".env" | `.env.${string}`;
