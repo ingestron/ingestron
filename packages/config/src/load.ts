@@ -33,6 +33,13 @@ export interface LoadOptions {
    * reference to its own text, so an editor can still show the project.
    */
   missingEnvvars?: "error" | "information";
+  /**
+   * True when whatever deploys the result supplies every `${envvar:…}`: each
+   * reference resolves to its own text, `${envvar:NAME}`, without reading the
+   * host environment or the environment files, and without a diagnostic
+   * (spec/config/syntax.md §4.4). `missingEnvvars` is then not used.
+   */
+  deployEnvvars?: boolean;
   /** Manifest path inside the project. Default: "project.yaml". */
   manifest?: string;
   /** Overrides for {@link defaultLimits}. */
@@ -81,18 +88,17 @@ export function resolveProject(files: FileSource, options: LoadOptions): LoadRes
 /** A load's starting state, with the variables `.env` files and the host give. */
 function createLoadContext(files: FileSource, options: LoadOptions): LoadContext {
   const limits = { ...defaultLimits, ...options.limits };
-  const { envvars, setIn, diagnostics } = envvarsFor(
-    files,
-    options.environment,
-    options.envvars ?? {},
-    limits.maxFileBytes,
-  );
+  // Values supplied when deploying are never read here, so neither are their sources.
+  const { envvars, setIn, diagnostics } = options.deployEnvvars
+    ? { envvars: {}, setIn: {}, diagnostics: [] }
+    : envvarsFor(files, options.environment, options.envvars ?? {}, limits.maxFileBytes);
   return {
     files,
     limits,
     envvars,
     envvarsSetIn: setIn,
     missingEnvvars: options.missingEnvvars ?? "error",
+    deployEnvvars: options.deployEnvvars ?? false,
     environment: options.environment,
     diagnostics,
     unsetEnvvars: new Set(),

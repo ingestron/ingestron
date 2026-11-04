@@ -127,6 +127,7 @@ export interface Limits {
 
 // @public
 export interface LoadOptions {
+    deployEnvvars?: boolean;
     environment?: string;
     envvars?: Readonly<Record<string, string | undefined>>;
     kinds: readonly KindDefinition<any>[];
