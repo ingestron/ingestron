@@ -68,6 +68,20 @@ line per variable gives:
 - whether it is set, and where from: the environment Ingestron runs in,
   `.env.<environment>` or `.env`; or "not set yet".
 
+When the standard names a pack that builds environments together, its files
+take each variable as a deploy-time value: the pipeline that deploys them
+supplies it ([output folders](outputs.md), section 6). Then, after the
+sentence above, the section says that the deploying pipeline supplies these
+values for each environment, and the line for each such variable also gives
+each name under which a pack's files take it, with the pack's id, from that
+pack's `buildEnvironments` (definitions specification, section 2.1); for
+example `BUNDLE_VAR_landing (databricks)`. These names come from building
+every environment as `plan` does, with each environment resolved for deploy;
+when that has problems, the names are left out and the section says to run
+`ingestron plan` to see why. A variable is still listed as set or not set yet
+on this computer, which matters only to the packs that read it when
+generating.
+
 The section MUST NOT print a variable's value, whether it came from the host
 environment or an environment file. Document ids and table names are names,
 not values: the section may print them as they resolved, even when a

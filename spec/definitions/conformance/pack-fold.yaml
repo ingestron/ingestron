@@ -1,0 +1,46 @@
+# A data-only pack at version 2 that builds environments together (section 2.1),
+# for PACK_VERSION and the CLI's output cases. Its connector is its own, so it
+# offers no fixes in the cases that use the other packs.
+id: fold
+version: 2
+buildEnvironments: true
+defaults:
+  naming:
+    catalog: "{{ environment }}"
+    schema: "{{ layer }}"
+    table: "{{ table }}"
+    pipeline: "{{ project }}"
+    job: "{{ project }}_refresh"
+  layers: [bronze, silver, gold]
+  types:
+    {
+      string: STRING,
+      integer: BIGINT,
+      number: DOUBLE,
+      boolean: BOOLEAN,
+      date: DATE,
+      timestamp: TIMESTAMP,
+    }
+  quality: { required: warn, default: warn }
+rules:
+  ingest: { default: fold-copy }
+  store: { default: fold-table }
+methods:
+  fold-copy:
+    action: ingest
+    description: Copies a source's files to a landing folder.
+    connectors: [fold]
+    produces: files
+    settings: { type: object }
+  fold-share:
+    action: ingest
+    description: Copies a source's files from a share.
+    connectors: [fold]
+    produces: files
+    settings: { type: object }
+  fold-table:
+    action: store
+    description: Keeps the landed files as a table.
+    accepts: [files]
+    produces: table
+    settings: { type: object }
