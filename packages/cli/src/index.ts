@@ -12,7 +12,7 @@ import { writeSchemas } from "./schemas.js";
 export type { Io } from "./io.js";
 export { packs } from "./packs.js";
 export { nameProblem, projectId } from "./scaffold.js";
-export { generatedOutputs } from "./generate.js";
+export { generatedOutputs } from "./build-outputs.js";
 export { platformRequest } from "./request.js";
 export { compareEnvironments } from "./compare.js";
 export { contractFromSample } from "./sample-contract.js";
