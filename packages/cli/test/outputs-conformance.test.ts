@@ -8,12 +8,13 @@ import { describe, expect, it } from "vitest";
 import { readArgs, usage } from "../src/args.js";
 import { generate } from "../src/generate.js";
 import { generatedFolders } from "../src/outputs.js";
-import { standInPacks } from "./outputs-packs.js";
+import { standIns, type Notice } from "./outputs-packs.js";
 
 interface Case {
   description: string;
   files: Record<string, string>;
   envvars?: Record<string, string>;
+  notices?: Notice[];
   command: "plan" | "apply" | "check";
   args?: string[];
   expect: {
@@ -45,7 +46,7 @@ function runCase(testCase: Case): { folder: string; exit: number; output: string
       output = `${options === "help" ? "" : options.mistake}\n\n${usage}`;
       return { folder, exit: 2, output };
     }
-    return { folder, exit: generate(options, io, standInPacks), output };
+    return { folder, exit: generate(options, io, standIns(testCase.notices)), output };
   } finally {
     for (const name of Object.keys(testCase.envvars ?? {}))
       if (saved[name] === undefined) delete process.env[name];
@@ -108,7 +109,7 @@ describe("output folder conformance", () => {
   const names = readdirSync(cases)
     .filter((name) => name.endsWith(".yaml"))
     .sort();
-  it("has the cases", () => expect(names.length).toBeGreaterThanOrEqual(12));
+  it("has the cases", () => expect(names.length).toBeGreaterThanOrEqual(14));
   for (const name of names) {
     const testCase = parse(readFileSync(join(cases, name), "utf8")) as Case;
     it(`${name}: ${testCase.description}`, () => {

@@ -1,5 +1,6 @@
 // The output folders and their files (spec/cli/outputs.md, sections 2 and 3):
 // one per pack, in the standard's order, then the passports.
+import type { FileSource } from "@ingestron/config";
 import {
   environmentsDiagnostics,
   type Pack,
@@ -12,6 +13,7 @@ import {
   folds,
   isTarget,
   packRef,
+  resolveEnvironments,
   type Report,
   type ResolvedEnvironment,
 } from "./resolve-environments.js";
@@ -33,6 +35,41 @@ export interface Built {
   outputs: Output[];
   reports: Report[];
   ok: boolean;
+}
+
+/** Every environment generated together, as plan generates it: what it found, and what it gave. */
+export interface Generated {
+  /** Whether the standard names a pack that builds environments together. */
+  together: boolean;
+  /** The environments resolved with the host's values only, known before resolving. */
+  local: string[];
+  /** Whether every environment resolved. */
+  resolved: boolean;
+  /** Whether every environment resolved and every pack built its files. */
+  ok: boolean;
+  /** The environments that resolved. */
+  environments: ResolvedEnvironment[];
+  /** The output folders; none unless `ok`. */
+  outputs: Output[];
+  /** What resolving each environment found, in project.yaml's order. */
+  environmentReports: Report[];
+  /** What each pack that builds environments together reported. */
+  packReports: Report[];
+}
+
+/** Resolves every environment and builds every output folder, writing nothing. */
+export function generateAll(
+  files: FileSource,
+  available: readonly Pack[],
+  envvars: Readonly<Record<string, string | undefined>>,
+): Generated {
+  const resolution = resolveEnvironments(files, available, envvars);
+  const { together, local, environments } = resolution;
+  const found = { together, local, environments, environmentReports: resolution.reports };
+  if (!resolution.ok) return { ...found, resolved: false, ok: false, outputs: [], packReports: [] };
+  const built = buildOutputs(environments, available);
+  const outputs = built.ok ? built.outputs : [];
+  return { ...found, resolved: true, ok: built.ok, outputs, packReports: built.reports };
 }
 
 /** Builds every output folder from the environments, each resolved. */

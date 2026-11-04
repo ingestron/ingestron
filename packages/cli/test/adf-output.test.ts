@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { nodeFiles } from "@ingestron/config";
 import { expect, it } from "vitest";
 import { packs } from "../src/packs.js";
-import { generateAll } from "../src/request-supplied.js";
+import { generateAll } from "../src/build-outputs.js";
 
 it.each(["private-sql-server", "private-files"])(
   "keeps the ADF files generated for %s",

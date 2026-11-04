@@ -1,7 +1,7 @@
 // plan, apply and check: definitions → every environment resolved → one output
 // folder per pack → the output folder (spec/cli/outputs.md).
 import { relative, resolve, sep } from "node:path";
-import { formatDiagnostics, nodeFiles } from "@ingestron/config";
+import { nodeFiles } from "@ingestron/config";
 import type { Pack } from "@ingestron/definitions";
 import {
   applyPlan,
@@ -13,11 +13,11 @@ import {
   type Plan,
 } from "@ingestron/generate";
 import type { Options } from "./args.js";
-import { buildOutputs } from "./build-outputs.js";
+import { generateAll } from "./build-outputs.js";
 import type { Io } from "./io.js";
 import { extraFiles, generatedFolders } from "./outputs.js";
 import { packs } from "./packs.js";
-import { resolveEnvironments, type Report } from "./resolve-environments.js";
+import { printEnvironmentReports, printPackReports } from "./reports.js";
 
 interface Planned {
   name: string;
@@ -34,14 +34,13 @@ interface Planned {
  */
 export function generate(options: Options, io: Io, available: readonly Pack[] = packs): number {
   const definitions = resolve(io.cwd, options.definitions);
-  const resolution = resolveEnvironments(nodeFiles(definitions), available, process.env);
-  printReports(io, resolution.reports);
-  if (!resolution.ok) return 1;
-  const built = buildOutputs(resolution.environments, available);
-  printReports(io, built.reports);
-  if (!built.ok) return 1;
+  const generated = generateAll(nodeFiles(definitions), available, process.env);
+  printEnvironmentReports(io, generated.environmentReports);
+  if (!generated.resolved) return 1;
+  printPackReports(io, generated.packReports);
+  if (!generated.ok) return 1;
   const out = resolve(io.cwd, options.out);
-  const planned = built.outputs.map(({ name, folder, targets, files }): Planned => {
+  const planned = generated.outputs.map(({ name, folder, targets, files }): Planned => {
     const root = resolve(out, ...folder.split("/"));
     const output = nodeFolder(root);
     return { name, targets, folder: output, plan: planGeneration(output, files), root };
@@ -56,15 +55,6 @@ export function generate(options: Options, io: Io, available: readonly Pack[] = 
     );
   if (options.command === "apply") summarise(io, done, notDone);
   return notDone.length > 0 || (options.command === "check" && retired.length > 0) ? 1 : 0;
-}
-
-/** Each environment's or pack's problems, or its warnings, before anything is planned. */
-function printReports(io: Io, reports: readonly Report[]): void {
-  for (const { name, failed, diagnostics } of reports) {
-    if (!failed && diagnostics.length === 0) continue;
-    const heading = failed ? "the definitions have problems" : "warnings";
-    io.write(`${name}: ${heading}\n${formatDiagnostics(diagnostics)}\n`);
-  }
 }
 
 /** A folder relative to the working folder, with `/` between its parts. */
