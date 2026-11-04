@@ -20,10 +20,11 @@ import {
   type ResolvedModel,
 } from "@ingestron/definitions";
 import type { Options } from "./args.js";
+import { generatedOutputs } from "./build-outputs.js";
 import { environmentsToGenerate } from "./environments.js";
-import { generatedOutputs } from "./generate.js";
 import type { Io } from "./io.js";
 import { packs } from "./packs.js";
+import { generateAll, suppliedFor, type Generated } from "./request-supplied.js";
 import { notKnown as whatIsNotKnown } from "./request-unknown.js";
 import { valuesToProvide } from "./request-values.js";
 
@@ -31,8 +32,9 @@ import { valuesToProvide } from "./request-values.js";
 export function request(options: Options, io: Io): number {
   const definitions = resolve(io.cwd, options.definitions);
   const files = nodeFiles(definitions);
+  const generated = generateAll(files, packs, process.env);
   const requests = environmentsToGenerate(definitions, options.environments).map((environment) =>
-    requestFor(files, environment),
+    requestFor(files, environment, generated),
   );
   io.write(requests.map(({ text }) => text).join("\n"));
   return requests.some(({ resolved }) => !resolved) ? 1 : 0;
@@ -46,19 +48,25 @@ export function request(options: Options, io: Io): number {
  * console.log(platformRequest(nodeFiles("definitions"), "prod"));
  */
 export function platformRequest(files: FileSource, environment: string | undefined): string {
-  return requestFor(files, environment).text;
+  return requestFor(files, environment, generateAll(files, packs, process.env)).text;
 }
+
+/**
+ * As an editor resolves: a variable set nowhere is not known yet. Every environment is
+ * resolved together, so the request shows the generated files' mode (spec/cli/request.md).
+ */
+const resolving = { packs, missingEnvvars: "information", environmentsTogether: true } as const;
 
 /** The request's text, and whether the definitions resolved; false gives the short note. */
 function requestFor(
   files: FileSource,
   environment: string | undefined,
+  generated: Generated,
 ): { text: string; resolved: boolean } {
   const { model, diagnostics } = resolveDefinitions(files, {
-    packs,
+    ...resolving,
     environment,
     envvars: process.env,
-    missingEnvvars: "information",
   });
   const name = environment ?? "default";
   if (!model)
@@ -74,9 +82,10 @@ function requestFor(
   }).project;
   const capabilities = packs.flatMap((pack) => pack.capabilities ?? []);
   const notKnown = whatIsNotKnown(project, model);
+  const references = project?.envvarReferences ?? [];
   const text = [
     `# Platform request: ${model.project.id} (${name})`,
-    valuesToProvide(project?.envvarReferences ?? [], environment, notKnown),
+    valuesToProvide(references, environment, notKnown, suppliedFor(generated, name)),
     identity(model),
     switchedOn(model, capabilities),
     switchedOff(diagnostics, capabilities),
@@ -174,9 +183,10 @@ function packSections(model: ResolvedModel): string[] {
     );
 }
 
+/** The first pack's SQL to run once: `prerequisites.sql`, or this environment's `prerequisites/<name>.sql`. */
 function sql(model: ResolvedModel, name: string): string | undefined {
   const text = generatedOutputs(model, name)
-    .map(({ files }) => files["prerequisites.sql"])
+    .map(({ files }) => files["prerequisites.sql"] ?? files[`prerequisites/${name}.sql`])
     .find(Boolean);
   return text && `## SQL to run once (review first)\n\n\`\`\`sql\n${text}\`\`\``;
 }

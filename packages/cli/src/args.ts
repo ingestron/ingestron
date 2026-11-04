@@ -6,11 +6,11 @@ export interface Options {
   command: "plan" | "apply" | "check" | "compare" | "request" | "contract" | "schemas" | "init";
   /** contract: the sample file to draft a contract from. */
   sample?: string;
-  /** Environments to generate; empty means every environment in project.yaml. */
+  /** compare and request: the environments; empty means every environment in project.yaml. */
   environments: string[];
   /** Folder with project.yaml. */
   definitions: string;
-  /** Folder for the generated files; each environment gets a sub-folder. */
+  /** Folder for the generated files; each pack gets a sub-folder. */
   out: string;
   /** Show line diffs in plans. */
   diffs: boolean;
@@ -32,7 +32,7 @@ export interface Options {
 
 /** The commands, in the order help shows them. */
 export const commands = [
-  { name: "plan", summary: "Show what would change in each environment's output folder." },
+  { name: "plan", summary: "Show what would change in each pack's output folder." },
   { name: "apply", summary: "Write the changes. Files edited by hand are never overwritten." },
   { name: "check", summary: "Fail when the output is not up to date (for CI). Writes nothing." },
   {
@@ -69,7 +69,7 @@ export const flags = [
   {
     flag: "--env <name>",
     summary:
-      "Only this environment (repeatable). Default: all in project.yaml. init: the environments.",
+      "compare and request: only this environment (repeatable). Default: all in project.yaml. init: the environments.",
   },
   { flag: "--definitions <dir>", summary: "Folder with project.yaml. Default: ." },
   { flag: "--out <dir>", summary: "Output folder. Default: build" },
@@ -115,6 +115,9 @@ export const usage = [
 
 const commandNames = new Set<string>(commands.map((command) => command.name));
 
+/** The commands that generate every environment together, so take no --env (spec/cli/outputs.md, section 5). */
+const generates = new Set(["plan", "apply", "check"]);
+
 const spec = {
   env: { type: "string", multiple: true },
   definitions: { type: "string", default: "." },
@@ -148,6 +151,10 @@ export function readArgs(args: string[]): Options | "help" | { mistake: string }
   if (values.help) return "help";
   const [command, ...extra] = positionals;
   if (!known(command, extra)) return { mistake: `Unknown command "${positionals.join(" ")}".` };
+  if (values.env !== undefined && generates.has(command))
+    return {
+      mistake: `Every environment is generated together, so ${command} does not take --env. Use compare for two environments, or request for one.`,
+    };
   const init = initOptions(values, extra[0]);
   if ("mistake" in init) return init;
   return {

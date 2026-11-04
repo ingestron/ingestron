@@ -3,24 +3,59 @@
 // leaves out while one is not set; and the checks that wait for it (spec/cli/request.md).
 import type { EnvvarReference } from "@ingestron/config";
 import type { LeftOut, NotKnown } from "./request-unknown.js";
+import type { Supplied } from "./request-supplied.js";
 
-/** The section, or nothing when the definitions read no environment variable. */
+/**
+ * The section, or nothing when the definitions read no environment variable and no pack's
+ * files take a value of their own. `supplied` gives the names the deploying pipeline
+ * supplies them as, when a pack builds environments together.
+ */
 export function valuesToProvide(
   references: readonly EnvvarReference[],
   environment: string | undefined,
   notKnown: NotKnown,
+  supplied?: Supplied,
 ): string | undefined {
-  if (references.length === 0) return undefined;
+  const own = supplied?.own ?? [];
+  if (references.length === 0 && own.length === 0) return undefined;
   const file = environment === undefined ? ".env" : `.env.${environment}`;
   const variables = byName(references);
   const unset = [...variables.values()].some((uses) => uses[0]?.setIn === undefined);
+  const lines = [
+    ...[...variables].map(([name, uses]) => `- ${line(name, uses, supplied)}`),
+    ...own.map((name) => `- ${name}: ${ownValue}`),
+  ];
   return [
     "## Values to provide",
-    "These values come from environment variables. Set them in the pipeline that runs " +
-      `Ingestron for this environment, or in \`${file}\` on your own computer, kept out of Git.`,
-    [...variables].map(([name, uses]) => `- ${line(name, uses)}`).join("\n"),
+    ...(variables.size > 0
+      ? [
+          "These values come from environment variables. Set them in the pipeline that runs " +
+            `Ingestron for this environment, or in \`${file}\` on your own computer, kept out of Git.`,
+        ]
+      : []),
+    ...(supplied ? [whenDeploying(supplied)] : []),
+    lines.join("\n"),
     ...(unset ? [notSetYet(notKnown), checksWait] : []),
   ].join("\n\n");
+}
+
+/** A value a pack's files take that no variable gives. */
+const ownValue =
+  "no environment variable gives it, so the pipeline that deploys the files supplies it for each environment.";
+
+/** That the deploying pipeline supplies the values, or that the names are not known. */
+function whenDeploying(supplied: Supplied): string {
+  if (supplied.unknown)
+    return (
+      "The files of the packs that build every environment together take these values " +
+      "when deploying, but generating every environment has problems, so the names they " +
+      "take them as are not shown. Run `ingestron plan` to see why."
+    );
+  return (
+    "The files of the packs that build every environment together take these values when " +
+    "deploying: the pipeline that deploys them supplies each value for each environment, " +
+    "under the names given."
+  );
 }
 
 /** The references grouped by variable, in the order each was first referenced. */
@@ -34,8 +69,15 @@ function byName(references: readonly EnvvarReference[]): Map<string, EnvvarRefer
   return variables;
 }
 
-/** One variable: the values it feeds, file by file, and where it is set. */
-function line(name: string, uses: EnvvarReference[]): string {
+/** One variable: the values it feeds, file by file, where it is set, and the names it is supplied as. */
+function line(name: string, uses: EnvvarReference[], supplied: Supplied | undefined): string {
+  const names = supplied?.variables.get(name) ?? [];
+  const deploying =
+    names.length > 0 ? ` The deploying pipeline supplies it as ${listed(names)}.` : "";
+  return `${feeds(name, uses)}${deploying}`;
+}
+
+function feeds(name: string, uses: EnvvarReference[]): string {
   const files = new Map<string, string[]>();
   for (const use of uses) {
     const fields = files.get(use.file) ?? [];

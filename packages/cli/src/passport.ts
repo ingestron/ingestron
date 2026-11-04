@@ -9,13 +9,27 @@ import {
 import { lineage } from "./passport-lineage.js";
 import { access, columns, freshness, provides, quality, table } from "./passport-sections.js";
 
-/** `README.md` and `<product id>.md` per product; none without products. */
+/**
+ * `README.md` and `<product id>.md` per product; none without products. From a model
+ * resolved for deploy, each deploy-time value reads as supplied when deploying.
+ */
 export function passports(model: ResolvedModel): Record<string, string> {
   if (model.products.length === 0) return {};
-  return Object.fromEntries([
-    ["README.md", index(model)],
-    ...model.products.map((product) => [passportFile(product.id), page(model, product)]),
-  ]);
+  return Object.fromEntries(
+    [
+      ["README.md", index(model)],
+      ...model.products.map((product) => [passportFile(product.id), page(model, product)]),
+    ].map(([path, text]) => [path, supplied(model, text!)]),
+  );
+}
+
+/** The text with each deploy-time value's `${envvar:NAME}` written as `` `NAME` (supplied when deploying) ``. */
+function supplied(model: ResolvedModel, text: string): string {
+  return (model.deployValues ?? []).reduce(
+    (written, value) =>
+      written.replaceAll(value.text, `\`${value.name}\` (supplied when deploying)`),
+    text,
+  );
 }
 
 function index(model: ResolvedModel): string {
