@@ -13,8 +13,21 @@ describe("generated files", () => {
     const retail = appliedSample("retail");
     const files = generatedFiles(openProject(retail, new Map()), "dev");
     if (!Array.isArray(files)) throw new Error(files.problems);
-    const orders = files.find((file) => file.path === "build/dev/src/retail/bronze/orders.sql");
+    const orders = files.find(
+      (file) => file.path === "build/databricks/src/retail/bronze/orders.sql",
+    );
     expect(orders?.text).toBe(readFileSync(join(retail, orders!.path), "utf8"));
+    for (const file of files) expect(readFileSync(join(retail, file.path), "utf8")).toBe(file.text);
+  });
+
+  it("open ADF's files at their path under factory/, as apply writes them", () => {
+    const erp = appliedSample("private-sql-server");
+    const files = generatedFiles(openProject(erp, new Map()), "dev");
+    if (!Array.isArray(files)) throw new Error(files.problems);
+    const paths = files.map((file) => file.path);
+    expect(paths).toContain("build/adf/factory/pipeline/pl_erp_erp.json");
+    expect(paths).toContain("build/adf/parameters/dev.json");
+    for (const file of files) expect(readFileSync(join(erp, file.path), "utf8")).toBe(file.text);
   });
 
   it("are found for a table, in every pack's folder", () => {
@@ -22,8 +35,8 @@ describe("generated files", () => {
     const files = generatedFiles(openProject(erp, new Map()), "dev");
     if (!Array.isArray(files)) throw new Error(files.problems);
     expect(generatedForTable(files, "invoices").map((file) => file.path)).toEqual([
-      "build/dev/databricks/src/erp/bronze/invoices.sql",
-      "build/dev/adf/pipeline/pl_erp_erp.json",
+      "build/databricks/src/erp/bronze/invoices.sql",
+      "build/adf/factory/pipeline/pl_erp_erp.json",
     ]);
   });
 
@@ -32,11 +45,11 @@ describe("generated files", () => {
     const files = generatedFiles(openProject(synapse, new Map()), "dev");
     if (!Array.isArray(files)) throw new Error(files.problems);
     expect(generatedForTable(files, "invoices").map((file) => file.path)).toEqual([
-      "build/dev/adf/pipeline/pl_sales_erp.json",
-      "build/dev/synapse/views.sql",
+      "build/synapse/views.sql",
+      "build/adf/factory/pipeline/pl_sales_erp.json",
     ]);
     expect(generatedForTable(files, "customer_totals").map((file) => file.path)).toEqual([
-      "build/dev/synapse/views.sql",
+      "build/synapse/views.sql",
     ]);
   });
 
@@ -46,23 +59,27 @@ describe("generated files", () => {
     const cloud = generatedFiles(project, "dev");
     if (!Array.isArray(cloud)) throw new Error(cloud.problems);
     expect(generatedForTable(cloud, "invoices").map((file) => file.path)).toEqual([
-      "build/dev/adf/pipeline/pl_sales_erp.json",
-      "build/dev/duckdb/tables/bronze.invoices.sql",
+      "build/duckdb/dev/tables/bronze.invoices.sql",
+      "build/adf/factory/pipeline/pl_sales_erp.json",
     ]);
     const onLaptop = generatedFiles(project, "local");
     if (!Array.isArray(onLaptop)) throw new Error(onLaptop.problems);
+    // ADF does not run on the laptop, so none of its files are the local environment's.
+    expect(generatedForTable(onLaptop, "invoices").map((file) => file.path)).toEqual([
+      "build/duckdb/local/tables/bronze.invoices.sql",
+    ]);
     expect(generatedForTable(onLaptop, "customer_totals").map((file) => file.path)).toEqual([
-      "build/local/duckdb/tables/silver.customer_totals.sql",
+      "build/duckdb/local/tables/silver.customer_totals.sql",
     ]);
   });
 
   it("match a DuckDB table's own SQL by schema as well as name", () => {
     const files = ["bronze", "silver"].map((schema) => ({
-      path: `build/dev/tables/${schema}.orders.sql`,
+      path: `build/duckdb/dev/tables/${schema}.orders.sql`,
       text: "",
     }));
     expect(generatedForTable(files, "orders", "orders", "silver").map((file) => file.path)).toEqual(
-      ["build/dev/tables/silver.orders.sql"],
+      ["build/duckdb/dev/tables/silver.orders.sql"],
     );
   });
 

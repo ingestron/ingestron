@@ -1,5 +1,6 @@
 // A setting written with ${envvar:…} that the editor cannot fill is not judged: an unset
-// variable is only information, and a set one never takes the labels and hovers away.
+// variable is only information, and a set one never takes the labels and hovers away. The
+// starter's self-hosted runtime gives ADF's notice (PACK_NOTICE) whatever the variable.
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -44,19 +45,22 @@ afterEach(() => {
 });
 
 const flow = "flows/stores.yaml";
+const notice = { code: "PACK_NOTICE", severity: "warning" };
 
 describe("an unset reference in a pack setting", () => {
   it("an unset variable in a patterned pack setting gives only information", () => {
     const found = problems(openProject(workspace(), new Map()), "dev");
     expect(found.map(({ code, severity }) => ({ code, severity }))).toEqual([
       { code: "ENVVAR_MISSING", severity: "information" },
+      notice,
     ]);
   });
 
   it("keeps the table labels and hovers when .env sets the variable", () => {
     const folder = workspace({ ".env.dev": `${name}=https://kv-placeholder.vault.azure.net\n` });
     const project = openProject(folder, new Map());
-    expect(problems(project, "dev")).toEqual([]);
+    const found = problems(project, "dev").map(({ code, severity }) => ({ code, severity }));
+    expect(found).toEqual([notice]);
     const text = readFileSync(join(folder, flow), "utf8");
     const labels = annotationsIn(project, flow, text, "dev").map((item) => item.label);
     expect(labels).toContain("→ stores_dev.bronze.sales");
