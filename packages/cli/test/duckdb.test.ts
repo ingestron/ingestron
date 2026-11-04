@@ -52,6 +52,10 @@ describe("the duckdb starter", () => {
     expect(applied.code, applied.output).toBe(0);
     const project = join(cwd, "demo");
     const sql = readFileSync(join(project, "build/duckdb/dev/run.sql"), "utf8");
+    // The generated README names the folder the CLI writes.
+    expect(readFileSync(join(project, "build/duckdb/dev/README.md"), "utf8")).toContain(
+      'duckdb -bail ingestron.duckdb -c ".read build/duckdb/dev/run.sql"',
+    );
     const totals = "SELECT customer, orders, total FROM silver.customer_totals ORDER BY customer";
     const expected = [
       { customer: "Ana", orders: "2", total: 65.75 },
