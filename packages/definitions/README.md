@@ -49,7 +49,8 @@ if (!result.model) {
 | `ResolvedModel`, `ResolvedTable`, …  | The model's types; see `src/model.ts`                                                                                                                       |
 | `Pack`, `PackInfo`, `Method`, `Rule` | What a pack declares; see `src/pack.ts`                                                                                                                     |
 | `EnvironmentsBuild`                  | What a pack's optional `buildEnvironments(models)` returns: one set of files for every environment                                                          |
-| `environmentsDiagnostics(problems)`  | The diagnostics for what `buildEnvironments` could not fold                                                                                                 |
+| `environmentsDiagnostics(problems)`  | The diagnostics for what `buildEnvironments` could not fold, and for its notices                                                                            |
+| `PackNotice`                         | A `PACK_NOTICE` that `buildEnvironments` returns with its problems: a warning with the pack's message and hint, and a file when one definition causes it    |
 | `compareTargets(models)`             | What differs between the targets of a pack that builds environments together: in more than values, with the standard messages, and every value that differs |
 | `splitDeployText(text, values)`      | A text split into its literal parts and the deploy-time values in it                                                                                        |
 | `checkFold(pack, models, { view })`  | For a pack's tests: whether its folded files give each target's own files, for one, two and more targets                                                    |
@@ -77,6 +78,17 @@ pattern; there it is a `DEPLOY_VALUE` error.
 once, as the CLI from 2.0 does. The platform's `mode` is then `production` by
 default for every environment except `dev`. Without it, `mode` is
 `production` only for `prod` and `production`, as before 1.8.
+
+`PackInfo.platformFields` lists the Platform fields a pack reads, such as
+`["mode", "schedule.paused"]`, for tools to show. Each is a dot path from the
+document's root, with `*` for any key of a mapping or any list item. Resolving
+throws when a path is not a field of the Platform schema, since the mistake is
+the pack's, not the project's.
+
+`documentReference(kind)` and `methodReference(pack, method)` describe every
+field once, each with its `minimum` and `maximum` when the schema gives them.
+The values of a mapping are described as the field `*` under it when they
+have a description or allowed values.
 
 `Connector.reading` optionally describes a native table reader's query support,
 accepted source options, landing format and required runtime. Packs derive this
