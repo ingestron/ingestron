@@ -46,12 +46,18 @@ describe("PACK_VERSION", () => {
     ]);
   });
 
-  it("stays WRONG_PACK for version 1 of a version 2 pack that builds one environment at a time", () => {
+  it("is PACK_VERSION too for version 1 of a version 2 pack that builds one environment at a time", () => {
     const result = resolveDefinitions(memoryFiles(withStandard("[test@1, fold@1]")), {
       packs: [test, fold],
       environment: "dev",
     });
-    expect(result.diagnostics.map(({ code }) => code)).toEqual(["WRONG_PACK"]);
+    expect(result.diagnostics).toMatchObject([
+      {
+        code: "PACK_VERSION",
+        message: 'This standard is for "fold@1", but the pack is fold@2.',
+        fixes: [{ title: 'Change to "fold@2"' }],
+      },
+    ]);
   });
 });
 
