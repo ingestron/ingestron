@@ -245,7 +245,9 @@ by a tool that generates are resolved without it.
   `message` (one or more sentences), the `file`, and when known the `line`,
   of the definition that causes it (for a `PACK_NOTICE`, only when one
   does), and optionally a `hint` in place of the code's. When there is an
-  error, the files MUST NOT be written.
+  error, the files MUST NOT be written. Whether there is one is decided on the
+  diagnostics the problems become (below), so a `PACK_NOTICE` never stops the
+  files being written, whatever severity it gives.
 
 A pack reports only these codes:
 
@@ -266,7 +268,8 @@ definitions fail. It has the pack's `message`, one or more sentences, and a
 `hint`, what to do, which the pack MUST give, since the code has no hint of
 its own. Its `file` and `line` are optional: the pack gives them when one
 definition causes the notice, and leaves them out when it is about the files
-as a whole. Each pack's specification lists its notices, with each message.
+as a whole. A `line` is given only with a `file`; without one it is not used.
+Each pack's specification lists its notices, with each message.
 
 A pack that builds environments together MUST:
 
@@ -690,15 +693,12 @@ unless `schedule.paused` says otherwise.
 
 A pack MAY list, as data (`platformFields`), the Platform fields it reads, so
 that tools can show them, such as each one with its default in the pack's
-reference. Each is a path from the document's root, its keys joined with `.`,
-such as `schedule.paused`, with `*` for any key of a mapping or any list item
-(`permissions.*.level`), as the field reference (section 10) writes paths. A path
-MUST name a field of the Platform schema. Following its keys from the root,
-each key is a property the schema gives at that point, in itself or any of
-its branches (`allOf`, `anyOf`, `oneOf`, `then` and `else`, each `$ref`
-followed); `*` is the schema's `additionalProperties`, when that is a schema,
-or a list's `items`. A pack that lists any other path is refused when it is
-given to resolution, before any file is read, with the error
+reference. Each is a path, its keys joined with `.`, such as
+`schedule.paused` or `permissions.*.level`, and MUST be the `path` of an
+entry of the Platform's field reference (section 10). Every pack given to
+resolution is checked, not only those the standard names. A pack that lists
+any other path is refused when it is given, before any file is read, with
+the error
 `The pack "<id>" lists the platform field "<path>", which the Platform document does not have.`,
 for the first such path in the order the packs are given. It is the pack's
 mistake, not the project's, so it is not a diagnostic: a tool stops with it.
@@ -828,26 +828,91 @@ diagnostics they become, exactly and in order, each written with its `code`,
 `severity`, `message` and `hint`, and, when it has a location, its `file`,
 `line` and `column`.
 
+A case with `reference` in place of `files` checks the field reference
+(section 10). `reference` is `{ kind: <Kind> }`, a document kind, or
+`{ method: <id>, settings: <schema> }`, with optional `defaults` and
+`placement`, a method of a data-only pack whose id is `reference`.
+`expect.paths`, when given, is every entry's path, in order, exactly.
+`expect.fields` are entries, each found by its `path` (keys joined with `.`),
+compared on the keys given only; a key given as `null` is one the entry does
+not have. `expect.absent` lists paths that have no entry.
+
 ## 10. Field reference
 
 Tools describe each field of a document kind, and each setting of a pack's
-method, from its JSON Schema, for the editor and the documentation alike:
-one entry per field, depth first. An entry has the field's `path` (keys from
-the root, `*` for any key of a mapping or any list item), its `name`, its
-`description`, its type in words, whether it is `required`, its allowed
-`values` (an `enum`, each with its meaning from `enumDescriptions`, or a
-`const`), its `default` and its first example. It has `minimum` and
-`maximum` when the schema gives them, so that a range can be shown from the
-schema rather than from the description's words. Each is taken from the
-field's schema, else from the first of its branches that gives it.
+method, from its JSON Schema, for the editor and the documentation alike, as
+one entry per field. The schema's **branches** are the schema itself, then
+those of its `allOf`, `anyOf` and `oneOf` items, its `then` and its `else`,
+each in that order and each with a local `$ref` (`#/$defs/<name>`) replaced
+by what it names, with the schema's own keywords beside the `$ref` kept.
 
-The fields under a mapping's `additionalProperties` schema, and under a
-list's `items`, are entries under `*`. The `additionalProperties` schema
-itself is an entry, `*` under the mapping, when it has a description or
-allowed values, in itself or any of its branches: for example a mapping whose
-every value is one of a list of names, each with its meaning, or other text.
-Otherwise it says nothing that the mapping's own entry does not, and is not
-an entry.
+**Entries, in order.** At each schema, the properties are those of all its
+branches, in the order each first appears, a later branch's schema for a
+name replacing an earlier one's. Each property is an entry, followed by the
+entries under it. Then, for each branch in order, its `additionalProperties`
+schema is an entry `*` under the mapping when that schema has a description,
+allowed values, a `minimum`, a `maximum`, a `default` or an example, in
+itself or any of its branches; then come the entries under its `items` and
+under its `additionalProperties`, each at `*`. An entry under `*` whose path
+an earlier one has is left out. A list's `items` schema is never an entry of
+its own. A `$ref` already being followed further up is not followed again, so
+a schema that contains itself, such as a column with nested columns, is
+described once.
+
+**What an entry has.**
+
+- `path`: the keys from the root, with `*` for any key of a mapping or any
+  list item; `name` is the last key.
+- `required`: the name is in the `required` of the parent schema or of the
+  items of its `allOf`, at any depth of `allOf`. A `*` entry is not required.
+- `description`, `default`, `minimum`, `maximum` and the example (the first of
+  `examples`): from the field's schema, else from the first of its branches
+  that gives it. Only the inclusive `minimum` and `maximum` are carried, not
+  `exclusiveMinimum` or `exclusiveMaximum`.
+- `values`: the schema's `const` as the only value, else each of its `enum`,
+  with the meaning at the same position in `enumDescriptions`; each taken
+  from the field's schema, else the first branch that gives one.
+- `type`, in words, as the table below gives it.
+- `docs`: the page and anchor. For a document kind,
+  `/docs/reference/documents#<anchor>` of the kind's name in lower case
+  followed by the path; for a method,
+  `/docs/reference/packs/<pack>#<anchor>` of the method's id followed by the
+  path. The anchor joins the parts with `-`, each `*` written `item` and each
+  other part in lower case with every run of characters other than `a` to
+  `z` and `0` to `9` replaced by `-`.
+- For a method's setting, `placement`: `platform` or `standard` when the
+  method's `placement` lists the setting's top-level key there, else
+  `definition`; and a top-level setting's `default` is the method's
+  `defaults` value for it, when it has one.
+
+A contract field's entry also carries Ingestron's own note on that field,
+which the implementation keeps beside the ODCS schema.
+
+**Type words.** When the schema, its `$ref` followed, has an `anyOf` or a
+`oneOf`, the words are those of each of its items, each taken
+together with the schema's own keywords other than `anyOf` and `oneOf`, each
+said once, in order, and joined with `, or `: for example
+`one of the values, or text`, and `a whole number, or never`. Otherwise, with
+the schema's branches merged, the schema itself first and then each branch
+in order, the first of these that applies:
+
+| The merged schema has                               | Words                               |
+| --------------------------------------------------- | ----------------------------------- |
+| `const`                                             | the value itself, as text           |
+| `enum`                                              | `one of the values`                 |
+| `type`, one or a list                               | each type's words, joined with `or` |
+| `properties` or `additionalProperties`, and no type | `a mapping`                         |
+| none of these                                       | `any value`                         |
+
+| `type`    | Words              |
+| --------- | ------------------ |
+| `object`  | `a mapping`        |
+| `array`   | `a list`           |
+| `string`  | `text`             |
+| `number`  | `a number`         |
+| `integer` | `a whole number`   |
+| `boolean` | `true or false`    |
+| any other | the type, as it is |
 
 ## Connector authoring metadata
 

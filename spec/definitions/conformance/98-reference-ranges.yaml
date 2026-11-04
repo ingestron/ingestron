@@ -1,0 +1,43 @@
+description: "A field's minimum and maximum come from its schema, or from the first branch that gives them; an anyOf's type words name each alternative."
+reference:
+  method: copy
+  placement: { standard: [parallel] }
+  defaults: { parallel: 4 }
+  settings:
+    type: object
+    required: [parallel]
+    properties:
+      parallel:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 2
+        description: How many tables are copied at once.
+      retries:
+        anyOf:
+          - { type: integer, minimum: 0 }
+          - { const: never }
+        description: How often a failed copy is tried again.
+      name: { type: string, description: The copy's name. }
+expect:
+  fields:
+    - path: parallel
+      name: parallel
+      type: a whole number
+      required: true
+      minimum: 1
+      maximum: 50
+      default: 4
+      placement: standard
+      docs: /docs/reference/packs/reference#copy-parallel
+    - path: retries
+      type: a whole number, or never
+      required: false
+      minimum: 0
+      maximum: null
+      values: [{ value: never }]
+      placement: definition
+    - path: name
+      type: text
+      minimum: null
+      maximum: null

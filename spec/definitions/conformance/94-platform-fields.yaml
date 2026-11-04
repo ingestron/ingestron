@@ -1,7 +1,7 @@
-description: A pack may list the Platform fields it reads, with `*` for any key of a mapping or any list item.
+description: A pack may list the Platform fields it reads, each the path of an entry of the field reference, with `*` for a list item.
 environment: dev
 platformFields:
-  test: [mode, schedule, schedule.paused, tags.*, permissions.*.level, grants.*.*.principal]
+  test: [mode, schedule, schedule.paused, tags, permissions.*.level, grants.*.*.principal]
 files:
   project.yaml: |
     id: retail
