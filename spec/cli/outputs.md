@@ -53,12 +53,20 @@ Every other environment is first resolved for deploy, and then:
 Targets are as the definitions specification, section 2.1, defines them,
 from the model each step above uses.
 
-For each environment that has problems, the output is the line
-`<environment>: the definitions have problems`, then the problems formatted
-as the configuration package formats them. For each environment that resolves
-with warnings or information, the output is `<environment>: warnings`, then
-those diagnostics. A diagnostic that both resolutions of an environment found
-is shown once: two are the same when their code, file, line and message are.
+Each diagnostic is shown once, under the environments that have it. Two
+diagnostics are the same when their code, file, line and message are, so one
+that both resolutions of an environment found, or that several environments
+have, such as a problem in a file they share, is shown once. The diagnostics
+are shown in groups, one for each set of environments that have the same
+diagnostics: a group is the line `<environments>: the definitions have problems`
+when any of its diagnostics is an error, else `<environments>: warnings`, then
+its diagnostics formatted as the configuration package formats them.
+`<environments>` are the environments that have each diagnostic of the group,
+in project.yaml's order, joined with `, `. The groups are in the order of
+their first diagnostic, taking the environments in project.yaml's order and
+each environment's diagnostics in their order. For example, a standard that
+names `databricks@1` in a project with `dev` and `prod` gives one
+`PACK_VERSION`, under `dev, prod: the definitions have problems`.
 
 When any environment has problems, nothing is planned or written, no output
 folder is checked, and the exit code is 1: a bundle cannot be written with one
@@ -211,6 +219,8 @@ files: # the project, path → text; paths under build/ are files already there
   project.yaml: |
     …
 envvars: { NAME: value } # optional; the host environment
+notices: # optional; what the fold stand-in's buildEnvironments also gives
+  - { message: "Text.", hint: "Text." }
 command: apply # plan, apply or check
 args: [] # optional; more arguments, such as [--env, dev]
 expect:
@@ -240,4 +250,6 @@ cases test where files go, not what a real pack writes:
   line for each target's name. Its `deployValues` give each deploy-time value
   of the models, in the order they first appear in target order, with
   `suppliedAs` `[FOLD_<name>]`. Its problems are the `structural` problems of
-  `compareTargets(models)` (definitions specification, section 2.1).
+  `compareTargets(models)` (definitions specification, section 2.1), then, for
+  each of the case's `notices`, a `PACK_NOTICE` with severity `warning`, that
+  `message` and `hint`, and no `file`.

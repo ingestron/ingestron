@@ -51,6 +51,13 @@ passport, written for someone who does not know the tools. Its sections, in orde
 
 Text from the definitions is written as it is, except that in table cells a
 `|` is escaped and line breaks become spaces. A passport built from a model
-resolved for deploy ([output folders](outputs.md), section 1) writes each
-deploy-time value's text, `${envvar:NAME}`, as `` `NAME` (supplied when deploying) ``. The same definitions always give
+resolved for deploy ([output folders](outputs.md), section 1) writes a
+deploy-time value's text, `${envvar:NAME}`, that stands alone as
+`` `NAME` (supplied when deploying) ``. Standing alone, it has a space, the
+start or the end of the text on each side, apart from brackets and the
+punctuation `,`, `.`, `;` and `:`. A deploy-time value inside a longer word,
+such as `https://${envvar:TEAMS_HOST}/teams`, writes that word with `<NAME>`
+in place of each reference, as code unless it holds a backtick already, then
+the names: `` `https://<TEAMS_HOST>/teams` (`TEAMS_HOST` supplied when deploying) ``,
+with several names joined by `and`. The same definitions always give
 the same files: nothing depends on the date, the time or the repository.
