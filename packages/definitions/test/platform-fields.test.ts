@@ -5,7 +5,12 @@ import { join } from "node:path";
 import { memoryFiles } from "@ingestron/config";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
-import { loadDefinitions, resolveDefinitions, type PackInfo } from "../src/index.js";
+import {
+  loadDefinitions,
+  packLoadProblem,
+  resolveDefinitions,
+  type PackInfo,
+} from "../src/index.js";
 
 const conformance = join(import.meta.dirname, "../../../spec/definitions/conformance");
 const read = (file: string) => parse(readFileSync(join(conformance, file), "utf8"));
@@ -40,6 +45,17 @@ describe("platformFields", () => {
         'The pack "test" lists the platform field "schedule.pausd", which the Platform document does not have.',
       ),
     );
+  });
+
+  it("is a PACK_LOAD error a tool can check for without resolving", () => {
+    expect(packLoadProblem([listing(["mode"])])).toBeUndefined();
+    expect(packLoadProblem([listing(["mode", "schedule.pausd"])])).toEqual({
+      code: "PACK_LOAD",
+      severity: "error",
+      message:
+        'The pack "test" lists the platform field "schedule.pausd", which the Platform document does not have.',
+      hint: "This is a mistake in the pack, not in the project, so nothing is checked or generated. Install a version of Ingestron, or of the editor extension, that fixes it.",
+    });
   });
 
   it("refuses a key under a value that is not a mapping, and a key for a mapping's values", () => {

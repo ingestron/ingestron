@@ -7,6 +7,7 @@ import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
 import {
   environmentsDiagnostics,
+  packLoadProblem,
   resolveDefinitions,
   type EnvironmentsBuild,
   type Method,
@@ -181,6 +182,7 @@ describe("conformance", () => {
       if (testCase.reference) return checkReference(testCase as ReferenceCase);
       if (testCase.expect.refused) {
         expect(() => resolveCase(testCase)).toThrow(new Error(testCase.expect.refused));
+        expect(packLoadProblem(packsFor(testCase))?.message).toBe(testCase.expect.refused);
         return;
       }
       const result = resolveCase(testCase);

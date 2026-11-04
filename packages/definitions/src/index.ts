@@ -15,6 +15,7 @@ export {
 } from "./environments.js";
 export { checkFold, splitDeployText, type FoldView } from "./fold.js";
 export { loadingCodeHelp, type LoadingStage } from "./loading-codes.js";
+export { packLoadProblem } from "./platform-fields.js";
 export { kinds, packageSchema, type GovernanceDoc } from "./documents.js";
 export { passportFile } from "./products.js";
 export type {
