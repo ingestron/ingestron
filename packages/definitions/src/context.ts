@@ -114,7 +114,7 @@ function selectPacks(
 
 /**
  * The standard names a version that is not available: `PACK_VERSION`, with a fix, when it
- * names version 1 of a version 2 pack that builds environments together; else `WRONG_PACK`.
+ * names version 1 of a version 2 pack; else `WRONG_PACK`.
  */
 function reportVersion(
   reporter: Reporter,
@@ -122,7 +122,7 @@ function reportVersion(
   pack: PackInfo,
   at: { document: DefinitionDocument<StandardDoc>; pointer: string },
 ): void {
-  if (!(reference === `${pack.id}@1` && pack.version === 2 && buildsTogether(pack))) {
+  if (!(reference === `${pack.id}@1` && pack.version === 2)) {
     const message = `This standard is for "${reference}", but the pack is ${pack.id}@${pack.version}.`;
     reporter.error("WRONG_PACK", message, at);
     return;
@@ -130,7 +130,7 @@ function reportVersion(
   const next = `${pack.id}@2`;
   reporter.error(
     "PACK_VERSION",
-    `This standard is for "${reference}", but the pack is ${next}, which builds every environment into one output folder.`,
+    `This standard is for "${reference}", but the pack is ${next}${buildsTogether(pack) ? ", which builds every environment into one output folder" : ""}.`,
     at,
     `Change it to ${next}; the upgrade notes say what changes in the generated files.`,
     [
