@@ -33,14 +33,14 @@ describe("ingestron init with flags", () => {
     const { code, output } = ingestron("init", "shop", "--template", "minimal", "--yes");
     expect(code).toBe(0);
     expect(output).toContain("Created shop from the template minimal (6 files).");
-    expect(output).toContain("dev → shop/build/dev\ncreate    databricks.yml");
+    expect(output).toContain("databricks → shop/build/databricks (dev)\ncreate    databricks.yml");
     expect(parse(readFileSync(join(cwd, "shop/project.yaml"), "utf8"))).toMatchObject({
       id: "shop",
       values: { landing: "/Volumes/dev/landing/shop" },
     });
     expect(ingestron("apply", "--definitions", "shop", "--out", "shop/build").code).toBe(0);
     expect(ingestron("check", "--definitions", "shop", "--out", "shop/build").output).toContain(
-      "dev: up to date",
+      "databricks: up to date",
     );
   });
 

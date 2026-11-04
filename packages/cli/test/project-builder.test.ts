@@ -76,7 +76,7 @@ it("checks the standard before creating any project files", () => {
   const cwd = mkdtempSync(join(tmpdir(), "dynamic-standard-"));
   writeFileSync(
     join(cwd, "standard.yaml"),
-    "apiVersion: ingestron.io/v1\nkind: Standard\nid: direct\npacks: [databricks@1]\n",
+    "apiVersion: ingestron.io/v1\nkind: Standard\nid: direct\npacks: [databricks@2]\n",
   );
   let output = "";
   const code = run(
@@ -114,9 +114,9 @@ it("rejects literal credentials before writing the project", () => {
 });
 
 it.each([
-  ["adf-synapse", "dev/synapse/views.sql"],
-  ["adf-duckdb", "dev/duckdb/run.sql"],
-  ["adf-landing", "dev/pipeline"],
+  ["adf-synapse", "synapse/views.sql"],
+  ["adf-duckdb", "duckdb/dev/run.sql"],
+  ["adf-landing", "adf/factory/pipeline"],
 ])("lands with ADF and builds the %s destination's files", (via, generated) => {
   const cwd = mkdtempSync(join(tmpdir(), "dynamic-destination-"));
   const io = { cwd, write: () => {} };
@@ -126,7 +126,7 @@ it.each([
     run(["apply", "--definitions", "project", "--out", "project/build", "--no-diff"], io),
   ).toBe(0);
   expect(existsSync(join(cwd, "project/build", generated))).toBe(true);
-  expect(existsSync(join(cwd, "project/build/dev/databricks.yml"))).toBe(false);
+  expect(existsSync(join(cwd, "project/build/databricks"))).toBe(false);
 });
 
 it.each([

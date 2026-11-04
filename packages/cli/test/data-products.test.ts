@@ -17,7 +17,7 @@ it("generates both environments with no problems, and a passport per product", (
   expect(run(["apply", "--no-diff", "--definitions", example, "--out", out], io), output).toBe(0);
   expect(output).not.toMatch(/warning|error/);
   for (const environment of ["dev", "local"])
-    expect(readFileSync(join(out, environment, "products/customers.md"), "utf8")).toContain(
+    expect(readFileSync(join(out, "products", environment, "customers.md"), "utf8")).toContain(
       "# Customers",
     );
 });

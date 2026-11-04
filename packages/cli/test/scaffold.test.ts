@@ -56,7 +56,7 @@ describe("scaffoldFiles", () => {
     const standard = join(temp(), "acme.yaml");
     writeFileSync(
       standard,
-      "apiVersion: ingestron.io/v1\nkind: Standard\nid: acme\npacks: [databricks@1]\n",
+      "apiVersion: ingestron.io/v1\nkind: Standard\nid: acme\npacks: [databricks@2]\n",
     );
     const result = scaffoldFiles(template("minimal"), {
       name: "s",

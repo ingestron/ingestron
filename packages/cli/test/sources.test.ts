@@ -20,7 +20,7 @@ function repository(): string {
   });
   writeFileSync(
     join(work, "acme.yaml"),
-    "apiVersion: ingestron.io/v1\nkind: Standard\nid: acme\npacks: [databricks@1]\n",
+    "apiVersion: ingestron.io/v1\nkind: Standard\nid: acme\npacks: [databricks@2]\n",
   );
   const git = (...args: string[]) => execFileSync("git", args, { cwd: work, stdio: "ignore" });
   git("init", "--quiet", "--initial-branch", "main");

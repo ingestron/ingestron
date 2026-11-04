@@ -107,6 +107,6 @@ describe("ingestron request and what is not known yet", () => {
     process.env.INGT_REQ_LANDING = "/Volumes/synthetic/landing";
     const set = ingestron(folder, "request", "--env", "dev");
     expect(set.code).toBe(1);
-    expect(ingestron(folder, "plan", "--env", "dev").output).toContain("classic compute");
+    expect(ingestron(folder, "plan").output).toContain("classic compute");
   });
 });
