@@ -163,7 +163,22 @@ one.
 to date with nothing extra and no retired folder (`check`); 1 when an
 environment or a pack has problems (sections 1 and 3), a folder is not clean,
 or `check` finds a folder not up to date, a file not generated or a retired
-folder; 2 for a usage mistake.
+folder; 2 for a usage mistake, or a pack that cannot be loaded.
+
+**A pack that cannot be loaded.** Before any command reads a file, the CLI
+checks its packs (definitions specification, section 7). When one is
+refused, every command (`plan`, `apply`, `check`, `compare`, `request`,
+`init`, `contract` and `schemas`) reads and writes nothing, prints the
+`PACK_LOAD` error and exits with 2. The output is the error alone, with no
+stack trace:
+
+```text
+(project)  error  PACK_LOAD
+  The pack "<id>" lists the platform field "<path>", which the Platform document does not have.
+  This is a mistake in the pack, not in the project, so nothing is checked or generated. Install a version of Ingestron, or of the editor extension, that fixes it.
+```
+
+`--help` and a usage mistake are answered first, as without the check.
 
 ## 5. `--env`
 
