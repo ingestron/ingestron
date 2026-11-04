@@ -39,6 +39,18 @@ describe("a project upgraded from CLI 1.x", () => {
     expect(existsSync(join(folder, "build"))).toBe(false);
   });
 
+  it("shows PACK_VERSION, with the fix to duckdb@2, for a DuckDB project's duckdb@1", () => {
+    const { ingestron } = workspace("duckdb", (root) =>
+      edit(root, "standard.yaml", "[duckdb@2]", "[duckdb@1]"),
+    );
+    const { code, output } = ingestron("plan");
+    expect(code).toBe(1);
+    expect(output).toContain(
+      'error  PACK_VERSION\n  This standard is for "duckdb@1", but the pack is duckdb@2.\n',
+    );
+    expect(output).toContain('Fix: Change to "duckdb@2".');
+  });
+
   it("reports each pack's and the passports' old folders, keeps an edited file, and checks once they are deleted", () => {
     const { folder, ingestron } = workspace("private-files", (root) => {
       for (const environment of ["dev", "prod"]) {

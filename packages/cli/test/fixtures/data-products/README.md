@@ -1,7 +1,7 @@
 # Define data products
 
 The web shop's orders and customers are copied from Azure SQL by ADF, and
-DuckDB builds the tables (`packs: [duckdb@1, adf@2]`), as in the DuckDB
+DuckDB builds the tables (`packs: [duckdb@2, adf@2]`), as in the DuckDB
 example. On top, two **data products**, each an Open Data Product Standard
 file in `products/`:
 
