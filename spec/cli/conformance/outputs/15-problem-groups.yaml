@@ -1,0 +1,52 @@
+description: "Problems are grouped by the environments that have them: a warning every environment has is shown once under all three, then an error only prod has under prod, each once, in the order of each group's first diagnostic."
+files:
+  project.yaml: |
+    id: retail
+    values: { layer: bronze }
+    environments:
+      dev: {}
+      test: {}
+      prod: { values: { layer: platinum } }
+    imports: ["*.yaml", "transforms/*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [fold@2]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: fold
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    layer: ${values.layer}
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        description: One row per order.
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+command: plan
+expect:
+  exit: 1
+  lines:
+    - "dev, test, prod: warnings"
+    - "prod: the definitions have problems"
+  diagnostics:
+    - { code: NO_MATCH, severity: warning, file: project.yaml }
+    - { code: UNKNOWN_LAYER, severity: error, file: sales.yaml, line: 5 }
+  folders: {}
