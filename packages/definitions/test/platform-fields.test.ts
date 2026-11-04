@@ -48,6 +48,15 @@ describe("platformFields", () => {
     expect(() => resolve(listing(["manage.*"]))).toThrow(/"manage\.\*"/);
   });
 
+  it("names the first pack, in the order given, that lists a path the reference does not have", () => {
+    const other = { ...listing(["compute.size"]), id: "other" };
+    const run = (packs: PackInfo[]) => () =>
+      resolveDefinitions(memoryFiles(files), { packs, environment: "dev" });
+    expect(run([listing(["mode"]), other])).toThrow(/^The pack "other" lists .*"compute\.size"/);
+    expect(run([other, listing(["schedule.pausd"])])).toThrow(/^The pack "other"/);
+    expect(run([listing(["schedule.pausd"]), other])).toThrow(/^The pack "test"/);
+  });
+
   it("refuses the pack when loading from a folder too, before the folder is read", () => {
     const missing = join(conformance, "no-such-folder");
     expect(() => loadDefinitions(missing, { packs: [listing(["compute.size"])] })).toThrow(

@@ -162,9 +162,8 @@ export interface PackInfo {
   /** The features that change shared objects, each turned on in the platform. */
   capabilities?: Capability[];
   /**
-   * The Platform fields the pack reads, for tools to show: dot paths from the document's root,
-   * with `*` for any key of a mapping or any list item. Each must be a field of the Platform
-   * schema, or resolution refuses the pack.
+   * The Platform fields the pack reads, for tools to show, keys joined with `.`. Each must be
+   * the path of an entry of `documentReference("Platform")`, or resolution refuses the pack.
    * @example ["mode", "schedule.paused", "manage.checks"]
    */
   platformFields?: string[];
