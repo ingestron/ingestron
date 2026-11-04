@@ -48,6 +48,12 @@ export interface ResolveOptions {
    * `deployValues` (specification section 1.1). `envvars` and `missingEnvvars` are not used.
    */
   deployTime?: boolean;
+  /**
+   * True when every environment is generated together, as the CLI from 2.0 does: `mode`
+   * is then `production` by default for every environment except `dev` (and `default`).
+   * Without it, `mode` defaults as before 1.8 (specification section 7).
+   */
+  environmentsTogether?: boolean;
 }
 
 /** The model when there are no errors, and every diagnostic. */
@@ -59,19 +65,24 @@ export interface ResolveResult {
 
 const allKinds = Object.values(kinds);
 
+/** What the loader is given, from the resolve options. */
+function loadOptions(options: ResolveOptions) {
+  return {
+    kinds: allKinds,
+    environment: options.environment,
+    envvars: options.envvars,
+    ...(options.missingEnvvars && { missingEnvvars: options.missingEnvvars }),
+    ...(options.deployTime && { deployEnvvars: true }),
+  };
+}
+
 /**
  * Loads definitions from any file source and resolves them with the packs its standard names.
  * @example
  * const result = resolveDefinitions(memoryFiles(files), { packs: [databricks], environment: "dev" });
  */
 export function resolveDefinitions(files: FileSource, options: ResolveOptions): ResolveResult {
-  const loaded = resolveProject(files, {
-    kinds: allKinds,
-    environment: options.environment,
-    envvars: options.envvars ?? {},
-    ...(options.missingEnvvars && { missingEnvvars: options.missingEnvvars }),
-    ...(options.deployTime && { deployEnvvars: true }),
-  });
+  const loaded = resolveProject(files, { ...loadOptions(options), envvars: options.envvars ?? {} });
   return withPlaceholders(
     files,
     loaded.ok
@@ -108,13 +119,7 @@ function withPlaceholders(
  * const result = loadDefinitions("definitions", { packs: [databricks, adf], environment: "prod" });
  */
 export function loadDefinitions(folder: string, options: ResolveOptions): ResolveResult {
-  const loaded = loadProject(folder, {
-    kinds: allKinds,
-    environment: options.environment,
-    envvars: options.envvars,
-    ...(options.missingEnvvars && { missingEnvvars: options.missingEnvvars }),
-    ...(options.deployTime && { deployEnvvars: true }),
-  });
+  const loaded = loadProject(folder, loadOptions(options));
   return withPlaceholders(
     nodeFiles(folder),
     loaded.ok
@@ -154,7 +159,10 @@ function resolveLoaded(
   const products = resolveProducts(context, tables);
   checkGovernance(context, products);
   // Project-wide checks only make sense once every table resolved.
-  const built = reporter.failed() ? undefined : buildModel(context, namer, tables, products);
+  const together = options.environmentsTogether === true;
+  const built = reporter.failed()
+    ? undefined
+    : buildModel(context, namer, together, tables, products);
   const model = built && deployTime ? { ...built, deployValues: deployValuesOf(project) } : built;
   if (model) runPackCheck(context, model);
   return model && !reporter.failed()
@@ -166,6 +174,7 @@ function resolveLoaded(
 function buildModel(
   context: Context,
   namer: TableNamer,
+  together: boolean,
   tables: ResolvedTable[],
   products: ResolvedProduct[],
 ): ResolvedModel | undefined {
@@ -185,7 +194,7 @@ function buildModel(
       packs: context.standard.value.packs,
       ...(context.standard.value.governance && { governance: context.standard.value.governance }),
     },
-    platform: resolvePlatform(context),
+    platform: resolvePlatform(context, together),
     layers: namer.layers,
     names: { pipeline, job },
     tables,

@@ -103,6 +103,31 @@ describe("deploy-time values", () => {
   });
 });
 
+describe("the mode default", () => {
+  const mode = (environment: string, environmentsTogether?: boolean) =>
+    resolveDefinitions(memoryFiles(files), {
+      packs: [test],
+      environment,
+      ...(environmentsTogether && { environmentsTogether }),
+    }).model?.platform.mode;
+
+  it("stays as before 1.8 for a project resolved one environment at a time", () => {
+    expect([mode("dev"), mode("test"), mode("prod")]).toEqual([
+      "development",
+      "development",
+      "production",
+    ]);
+  });
+
+  it("is production for every environment except dev when environments are generated together", () => {
+    expect([mode("dev", true), mode("test", true), mode("prod", true)]).toEqual([
+      "development",
+      "production",
+      "production",
+    ]);
+  });
+});
+
 describe("a pack's problems", () => {
   it("become errors at the definition, with the hint for their code, at line 1 when no line is known", () => {
     const diagnostics = environmentsDiagnostics([

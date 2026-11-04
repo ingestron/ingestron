@@ -14,7 +14,8 @@ MAY are used as in RFC 2119.
 
 The environments are those project.yaml declares, in its order, or the one
 environment `default` when it declares none. Before anything is planned, each
-environment is resolved:
+environment is resolved, always with `environmentsTogether: true`
+(definitions specification, section 7):
 
 - **for deploy**, with `deployTime: true` (definitions specification, section
   1.1), when the standard names a pack that builds environments together.

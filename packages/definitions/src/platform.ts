@@ -8,12 +8,13 @@ const developmentNames = new Set(["dev", "default"]);
 /** Environments whose schedules run unless the platform says otherwise. */
 const productionNames = new Set(["prod", "production"]);
 
-/** The platform for the selected environment; the defaults apply when there is no Platform document. */
-export function resolvePlatform(context: Context): ResolvedPlatform {
+/**
+ * The platform for the selected environment; the defaults apply when there is no Platform
+ * document. `together`: every environment is generated together (`environmentsTogether`).
+ */
+export function resolvePlatform(context: Context, together: boolean): ResolvedPlatform {
   const doc: PlatformDoc = context.platform?.value ?? { id: "default" };
-  // A shared environment such as test is deployed by a pipeline, so it is production.
-  const mode =
-    doc.mode ?? (developmentNames.has(context.environment) ? "development" : "production");
+  const mode = doc.mode ?? defaultMode(context.environment, together);
   const runs = doc.mode === "production" || (!doc.mode && productionNames.has(context.environment));
   const schedule = scheduleOf(doc, runs);
   return {
@@ -24,6 +25,15 @@ export function resolvePlatform(context: Context): ResolvedPlatform {
     ...(schedule && { schedule }),
     ...collectionsOf(doc),
   };
+}
+
+/**
+ * Generated together, a shared environment such as test is deployed by a pipeline, so it
+ * is production. Otherwise only prod and production are, as before definitions 1.8.
+ */
+function defaultMode(environment: string, together: boolean): ResolvedPlatform["mode"] {
+  if (together) return developmentNames.has(environment) ? "development" : "production";
+  return productionNames.has(environment) ? "production" : "development";
 }
 
 /** Settings that are empty when not given. */
