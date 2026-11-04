@@ -28,7 +28,7 @@ properties:
     uniqueItems: true
     items: { type: string, pattern: "^[a-z][a-z0-9-]*@[0-9]+$" }
     description: >-
-      The packs to use, each with its major version, such as `[databricks@1, adf@1]`. The first
+      The packs to use, each with its major version, such as `[databricks@2, adf@2]`. The first
       provides the defaults.
   naming:
     {
