@@ -1,0 +1,50 @@
+description: With deployEnvvars, every ${envvar:…} is left for whatever deploys the result, written without spaces, even when the host environment or an environment file sets it; no diagnostic is reported, the environment files are not read, and each reference is listed without setIn.
+environment: dev
+envvars:
+  FROM_HOST: host-value
+deployEnvvars: true
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    values:
+      landing: ${ envvar:LANDING }
+    environments:
+      dev:
+        values:
+          region: ${envvar:FROM_DEV}
+    imports: ["*.pipeline.yaml"]
+  .env: |
+    LANDING=/from/env/file
+    not a line
+  .env.dev: |
+    FROM_DEV=dev
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    path: ${values.landing}/orders
+    region: ${values.region}
+    host: ${envvar:FROM_HOST}
+    kept: $${envvar:KEPT}
+expect:
+  documents:
+    - kind: Pipeline
+      id: a
+      value:
+        apiVersion: example.dev/v1
+        kind: Pipeline
+        id: a
+        path: "${envvar:LANDING}/orders"
+        region: "${envvar:FROM_DEV}"
+        host: "${envvar:FROM_HOST}"
+        kept: "${envvar:KEPT}"
+  diagnostics: []
+  unsetEnvvars: ["${envvar:LANDING}", "${envvar:FROM_DEV}", "${envvar:FROM_HOST}"]
+  envvarReferences:
+    - { name: LANDING, file: project.yaml, pointer: /values/landing }
+    - { name: FROM_DEV, file: project.yaml, pointer: /values/region }
+    - { name: FROM_HOST, file: a.pipeline.yaml, pointer: /host }
