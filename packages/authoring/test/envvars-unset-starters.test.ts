@@ -62,12 +62,9 @@ afterEach(() => {
 });
 
 describe.each(starters)("an unset source on the $template starter", (starter) => {
-  it("gives the information, and plan's error for a source supplied when deploying", () => {
+  it("gives plan's error for a source supplied when deploying, and no .env advice", () => {
     const found = problems(openProject(workspace(starter), new Map()), "dev");
-    expect(found.map(({ code, severity }) => ({ code, severity }))).toEqual([
-      { code: "ENVVAR_MISSING", severity: "information" },
-      deployValue,
-    ]);
+    expect(found.map(({ code, severity }) => ({ code, severity }))).toEqual([deployValue]);
   });
 
   it("keeps the labels the written source gives when .env sets the variable", () => {
