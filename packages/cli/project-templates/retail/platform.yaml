@@ -16,6 +16,6 @@ permissions:
     level: CAN_VIEW
 schedule:
   cron: 0 0 5 * * ?
-  timezone: Pacific/Auckland
+  timezone: Europe/London
 notifications:
   on_failure: [sales-data@example.com]

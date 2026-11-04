@@ -3,7 +3,7 @@ kind: Platform
 id: lakehouse
 schedule:
   cron: 0 15 * * * ?
-  timezone: Pacific/Auckland
+  timezone: Europe/London
 settings:
   adf-copy: # shared infrastructure, referenced by name
     landing: ${values.landing}

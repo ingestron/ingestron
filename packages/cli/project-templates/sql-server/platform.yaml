@@ -3,4 +3,4 @@ kind: Platform
 id: lakehouse
 schedule:
   cron: 0 0 * * * ?
-  timezone: Pacific/Auckland
+  timezone: Europe/London

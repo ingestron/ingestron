@@ -47,7 +47,7 @@ files:
     tags: { team: sales }
     permissions:
       - { group_name: analysts, level: CAN_VIEW }
-    schedule: { cron: '0 0 6 * * ?', timezone: Pacific/Auckland }
+    schedule: { cron: '0 0 6 * * ?', timezone: Europe/London }
     notifications: { on_failure: [data@example.com] }
     manage: { schemas: true }
     grants:
@@ -69,7 +69,7 @@ expect:
         level: CAN_VIEW
     schedule:
       cron: 0 0 6 * * ?
-      timezone: Pacific/Auckland
+      timezone: Europe/London
       paused: true
     notifications:
       on_failure:

@@ -189,12 +189,12 @@ properties:
           description: "Quartz cron expression, such as `0 0 6 * * ?`.",
           examples: [0 0 5 * * ?],
         }
-      timezone: { type: string, description: "Default: UTC.", examples: [Pacific/Auckland] }
+      timezone: { type: string, description: "Default: UTC.", examples: [Europe/London] }
       paused: { type: boolean, description: "Default: paused outside production." }
     description: When the refresh job runs (Quartz cron), its time zone, and whether it is paused.
     examples:
       - cron: 0 0 5 * * ?
-        timezone: Pacific/Auckland
+        timezone: Europe/London
   notifications:
     type: object
     additionalProperties: false
