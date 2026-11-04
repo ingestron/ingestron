@@ -19,6 +19,7 @@ export {
   generatedOutputs,
   type GeneratedOutput,
   type GeneratedOutputs,
+  type GeneratedOutputsOptions,
   type Report,
 } from "./generated-outputs.js";
 export { platformRequest } from "./request.js";

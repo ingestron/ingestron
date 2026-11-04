@@ -6,7 +6,8 @@
 
 import { AnyDiagnostic } from '@ingestron/config';
 import { FileSource } from '@ingestron/config';
-import type { Pack } from '@ingestron/definitions';
+import { Pack } from '@ingestron/definitions';
+import { SuppliedValue } from '@ingestron/definitions';
 
 // @public
 export function builtInTemplates(): Template[];
@@ -92,6 +93,7 @@ export const flags: readonly [{
 // @public
 export interface GeneratedOutput {
     byEnvironment: boolean;
+    deployValues?: SuppliedValue[];
     files: Record<string, string>;
     folder: string;
     name: string;
@@ -104,11 +106,18 @@ export interface GeneratedOutputs {
     ok: boolean;
     outputs: GeneratedOutput[];
     packReports: Report[];
+    refused?: AnyDiagnostic;
     text: string;
 }
 
 // @public
-export function generatedOutputs(files: FileSource): GeneratedOutputs;
+export function generatedOutputs(files: FileSource, options?: GeneratedOutputsOptions): GeneratedOutputs;
+
+// @public
+export interface GeneratedOutputsOptions {
+    envvars?: Readonly<Record<string, string | undefined>>;
+    packs?: readonly Pack[];
+}
 
 // @public
 export interface Io {

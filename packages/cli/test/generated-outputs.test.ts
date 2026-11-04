@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { nodeFiles } from "@ingestron/config";
 import { describe, expect, it } from "vitest";
-import { generatedOutputs } from "../src/index.js";
+import { generatedOutputs, packs } from "../src/index.js";
 import { edit, workspace } from "./workspace.js";
 
 describe("generatedOutputs", () => {
@@ -62,5 +62,33 @@ describe("generatedOutputs", () => {
   it("prints nothing first for a project without problems", () => {
     const { folder } = workspace("retail");
     expect(generatedOutputs(nodeFiles(folder)).text).toBe("");
+  });
+
+  it("names each value the deploying pipeline supplies, as the files take it", () => {
+    const { folder } = workspace("retail", (root) =>
+      edit(root, "connections/shop.yaml", "${values.storage}/shop", "${envvar:INGT_LANDING}/shop"),
+    );
+    const databricks = generatedOutputs(nodeFiles(folder), { envvars: {} }).outputs[0];
+    expect(databricks?.deployValues).toEqual([
+      { name: "INGT_LANDING", suppliedAs: ["BUNDLE_VAR_ingt_landing"] },
+    ]);
+  });
+
+  it("reads the variables it is given, in place of the host's", () => {
+    const { folder } = workspace("duckdb", (root) =>
+      edit(root, "flows/orders.yaml", "source: shop", "source: ${envvar:INGT_SRC}"),
+    );
+    expect(generatedOutputs(nodeFiles(folder), { envvars: {} }).ok).toBe(false);
+    expect(generatedOutputs(nodeFiles(folder), { envvars: { INGT_SRC: "shop" } }).ok).toBe(true);
+  });
+
+  it("gives PACK_LOAD, in place of throwing, for packs it is given that cannot be loaded", () => {
+    const { folder } = workspace();
+    const broken = { ...packs[0]!, id: "broken", platformFields: ["schedule.nowhere"] };
+    const generated = generatedOutputs(nodeFiles(folder), { packs: [...packs, broken] });
+    expect(generated.ok).toBe(false);
+    expect(generated.outputs).toEqual([]);
+    expect(generated.refused?.code).toBe("PACK_LOAD");
+    expect(generated.text).toMatch(/^\(project\) {2}error {2}PACK_LOAD\n {2}The pack "broken"/);
   });
 });
