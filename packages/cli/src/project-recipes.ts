@@ -143,7 +143,7 @@ const routeStandards: Record<string, { packs: string[]; store?: string }> = {
   databricks: { packs: ["databricks@2"] },
   "adf-databricks": { packs: ["databricks@2", "adf@2"] },
   "adf-synapse": { packs: ["synapse@2", "adf@2"], store: "synapse-view" },
-  "adf-duckdb": { packs: ["duckdb@1", "adf@2"] },
+  "adf-duckdb": { packs: ["duckdb@2", "adf@2"] },
   "adf-landing": { packs: ["adf@2"], store: "none" },
 };
 
