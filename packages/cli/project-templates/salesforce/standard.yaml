@@ -1,4 +1,4 @@
 apiVersion: ingestron.io/v1
 kind: Standard
 id: crm
-packs: [databricks@1]
+packs: [databricks@2]

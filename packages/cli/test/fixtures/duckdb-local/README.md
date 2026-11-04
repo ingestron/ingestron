@@ -1,7 +1,7 @@
 # Run locally with DuckDB
 
 ADF copies the ERP's invoices into storage, and DuckDB loads them into a table,
-runs a transform and publishes both as Parquet: `packs: [duckdb@1, adf@1]` in
+runs a transform and publishes both as Parquet: `packs: [duckdb@1, adf@2]` in
 `standard.yaml`. Each load copies the whole table into one file,
 `erp/erp.dbo.Invoices/erp.dbo.Invoices.parquet`, replacing the last one
 (`layout: snapshot`), so the table is always the latest load.

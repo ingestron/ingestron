@@ -4,7 +4,8 @@ id: events
 source: events
 ingest:
   # Keep append explicit when this flow is composed with a chosen ingestion method.
-  with: { starting_offset: earliest, mode: append }
+  # One bundle covers every environment, so how the pipeline runs is the same in each.
+  with: { starting_offset: earliest, mode: append, continuous: false }
 tables:
   page_views: { object: web.page-views, contract: web.page_views }
   purchases: { object: web.purchases, contract: web.purchases }

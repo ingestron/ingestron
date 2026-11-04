@@ -5,7 +5,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fullNameText } from "@ingestron/definitions";
 import { describe, expect, it } from "vitest";
-import { generatedOutputs } from "../src/generate.js";
+import { generatedOutputs } from "../src/build-outputs.js";
+import { run } from "../src/index.js";
 import { passports } from "../src/passport.js";
 import { lineage } from "../src/passport-lineage.js";
 import { model, project, sales } from "./passport-fixtures.js";
@@ -16,14 +17,14 @@ describe("passports", () => {
   it("writes no products folder for a project without products", () => {
     const plain = mkdtempSync(join(tmpdir(), "ingestron-passport-"));
     cpSync(retail, plain, { recursive: true });
-    expect(generatedOutputs(model(plain), "dev").map(({ label }) => label)).toEqual(["dev"]);
+    expect(generatedOutputs(model(plain), "dev").map(({ label }) => label)).toEqual(["databricks"]);
   });
 
   it("names each output's table in this environment and where it lives", () => {
     const resolved = model(project());
     expect(generatedOutputs(resolved, "dev").map(({ label }) => label)).toEqual([
-      "dev",
-      "dev/products",
+      "databricks",
+      "products/dev",
     ]);
     const table = resolved.tables.find((item) => item.name === "daily_sales")!;
     const page = passports(resolved)["sales.md"]!;
@@ -158,6 +159,42 @@ describe("passports", () => {
     expect(index).toContain("[Customers](customers.md)");
     expect(index).toContain("Everyone who has bought from the web shop.");
     expect(index).not.toContain("Updated hourly");
+  });
+
+  it("writes every environment's passports in build/products, beside the bundle", () => {
+    const folder = project();
+    let output = "";
+    const io = { cwd: folder, write: (text: string) => (output += text) };
+    expect(run(["apply"], io), output).toBe(0);
+    expect(output).toContain("products → build/products (dev, prod)");
+    for (const environment of ["dev", "prod"])
+      expect(
+        readFileSync(join(folder, "build/products", environment, "sales.md"), "utf8"),
+      ).toContain("# Daily sales");
+  });
+
+  it("writes a value supplied when deploying by its variable's name, never a value from the host", () => {
+    const folder = project((root) => {
+      const file = join(root, "contracts/customers.product.yaml");
+      writeFileSync(
+        file,
+        readFileSync(file, "utf8").replace(
+          '"https://example.com/customer-data"',
+          '"${envvar:INGT_SUPPORT_URL}"',
+        ),
+      );
+    });
+    process.env.INGT_SUPPORT_URL = "https://from-host.example.com";
+    try {
+      expect(run(["apply"], { cwd: folder, write: () => undefined })).toBe(0);
+    } finally {
+      delete process.env.INGT_SUPPORT_URL;
+    }
+    const page = readFileSync(join(folder, "build/products/dev/customers.md"), "utf8");
+    expect(page).toContain(
+      "- Ask: customer-data (teams), `INGT_SUPPORT_URL` (supplied when deploying)",
+    );
+    expect(page).not.toContain("from-host");
   });
 
   it("is the same every run", () => {

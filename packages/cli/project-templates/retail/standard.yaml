@@ -2,7 +2,7 @@
 apiVersion: ingestron.io/v1
 kind: Standard
 id: acme
-packs: [databricks@1]
+packs: [databricks@2]
 naming:
   catalog: "{{ environment }}_sales"
 quality:

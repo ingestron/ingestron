@@ -12,8 +12,9 @@ it("generates the ADF copies and the Synapse views of a views-only project", () 
   const io = { cwd: folder, write: (text: string) => (output += text) };
   expect(run(["apply", "--no-diff", "--definitions", folder, "--out", out], io), output).toBe(0);
   expect(run(["check", "--definitions", folder, "--out", out], io), output).toBe(0);
-  expect(existsSync(join(out, "dev/adf/pipeline/pl_sales_erp.json"))).toBe(true);
-  const views = readFileSync(join(out, "dev/synapse/views.sql"), "utf8");
+  expect(existsSync(join(out, "adf/factory/pipeline/pl_sales_erp.json"))).toBe(true);
+  const views = readFileSync(join(out, "synapse/views.sql"), "utf8");
+  expect(readFileSync(join(out, "synapse/environments/dev.sql"), "utf8")).toContain(":r views.sql");
   expect(views).toContain("CREATE OR ALTER VIEW [bronze].[customers] AS");
   expect(views).toContain("  BULK 'erp/erp.dbo.Invoices/erp.dbo.Invoices.parquet',");
   expect(views).toContain("CREATE OR ALTER VIEW [silver].[customer_totals] AS");

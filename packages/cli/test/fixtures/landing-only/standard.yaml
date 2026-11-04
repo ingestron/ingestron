@@ -1,7 +1,7 @@
 apiVersion: ingestron.io/v1
 kind: Standard
 id: sales
-packs: [adf@1]
+packs: [adf@2]
 store:
   default: none # flows end at the files ADF lands
 ingest:

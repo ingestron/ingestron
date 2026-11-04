@@ -3,8 +3,10 @@ import {
   appendFileSync,
   cpSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -13,11 +15,12 @@ import { describe, expect, it } from "vitest";
 import { run } from "../src/index.js";
 
 const example = join(import.meta.dirname, "../project-templates/retail");
+const privateFiles = join(import.meta.dirname, "../project-templates/private-files");
 
 /** A copy of the example to work in, and a function that runs the CLI there. */
-function workspace() {
+function workspace(from = example) {
   const folder = mkdtempSync(join(tmpdir(), "ingestron-cli-"));
-  cpSync(example, folder, { recursive: true, filter: (path) => !path.includes("/build") });
+  cpSync(from, folder, { recursive: true, filter: (path) => !path.includes("/build") });
   const ingestron = (...args: string[]) => {
     let output = "";
     const code = run(args, { cwd: folder, write: (text) => (output += text) });
@@ -31,8 +34,7 @@ describe("ingestron plan", () => {
     const { folder, ingestron } = workspace();
     const { code, output } = ingestron("plan");
     expect(code).toBe(0);
-    expect(output).toContain("dev → build/dev\ncreate    databricks.yml");
-    expect(output).toContain("prod → build/prod\n");
+    expect(output).toContain("databricks → build/databricks (dev, prod)\ncreate    databricks.yml");
     expect(output).toContain("6 files: 6 create. Ready to apply.");
     expect(existsSync(join(folder, "build"))).toBe(false);
   });
@@ -41,19 +43,14 @@ describe("ingestron plan", () => {
     const { folder } = workspace();
     const elsewhere = mkdtempSync(join(tmpdir(), "ingestron-elsewhere-"));
     let output = "";
-    const code = run(
-      ["plan", "--env", "dev", "--definitions", folder, "--out", join(elsewhere, "out")],
-      {
-        cwd: elsewhere,
-        write: (text) => (output += text),
-      },
-    );
-    expect({ code, output: output.split("\n")[0] }).toEqual({ code: 0, output: "dev → out/dev" });
-  });
-
-  it("plans one environment with --env", () => {
-    const { output } = workspace().ingestron("plan", "--env", "prod");
-    expect(output).not.toContain("dev → ");
+    const code = run(["plan", "--definitions", folder, "--out", join(elsewhere, "out")], {
+      cwd: elsewhere,
+      write: (text) => (output += text),
+    });
+    expect({ code, output: output.split("\n")[0] }).toEqual({
+      code: 0,
+      output: "databricks → out/databricks (dev, prod)",
+    });
   });
 
   it("prints definition problems with their location and fails", () => {
@@ -63,10 +60,36 @@ describe("ingestron plan", () => {
       flow,
       readFileSync(flow, "utf8").replace("contract: shop.orders", "contract: shop.order"),
     );
-    const { code, output } = ingestron("plan", "--env", "dev");
+    const { code, output } = ingestron("plan");
     expect(code).toBe(1);
+    expect(output).toContain("dev: the definitions have problems");
     expect(output).toContain("flows/shop.yaml:9:15  error  BROKEN_LINK");
+    expect(output).not.toContain("databricks → ");
   });
+
+  it("gives PACK_VERSION, with the fix to @2, for a standard that names databricks@1", () => {
+    const { folder, ingestron } = workspace();
+    const standard = join(folder, "standard.yaml");
+    writeFileSync(standard, readFileSync(standard, "utf8").replace("databricks@2", "databricks@1"));
+    const { code, output } = ingestron("plan");
+    expect(code).toBe(1);
+    expect(output).toContain("error  PACK_VERSION");
+    expect(output).toContain('Fix: Change to "databricks@2".');
+  });
+});
+
+describe("--env", () => {
+  for (const command of ["plan", "apply", "check"])
+    it(`is refused by ${command}, which generates every environment together`, () => {
+      const { folder, ingestron } = workspace();
+      const { code, output } = ingestron(command, "--env", "dev");
+      expect(code).toBe(2);
+      expect(output.split("\n\n")[0]).toBe(
+        `Every environment is generated together, so ${command} does not take --env. Use compare for two environments, or request for one.`,
+      );
+      expect(output).toContain("Usage: ingestron");
+      expect(existsSync(join(folder, "build"))).toBe(false);
+    });
 });
 
 describe("warnings", () => {
@@ -74,98 +97,119 @@ describe("warnings", () => {
     const { folder, ingestron } = workspace();
     const manifest = join(folder, "project.yaml");
     writeFileSync(manifest, `${readFileSync(manifest, "utf8")}  - extra/*.yaml\n`);
-    const { code, output } = ingestron("plan", "--env", "dev");
+    const { code, output } = ingestron("plan");
     expect(code).toBe(0);
-    expect(output).toContain("project.yaml");
+    expect(output).toContain("dev: warnings\nproject.yaml");
     expect(output).toContain("warning  NO_MATCH");
     expect(output).toContain("Ready to apply.");
   });
 });
 
 describe("ingestron apply and check", () => {
-  it("writes each environment, after which check reports up to date", () => {
+  it("writes one bundle for every environment, after which check reports up to date", () => {
     const { folder, ingestron } = workspace();
     expect(ingestron("apply").code).toBe(0);
-    expect(readFileSync(join(folder, "build/prod/databricks.yml"), "utf8")).toContain(
-      "mode: production",
-    );
+    const bundle = readFileSync(join(folder, "build/databricks/databricks.yml"), "utf8");
+    expect(bundle).toContain("  dev:\n");
+    expect(bundle).toContain("  prod:\n");
+    expect(bundle).toContain("mode: production");
     const check = ingestron("check");
-    expect(check).toEqual({ code: 0, output: "dev: up to date\nprod: up to date\n" });
+    expect(check).toEqual({ code: 0, output: "databricks: up to date\n" });
   });
 
   it("fails check when the definitions changed since the last apply", () => {
     const { folder, ingestron } = workspace();
     ingestron("apply");
     appendFileSync(join(folder, "standard.yaml"), "layers: [raw, curated]\n");
-    const check = ingestron("check", "--env", "dev");
+    const check = ingestron("check");
     expect(check.code).toBe(1);
-    expect(check.output).toContain("dev: not up to date");
+    expect(check.output).toContain("databricks: not up to date");
   });
 
   it("never overwrites a generated file that was edited by hand", () => {
     const { folder, ingestron } = workspace();
     ingestron("apply");
-    const edited = join(folder, "build/dev/databricks.yml");
+    const edited = join(folder, "build/databricks/databricks.yml");
     appendFileSync(edited, "# my change\n");
-    const apply = ingestron("apply", "--env", "dev");
+    const apply = ingestron("apply");
     expect(apply.code).toBe(1);
     expect(apply.output).toContain("conflict  databricks.yml");
     expect(readFileSync(edited, "utf8")).toContain("# my change");
   });
 
-  it("fails check, and keeps the folder, when an environment is no longer generated", () => {
+  it("drops an environment's target from the bundle when the environment is removed", () => {
     const { folder, ingestron } = workspace();
     ingestron("apply");
     const manifest = join(folder, "project.yaml");
     writeFileSync(manifest, readFileSync(manifest, "utf8").replace(/ {2}prod:\n( {4}.*\n)+/, ""));
-    const check = ingestron("check");
-    expect(check.code).toBe(1);
-    expect(check.output).toContain("dev: up to date\n");
-    expect(check.output).toContain("build/prod: no longer generated");
-    expect(ingestron("apply").output).toContain("build/prod: no longer generated");
-    expect(existsSync(join(folder, "build/prod/databricks.yml"))).toBe(true);
+    expect(ingestron("check").output).toContain("databricks: not up to date");
+    expect(ingestron("apply").output).toContain("databricks → build/databricks (dev)");
+    expect(readFileSync(join(folder, "build/databricks/databricks.yml"), "utf8")).not.toContain(
+      "  prod:",
+    );
+    expect(ingestron("check").code).toBe(0);
   });
 
-  it("reports the old folder when a second pack moves the output", () => {
+  it("reports an upgraded project's build/<env>/ folders as no longer generated, and check fails until they are deleted", () => {
     const { folder, ingestron } = workspace();
-    ingestron("apply", "--env", "dev");
+    for (const environment of ["dev", "prod"]) {
+      mkdirSync(join(folder, "build", environment), { recursive: true });
+      writeFileSync(join(folder, "build", environment, "databricks.yml"), "bundle: {}\n");
+      writeFileSync(
+        join(folder, "build", environment, ".generated.json"),
+        '{ "version": 1, "files": {} }\n',
+      );
+    }
+    const apply = ingestron("apply");
+    expect(apply.code).toBe(0);
+    for (const environment of ["dev", "prod"])
+      expect(apply.output).toContain(
+        `build/${environment}: no longer generated. Delete the folder, or delete its .generated.json to keep it as your own.`,
+      );
+    const check = ingestron("check");
+    expect(check.code).toBe(1);
+    expect(check.output).toContain("databricks: up to date");
+    expect(existsSync(join(folder, "build/dev/databricks.yml"))).toBe(true);
+    for (const environment of ["dev", "prod"])
+      rmSync(join(folder, "build", environment), { recursive: true });
+    expect(ingestron("check")).toEqual({ code: 0, output: "databricks: up to date\n" });
+  });
+
+  it("keeps the first pack's folder where it is when the standard names a second pack", () => {
+    const { folder, ingestron } = workspace();
+    ingestron("apply");
     const standard = join(folder, "standard.yaml");
     writeFileSync(
       standard,
-      readFileSync(standard, "utf8").replace("[databricks@1]", "[databricks@1, adf@1]"),
+      readFileSync(standard, "utf8").replace("[databricks@2]", "[databricks@2, adf@2]"),
     );
-    ingestron("apply", "--env", "dev");
-    const check = ingestron("check", "--env", "dev");
-    expect(check.code).toBe(1);
-    expect(check.output).toContain("build/dev: no longer generated");
-    expect(check.output).not.toContain("build/dev/databricks: no longer generated");
-    expect(check.output).not.toContain("not generated  databricks/");
-  });
-
-  it("does not report environments left out with --env", () => {
-    const { ingestron } = workspace();
-    ingestron("apply");
-    expect(ingestron("check", "--env", "dev")).toEqual({ code: 0, output: "dev: up to date\n" });
+    const check = ingestron("check");
+    expect(check).toEqual({ code: 0, output: "databricks: up to date\n" });
   });
 
   it("fails check on a file in an output folder that was not generated", () => {
     const { folder, ingestron } = workspace();
     ingestron("apply");
-    writeFileSync(join(folder, "build/dev/src/retail/bronze/extra.sql"), "SELECT 1\n");
-    const check = ingestron("check", "--env", "dev");
+    writeFileSync(join(folder, "build/databricks/src/retail/bronze/extra.sql"), "SELECT 1\n");
+    const check = ingestron("check");
     expect(check.code).toBe(1);
-    expect(check.output).toContain("dev: not generated  src/retail/bronze/extra.sql");
-    expect(ingestron("check", "--env", "dev", "--allow-extra").code).toBe(0);
+    expect(check.output).toContain("databricks: not generated  src/retail/bronze/extra.sql");
+    expect(ingestron("check", "--allow-extra").code).toBe(0);
   });
 
-  it("summarises which environments were applied and which were blocked", () => {
-    const { folder, ingestron } = workspace();
+  it("summarises which output folders were applied and which were blocked", () => {
+    const { folder, ingestron } = workspace(privateFiles);
     ingestron("apply");
-    appendFileSync(join(folder, "build/prod/databricks.yml"), "# my change\n");
+    appendFileSync(join(folder, "build/adf/parameters/prod.json"), "\n");
+    const manifest = join(folder, "project.yaml");
+    writeFileSync(
+      manifest,
+      readFileSync(manifest, "utf8").replace("kv-stores-prod", "kv-stores-live"),
+    );
     appendFileSync(join(folder, "standard.yaml"), "layers: [raw, curated]\n");
     const apply = ingestron("apply");
     expect(apply.code).toBe(1);
-    expect(apply.output).toContain("Applied: dev. Not applied: prod.");
+    expect(apply.output).toContain("Applied: databricks. Not applied: adf.");
   });
 });
 
