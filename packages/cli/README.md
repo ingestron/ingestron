@@ -28,6 +28,45 @@ const code = run(["check"], {
 process.exitCode = code;
 ```
 
+## Project builder API
+
+The package also exposes the catalogue and the composed questions that
+`ingestron init` and VS Code's New project use. `projectSources()` returns
+source IDs, titles and categories. `projectRoutes(connector, connectivity?)`
+returns compatible routes, methods, reachability and maturity.
+`projectRecipe(connector, via, connectivity)` returns a `ProjectRecipe`
+containing the selected definition files and a `Template` with configuration
+questions. It reads the packaged recipes but writes no project files. Use `run`
+to apply answers, validate and create the project:
+
+```ts
+import { projectSources, projectRoutes, projectRecipe, run } from "@ingestron/cli";
+
+const source = projectSources().find((item) => item.id === "postgresql")!;
+const route = projectRoutes(source.id, "private")[0]!;
+const recipe = projectRecipe(source.id, route.via, "private");
+console.log(recipe.template.questions);
+const code = run(
+  [
+    "init",
+    "sales",
+    "--connector",
+    source.id,
+    "--via",
+    route.via,
+    "--connectivity",
+    "private",
+    "--yes",
+  ],
+  { cwd: process.cwd(), write: (text) => process.stdout.write(text) },
+);
+process.exitCode = code;
+```
+
+The exported `ProjectSource`, `ProjectRoute` and `ProjectRecipe` types describe
+these plain objects. The catalogue comes from installed pack metadata; a
+selected standard is checked during creation, before any files are written.
+
 ## Checking generated bundles
 
 `pnpm check:bundle <schema.json>` checks the Databricks YAML generated for every
