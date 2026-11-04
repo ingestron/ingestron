@@ -102,6 +102,7 @@ export interface GeneratedOutput {
 
 // @public
 export interface GeneratedOutputs {
+    deployed: string[];
     environmentReports: Report[];
     ok: boolean;
     outputs: GeneratedOutput[];
