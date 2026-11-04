@@ -3,20 +3,22 @@
 // the project's files with open editors read first.
 import { compareEnvironments as compare, platformRequest as request } from "@ingestron/cli";
 import { formatDiagnostics, type AnyDiagnostic } from "@ingestron/config";
-import { unlessPackThrows } from "./pack-load.js";
+import { refusedPacks } from "./pack-load.js";
 import type { Project } from "./project.js";
 
 /** The request as Markdown for the environment, as `ingestron request` prints it. */
 export function platformRequest(project: Project, environment: string | undefined): string {
-  return unlessPackThrows(() => request(project.files, environment), stopped);
+  const refused = refusedPacks();
+  return refused ? stopped(refused) : request(project.files, environment);
 }
 
 /** What differs between two environments, as `ingestron compare` prints it. */
 export function compareEnvironments(project: Project, a: string, b: string): string {
-  return unlessPackThrows(() => compare(project.files, a, b), stopped);
+  const refused = refusedPacks();
+  return refused ? stopped(refused) : compare(project.files, a, b);
 }
 
-/** The problem that stopped resolving, as a code block in place of the document. */
+/** The PACK_LOAD error, as a code block in place of the document. */
 function stopped(problem: AnyDiagnostic): string {
   return `\`\`\`text\n${formatDiagnostics([problem])}\n\`\`\`\n`;
 }
