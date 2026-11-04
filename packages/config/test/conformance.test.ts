@@ -19,6 +19,7 @@ interface ConformanceCase {
   environment?: string;
   envvars?: Record<string, string>;
   missingEnvvars?: "error" | "information";
+  deployEnvvars?: boolean;
   limits?: Partial<Limits>;
   kinds?: {
     apiVersion: string;
@@ -49,6 +50,7 @@ function load(testCase: ConformanceCase) {
     environment: testCase.environment,
     envvars: testCase.envvars ?? {},
     missingEnvvars: testCase.missingEnvvars,
+    deployEnvvars: testCase.deployEnvvars,
     limits: testCase.limits,
   });
   expect(result.project?.unsetEnvvars ?? []).toEqual(testCase.expect.unsetEnvvars ?? []);

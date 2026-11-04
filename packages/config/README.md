@@ -126,6 +126,9 @@ selected, then `.env`. Both files sit in the project folder and hold
 an `ENVVAR_MISSING` error. An editor can pass `missingEnvvars: "information"`
 instead: the problem is then information, the reference stays as written, and
 nothing is checked against that text (`project.unsetEnvvars` lists it).
+A tool whose output is deployed by a pipeline that supplies the variables can
+pass `deployEnvvars: true`: every reference then stays as `${envvar:NAME}`,
+whatever the environment and the `.env` files hold, and neither file is read.
 
 `project.envvarReferences` lists every `${envvar:…}` the load read: the
 variable's name, the file and JSON Pointer of the value it feeds, and where it
