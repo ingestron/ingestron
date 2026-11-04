@@ -1,0 +1,57 @@
+description: "An environment that runs on a pack that does not build environments together is resolved with the host's values only, so a variable set nowhere is ENVVAR_MISSING there, and never a deploy-time value."
+files:
+  project.yaml: |
+    id: retail
+    values: { landing: ./samples }
+    environments:
+      dev: { values: { store: fold-table } }
+      prod: { values: { store: fold-table } }
+      laptop:
+        runs-on: local
+        values: { store: local-table, landing: "${envvar:LAPTOP_DATA}" }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [fold@2, local@1]
+    store:
+      default: ${values.store}
+    ingest:
+      settings:
+        local-landed:
+          landing: ${values.landing}
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: fold
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        description: One row per order.
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+command: plan
+expect:
+  exit: 1
+  lines:
+    - "laptop: the definitions have problems"
+  diagnostics:
+    - { code: ENVVAR_MISSING, severity: error, file: project.yaml, line: 8 }
+  folders: {}

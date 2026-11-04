@@ -27,24 +27,28 @@ environment is resolved, always with `environmentsTogether: true`
 
 When the standard names no pack that builds environments together, each
 environment is resolved with the host's values only, and that model is used
-for everything. Otherwise each environment is first resolved for deploy, and
-then:
+for everything.
+
+Otherwise an environment whose `runs-on` names a pack that does not build
+environments together, such as DuckDB, is a **local environment**, known from
+project.yaml before anything is resolved: it is resolved with the host's
+values only, that model is used for everything, the passports included, and
+that resolution's problems are the environment's. So a `${envvar:…}` set
+nowhere is `ENVVAR_MISSING` there, as in CLI 1.x, and never `DEPLOY_VALUE`.
+
+Every other environment is first resolved for deploy, and then:
 
 1. When that resolves, and the environment is a target of a pack that builds
    environments together, it is a **deployed environment**. Its model resolved
    for deploy is given to those packs and to the passports. When it is also a
    target of a pack that does not build environments together, it is resolved
-   with the host's values too, for that pack.
+   with the host's values too, for that pack, and the problems of that
+   resolution are the environment's too.
 2. When that resolves, and the environment is a target of no pack that builds
-   environments together, such as one that runs on DuckDB, it is a **local
-   environment**. It is resolved with the host's values, and that model is
-   used for everything, the passports included.
-3. When that fails, the environment is resolved with the host's values. When
-   that resolves and the environment is a target of no pack that builds
-   environments together, it is a local environment, as in 2, so a
-   `${envvar:…}` in an environment no deployed artefact covers never fails
-   the run. Otherwise the problems of the resolution for deploy are the
-   environment's.
+   environments together, it is a local environment as well: it is resolved
+   with the host's values, that model is used for everything, and when that
+   resolution fails, its problems are the environment's.
+3. When that fails, its problems are the environment's.
 
 Targets are as the definitions specification, section 2.1, defines them,
 from the model each step above uses.

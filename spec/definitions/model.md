@@ -164,7 +164,10 @@ The model lists its deploy-time values in `deployValues`, one per `NAME`, in
 the order first resolved. Each has its `name`, its `text` (`${envvar:NAME}`)
 and its `uses`: the `file`, `pointer` and, when known, `line` of each value it
 feeds, as the loaded project's `envvarReferences` give them (configuration
-specification, section 4.6). A model resolved without `deployTime` has no
+specification, section 4.6), leaving out each whose value the environment
+overrides, so that the resolved value there does not hold the text. A
+deploy-time value with no use left, such as a default that every
+environment's own value replaces, is not listed. A model resolved without `deployTime` has no
 `deployValues`, and reads `${envvar:…}` as the rest of this specification
 says. As for any unset reference, text is matched as written: text kept with
 `$${envvar:NAME}` for a `NAME` that is also a deploy-time value reads as that
@@ -351,21 +354,31 @@ gives:
     at the file and line where the second target's step was chosen, when it
     records one, else at the table's file;
   - a `DEPLOY_VALUE` error with the hint above for each place where two
-    targets hold different deploy-time values:
+    targets hold different deploy-time values. Each target's deploy-time
+    values at the place are taken in the order the text holds them
+    (`splitDeployText`); against the first target that holds any, the first
+    other target whose list differs is reported, at the first position where
+    both hold a value and the two differ:
     `This value is ${envvar:<NAME>} in <target> and ${envvar:<NAME>} in <target>.`,
-    at the first use of the second value;
+    naming those two values, at the first use of the second one. A target that
+    holds fewer values there, with literal text in place of one, is not a
+    difference of names;
 - `differing`: every other place, by JSON Pointer into the first target's
   model, where the targets' values are not all the same, with the value in
   each target that has one. A list whose length differs is one place; so is
   a key that some targets do not have.
 
-Target lists are joined with `, `, the last two with `and`.
+Target lists are joined with `, `, the last two with the word `and` between
+them. A problem the same as one already given (the same code, message, file
+and line), such as for a value two tables share, is given once.
 
 `splitDeployText(text, deployValues)` splits a text into its literal parts
 and the deploy-time values in it, in order, leaving out empty parts.
 `checkFold(pack, models, { view, same? })` checks the fold property and
 rules 4 and 5 for the models of the first one, two and more targets, and
-returns a sentence for each failure; none when it holds.
+returns a sentence for each failure; none when it holds. A model resolved
+without `deployTime` (one with no `deployValues`) is a failure, so rules 4
+and 5 cannot hold by having nothing to check.
 
 ## 3. Values from the standard, platform and definitions
 
