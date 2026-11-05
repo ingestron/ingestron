@@ -5,8 +5,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { completionsAt } from "../src/completion.js";
 import { openProject } from "../src/project.js";
+import { filledTemplates } from "./starters.js";
 
-const retail = join(import.meta.dirname, "../../cli/project-templates/retail");
+const retail = join(filledTemplates, "retail");
 const read = (path: string) => readFileSync(join(retail, path), "utf8");
 const labels = (items: { label: string }[]) => items.map((item) => item.label).sort();
 

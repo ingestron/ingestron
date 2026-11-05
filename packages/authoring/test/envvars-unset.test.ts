@@ -9,8 +9,9 @@ import { annotationsIn } from "../src/annotations.js";
 import { problems } from "../src/diagnostics.js";
 import { hoverAt } from "../src/hover.js";
 import { openProject } from "../src/project.js";
+import { filledTemplates } from "./starters.js";
 
-const template = join(import.meta.dirname, "../../cli/project-templates/private-files");
+const template = join(filledTemplates, "private-files");
 // A name no developer's shell sets, so "unset" is unset everywhere.
 const name = "INGESTRON_TEST_KEY_VAULT";
 const folders: string[] = [];
@@ -21,11 +22,11 @@ function workspace(files: Record<string, string> = {}): string {
   const folder = mkdtempSync(join(tmpdir(), "ingestron-authoring-unset-"));
   folders.push(folder);
   cpSync(template, folder, { recursive: true, filter: (path) => !path.includes("/build") });
-  const project = join(folder, "project.yaml");
+  const platform = join(folder, "platform.yaml");
   writeFileSync(
-    project,
-    readFileSync(project, "utf8").replace(
-      "key_vault: https://kv-stores-dev.vault.azure.net",
+    platform,
+    readFileSync(platform, "utf8").replace(
+      "key_vault: https://${values.key_vault}.vault.azure.net",
       `key_vault: \${envvar:${name}}`,
     ),
   );

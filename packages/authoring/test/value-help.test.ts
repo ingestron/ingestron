@@ -4,11 +4,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { completionsAt } from "../src/completion.js";
 import { openProject } from "../src/project.js";
+import { filledTemplates } from "./starters.js";
 
-const project = openProject(
-  join(import.meta.dirname, "../../cli/project-templates/pyspark"),
-  new Map(),
-);
+const project = openProject(join(filledTemplates, "pyspark"), new Map());
 const suggest = (file: string, text: string, at = text.length) =>
   completionsAt(project, file, text, at, project.environments[0]).map(
     (item) => item.snippet ?? item.insertText ?? item.label,

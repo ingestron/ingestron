@@ -4,8 +4,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { openProject } from "../src/project.js";
 import { fileMoveEdits, renameProblem } from "../src/rename.js";
+import { filledTemplates } from "./starters.js";
 
-const retail = join(import.meta.dirname, "../../cli/project-templates/retail");
+const retail = join(filledTemplates, "retail");
 const project = openProject(retail, new Map());
 const read = (path: string) => readFileSync(join(retail, path), "utf8");
 const at = (path: string, text: string, plus = 0) => read(path).indexOf(text) + plus;

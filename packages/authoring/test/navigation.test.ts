@@ -5,8 +5,9 @@ import { describe, expect, it } from "vitest";
 import { definitionAt, referencesAt, type Place } from "../src/navigation.js";
 import { renameAt } from "../src/rename.js";
 import { openProject } from "../src/project.js";
+import { filledTemplates } from "./starters.js";
 
-const retail = join(import.meta.dirname, "../../cli/project-templates/retail");
+const retail = join(filledTemplates, "retail");
 const project = openProject(retail, new Map());
 const read = (path: string) => readFileSync(join(retail, path), "utf8");
 const at = (path: string, text: string, plus = 0) => read(path).indexOf(text) + plus;
@@ -48,9 +49,12 @@ describe("go to definition", () => {
     const value = definitionAt(
       project,
       "connections/shop.yaml",
-      at("connections/shop.yaml", "values.storage", 8),
+      at("connections/shop.yaml", "values.storage_account", 8),
     );
-    expect(shown(value)).toBe(`project.yaml:storage@${at("project.yaml", "storage")}`);
+    // Given only per environment, the value is defined where it is first given.
+    expect(shown(value)).toBe(
+      `project.yaml:storage_account@${at("project.yaml", "storage_account")}`,
+    );
     const file = definitionAt(
       project,
       "transforms/daily_sales.yaml",
@@ -132,7 +136,7 @@ describe("rename covers every place a name is used", () => {
 });
 
 describe("PySpark inputs", () => {
-  const pyspark = join(import.meta.dirname, "../../cli/project-templates/pyspark");
+  const pyspark = join(filledTemplates, "pyspark");
 
   it('renames tables["x"] in a transform\'s Python with the table', () => {
     const python = openProject(pyspark, new Map());

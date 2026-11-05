@@ -5,8 +5,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { fixAll } from "../src/fix-all.js";
 import { openProject } from "../src/project.js";
+import { filledTemplates } from "./starters.js";
 
-const retail = join(import.meta.dirname, "../../cli/project-templates/retail");
+const retail = join(filledTemplates, "retail");
 const unique = (file: string, column: string) =>
   readFileSync(join(retail, file), "utf8").replace(
     `{ name: ${column}, logicalType: integer, required: true, primaryKey: true }`,

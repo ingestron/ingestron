@@ -5,8 +5,9 @@ import { describe, expect, it } from "vitest";
 import { generatedFiles, generatedForTable, tableAtCursor } from "../src/preview.js";
 import { openProject } from "../src/project.js";
 import { appliedSample } from "./applied.js";
+import { filledTemplates } from "./starters.js";
 
-const templates = join(import.meta.dirname, "../../cli/project-templates");
+const templates = filledTemplates;
 
 describe("generated files", () => {
   it("match what the CLI wrote to build/", () => {

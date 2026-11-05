@@ -5,8 +5,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { quickFixes } from "../src/fixes.js";
 import { openProject } from "../src/project.js";
+import { filledTemplates } from "./starters.js";
 
-const retail = join(import.meta.dirname, "../../cli/project-templates/retail");
+const retail = join(filledTemplates, "retail");
 
 function edited(path: string, change: (text: string) => string) {
   const text = change(readFileSync(join(retail, path), "utf8"));
@@ -86,7 +87,7 @@ describe("quick fixes", () => {
 
 describe("missing method settings", () => {
   it("are one fix that adds each key, empty, in the platform, the standard and the flow", () => {
-    const folder = join(import.meta.dirname, "../../cli/project-templates/private-files");
+    const folder = join(filledTemplates, "private-files");
     const read = (path: string) => readFileSync(join(folder, path), "utf8");
     const open = new Map([
       [join(folder, "standard.yaml"), read("standard.yaml").split("ingest:")[0]!],

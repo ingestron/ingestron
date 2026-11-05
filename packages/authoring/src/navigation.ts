@@ -77,10 +77,26 @@ function scan(project: Project): Occurrence[] {
     .list()
     .filter((path) => !path.startsWith("build/") && !path.includes("/build/"));
   const code = transformCode(project, paths);
-  return paths.flatMap((path) => {
-    const text = project.files.read(path) ?? "";
-    const inText = /\.(ya?ml|sql|py)$/.test(path) ? textOccurrences(path, text, code) : [];
-    return /\.ya?ml$/.test(path) ? [...yamlOccurrences(path, text), ...inText] : inText;
+  return valuesPerEnvironment(
+    paths.flatMap((path) => {
+      const text = project.files.read(path) ?? "";
+      const inText = /\.(ya?ml|sql|py)$/.test(path) ? textOccurrences(path, text, code) : [];
+      return /\.ya?ml$/.test(path) ? [...yamlOccurrences(path, text), ...inText] : inText;
+    }),
+  );
+}
+
+/**
+ * A value that project.yaml gives only under `environments.<name>.values`, such as the storage
+ * account `ingestron init` writes per environment, is defined where it is first given.
+ */
+function valuesPerEnvironment(found: Occurrence[]): Occurrence[] {
+  const defined = new Set(found.filter((item) => item.definition).map((item) => item.symbol));
+  return found.map((item) => {
+    const first = item.file === "project.yaml" && item.symbol.startsWith("value:");
+    if (!first || defined.has(item.symbol)) return item;
+    defined.add(item.symbol);
+    return { ...item, definition: true };
   });
 }
 

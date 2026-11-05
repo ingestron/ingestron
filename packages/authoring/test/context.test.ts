@@ -5,8 +5,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { flowFacts, placeAt } from "../src/context.js";
 import { openProject } from "../src/project.js";
+import { filledTemplates } from "./starters.js";
 
-const retail = join(import.meta.dirname, "../../cli/project-templates/retail");
+const retail = join(filledTemplates, "retail");
 const flow = readFileSync(join(retail, "flows/shop.yaml"), "utf8");
 
 /** The place where `|` is in `marked`. */

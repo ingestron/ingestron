@@ -5,8 +5,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { completionsAt } from "../src/completion.js";
 import { openProject } from "../src/project.js";
+import { filledTemplates } from "./starters.js";
 
-const erp = join(import.meta.dirname, "../../cli/project-templates/private-sql-server");
+const erp = join(filledTemplates, "private-sql-server");
 
 /** Completions where `|` is in the edited text of `path`. */
 function at(path: string, edit: (text: string) => string) {
@@ -52,7 +53,7 @@ describe("values of method settings", () => {
 
 describe("settings help in a new, unfinished file", () => {
   it("offers a method's values before the file has ever been valid", () => {
-    const minimal = join(import.meta.dirname, "../../cli/project-templates/minimal");
+    const minimal = join(filledTemplates, "minimal");
     const marked = [
       "apiVersion: ingestron.io/v1",
       "kind: Flow",

@@ -5,9 +5,10 @@ import { describe, expect, it } from "vitest";
 import { problems } from "../src/diagnostics.js";
 import { openProject } from "../src/project.js";
 import { appliedSample } from "./applied.js";
+import { filledTemplates } from "./starters.js";
 
 const retail = appliedSample("retail");
-const minimal = join(import.meta.dirname, "../../cli/project-templates/minimal");
+const minimal = join(filledTemplates, "minimal");
 const read = (folder: string, path: string) => readFileSync(join(folder, path), "utf8");
 
 function edited(folder: string, path: string, change: (text: string) => string) {
@@ -17,6 +18,20 @@ function edited(folder: string, path: string, change: (text: string) => string) 
 describe("problems", () => {
   it("has none for a correct project", () => {
     expect(problems(openProject(retail, new Map()), "dev")).toEqual([]);
+  });
+
+  it("warns at each value a new project still holds as REPLACE_ME, for the environment", () => {
+    const starter = join(import.meta.dirname, "../../cli/project-templates/minimal");
+    expect(problems(openProject(starter, new Map()), "dev")).toMatchObject([
+      {
+        file: "project.yaml",
+        code: "REPLACE_ME",
+        severity: "warning",
+        message: expect.stringMatching(
+          /^values\.landing is still REPLACE_ME: write the real value before deploying\.\nIngestron cannot know this value\./,
+        ),
+      },
+    ]);
   });
 
   it("shows a broken link where it is written", () => {
