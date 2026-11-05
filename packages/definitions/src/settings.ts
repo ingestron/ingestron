@@ -8,6 +8,7 @@ import type { Origin } from "./model.js";
 import { reportMissing, type MethodUse, type SettingsUser } from "./missing-settings.js";
 import type { Action, Method } from "./pack.js";
 import { holdsUnsetEnvvar } from "./unknown-values.js";
+import { replaceMe } from "./replace-me.js";
 
 /** Settings from one layer, with where they were written (none for pack defaults). */
 export interface SettingsLayer {
@@ -162,9 +163,11 @@ function checkSchema(
     validators.set(method, validate);
   }
   if (validate(settings)) return true;
-  // Text that holds an unset reference is not known yet, so it fails nothing but `type`.
-  const failures = withoutUnsetEnvvars(validate.errors ?? [], (text) =>
-    holdsUnsetEnvvar(context.project, text),
+  // Text that holds an unset reference is not known yet, so it fails nothing but `type`;
+  // nor does text that holds REPLACE_ME, which its own diagnostic reports (specification section 1).
+  const failures = withoutUnsetEnvvars(
+    validate.errors ?? [],
+    (text) => holdsUnsetEnvvar(context.project, text) || text.includes(replaceMe),
   );
   if (failures.length === 0) return true;
   const missing = failures

@@ -113,6 +113,16 @@ export interface Connector {
     optional?: boolean;
     type?: "text" | "number" | "object";
     values?: string[];
+    /**
+     * A value `ingestron init` writes for the setting: a number, true or false, or one of
+     * `values`; a choice that suits most projects, never a stand-in for the owner's value.
+     */
+    default?: string | number | boolean;
+    /**
+     * One sentence on where the owner finds the value, shown in a new project's README.md.
+     * @example "Your database administrator; SSMS shows it as the server name."
+     */
+    find?: string;
   }[];
   /** What the pack generates for it, in a short phrase. */
   generates: string;
