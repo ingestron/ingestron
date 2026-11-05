@@ -1,0 +1,21 @@
+# SQL Server: ADF ingestion into Databricks. README.md lists what to fill in.
+id: sales
+environments:
+  dev:
+    values:
+      # Storage account (ADLS Gen2) that the landing folder is in: its name
+      storage_account: REPLACE_ME
+      # Key Vault that holds the source's secrets: its name, not its URL
+      key_vault: REPLACE_ME
+  prod:
+    values:
+      # Storage account (ADLS Gen2) that the landing folder is in: its name
+      storage_account: REPLACE_ME
+      # Key Vault that holds the source's secrets: its name, not its URL
+      key_vault: REPLACE_ME
+imports:
+  - standard.yaml
+  - platform.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - contracts/*.yaml

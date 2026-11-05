@@ -160,8 +160,9 @@ under `environments.<environment>.values`. A value that was a number or
 - `<environment>.<name>` for an environment the project does not have, or a
   name written once for every environment.
 
-[conformance/projects.json](conformance/projects.json) lists, for some
-routes, the names `init --yes` writes as `REPLACE_ME`.
+[conformance/projects.json](conformance/projects.json) lists under
+`replaceMe`, for some routes, the names `init --yes` writes as `REPLACE_ME`,
+in the order README.md lists them.
 
 ### README.md
 
@@ -178,15 +179,27 @@ and prints the values to replace instead. The README has, in order:
    where to find it (the setting's `find`, else the connector's
    documentation) and its environments (`all` for a value written once). The
    rows are the project's `REPLACE_ME` diagnostics, so they match `plan`.
-   With none, "Nothing to replace: the project runs as written.";
+   With none, "Nothing to replace: the project runs as written.", or, when
+   every environment is resolved with the host's values only ([output
+   folders](outputs.md), section 1), "Nothing to replace: this project runs
+   on this computer.";
 4. **Secrets to create**, when the project has any: each secret's name, where
    it goes and what it holds;
 5. **Deploy**: for each output folder, the commands that deploy it per
    environment, and the deploy-time values its pack's `deployValues` name;
-6. **Ask the platform team**: `ingestron request --env <environment>`;
+6. **Ask the platform team**: `ingestron request --env <environment>`, for
+   the last environment;
 7. **Values per environment**: project.yaml's
    `environments.<name>.values`, `${envvar:…}` and `${secret:…}`.
 
 After the plan, `init` prints
 `<n> values are still REPLACE_ME: README.md lists each one and where to find it.`,
 or `Nothing to replace: the project runs as written.`
+
+### Conformance
+
+Each folder in [conformance/init/](conformance/init/) is a case: `case.json`
+gives the `args`, the `date` init runs on, the `folder` it creates, the
+`exit` code and the `lastLine` of the output; `files/` holds files the
+project must have, each exactly, README.md included. The cases are not
+formatted by Prettier.

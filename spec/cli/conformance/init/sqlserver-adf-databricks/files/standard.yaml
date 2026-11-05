@@ -1,0 +1,10 @@
+apiVersion: ingestron.io/v1
+kind: Standard
+id: sales
+packs: [databricks@2, adf@2] # Databricks names and stores the tables; ADF only copies them
+ingest:
+  settings:
+    adf-copy:
+      # Start of the first window (UTC): midnight on the day this project was created
+      start: 2026-11-04T00:00:00Z
+      every: {frequency: Hour, interval: 24}

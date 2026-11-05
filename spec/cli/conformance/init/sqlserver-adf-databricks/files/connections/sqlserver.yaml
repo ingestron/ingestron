@@ -1,0 +1,12 @@
+apiVersion: ingestron.io/v1
+kind: Connection
+id: sqlserver
+connector: sqlserver
+connectivity: private # reached only through a self-hosted integration runtime or a private network
+settings:
+  # The host name the integration runtime reaches
+  server: REPLACE_ME
+  # The login; required for SQL or Windows authentication
+  user: REPLACE_ME
+  # Key Vault secret: the login password; required for SQL or Windows authentication
+  password: ${secret:sales-sqlserver-password}

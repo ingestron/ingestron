@@ -1,0 +1,11 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: sqlserver
+source: sqlserver
+ingest:
+  uses: adf-copy # the route's ingest method; a table may choose another
+tables:
+  sqlserver_records:
+    # The source object: database.schema.table
+    object: REPLACE_ME.REPLACE_ME.REPLACE_ME
+    contract: records
