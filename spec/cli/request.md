@@ -60,8 +60,8 @@ has something to say:
 
 The section lists each `REPLACE_ME` diagnostic of the environment
 (definitions specification, section 1), in their order. It starts with
-"These values are still `REPLACE_ME`; deploying fails until they are
-written:", then one line each: the field, as the diagnostic's message names
+"These values are still `REPLACE_ME`; `ingestron check` fails until they
+are written:", then one line each: the field, as the diagnostic's message names
 it, the file and the line, such as
 `` `settings.integration_runtime` in `platform.yaml` (line 10) ``. An
 environment with none has no such section. The section does not change the

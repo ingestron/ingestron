@@ -98,7 +98,10 @@ and a Key Vault is `https://${values.key_vault}.vault.azure.net`.
 The storage account and the Key Vault are per environment: each is one
 `REPLACE_ME` under `environments.<name>.values` in project.yaml, for every
 environment, and the platform composes the URLs from them. Everything else is
-written once.
+written once. On a route through Data Factory they stay literal values in
+project.yaml: where environments differ, they become ARM parameters of the
+factory. Data Factory takes a deploy-time value only as a whole value, so
+`${envvar:…}` there, inside the composed URL, is `DEPLOY_VALUE`.
 
 The built-in starters follow the same rules in their own files, except
 `duckdb`, which runs on the user's computer and has nothing to replace.
@@ -106,24 +109,29 @@ The built-in starters follow the same rules in their own files, except
 A connection setting is, by its connector's metadata (definitions
 specification, "Connector authoring metadata"):
 
+- left out, when the metadata marks it `optional`;
 - a secret: `${secret:<project id>-<connection id>-<setting>}`, each `_`
   written `-`;
-- a default: the setting's `default`, else, for a setting whose value is a
-  number, `true` or `false`, or one of its `values`, the example's value;
+- a default: the setting's `default`;
+- a value to check: for a setting whose value is a number, `true` or
+  `false`, or one of its `values`, and that has no `default`, the example's
+  value, with a comment that ends `the example's value, check it`;
 - otherwise `REPLACE_ME`.
 
-A source option is a default when its schema allows only some values, a
-secret as above, and `REPLACE_ME` when it is text; others stay as the
-example writes them. A query is `REPLACE_ME` when the connector requires one,
-and is left out otherwise. Optional connection settings the example does not
-write are left out.
+A source option is kept when its schema allows only some values, a secret
+as above, and kept as written when it is not text. A text option is left out
+when the project resolves without it; `init` writes as `REPLACE_ME` only
+those the connector needs, each found by resolving with it left out. A query
+is `REPLACE_ME` when the connector requires one, and is left out otherwise.
+Optional connection settings the example does not write are left out.
 
 ### Written defaults
 
 These are written, each with a short comment: the connection's
 `connectivity`; the standard's `packs`; each flow's `ingest.uses`; the
 schedule (the ADF window's `every`, and its `start`, midnight UTC on the day
-`init` runs; Databricks' `schedule.cron` with `timezone: UTC`); the landing
+`init` runs; on a route into Databricks through Data Factory, a Databricks
+`schedule` that refreshes hourly, with `timezone: UTC`); the landing
 folder; `layout: snapshot` where the route sets it; and Synapse's
 `data_source_location` and DuckDB's `published`, in the same storage account
 as the landing folder. Naming, layers, types, quality, store methods,
@@ -132,7 +140,9 @@ resource names and who the jobs run as stay the packs' defaults.
 A comment is one line of at most 100 characters directly above the value (a
 default's MAY follow it on the same line): the setting's description, its
 first sentence without the full stop. The files are edited as YAML
-documents, so the example's comments are kept.
+documents, so the example's comments are kept; where the example already has
+a comment line above a value, it is kept in place of the description, so
+there is exactly one.
 
 ### Names and `--set`
 
@@ -183,18 +193,30 @@ and prints the values to replace instead. The README has, in order:
    every environment is resolved with the host's values only ([output
    folders](outputs.md), section 1), "Nothing to replace: this project runs
    on this computer.";
-4. **Secrets to create**, when the project has any: each secret's name, where
-   it goes and what it holds;
-5. **Deploy**: for each output folder, the commands that deploy it per
-   environment, and the deploy-time values its pack's `deployValues` name;
-6. **Ask the platform team**: `ingestron request --env <environment>`, for
+4. **Values to check**, when the project has any: a row for each value to
+   check (above), with its place, what it is and where to find it;
+5. **Secrets to create**: each secret's name, where it goes and what it
+   holds; with none, that no connection names a Key Vault secret;
+6. **Deploy**: for each output folder, Data Factory's first, the commands
+   that deploy it, written for `<environment>`, what each placeholder is, and
+   the deploy-time values its pack's `deployValues` name; Data Factory's
+   steps link to the documentation's full page;
+7. **Ask the platform team**: `ingestron request --env <environment>`, for
    the last environment;
-7. **Values per environment**: project.yaml's
-   `environments.<name>.values`, `${envvar:…}` and `${secret:…}`.
+8. **Values per environment**: project.yaml's
+   `environments.<name>.values`, `${envvar:…}` and `${secret:…}`; on a route
+   through Data Factory, that the storage account and Key Vault stay in
+   project.yaml (above).
+
+Code blocks are fenced, with their language.
 
 After the plan, `init` prints
 `<n> values are still REPLACE_ME: README.md lists each one and where to find it.`,
-or `Nothing to replace: the project runs as written.`
+where `<n>` counts the README's rows, one per name, or
+`Nothing to replace: the project runs as written.` The plan's own count line
+is not printed then. When the folder's README.md is kept, `init` prints each
+row with where to find it, and the secrets to create, and project.yaml's
+first comment does not mention README.md.
 
 ### Conformance
 
