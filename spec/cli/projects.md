@@ -128,7 +128,7 @@ Optional connection settings the example does not write are left out.
 ### Written defaults
 
 These are written, each with a short comment: the connection's
-`connectivity`; the standard's `packs`; each flow's `ingest.uses`; the
+`connectivity`; the standard's `packs` and a starter's `naming.catalog`; each flow's `ingest.uses`; the
 schedule (the ADF window's `every`, and its `start`, midnight UTC on the day
 `init` runs; on a route into Databricks through Data Factory, a Databricks
 `schedule` that refreshes hourly, with `timezone: UTC`); the landing
@@ -209,6 +209,12 @@ and prints the values to replace instead. The README has, in order:
    project.yaml (above).
 
 Code blocks are fenced, with their language.
+
+`init` also writes `.gitignore`, or, when the folder has one, adds only the
+lines it lacks and changes nothing else in it: the `.env` lines, and, on a
+route through Data Factory, `node_modules/`, `downloads/` and `arm/`, which
+the README's export steps write into the project folder. The README says so
+beside those steps.
 
 After the plan, `init` prints
 `<n> values are still REPLACE_ME: README.md lists each one and where to find it.`,
