@@ -3,8 +3,15 @@
 import { parse } from "yaml";
 import type { Generated } from "./build-outputs.js";
 import { deploySection } from "./init-deploy.js";
-import { findFor } from "./init-find.js";
-import { projectValues, type ProjectValue } from "./init-values.js";
+import {
+  checkRows,
+  replaceRows,
+  secretRows,
+  type CheckRow,
+  type ReplaceRow,
+  type SecretRow,
+} from "./init-rows.js";
+import { projectValues } from "./init-values.js";
 import type { Content } from "./scaffold.js";
 
 /** What README.md is written from. */
@@ -17,72 +24,31 @@ export interface ReadmeFacts {
   generated: Generated;
 }
 
-/** One value still REPLACE_ME: its name, places, what it is and where to find it. */
-export interface ReplaceRow {
-  name: string;
-  places: { file: string; line: number }[];
-  what: string;
-  find: string;
-  environments: string[];
-}
-
-/**
- * A row for each name still REPLACE_ME, from the project's REPLACE_ME diagnostics, so the
- * rows match `plan`; in the order the diagnostics first name each.
- */
-export function replaceRows(files: Record<string, Content>, generated: Generated): ReplaceRow[] {
-  const values = projectValues(files);
-  const rows = new Map<string, ReplaceRow>();
-  const places = generated.environmentReports
-    .flatMap((report) => report.diagnostics)
-    .filter((diagnostic) => diagnostic.code === "REPLACE_ME" && diagnostic.location)
-    .map((diagnostic) => diagnostic.location!);
-  for (const { file, line } of places) {
-    const value = values.find((item) => item.file === file && item.line === line);
-    const name = value?.name ?? file;
-    const row = rows.get(name) ?? newRow(name, value, files, generated);
-    rows.set(name, row);
-    if (!row.places.some((place) => place.file === file && place.line === line))
-      row.places.push({ file, line });
-    // A value written once is in every environment; one under environments.<name>.values in its own.
-    const environment = value?.environment ?? "all";
-    if (!row.environments.includes(environment)) row.environments.push(environment);
-  }
-  return [...rows.values()];
-}
-
-function newRow(
-  name: string,
-  value: ProjectValue | undefined,
-  files: Record<string, Content>,
-  generated: Generated,
-): ReplaceRow {
-  return {
-    name,
-    places: [],
-    what: value?.comment ?? "",
-    find: value ? findFor(value, files, generated) : "",
-    environments: [],
-  };
-}
-
 /** README.md's text. */
 export function projectReadme(facts: ReadmeFacts): string {
-  const rows = replaceRows(facts.files, facts.generated);
-  const secrets = projectValues(facts.files).filter((value) => value.kind === "secret");
+  const { files, generated } = facts;
+  const factory = throughDataFactory(files);
   return [
     `# ${facts.project}`,
     introduction(facts),
-    "## Run it\n\n    ingestron plan     # what would be generated, and what is still REPLACE_ME\n    ingestron apply    # writes the files under build/",
-    valuesSection(rows, local(facts.generated)),
-    secretsSection(secrets, facts.files),
-    deploySection(facts.generated.outputs),
-    askSection(facts.generated),
-    perEnvironment,
+    "## Run it\n\n```sh\ningestron plan     # what would be generated, and what is still REPLACE_ME\ningestron apply    # writes the files under build/\n```",
+    valuesSection(replaceRows(files, generated), local(generated), factory),
+    checkSection(checkRows(files, generated)),
+    secretsSection(secretRows(files), files),
+    deploySection(generated.outputs),
+    askSection(generated),
+    perEnvironment(factory),
   ]
     .filter(Boolean)
     .join("\n\n")
     .concat("\n");
+}
+
+/** Whether the standard names the Data Factory pack, which composes the storage and vault URLs. */
+function throughDataFactory(files: Record<string, Content>): boolean {
+  const standard = parse(String(files["standard.yaml"] ?? "")) as { packs?: unknown } | null;
+  const named = Array.isArray(standard?.packs) ? standard.packs.map(String) : [];
+  return named.some((ref) => ref.startsWith("adf@"));
 }
 
 function introduction(facts: ReadmeFacts): string {
@@ -116,7 +82,7 @@ function local(generated: Generated): boolean {
   return generated.environmentReports.every((report) => generated.local.includes(report.name));
 }
 
-function valuesSection(rows: ReplaceRow[], onThisComputer: boolean): string {
+function valuesSection(rows: ReplaceRow[], onThisComputer: boolean, factory: boolean): string {
   if (rows.length === 0)
     return `## Values to replace before deploying\n\nNothing to replace: ${onThisComputer ? "this project runs on this computer" : "the project runs as written"}.`;
   const lines = rows.map((row) => {
@@ -133,33 +99,51 @@ function valuesSection(rows: ReplaceRow[], onThisComputer: boolean): string {
   return [
     "## Values to replace before deploying",
     "Ingestron cannot know these. `plan` warns about each; `ingestron check` fails until all are written.",
-    [
-      "| Name | File and line | What it is | Where to find it | Environments |",
-      "| --- | --- | --- | --- | --- |",
-      ...lines,
-    ].join("\n"),
-    "Write each in place, or set it when creating a project with `ingestron init --set <name>=<value>`.\nA value written once is used in every environment; to give one environment its own, write it in\n`project.yaml` under `environments.<name>.values` and use it as `${values.<name>}`.",
+    table(["Name", "File and line", "What it is", "Where to find it", "Environments"], lines),
+    `Write each in place, or set it when creating a project with \`ingestron init --set <name>=<value>\`.\n${
+      factory
+        ? "The storage account and Key Vault are written for each environment in `project.yaml`: where\nenvironments differ, Data Factory takes them as parameters of the factory."
+        : "A value written once is used in every environment; to give one environment its own, write it in\n`project.yaml` under `environments.<name>.values` and use it as `${values.<name>}`."
+    }`,
   ].join("\n\n");
+}
+
+function checkSection(rows: CheckRow[]): string {
+  if (rows.length === 0) return "";
+  const lines = rows.map(
+    (row) =>
+      `| \`${row.name}\` | \`${row.place.file}:${row.place.line}\` | ${cell(row.what)} | ${cell(row.find)} |`,
+  );
+  return [
+    "## Values to check",
+    "These are the example's own values, which the source may not share. Nothing warns about them.",
+    table(["Name", "File and line", "What it is", "Where to find it"], lines),
+  ].join("\n\n");
+}
+
+function table(headings: string[], lines: string[]): string {
+  return [
+    `| ${headings.join(" | ")} |`,
+    `| ${headings.map(() => "---").join(" | ")} |`,
+    ...lines,
+  ].join("\n");
 }
 
 function cell(text: string): string {
   return text.replaceAll("|", "\\|");
 }
 
-function secretsSection(secrets: ProjectValue[], files: Record<string, Content>): string {
-  if (secrets.length === 0) return "";
+function secretsSection(secrets: SecretRow[], files: Record<string, Content>): string {
+  if (secrets.length === 0)
+    return "## Secrets to create\n\nNone: no connection here names a Key Vault secret.";
   const vault = projectValues(files).some((value) => value.name === "key_vault")
     ? "each environment's `key_vault`"
     : "the Key Vault the platform reads";
-  const lines = secrets.map((value) => {
-    const name = /^\$\{secret:([^}]+)\}$/.exec(String(value.value))?.[1] ?? "";
-    const holds = (value.comment ?? value.name).replace(/^Key Vault secret: /, "");
-    return `| \`${name}\` | ${vault} | ${cell(holds.charAt(0).toUpperCase() + holds.slice(1))} |`;
-  });
+  const lines = secrets.map((row) => `| \`${row.name}\` | ${vault} | ${cell(row.holds)} |`);
   return [
     "## Secrets to create",
-    ["| Secret | In | Holds |", "| --- | --- | --- |", ...lines].join("\n"),
-    "Azure portal: Key vaults, your vault, Secrets, Generate/Import. Never write a secret in a file.",
+    table(["Secret", "In", "Holds"], lines),
+    "Azure portal: Key vaults, your vault, Objects, Secrets, + Generate/Import. Never write a secret in a file.",
   ].join("\n\n");
 }
 
@@ -168,7 +152,12 @@ function askSection(generated: Generated): string {
   return `## Ask the platform team\n\n\`ingestron request --env ${last} > request-${last}.md\` writes what must exist before deploying, such as\nthe identities' access, as Markdown to send. It lists any value still \`REPLACE_ME\`.`;
 }
 
-const perEnvironment = [
-  "## Values per environment",
-  "- `project.yaml`, `environments.<name>.values`: names, hosts and paths, reviewed in Git. Start here.\n- `${envvar:NAME}`: a deploy-time value that the pipeline deploying `build/` supplies, such as\n  `BUNDLE_VAR_<name>`; `ingestron request` names each per platform. `.env.<environment>` (kept\n  out of Git) sets it on your computer for DuckDB.\n- `${secret:NAME}`: a Key Vault secret's name, never its value.",
-].join("\n\n");
+function perEnvironment(factory: boolean): string {
+  const envvar = factory
+    ? "- `${envvar:NAME}`: a deploy-time value that the pipeline deploying `build/` supplies;\n  `ingestron request` names each per platform. Data Factory takes one only as a whole value, so\n  keep the storage account and Key Vault in `project.yaml`."
+    : "- `${envvar:NAME}`: a deploy-time value that the pipeline deploying `build/` supplies, such as\n  `BUNDLE_VAR_<name>`; `ingestron request` names each per platform. `.env.<environment>` (kept\n  out of Git) sets it on your computer for DuckDB.";
+  return [
+    "## Values per environment",
+    `- \`project.yaml\`, \`environments.<name>.values\`: names, hosts and paths, reviewed in Git. Start here.\n${envvar}\n- \`\${secret:NAME}\`: a Key Vault secret's name, never its value.`,
+  ].join("\n\n");
+}
