@@ -4,4 +4,5 @@ id: billing
 connector: files
 connectivity: public
 settings:
-  path: /Volumes/dev/landing/billing
+  # Where the files land: a Unity Catalog volume, such as /Volumes/main/landing/billing
+  path: REPLACE_ME

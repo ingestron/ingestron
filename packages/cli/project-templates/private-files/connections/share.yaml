@@ -5,6 +5,9 @@ description: The stores' export share, inside the corporate network only.
 connector: files
 connectivity: private
 settings:
-  path: '\\fs01\exports'
-  user: corp\ingest
-  password: ${secret:fs01-password} # a Key Vault secret name
+  # The share, such as \\fs01\exports
+  path: REPLACE_ME
+  # The account that reads the share, such as corp\ingest
+  user: REPLACE_ME
+  # Key Vault secret: the account's password
+  password: ${secret:stores-share-password}

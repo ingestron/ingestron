@@ -7,5 +7,11 @@ ingest:
   # One bundle covers every environment, so how the pipeline runs is the same in each.
   with: { starting_offset: earliest, mode: append, continuous: false }
 tables:
-  page_views: { object: web.page-views, contract: web.page_views }
-  purchases: { object: web.purchases, contract: web.purchases }
+  page_views:
+    # The topic
+    object: REPLACE_ME
+    contract: web.page_views
+  purchases:
+    # The topic
+    object: REPLACE_ME
+    contract: web.purchases

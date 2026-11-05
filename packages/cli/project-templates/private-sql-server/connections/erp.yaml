@@ -5,6 +5,9 @@ description: The ERP's SQL Server, inside the corporate network only.
 connector: sqlserver
 connectivity: private
 settings:
-  server: erp-sql01.corp.local
-  user: ingest_reader
-  password: ${secret:erp-sql-password} # a Key Vault secret name
+  # The host name the integration runtime reaches
+  server: REPLACE_ME
+  # The login that reads the tables
+  user: REPLACE_ME
+  # Key Vault secret: the login's password
+  password: ${secret:erp-erp-password}
