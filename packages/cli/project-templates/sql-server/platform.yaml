@@ -2,5 +2,5 @@ apiVersion: ingestron.io/v1
 kind: Platform
 id: lakehouse
 schedule:
-  cron: 0 0 * * * ?
-  timezone: UTC
+  cron: 0 0 * * * ? # Quartz cron: the refresh job runs on the hour, every hour
+  timezone: UTC # the time zone the cron is read in
