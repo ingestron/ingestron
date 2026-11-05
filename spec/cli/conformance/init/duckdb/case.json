@@ -1,0 +1,8 @@
+{
+  "description": "The DuckDB starter runs on this computer: nothing to replace",
+  "args": ["init", "local", "--template", "duckdb", "--yes"],
+  "date": "2026-11-04",
+  "folder": "local",
+  "exit": 0,
+  "lastLine": "Nothing to replace: the project runs as written."
+}

@@ -1,0 +1,8 @@
+{
+  "description": "SQL Server, private, through Data Factory into Databricks, in the folder sales: REPLACE_ME with a comment above each, the defaults written, and README.md",
+  "args": ["init", "sales", "--connector", "sqlserver", "--connectivity", "private", "--via", "adf-databricks", "--yes"],
+  "date": "2026-11-04",
+  "folder": "sales",
+  "exit": 0,
+  "lastLine": "8 values are still REPLACE_ME: README.md lists each one and where to find it."
+}

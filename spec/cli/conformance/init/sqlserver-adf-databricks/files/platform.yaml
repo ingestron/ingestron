@@ -1,0 +1,10 @@
+apiVersion: ingestron.io/v1
+kind: Platform
+id: sales
+settings:
+  adf-copy:
+    # Landing folder: the landing container of each environment's storage account
+    landing: abfss://landing@${values.storage_account}.dfs.core.windows.net/sales
+    key_vault: https://${values.key_vault}.vault.azure.net
+    # Name of the integration runtime that reaches the source
+    integration_runtime: REPLACE_ME

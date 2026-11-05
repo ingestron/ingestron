@@ -37,13 +37,93 @@
     }
   ],
   "aliases": [
-    { "given": "adf", "means": "adf-databricks" },
-    { "given": "adf-files", "means": "adf-landing" }
+    {
+      "given": "adf",
+      "means": "adf-databricks"
+    },
+    {
+      "given": "adf-files",
+      "means": "adf-landing"
+    }
   ],
   "invalid": [
     ["--connector", "missing", "--yes"],
     ["--connector", "postgresql", "--via", "databricks", "--yes"],
     ["--connector", "kafka", "--connectivity", "private", "--yes"],
     ["--connector", "files", "--template", "minimal", "--yes"]
+  ],
+  "replaceMe": [
+    {
+      "connector": "sqlserver",
+      "connectivity": "private",
+      "via": "adf-databricks",
+      "names": [
+        "source_server",
+        "source_user",
+        "sqlserver_records_object",
+        "storage_account",
+        "key_vault",
+        "integration_runtime"
+      ]
+    },
+    {
+      "connector": "sqlserver",
+      "connectivity": "workspace",
+      "via": "databricks",
+      "names": ["source_uc_connection", "customers_object", "invoices_object"]
+    },
+    {
+      "connector": "postgresql",
+      "connectivity": "private",
+      "via": "adf-synapse",
+      "names": [
+        "source_server",
+        "source_database",
+        "source_user",
+        "postgresql_records_object",
+        "storage_account",
+        "key_vault",
+        "integration_runtime"
+      ]
+    },
+    {
+      "connector": "postgresql",
+      "connectivity": "private",
+      "via": "adf-duckdb",
+      "names": [
+        "source_server",
+        "source_database",
+        "source_user",
+        "postgresql_records_object",
+        "storage_account",
+        "key_vault",
+        "integration_runtime"
+      ]
+    },
+    {
+      "connector": "salesforce",
+      "connectivity": "public",
+      "via": "databricks",
+      "names": ["source_uc_connection", "accounts_object", "opportunities_object"]
+    },
+    {
+      "connector": "files",
+      "connectivity": "public",
+      "via": "adf-landing",
+      "names": [
+        "source_path",
+        "source_user",
+        "files_records_object",
+        "storage_account",
+        "key_vault",
+        "integration_runtime"
+      ]
+    },
+    {
+      "connector": "kafka",
+      "connectivity": "public",
+      "via": "databricks",
+      "names": ["source_uc_connection", "page_views_object", "purchases_object"]
+    }
   ]
 }
