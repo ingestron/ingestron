@@ -27,13 +27,8 @@ export function valuesToProvide(
   ];
   return [
     "## Values to provide",
-    ...(variables.size > 0
-      ? [
-          "These values come from environment variables. Set them in the pipeline that runs " +
-            `Ingestron for this environment, or in \`${file}\` on your own computer, kept out of Git.`,
-        ]
-      : []),
-    ...(supplied ? [whenDeploying(supplied)] : []),
+    ...(variables.size > 0 ? [whereFrom(file, supplied)] : []),
+    ...(supplied?.unknown ? [namesNotKnown] : []),
     lines.join("\n"),
     ...(unset ? [notSetYet(notKnown), checksWait] : []),
   ].join("\n\n");
@@ -43,20 +38,28 @@ export function valuesToProvide(
 const ownValue =
   "no environment variable gives it, so the pipeline that deploys the files supplies it for each environment.";
 
-/** That the deploying pipeline supplies the values, or that the names are not known. */
-function whenDeploying(supplied: Supplied): string {
-  if (supplied.unknown)
+/**
+ * Where the variables come from: the pipeline that deploys the files, under the names given,
+ * when a pack builds every environment together; else the pipeline that runs Ingestron.
+ */
+function whereFrom(file: string, supplied: Supplied | undefined): string {
+  if (supplied && !supplied.unknown)
     return (
-      "The files of the packs that build every environment together take these values " +
-      "when deploying, but generating every environment has problems, so the names they " +
-      "take them as are not shown. Run `ingestron plan` to see why."
+      "These values come from environment variables. The pipeline that deploys the files " +
+      "supplies each one for each environment, under the names given; on your own computer, " +
+      `\`${file}\` (kept out of Git) is read only by a pack that reads them when generating, such as DuckDB.`
     );
   return (
-    "The files of the packs that build every environment together take these values when " +
-    "deploying: the pipeline that deploys them supplies each value for each environment, " +
-    "under the names given."
+    "These values come from environment variables. Set them in the pipeline that runs " +
+    `Ingestron for this environment, or in \`${file}\` on your own computer, kept out of Git.`
   );
 }
+
+/** That the names are not known while generating has problems. */
+const namesNotKnown =
+  "The files of the packs that build every environment together take these values " +
+  "when deploying, but generating every environment has problems, so the names they " +
+  "take them as are not shown. Run `ingestron plan` to see why.";
 
 /** The references grouped by variable, in the order each was first referenced. */
 function byName(references: readonly EnvvarReference[]): Map<string, EnvvarReference[]> {
