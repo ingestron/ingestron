@@ -26,7 +26,10 @@ const adf: Deploy = (_output, folder) => [
   "",
   ...sh(["npm install", `npm run build export ${folder}/factory <factory resource ID> arm`]),
   "",
-  "Then, for each environment, signed in to its subscription, in PowerShell:",
+  "They write `node_modules/`, `downloads/` and `arm/` here, which `.gitignore` keeps out of Git.",
+  "",
+  "Then, for each environment, in PowerShell 7 with the Az modules, signed in to its subscription",
+  "with both `Connect-AzAccount` (for the script) and `az login` (for the deployment):",
   "",
   ...powershell([
     `./arm/PrePostDeploymentScript.ps1 -ArmTemplate arm/ARMTemplateForFactory.json -ArmTemplateParameters ${folder}/parameters/<environment>.json -ResourceGroupName <group> -DataFactoryName <factory> -PreDeployment $true -DeleteDeployment $false`,
