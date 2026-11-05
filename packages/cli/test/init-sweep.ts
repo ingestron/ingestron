@@ -72,24 +72,34 @@ export function createsWithPlaceholders({ connector, connectivity, via }: Combin
     found.filter((match) => match[4] === "REPLACE_ME").map((match) => `${match[1]}:${match[2]}`),
   );
   const folder = join(cwd, "p");
+  const files = projectFiles(folder);
+  // Every REPLACE_ME written is warned, and there is at least one.
+  const written = projectValues(files)
+    .filter((value) => value.kind === "replace")
+    .map((value) => `${value.file}:${value.line}`);
+  expect(written.length).toBeGreaterThan(0);
+  expect(places, output).toEqual(new Set(written));
   const readme = readFileSync(join(folder, "README.md"), "utf8");
   expect(readmePlaces(readme), readme).toEqual(places);
   for (const place of places) {
     const [file, line] = place.split(":");
-    const above = readFileSync(join(folder, file!), "utf8").split("\n")[Number(line) - 2] ?? "";
+    const lines = String(files[file!]).split("\n");
+    const above = lines[Number(line) - 2] ?? "";
+    const twoAbove = lines[Number(line) - 3] ?? "";
     expect(above.trim(), `${place} has a comment above it`).toMatch(/^# .{1,98}$/);
+    expect(twoAbove.trim(), `${place} has one comment line, not two`).not.toMatch(/^#/);
   }
-  const files = projectFiles(folder);
   for (const secret of projectValues(files).filter((value) => value.kind === "secret"))
     expect(readme).toContain(`\`${String(secret.value).slice(9, -1)}\``);
-  expect(ingestron(cwd, ["check", "--definitions", "p", "--out", "p/build"]).code).toBe(1);
   return { cwd, files };
 }
 
 /** Every `file:line` README.md's table gives, `:line` read with the file before it. */
 function readmePlaces(readme: string): Set<string> {
   const places = new Set<string>();
-  for (const row of readme.split("\n").filter((line) => line.startsWith("| `"))) {
+  const start = readme.indexOf("## Values to replace");
+  const section = readme.slice(start, readme.indexOf("\n## ", start + 1));
+  for (const row of section.split("\n").filter((line) => line.startsWith("| `"))) {
     const cell = row.split(" | ")[1] ?? "";
     let file = "";
     for (const [, path, line] of cell.matchAll(/`([^`:]*):(\d+)`/g)) {
@@ -147,4 +157,10 @@ export function fillsEveryName(
   expect(output, given.join(" ")).not.toContain("REPLACE_ME warning");
   expect(output).not.toMatch(/warning +(?!PACK_NOTICE)\S+$/m);
   expect(output).toContain("Nothing to replace: the project runs as written.");
+  // Filled, it applies, and check passes: no REPLACE_ME left, and the output up to date.
+  const where = ["--definitions", "p", "--out", "p/build"];
+  const applied = ingestron(cwd, ["apply", "--no-diff", ...where]);
+  expect(applied.code, applied.output).toBe(0);
+  const checked = ingestron(cwd, ["check", ...where]);
+  expect(checked.code, checked.output).toBe(0);
 }
