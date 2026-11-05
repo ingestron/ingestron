@@ -80,11 +80,11 @@ export const flags: readonly [{
     readonly flag: "--standard <path|url>";
     readonly summary: "init: use this standard instead of the supplied default.";
 }, {
-    readonly flag: "--set <value>=<text>";
-    readonly summary: "init: answer one of the project configuration questions (repeatable).";
+    readonly flag: "--set <name>=<text>";
+    readonly summary: "init: write a value in place of REPLACE_ME, by its name, such as source_server or prod.storage_account (repeatable).";
 }, {
     readonly flag: "--yes";
-    readonly summary: "init: take the default for every question not answered.";
+    readonly summary: "init: take the default of each choice not given as a flag.";
 }, {
     readonly flag: "--help";
     readonly summary: "Show this text.";
@@ -125,6 +125,7 @@ export interface Io {
     ask?(question: string): string | undefined;
     // (undocumented)
     cwd: string;
+    now?(): Date;
     // (undocumented)
     write(text: string): void;
 }
