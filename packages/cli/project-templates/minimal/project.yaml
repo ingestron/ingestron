@@ -1,7 +1,8 @@
 # The smallest project: everything not written here comes from the pack's defaults.
 id: shop
 values:
-  landing: /Volumes/dev/landing/shop
+  # Where the source files land: a Unity Catalog volume, such as /Volumes/main/landing/shop
+  landing: REPLACE_ME
 environments:
   dev: {}
 imports:

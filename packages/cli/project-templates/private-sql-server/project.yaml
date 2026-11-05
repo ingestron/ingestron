@@ -3,14 +3,18 @@
 # folder; Databricks keeps the tables current from those files.
 id: erp
 environments:
-  dev: {}
+  dev:
+    values:
+      # Storage account (ADLS Gen2) that the landing folder is in: its name
+      storage_account: REPLACE_ME
+      # Key Vault that holds the source's secrets: its name, not its URL
+      key_vault: REPLACE_ME
   prod:
     values:
-      landing: abfss://landing@erplakeprod.dfs.core.windows.net/erp
-      key_vault: https://kv-erp-prod.vault.azure.net
-values:
-  landing: abfss://landing@erplakedev.dfs.core.windows.net/erp
-  key_vault: https://kv-erp-dev.vault.azure.net
+      # Storage account (ADLS Gen2) that the landing folder is in: its name
+      storage_account: REPLACE_ME
+      # Key Vault that holds the source's secrets: its name, not its URL
+      key_vault: REPLACE_ME
 imports:
   - standard.yaml
   - platform.yaml

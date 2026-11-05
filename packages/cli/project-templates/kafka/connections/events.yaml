@@ -5,4 +5,5 @@ description: Event Hubs namespace, used through its Kafka endpoint.
 connector: kafka
 connectivity: public
 settings:
-  uc_connection: web_events_kafka
+  # The Unity Catalog connection to the Kafka endpoint, which an administrator creates beforehand
+  uc_connection: REPLACE_ME

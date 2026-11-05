@@ -5,4 +5,4 @@ description: Files the web shop exports every hour.
 connector: files
 connectivity: public
 settings:
-  path: ${values.storage}/shop
+  path: abfss://landing@${values.storage_account}.dfs.core.windows.net/shop

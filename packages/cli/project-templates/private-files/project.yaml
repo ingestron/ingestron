@@ -3,14 +3,18 @@
 # they are; Databricks reads them there with Auto Loader.
 id: stores
 environments:
-  dev: {}
+  dev:
+    values:
+      # Storage account (ADLS Gen2) that the landing folder is in: its name
+      storage_account: REPLACE_ME
+      # Key Vault that holds the source's secrets: its name, not its URL
+      key_vault: REPLACE_ME
   prod:
     values:
-      landing: abfss://landing@storeslakeprod.dfs.core.windows.net/stores
-      key_vault: https://kv-stores-prod.vault.azure.net
-values:
-  landing: abfss://landing@storeslakedev.dfs.core.windows.net/stores
-  key_vault: https://kv-stores-dev.vault.azure.net
+      # Storage account (ADLS Gen2) that the landing folder is in: its name
+      storage_account: REPLACE_ME
+      # Key Vault that holds the source's secrets: its name, not its URL
+      key_vault: REPLACE_ME
 imports:
   - standard.yaml
   - platform.yaml
