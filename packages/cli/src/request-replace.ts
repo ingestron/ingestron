@@ -14,7 +14,7 @@ export function valuesToReplace(diagnostics: readonly AnyDiagnostic[]): string |
   if (lines.length === 0) return undefined;
   return [
     "## Values to replace",
-    "These values are still `REPLACE_ME`; deploying fails until they are written:",
+    "These values are still `REPLACE_ME`; `ingestron check` fails until they are written:",
     lines.join("\n"),
   ].join("\n\n");
 }
