@@ -8,7 +8,7 @@ import { run } from "../src/index.js";
 import { fillStarter } from "./starters.js";
 
 const supplied =
-  "The files of the packs that build every environment together take these values when deploying";
+  "The pipeline that deploys the files supplies each one for each environment, under the names given";
 
 /** A copy of an example, with each replacement made in project.yaml. */
 function workspace(example: string, replacements: [string, string][] = []): string {
@@ -82,11 +82,15 @@ describe("ingestron request and values supplied when deploying", () => {
     );
     expect(output).not.toContain(supplied);
     expect(output).not.toContain("The deploying pipeline supplies");
+    // Read when generating, so set where Ingestron runs.
+    expect(output).toContain(
+      "Set them in the pipeline that runs Ingestron for this environment, or in `.env.local` on your own computer, kept out of Git.",
+    );
   });
 
   it("says to run plan, and names nothing, when generating every environment has problems", () => {
     const folder = workspace("project-templates/retail", [
-      ["landing@retailprod.dfs", "landing@${envvar:RETAIL_ACCOUNT}.dfs"],
+      ["storage_account: retailprod", "storage_account: ${envvar:RETAIL_ACCOUNT}"],
     ]);
     // A mode supplied only when deploying cannot decide what is generated: DEPLOY_VALUE.
     const platform = join(folder, "platform.yaml");
