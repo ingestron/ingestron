@@ -172,7 +172,7 @@ print, when the project has any,
 ```
 
 where `<n>` counts the places written, each once whatever environments have
-it.
+it; for one place the line reads `1 value is still REPLACE_ME; …`.
 
 **Exit codes.** 0 when every folder is clean (`plan`), written (`apply`), or up
 to date with nothing extra and no retired folder (`check`); 1 when an
