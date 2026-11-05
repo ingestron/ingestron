@@ -52,6 +52,46 @@ warning at the text, with a fix to the `${…}` form when there is one:
 `{{ environment }}` (or `env`) is `${environment.name}` and `{{ project }}`
 is `${project.id}`.
 
+The text `REPLACE_ME` stands for a value that only the project's owner knows,
+such as a host, a storage account or a source table; `ingestron init` writes
+it where it cannot know the value. For the selected environment, every text
+value of every loaded document is checked after its `${…}` references are
+replaced, text read with `${file:…}` included, and so is each
+`${values.<name>}` a transform's `code` still holds, as its value. A value
+that contains the exact, case-sensitive text `REPLACE_ME` anywhere is
+`REPLACE_ME`: a warning, or an error when the project is resolved with the
+option `replaceMe: "error"`, as `ingestron check` resolves it. Keys,
+comments, and project.yaml values that no document reads are not checked.
+There is no escape.
+
+It is reported once for each place where the text was written, which is the
+first of these that holds it:
+
+1. the document's own text at the value;
+2. a project.yaml value that this text reads with `${values.<name>}`: the
+   selected environment's value under `environments.<environment>.values`
+   when it has one, else the top-level `values`; a project.yaml value that
+   reads another value is followed the same way;
+3. the file that a `${file:…}` in this text reads, at the first line that
+   holds the text;
+4. a `${envvar:…}` reference in this text, at the reference.
+
+The message is `<field> is still REPLACE_ME: write the real value before deploying.`,
+where `<field>` is, as a platform request writes it, the keys of the value's
+JSON Pointer joined with `.`, such as `settings.server`; for a project.yaml
+value it is `values.<name>`, such as `values.storage_account`. The hint is
+`Ingestron cannot know this value. The comment above it says what it is; README.md says where to find it. A value that differs per environment goes in project.yaml under environments.<name>.values.`
+It has no fix.
+
+`REPLACE_ME` is a known value, not an unset reference: every other check runs
+on it, and `deployTime` (section 1.1) changes nothing. One exception keeps a
+new project resolving: a method's settings check leaves out a failure whose
+failing value is text that holds `REPLACE_ME`, other than a `type` failure,
+as it leaves out one an unset reference causes (below), because the
+`REPLACE_ME` diagnostic reports that value. So `REPLACE_ME` in a name whose
+pattern allows no `_`, such as an integration runtime's, is reported once, as
+`REPLACE_ME`.
+
 A transform's `code` read with `${file:…}` is text, which the loader leaves
 as written. Resolution replaces each `${values.<name>}` still in the code
 (`<name>` may be a dotted path) with the environment's value, as the loader
@@ -807,7 +847,8 @@ reported in one run:
 Each case in [conformance/](conformance/) gives `files` (the project), an
 optional `environment`, optional `envvars` and `missingEnvvars` (as in the
 config conformance cases), an optional `deployTime: true` (section 1.1), an
-optional `environmentsTogether: true` (section 7), and
+optional `environmentsTogether: true` (section 7), an optional
+`replaceMe: error` (section 1), and
 `expect`: `tables` (partial objects, in order,
 with `fullName` written as `catalog.schema.table`, and `null` for a step the
 table does not have, such as `serve: null`), `products` (partial objects,
@@ -938,6 +979,20 @@ A connector's settings metadata may mark a field `optional`, give its primitive
 conditional fields explain the condition in their description. Snippets include
 only that default path's required fields. This metadata describes authoring;
 the selected method still validates the resolved definition.
+
+Two more fields serve project creation, both optional:
+
+- `default`: a value `ingestron init` writes for the setting, a number, `true`
+  or `false`, or one of its `values`. It is a choice that suits most projects,
+  not a stand-in for a value only the owner knows.
+- `find`: one sentence on where the owner finds the value, such as
+  `Data Factory Studio: Manage, Integration runtimes`. A new project's
+  README.md shows it beside each `REPLACE_ME`.
+
+A method's settings schema MAY carry `find` too, on any property, as an
+annotation that validation ignores, for the settings that belong in the
+platform or the standard. A tool that has no `find` for a value says where
+else to look, such as the connector's documentation.
 
 When connector IDs appear in several packs, authoring uses the resolved ingest
 method to choose settings. If resolution is unavailable, a unique connector

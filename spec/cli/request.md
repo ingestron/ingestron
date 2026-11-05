@@ -42,18 +42,30 @@ The title is `# Platform request: <project id> (<environment>)`, with
 `default` when no environment is selected. Then, in order, each section that
 has something to say:
 
-1. **Values to provide** (below).
-2. Who the generated pipelines and jobs run as.
-3. **Switched on:** each capability the platform turns on with `manage`,
+1. **Values to replace** (below).
+2. **Values to provide** (below).
+3. Who the generated pipelines and jobs run as.
+4. **Switched on:** each capability the platform turns on with `manage`,
    what it does and what it needs.
-4. **Used by the definitions, but switched off:** each capability the
+5. **Used by the definitions, but switched off:** each capability the
    definitions use while the platform has it off.
-5. **Shared infrastructure:** the platform's settings of the methods the
+6. **Shared infrastructure:** the platform's settings of the methods the
    environment uses, with their values. A secret is never shown; it reads
    "a secret".
-6. Each pack's own sections, such as what must exist before deploying and
+7. Each pack's own sections, such as what must exist before deploying and
    the schedules. Sections of the same title from several packs are joined.
-7. **SQL to run once (review first):** the generated `prerequisites.sql`.
+8. **SQL to run once (review first):** the generated `prerequisites.sql`.
+
+## Values to replace
+
+The section lists each `REPLACE_ME` diagnostic of the environment
+(definitions specification, section 1), in their order. It starts with
+"These values are still `REPLACE_ME`; deploying fails until they are
+written:", then one line each: the field, as the diagnostic's message names
+it, the file and the line, such as
+`` `settings.integration_runtime` in `platform.yaml` (line 10) ``. An
+environment with none has no such section. The section does not change the
+exit code.
 
 ## Values to provide
 
