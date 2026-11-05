@@ -56,7 +56,13 @@ export function platformRequest(files: FileSource, environment: string | undefin
  * As an editor resolves: a variable set nowhere is not known yet. Every environment is
  * resolved together, so the request shows the generated files' mode (spec/cli/request.md).
  */
-const resolving = { packs, missingEnvvars: "information", environmentsTogether: true } as const;
+const resolving = {
+  packs,
+  missingEnvvars: "information",
+  environmentsTogether: true,
+  // The live host environment, read when each request is made.
+  envvars: process.env,
+} as const;
 
 /** The request's text, and whether the definitions resolved; false gives the short note. */
 function requestFor(
@@ -64,11 +70,7 @@ function requestFor(
   environment: string | undefined,
   generated: Generated,
 ): { text: string; resolved: boolean } {
-  const { model, diagnostics } = resolveDefinitions(files, {
-    ...resolving,
-    environment,
-    envvars: process.env,
-  });
+  const { model, diagnostics } = resolveDefinitions(files, { ...resolving, environment });
   const name = environment ?? "default";
   if (!model)
     return {

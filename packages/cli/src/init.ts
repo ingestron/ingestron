@@ -1,15 +1,22 @@
-// ingestron init: a new project from a connection or explicit template. Every answer comes from a
-// flag, else the default with --yes, else a question; without a terminal a
-// missing answer is an error that names the flag, never a wait.
-import { readFileSync } from "node:fs";
+// ingestron init: a new project from a connection or a template. It asks only what picks the
+// project; every value it cannot know is REPLACE_ME, and README.md says what to write
+// (spec/cli/projects.md). Without a terminal a missing choice is an error that names the flag.
+import { existsSync, readFileSync } from "node:fs";
 import { basename, join, relative, resolve } from "node:path";
-import { parse } from "yaml";
+import { memoryFiles } from "@ingestron/config";
+import { isMap, isScalar, parse } from "yaml";
 import type { Options } from "./args.js";
+import { generateAll, type Generated } from "./build-outputs.js";
+import { generate, replaceMeCount } from "./generate.js";
 import { chooseProject } from "./init-choice.js";
-import { projectProblem } from "./init-preflight.js";
-import type { Content } from "./scaffold.js";
-import { generate } from "./generate.js";
+import { composeRecipe, type RecipeFacts } from "./init-compose.js";
+import { projectReadme, replaceRows } from "./init-readme.js";
+import { applySet } from "./init-set.js";
+import { startToday } from "./init-platform.js";
+import { editYaml } from "./init-yaml.js";
 import type { Io } from "./io.js";
+import { packs } from "./packs.js";
+import { environmentReportsText } from "./reports.js";
 import {
   ignoredText,
   nameProblem,
@@ -17,9 +24,10 @@ import {
   scaffoldFiles,
   writeScaffold,
   type Answers,
+  type Content,
 } from "./scaffold.js";
 import { standardSource, templateSource } from "./sources.js";
-import { type Question, type Template } from "./templates.js";
+import type { Template } from "./templates.js";
 
 /** Asks one question; `check` explains an answer that is not valid, and the question is asked again. */
 type Ask = (
@@ -29,20 +37,26 @@ type Ask = (
   check?: (answer: string) => string | undefined,
 ) => string;
 
+/** Where the project comes from: a template, or a recipe with what composing it needs. */
+interface Source {
+  template: Template;
+  done(): void;
+  files?: Record<string, Content>;
+  facts?: RecipeFacts;
+}
+
 /** Creates the project and shows its plan. Returns the exit code. */
 export function init(options: Options, io: Io): number {
   const cleanups: (() => void)[] = [];
   try {
     checkFlags(options);
-    const ask = asker(options, io);
     const target = resolve(io.cwd, options.init.folder);
-    const source: { template: Template; done(): void; files?: Record<string, Content> } = options
-      .init.template
+    const source: Source = options.init.template
       ? templateSource(options.init.template, io.cwd)
-      : chooseProject(options.init, ask);
+      : chooseProject(options.init, asker(options, io));
     cleanups.push(source.done);
-    const answers = gather(options, io, ask, source.template, target, cleanups);
-    return create(options, io, target, source.template, answers, source.files);
+    const answers = gather(options, io, source.template, target, cleanups);
+    return create(options, io, target, source, answers);
   } catch (error) {
     io.write(`${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
@@ -51,76 +65,34 @@ export function init(options: Options, io: Io): number {
   }
 }
 
+/** The name, environments and standard: flags, else the defaults; nothing is asked. */
 function gather(
   options: Options,
   io: Io,
-  ask: Ask,
   template: Template,
   target: string,
   cleanups: (() => void)[],
 ): Answers {
   const { init: flags } = options;
-  const suggested = projectId(basename(target));
-  const name =
-    flags.name ??
-    ask(`Project name [${suggested}]: `, "--name", suggested, (answer) =>
-      nameProblem(answer, "project"),
-    );
-  const known = (flags.template ? templateEnvironments(template) : ["dev", "prod"]).join(", ");
+  const name = flags.name ?? projectId(basename(target));
   const environments =
     options.environments.length > 0
       ? options.environments
-      : list(ask(`Environments [${known}]: `, "--env", known, environmentsProblem));
-  // Optional: keeping the template's standard needs no answer.
-  const standard =
-    flags.standard ??
-    (io.ask && !flags.yes
-      ? ask(
-          "Standard: a path or Git URL, or Enter to keep the supplied default: ",
-          "--standard",
-          "",
-        )
-      : "");
-  const answers: Answers = { name, environments, values: {} };
-  if (standard) {
-    const found = standardSource(standard, io.cwd);
-    cleanups.push(found.done);
-    answers.standard = { file: found.file, source: found.source };
-  }
-  answers.values = values(flags.set, template, ask);
-  return answers;
-}
-
-function values(set: Record<string, string>, template: Template, ask: Ask): Record<string, string> {
-  const asked = template.questions.map((question) => question.value);
-  const unknown = Object.keys(set).find((key) => !asked.includes(key));
-  if (unknown)
-    throw new Error(
-      `The template asks no "${unknown}". It asks: ${asked.join(", ") || "nothing"}.`,
-    );
-  const answers: Record<string, string> = Object.fromEntries(
+      : flags.template
+        ? templateEnvironments(template)
+        : ["dev", "prod"];
+  // A template's own questions are never asked: --set answers them, else the default is written.
+  const values = Object.fromEntries(
     template.questions.map((question) => [
       question.value,
-      set[question.value] ??
-        ask(
-          `${question.ask} [${question.default}]: `,
-          `--set ${question.value}=…`,
-          question.default,
-        ),
+      flags.set[question.value] ?? question.default,
     ]),
   );
-  return followed(template.questions, answers);
-}
-
-/** Answers left at their default that follow another answer's storage account. */
-function followed(questions: Question[], answers: Record<string, string>): Record<string, string> {
-  for (const question of questions) {
-    const from =
-      question.follows && questions.find((item) => item.value === question.follows!.from);
-    if (!from || answers[question.value] !== question.default) continue;
-    const root = /^abfss:\/\/([^@/]+)@([^/]+)/.exec(answers[from.value] ?? "");
-    if (!root || answers[from.value] === from.default) continue;
-    answers[question.value] = `abfss://${question.follows!.fileSystem ?? root[1]}@${root[2]}`;
+  const answers: Answers = { name, environments, values };
+  if (flags.standard) {
+    const found = standardSource(flags.standard, io.cwd);
+    cleanups.push(found.done);
+    answers.standard = { file: found.file, source: found.source };
   }
   return answers;
 }
@@ -140,18 +112,56 @@ function asker(options: Options, io: Io): Ask {
   };
 }
 
+/** The project's files: the template's, composed, with the answers given as --set. */
+function projectFiles(
+  source: Source,
+  answers: Answers,
+  set: Options["init"]["set"],
+  today: string,
+) {
+  const files = scaffoldFiles(source.template, answers, source.files);
+  if (source.facts) {
+    const { title } = source.template;
+    composeRecipe(files, source.facts, { ...answers, project: answers.name, today });
+    editYaml(files, "project.yaml", (document) => {
+      const first = isMap(document.contents) ? document.contents.items[0]?.key : undefined;
+      if (isScalar(first)) first.commentBefore = ` ${title}. README.md lists what to fill in.`;
+    });
+  }
+  startToday(files, today);
+  const asked = source.template.questions.map((question) => question.value);
+  applySet(files, set, answers.environments, asked);
+  return files;
+}
+
+/** The project's files and README.md, unless one is there, and every environment generated. */
+function prepare(options: Options, io: Io, target: string, source: Source, answers: Answers) {
+  const today = (io.now?.() ?? new Date()).toISOString().slice(0, 10);
+  const files = projectFiles(source, answers, options.init.set, today);
+  const generated = generateAll(memoryFiles(textOf(files)), packs, process.env);
+  if (!generated.resolved)
+    throw new Error(
+      `The project does not resolve; nothing written.\n${environmentReportsText(generated.environmentReports)}`,
+    );
+  // README.md is the user's: one already there is kept, and the values are printed instead.
+  const kept = existsSync(join(target, "README.md"));
+  if (!kept) {
+    const { title, summary } = source.template;
+    const facts = { project: answers.name, title, summary, today, files, generated };
+    files["README.md"] = projectReadme(facts);
+  }
+  return { files, generated, kept };
+}
+
 /** Writes the project, unless a file is in the way, then shows its plan. */
 function create(
   options: Options,
   io: Io,
   target: string,
-  template: Template,
+  source: Source,
   answers: Answers,
-  prepared?: Record<string, Content>,
 ): number {
-  const files = scaffoldFiles(template, answers, prepared);
-  const problem = projectProblem(files);
-  if (problem) throw new Error(problem);
+  const { files, generated, kept } = prepare(options, io, target, source, answers);
   const result = writeScaffold(target, files);
   const shown = relative(io.cwd, target) || ".";
   if ("clashes" in result) {
@@ -159,17 +169,38 @@ function create(
     io.write(`Nothing written: these files already exist in ${shown}:\n${listed}`);
     return 1;
   }
+  const from = `${options.init.template ? "the template " : ""}${source.template.name}`;
   io.write(
-    `Created ${shown} from ${options.init.template ? "the template " : ""}${template.name} (${result.written.length} files)${ignoredText(result.ignored)}.\n\n`,
+    `Created ${shown} from ${from} (${result.written.length} files)${ignoredText(result.ignored)}.\n\n`,
   );
-  const plan = {
-    command: "plan" as const,
-    environments: [],
-    definitions: target,
-    out: join(target, "build"),
-    diffs: false,
-  };
-  return generate({ ...options, ...plan }, io);
+  const plan = { command: "plan" as const, environments: [], diffs: false };
+  const where = { definitions: target, out: join(target, "build") };
+  const code = generate({ ...options, ...plan, ...where }, io, packs, generated);
+  io.write(stillToReplace(files, generated, kept));
+  return code;
+}
+
+/** After the plan: how many values are still REPLACE_ME, and where they are listed. */
+function stillToReplace(
+  files: Record<string, Content>,
+  generated: Generated,
+  kept: boolean,
+): string {
+  const count = replaceMeCount(generated.environmentReports);
+  if (count === 0) return "Nothing to replace: the project runs as written.\n";
+  const values = count === 1 ? "1 value is" : `${count} values are`;
+  if (!kept) return `${values} still REPLACE_ME: README.md lists each one and where to find it.\n`;
+  const rows = replaceRows(files, generated).map(
+    (row) =>
+      `  ${row.name}  ${row.places.map((place) => `${place.file}:${place.line}`).join(", ")}${row.what ? `  ${row.what}` : ""}\n`,
+  );
+  return `${values} still REPLACE_ME (README.md was already there, so it is kept):\n${rows.join("")}`;
+}
+
+function textOf(files: Record<string, Content>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(files).map(([path, content]) => [path, content.toString()]),
+  );
 }
 
 /** Names given as flags are checked before anything else happens. */
@@ -185,22 +216,9 @@ function checkFlags(options: Options): void {
   if (problem) throw new Error(problem);
 }
 
-function environmentsProblem(answer: string): string | undefined {
-  return list(answer)
-    .map((name) => nameProblem(name, "environment"))
-    .find(Boolean);
-}
-
 function templateEnvironments(template: Template): string[] {
   const project = parse(readFileSync(join(template.folder, "project.yaml"), "utf8")) as {
     environments?: object;
   };
   return Object.keys(project.environments ?? { dev: {} });
-}
-
-function list(text: string): string[] {
-  return text
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
 }
