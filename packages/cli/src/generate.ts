@@ -13,7 +13,7 @@ import {
   type Plan,
 } from "@ingestron/generate";
 import type { Options } from "./args.js";
-import { generateAll } from "./build-outputs.js";
+import { generateAll, type Generated } from "./build-outputs.js";
 import type { Io } from "./io.js";
 import { extraFiles, generatedFolders } from "./outputs.js";
 import { packs } from "./packs.js";
@@ -32,9 +32,17 @@ interface Planned {
  * Runs plan, apply or check for every environment together. Returns the exit code.
  * `available` are the packs a standard may name; tests give stand-ins.
  */
-export function generate(options: Options, io: Io, available: readonly Pack[] = packs): number {
+export function generate(
+  options: Options,
+  io: Io,
+  available: readonly Pack[] = packs,
+  prepared?: Generated,
+): number {
   const definitions = resolve(io.cwd, options.definitions);
-  const generated = generateAll(nodeFiles(definitions), available, process.env);
+  // check fails while a value is still REPLACE_ME (spec/cli/outputs.md, section 4).
+  const replaceMe = options.command === "check" ? "error" : "warning";
+  const generated =
+    prepared ?? generateAll(nodeFiles(definitions), available, process.env, replaceMe);
   printEnvironmentReports(io, generated.environmentReports);
   if (!generated.resolved) return 1;
   printPackReports(io, generated.packReports);
@@ -54,7 +62,26 @@ export function generate(options: Options, io: Io, available: readonly Pack[] = 
       `${shown(io, folder)}: no longer generated. Delete the folder, or delete its ${manifestFile} to keep it as your own.\n`,
     );
   if (options.command === "apply") summarise(io, done, notDone);
+  if (options.command !== "check") stillToReplace(io, generated.environmentReports);
   return notDone.length > 0 || (options.command === "check" && retired.length > 0) ? 1 : 0;
+}
+
+/** After plan and apply, how many places are still REPLACE_ME, each counted once. */
+function stillToReplace(io: Io, reports: Generated["environmentReports"]): void {
+  const count = replaceMeCount(reports);
+  if (count > 0)
+    io.write(
+      `${count} ${count === 1 ? "value is" : "values are"} still REPLACE_ME; ingestron check fails until each is written.\n`,
+    );
+}
+
+/** The places still REPLACE_ME in the reports, each once whatever environments have it. */
+export function replaceMeCount(reports: Generated["environmentReports"]): number {
+  const places = reports
+    .flatMap((report) => report.diagnostics)
+    .filter((diagnostic) => diagnostic.code === "REPLACE_ME")
+    .map(({ location }) => `${location?.file}:${location?.line}:${location?.column}`);
+  return new Set(places).size;
 }
 
 /** A folder relative to the working folder, with `/` between its parts. */

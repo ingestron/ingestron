@@ -67,8 +67,9 @@ export function generateAll(
   files: FileSource,
   available: readonly Pack[],
   envvars: Readonly<Record<string, string | undefined>>,
+  replaceMe: "warning" | "error" = "warning",
 ): Generated {
-  const resolution = resolveEnvironments(files, available, envvars);
+  const resolution = resolveEnvironments(files, available, envvars, replaceMe);
   const { together, local, environments } = resolution;
   const found = { together, local, environments, environmentReports: resolution.reports };
   if (!resolution.ok) return { ...found, resolved: false, ok: false, outputs: [], packReports: [] };
