@@ -193,4 +193,9 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
       "A value has {{ … }}, which is replaced only in naming patterns and transform code, so it stays as written. A warning.",
     fix: "Use a ${…} reference instead, such as ${environment.name}, ${project.id} or ${values.<name>}; they work in any value.",
   },
+  REPLACE_ME: {
+    meaning:
+      "A value is still REPLACE_ME, which ingestron init writes where it cannot know the value, such as a host or a storage account. A warning, and an error in ingestron check.",
+    fix: "Write the real value; the comment above it says what it is, and the project's README.md says where to find it.",
+  },
 };

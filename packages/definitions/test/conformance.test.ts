@@ -24,6 +24,7 @@ interface Case {
   missingEnvvars?: "error" | "information";
   deployTime?: boolean;
   environmentsTogether?: boolean;
+  replaceMe?: "warning" | "error";
   /** The paths each pack lists as `platformFields` in this case, by pack id. */
   platformFields?: Record<string, string[]>;
   files: Record<string, string>;
@@ -169,6 +170,7 @@ function resolveCase(testCase: Case) {
     ...(testCase.missingEnvvars && { missingEnvvars: testCase.missingEnvvars }),
     ...(testCase.deployTime && { deployTime: true }),
     ...(testCase.environmentsTogether && { environmentsTogether: true }),
+    ...(testCase.replaceMe && { replaceMe: testCase.replaceMe }),
   });
 }
 

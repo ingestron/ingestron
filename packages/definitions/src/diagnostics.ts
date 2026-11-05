@@ -34,6 +34,7 @@ export type DefinitionCode =
   | "QUALITY_RULE_NOT_CHECKED"
   | "CAPABILITY_OFF"
   | "PLACEHOLDER_NOT_REPLACED"
+  | "REPLACE_ME"
   | "RUNS_ON"
   | "RUNS_ON_SKIPPED"
   | "SETTINGS_UNUSED"

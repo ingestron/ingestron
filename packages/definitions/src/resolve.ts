@@ -16,6 +16,7 @@ import { checkDeployValues, deployValuesOf, resolutionReporter } from "./deploy-
 import { kinds } from "./documents.js";
 import { flowTables } from "./flows.js";
 import { documentFiles, withPlaceholders } from "./placeholders.js";
+import { withReplaceMe } from "./replace-me.js";
 import { checkGovernance } from "./governance.js";
 import { resolveProducts } from "./products.js";
 import { runsOnProblems } from "./runs-on-pack.js";
@@ -55,6 +56,11 @@ export interface ResolveOptions {
    * Without it, `mode` defaults as before 1.8 (specification section 7).
    */
   environmentsTogether?: boolean;
+  /**
+   * What a value that still holds `REPLACE_ME` is: a warning (the default), or an error, as
+   * `ingestron check` resolves, so CI fails until it is written (specification section 1).
+   */
+  replaceMe?: "warning" | "error";
 }
 
 /** The model when there are no errors, and every diagnostic. */
@@ -89,10 +95,15 @@ export function resolveDefinitions(files: FileSource, options: ResolveOptions): 
   return withPlaceholders(
     files,
     loaded.ok
-      ? resolveLoaded(loaded.project, options, [
-          ...loaded.diagnostics,
-          ...runsOnProblems(files, loaded.project, options.packs),
-        ])
+      ? withReplaceMe(
+          files,
+          loaded.project,
+          options,
+          resolveLoaded(loaded.project, options, [
+            ...loaded.diagnostics,
+            ...runsOnProblems(files, loaded.project, options.packs),
+          ]),
+        )
       : { ok: false, diagnostics: loaded.diagnostics },
     documentFiles(files, loaded.project?.documents),
   );
@@ -110,10 +121,15 @@ export function loadDefinitions(folder: string, options: ResolveOptions): Resolv
   return withPlaceholders(
     nodeFiles(folder),
     loaded.ok
-      ? resolveLoaded(loaded.project, options, [
-          ...loaded.diagnostics,
-          ...runsOnProblems(nodeFiles(folder), loaded.project, options.packs),
-        ])
+      ? withReplaceMe(
+          nodeFiles(folder),
+          loaded.project,
+          options,
+          resolveLoaded(loaded.project, options, [
+            ...loaded.diagnostics,
+            ...runsOnProblems(nodeFiles(folder), loaded.project, options.packs),
+          ]),
+        )
       : { ok: false, diagnostics: loaded.diagnostics },
     documentFiles(nodeFiles(folder), loaded.project?.documents),
   );
