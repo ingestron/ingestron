@@ -2,7 +2,7 @@
 // the defaults and the secret names, and the --set answers; resolved until it resolves
 // (spec/cli/projects.md).
 import { memoryFiles } from "@ingestron/config";
-import { isMap, isScalar } from "yaml";
+import { isMap, isScalar, parse } from "yaml";
 import type { Options } from "./args.js";
 import { generateAll } from "./build-outputs.js";
 import { composeRecipe, type RecipeFacts } from "./init-compose.js";
@@ -52,9 +52,30 @@ function projectFiles(
     });
   }
   startToday(files, writing.today);
+  ignoreExport(files);
   const asked = source.template.questions.map((question) => question.value);
   applySet(files, set, answers.environments, asked);
   return { files, leftOut };
+}
+
+/** What Microsoft's Data Factory export writes into the project folder (README.md, Deploy). */
+const exportFolders = ["node_modules/", "downloads/", "arm/"];
+
+/**
+ * On a route through Data Factory, .gitignore keeps the export's folders out of Git. A
+ * .gitignore already in the folder gains only the lines it lacks (`writeScaffold`).
+ */
+function ignoreExport(files: Record<string, Content>): void {
+  const standard = parse(String(files["standard.yaml"] ?? "")) as { packs?: unknown } | null;
+  const named = Array.isArray(standard?.packs) ? standard.packs.map(String) : [];
+  if (!named.some((ref) => ref.startsWith("adf@"))) return;
+  const text = String(files[".gitignore"] ?? "");
+  const lines = text.split(/\r?\n/).map((line) => line.trim());
+  const missing = exportFolders.filter((line) => !lines.includes(line));
+  if (missing.length === 0) return;
+  const base = text === "" || text.endsWith("\n") ? text : `${text}\n`;
+  files[".gitignore"] =
+    `${base}# What Microsoft's Data Factory export writes (README.md, Deploy)\n${missing.join("\n")}\n`;
 }
 
 /**
