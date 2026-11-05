@@ -1,0 +1,52 @@
+description: "check resolves with replaceMe error, so a value still REPLACE_ME is an error under the environments that have it, nothing is checked, and check exits 1."
+files:
+  project.yaml: |
+    id: retail
+    environments:
+      dev:
+        values: { account: REPLACE_ME }
+      prod:
+        values: { account: REPLACE_ME }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [fold@2]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: fold
+    connectivity: public
+    settings: { path: "/data/${values.account}" }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: REPLACE_ME, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        description: One row per order.
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+command: check
+expect:
+  exit: 1
+  lines:
+    - "dev, prod: the definitions have problems"
+    - "dev: the definitions have problems"
+    - "prod: the definitions have problems"
+  diagnostics:
+    - { code: REPLACE_ME, severity: error, file: sales.yaml, line: 6 }
+    - { code: REPLACE_ME, severity: error, file: project.yaml, line: 4 }
+    - { code: REPLACE_ME, severity: error, file: project.yaml, line: 6 }

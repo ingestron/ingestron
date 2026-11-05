@@ -1,0 +1,82 @@
+description: REPLACE_ME is a warning where it was written, once per place - a document's own text, a project.yaml value read inside a URL (the environment's own over the top-level one), a file read with ${file:…} and a variable's reference - and never in a comment or a value no document reads. A settings failure it causes is left out.
+environment: prod
+envvars: { OWNER: REPLACE_ME }
+files:
+  project.yaml: |
+    id: retail
+    environments:
+      dev: {}
+      prod:
+        values:
+          account: REPLACE_ME
+    values:
+      account: retaildev
+      unused: REPLACE_ME
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    description: Run by ${envvar:OWNER}
+    connector: files
+    connectivity: public
+    settings:
+      # REPLACE_ME in a comment is not checked
+      path: abfss://landing@${values.account}.dfs.core.windows.net/shop
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    description: ${file:about.txt}
+    source: shop
+    ingest: { uses: files, with: { format: REPLACE_ME } }
+    tables:
+      orders: { object: REPLACE_ME, contract: orders }
+  about.txt: |
+    Orders from the shop.
+    Owner: REPLACE_ME
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        properties:
+          - { name: id, logicalType: integer }
+expect:
+  diagnostics:
+    - code: REPLACE_ME
+      severity: warning
+      file: about.txt
+      line: 2
+      message: "description is still REPLACE_ME: write the real value before deploying."
+      hint: "Ingestron cannot know this value. The comment above it says what it is; README.md says where to find it. A value that differs per environment goes in project.yaml under environments.<name>.values."
+      fixes: []
+    - code: REPLACE_ME
+      severity: warning
+      file: sales.yaml
+      line: 6
+      message: "ingest.with.format is still REPLACE_ME: write the real value before deploying."
+    - code: REPLACE_ME
+      severity: warning
+      file: sales.yaml
+      line: 8
+      message: "tables.orders.object is still REPLACE_ME: write the real value before deploying."
+    - code: REPLACE_ME
+      severity: warning
+      file: shop.yaml
+      line: 4
+      message: "description is still REPLACE_ME: write the real value before deploying."
+    - code: REPLACE_ME
+      severity: warning
+      file: project.yaml
+      line: 6
+      column: 16
+      message: "values.account is still REPLACE_ME: write the real value before deploying."
