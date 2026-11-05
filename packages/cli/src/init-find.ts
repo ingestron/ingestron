@@ -28,7 +28,8 @@ export function findFor(
   files: Record<string, Content>,
   generated: Generated,
 ): string {
-  if (value.file === "project.yaml") return composed[value.name] ?? fallback;
+  if (value.file === "project.yaml")
+    return composed[value.name] ?? readerFind(value.name, files, generated) ?? fallback;
   const document = (parse(String(files[value.file] ?? "")) ?? {}) as Written;
   if (document.kind === "Platform" && value.keys[0] === "settings")
     return found(methodSettings(value.keys[1]!)[value.keys[2]!]) ?? fallback;
@@ -47,6 +48,31 @@ function sourceFind(value: ProjectValue, document: Written, generated: Generated
   return (
     setting?.find ?? `The source's own tools; see the connector's documentation: ${connector.docs}`
   );
+}
+
+/** The `find` of the setting that reads a project.yaml value as its whole value. */
+function readerFind(name: string, files: Record<string, Content>, generated: Generated) {
+  const whole = `\${values.${name}}`;
+  for (const [file, text] of Object.entries(files)) {
+    if (file === "project.yaml" || !/\.ya?ml$/.test(file)) continue;
+    const keys = keysOf(parse(String(text)), whole, []);
+    if (!keys) continue;
+    const reader: ProjectValue = { name, file, keys, line: 0, kind: "setting", value: whole };
+    const find = findFor(reader, files, generated);
+    if (find !== fallback) return find;
+  }
+  return undefined;
+}
+
+/** The keys to the value that is exactly `text`, depth first. */
+function keysOf(node: unknown, text: string, keys: string[]): string[] | undefined {
+  if (node === text) return keys;
+  if (!node || typeof node !== "object") return undefined;
+  for (const [key, child] of Object.entries(node)) {
+    const found = keysOf(child, text, [...keys, key]);
+    if (found) return found;
+  }
+  return undefined;
 }
 
 function found(schema: unknown): string | undefined {
