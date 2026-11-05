@@ -17,7 +17,7 @@ describe("hover", () => {
     const shown = hover("  orders:", 3)!;
     expect(shown).toContain("`dev_sales`.`bronze`.`orders`");
     expect(shown).toContain("**store**: `streaming-table` (databricks)");
-    expect(shown).toContain("| `cluster_by` | `auto` | standard, fixed (standard.yaml:15) |");
+    expect(shown).toContain("| `cluster_by` | `auto` | standard, fixed (standard.yaml:16) |");
     expect(shown).toContain("| `mode` | `upsert` | this table (flows/shop.yaml:11) |");
     expect(shown).not.toContain("| `format` |");
     expect(shown).toContain("Pack defaults: `format: parquet`, `schema_evolution: addNewColumns`");
