@@ -5,17 +5,14 @@ import { join } from "node:path";
 import { parse } from "yaml";
 import { templatesFolder } from "./samples.js";
 
-/** One question; the answer becomes `values.<value>` in project.yaml. */
+/**
+ * One question of a template from elsewhere. `init` never asks it: `--set <value>=…` answers it,
+ * else its default is written to `values.<value>` in project.yaml.
+ */
 export interface Question {
   value: string;
   ask: string;
   default: string;
-  /**
-   * Set by New project's recipes, never in template.yaml: while this answer is
-   * its default and the `from` answer is not, it follows that answer's storage
-   * account, in `file system` (or the same one when unset).
-   */
-  follows?: { from: string; fileSystem?: string };
 }
 
 /** A template folder and what it asks. */
@@ -39,7 +36,7 @@ export const templateSchema = {
     questions: {
       type: "array",
       description:
-        "What `ingestron init` asks; each answer becomes values.<value> in project.yaml.",
+        "Values the project needs, for templates from elsewhere. ingestron init never asks them: --set <value>=… answers one, else its default becomes values.<value> in project.yaml.",
       items: {
         type: "object",
         additionalProperties: false,
@@ -53,7 +50,7 @@ export const templateSchema = {
           ask: { type: "string", description: "The question, as the user sees it." },
           default: {
             type: "string",
-            description: "The answer used with --yes or an empty answer.",
+            description: "The value written when --set does not give one.",
           },
         },
       },
