@@ -105,7 +105,7 @@ function composeInfrastructure(
     );
 }
 
-/** The standard's id and packs, with why, and the schedule's start: the day `init` runs. */
+/** The standard's id, its packs with why, and the window's size with what it is. */
 export function composeStandard(
   files: Record<string, Content>,
   route: Route,
@@ -114,7 +114,39 @@ export function composeStandard(
   editYaml(files, "standard.yaml", (document) => {
     document.set("id", project);
     commentAfter(document, ["packs"], route.packsComment);
-    inFlow(document, ["ingest", "settings", route.method, "every"]);
+    const keys = ["ingest", "settings", route.method, "every"];
+    const every = document.getIn(keys) as { toJSON?(): unknown } | undefined;
+    if (!every) return;
+    const size = windowSize(every.toJSON?.());
+    const described = methodSettings(route.method).every?.description ?? "Window size";
+    setWithComment(document, keys, document.getIn(keys, true), `${commentText(described)}${size}`);
+    inFlow(document, keys);
+  });
+}
+
+/** `: one window every 24 hours`, for an `every` of a frequency and an interval. */
+function windowSize(every: unknown): string {
+  const { frequency, interval } = (every ?? {}) as { frequency?: unknown; interval?: unknown };
+  if (typeof frequency !== "string" || typeof interval !== "number") return "";
+  const unit = frequency.toLowerCase();
+  return `: one window every ${interval} ${unit}${interval === 1 ? "" : "s"}`;
+}
+
+/**
+ * Databricks reads what Data Factory lands on a schedule of its own: without one, its
+ * pipelines run only when someone starts them. Hourly, in UTC.
+ */
+export function composeSchedule(files: Record<string, Content>, route: Route): void {
+  if (!route.packs.includes("databricks@2") || !route.packs.includes("adf@2")) return;
+  editYaml(files, "platform.yaml", (document) => {
+    if (document.has("schedule")) return;
+    const schedule = document.createNode({ cron: "0 30 * * * ?", timezone: "UTC" }, { flow: true });
+    setWithComment(
+      document,
+      ["schedule"],
+      schedule,
+      "Databricks refreshes hourly, at half past, to read the files Data Factory lands",
+    );
   });
 }
 
