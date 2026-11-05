@@ -1,7 +1,7 @@
 // A recipe trimmed to its route: the standard's packs and store, only the route's method
 // settings, and the landing storage the destination reads (spec/cli/projects.md).
 import { isMap, isScalar } from "yaml";
-import { deleteIfThere, editYaml, type YamlDocument } from "./init-yaml.js";
+import { deleteIfThere, editYaml, setWithComment, type YamlDocument } from "./init-yaml.js";
 import type { Content } from "./scaffold.js";
 
 /** Trims the standard and the platform to the route's method, as documents. */
@@ -83,7 +83,12 @@ function trimStandard(
     if (route.store) standard.setIn(["store", "default"], route.store);
     onlyMethod(standard, ["ingest", "settings"], method);
     if (snapshot(via, windowed))
-      standard.setIn(["ingest", "settings", method, "layout"], "snapshot");
+      setWithComment(
+        standard,
+        ["ingest", "settings", method, "layout"],
+        "snapshot",
+        "One file per table, replaced by each copy: the files the route's tables or views read",
+      );
   });
 }
 
