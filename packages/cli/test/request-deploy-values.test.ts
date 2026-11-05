@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { run } from "../src/index.js";
+import { fillStarter } from "./starters.js";
 
 const supplied =
   "The files of the packs that build every environment together take these values when deploying";
@@ -16,6 +17,7 @@ function workspace(example: string, replacements: [string, string][] = []): stri
     recursive: true,
     filter: (path) => !path.includes("/build"),
   });
+  fillStarter(folder, example.split("/")[1]!);
   const project = join(folder, "project.yaml");
   let text = readFileSync(project, "utf8");
   for (const [from, to] of replacements) text = text.replace(from, to);
@@ -35,22 +37,23 @@ function request(folder: string, environment: string): { code: number; output: s
 describe("ingestron request and values supplied when deploying", () => {
   it("names a Databricks bundle variable, as BUNDLE_VAR_<name>, with the pack", () => {
     const folder = workspace("project-templates/retail", [
-      ["landing@retailprod.dfs", "landing@${envvar:RETAIL_ACCOUNT}.dfs"],
+      ["storage_account: retailprod", "storage_account: ${envvar:RETAIL_ACCOUNT}"],
     ]);
     const { code, output } = request(folder, "prod");
     expect(code, output).toBe(0);
     expect(output).toContain(supplied);
     expect(output).toContain(
-      "- `RETAIL_ACCOUNT`, used for `values.storage` in `project.yaml`: not set yet. The deploying pipeline supplies it as `BUNDLE_VAR_retail_account` (databricks).",
+      "- `RETAIL_ACCOUNT`, used for `values.storage_account` in `project.yaml`: not set yet. The deploying pipeline supplies it as `BUNDLE_VAR_retail_account` (databricks).",
     );
     // dev holds no deploy-time value, so its request has no such section.
     expect(request(folder, "dev").output).not.toContain("## Values to provide");
   });
 
   it("names an ARM parameter, which is not an environment variable, for Data Factory", () => {
-    const folder = workspace("project-templates/private-files", [
-      ["https://kv-stores-prod.vault.azure.net", "${envvar:STORES_VAULT}"],
-    ]);
+    const folder = workspace("project-templates/private-files");
+    const platform = join(folder, "platform.yaml");
+    const text = readFileSync(platform, "utf8");
+    writeFileSync(platform, text.replace(/key_vault: .*/, "key_vault: ${envvar:STORES_VAULT}"));
     const { output } = request(folder, "prod");
     expect(output).toContain(
       "supplies it as `ls_stores_keyvault_properties_typeProperties_baseUrl` (adf).",

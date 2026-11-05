@@ -2,12 +2,15 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { run } from "../src/index.js";
+import { filledStarter } from "./starters.js";
 
 const examples = join(import.meta.dirname, "..");
 
 function ingestron(example: string, ...args: string[]) {
   let output = "";
-  const code = run(args, { cwd: join(examples, example), write: (text) => (output += text) });
+  const [kind, starter] = example.split("/");
+  const cwd = kind === "project-templates" ? filledStarter(starter!) : join(examples, example);
+  const code = run(args, { cwd, write: (text) => (output += text) });
   return { code, output };
 }
 

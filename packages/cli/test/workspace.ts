@@ -4,6 +4,7 @@ import { cpSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { run } from "../src/index.js";
+import { fillStarter } from "./starters.js";
 
 const packageFolder = join(import.meta.dirname, "..");
 
@@ -18,6 +19,7 @@ export function workspace(example = "retail", change: (folder: string) => void =
     recursive: true,
     filter: (path) => !path.includes("/build"),
   });
+  if (!example.includes("/")) fillStarter(folder, example);
   change(folder);
   const ingestron = (...args: string[]) => {
     let output = "";

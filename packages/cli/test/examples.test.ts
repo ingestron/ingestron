@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { run } from "../src/index.js";
+import { filledStarter } from "./starters.js";
 
 const examples = join(import.meta.dirname, "..");
 const names = ["project-templates", "test/fixtures"]
@@ -23,7 +24,8 @@ describe("samples", () => {
   for (const name of names) {
     it(`${name}: generates, and is up to date when generated again`, () => {
       let output = "";
-      const folder = join(examples, name);
+      const [kind, starter] = name.split("/");
+      const folder = kind === "project-templates" ? filledStarter(starter!) : join(examples, name);
       const out = mkdtempSync(join(tmpdir(), "ingestron-sample-"));
       const io = { cwd: folder, write: (text: string) => (output += text) };
       const apply = run(["apply", "--no-diff", "--definitions", folder, "--out", out], io);

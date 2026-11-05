@@ -47,9 +47,10 @@ describe("scaffoldFiles", () => {
       environments: ["prod"],
       values: {},
     });
-    expect(parse(retail["project.yaml"]!.toString()).environments.prod.values.host).toContain(
-      "adb-2222",
-    );
+    expect(parse(retail["project.yaml"]!.toString()).environments.prod.values).toEqual({
+      host: "REPLACE_ME",
+      storage_account: "REPLACE_ME",
+    });
   });
 
   it("replaces the standard with the chosen one, noting where it came from", () => {

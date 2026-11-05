@@ -9,8 +9,9 @@ import { environmentOutputs } from "../src/build-outputs.js";
 import { passports } from "../src/passport.js";
 import { lineage } from "../src/passport-lineage.js";
 import { model, project, sales } from "./passport-fixtures.js";
+import { filledStarter } from "./starters.js";
 
-const retail = join(import.meta.dirname, "../project-templates/retail");
+const retail = filledStarter("retail");
 
 describe("passports", () => {
   it("writes no products folder for a project without products", () => {

@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { run } from "../src/index.js";
+import { fillStarter } from "./starters.js";
 
 // A name no developer's shell sets, so "unset" is unset everywhere; any real value is restored.
 const name = "INGESTRON_TEST_LANDING";
@@ -14,14 +15,15 @@ const prod = "abfss://landing@envfileprod.dfs.core.windows.net/stores";
 /** A copy of the private-files starter whose landing folder comes from ${envvar:INGESTRON_TEST_LANDING}. */
 function workspace(
   files: Record<string, string>,
-  value = /abfss:\/\/landing@\w+\.dfs\.core\.windows\.net\/stores/g,
+  value = /abfss:\/\/landing@\$\{values\.storage_account\}\.dfs\.core\.windows\.net\/stores/g,
 ): string {
   const folder = mkdtempSync(join(tmpdir(), "ingestron-env-files-"));
   cpSync(join(import.meta.dirname, "../project-templates/private-files"), folder, {
     recursive: true,
     filter: (path) => !path.includes("/build"),
   });
-  const project = join(folder, "project.yaml");
+  fillStarter(folder, "private-files");
+  const project = join(folder, "platform.yaml");
   writeFileSync(project, readFileSync(project, "utf8").replace(value, `\${envvar:${name}}`));
   for (const [file, text] of Object.entries(files)) writeFileSync(join(folder, file), text);
   return folder;

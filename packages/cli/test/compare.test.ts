@@ -5,8 +5,9 @@ import { describe, expect, it } from "vitest";
 import { compareEnvironments, tableFacts } from "../src/compare.js";
 import type { ResolvedTable } from "@ingestron/definitions";
 import { run } from "../src/index.js";
+import { filledStarter } from "./starters.js";
 
-const retail = join(import.meta.dirname, "../project-templates/retail");
+const retail = filledStarter("retail");
 
 describe("compareEnvironments", () => {
   const text = compareEnvironments(nodeFiles(retail), "dev", "prod");

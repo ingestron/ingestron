@@ -75,14 +75,14 @@ describe("an environment that runs on DuckDB beside cloud environments", () => {
       edit(
         root,
         "project.yaml",
-        "values:\n  landing",
-        "values:\n  store: streaming-table\n  landing",
+        "environments:\n",
+        "values:\n  store: streaming-table\nenvironments:\n",
       );
       edit(
         root,
         "project.yaml",
-        "      key_vault: https://kv-stores-prod.vault.azure.net\n",
-        "      key_vault: https://kv-stores-prod.vault.azure.net\n  laptop:\n    runs-on: duckdb\n    values: { store: duckdb-table }\n",
+        "      key_vault: kv-stores-prod\n",
+        "      key_vault: kv-stores-prod\n  laptop:\n    runs-on: duckdb\n    values: { store: duckdb-table, storage_account: storeslakedev, key_vault: kv-stores-dev }\n",
       );
       edit(root, "standard.yaml", "[databricks@2, adf@2]", "[databricks@2, adf@2, duckdb@2]");
       edit(
