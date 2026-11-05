@@ -36,6 +36,7 @@ export function generate(
   options: Options,
   io: Io,
   available: readonly Pack[] = packs,
+  /** A generation `init` already made; `init` then prints its own REPLACE_ME count. */
   prepared?: Generated,
 ): number {
   const generated = prepared ?? generation(options, io, available);
@@ -57,7 +58,7 @@ export function generate(
     io.write(
       `${shown(io, folder)}: no longer generated. Delete the folder, or delete its ${manifestFile} to keep it as your own.\n`,
     );
-  closing(options, io, { done, notDone }, generated);
+  closing(options, io, { done, notDone }, prepared ? undefined : generated);
   return notDone.length > 0 || (options.command === "check" && retired.length > 0) ? 1 : 0;
 }
 
@@ -66,10 +67,10 @@ function closing(
   options: Options,
   io: Io,
   { done, notDone }: { done: string[]; notDone: string[] },
-  generated: Generated,
+  generated: Generated | undefined,
 ): void {
   if (options.command === "apply") summarise(io, done, notDone);
-  if (options.command !== "check") stillToReplace(io, generated.environmentReports);
+  if (generated && options.command !== "check") stillToReplace(io, generated.environmentReports);
 }
 
 /** After plan and apply, how many places are still REPLACE_ME, each counted once. */
