@@ -4,6 +4,3 @@ id: erp
 packs: [databricks@2]
 naming:
   catalog: erp_{{ environment }}
-ingest:
-  settings:
-    lakeflow-connect: { gateway_policy_id: 0011AABBCCDDEEFF }

@@ -3,9 +3,11 @@ kind: Platform
 id: lakehouse
 schedule:
   cron: 0 15 * * * ?
-  timezone: Europe/London
+  timezone: UTC
 settings:
   adf-files: # shared infrastructure, referenced by name
-    landing: ${values.landing}
-    key_vault: ${values.key_vault}
-    integration_runtime: shir-stores
+    # Landing folder: the landing container of each environment's storage account
+    landing: abfss://landing@${values.storage_account}.dfs.core.windows.net/stores
+    key_vault: https://${values.key_vault}.vault.azure.net
+    # The self-hosted integration runtime in the data factory that reaches the share
+    integration_runtime: REPLACE_ME

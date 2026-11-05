@@ -5,17 +5,17 @@ id: lakehouse
 workspace:
   host: ${values.host}
 run_as:
-  service_principal_name: 7f3c2a10-0000-4000-8000-000000000001
+  service_principal_name: ${values.run_as}
 tags:
   team: sales
   environment: ${environment.name}
 permissions:
-  - group_name: sales-engineers
+  - group_name: ${values.engineers}
     level: CAN_MANAGE
-  - group_name: sales-analysts
+  - group_name: ${values.analysts}
     level: CAN_VIEW
 schedule:
   cron: 0 0 5 * * ?
-  timezone: Europe/London
+  timezone: UTC
 notifications:
-  on_failure: [sales-data@example.com]
+  on_failure: ["${values.on_failure}"]

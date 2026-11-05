@@ -4,10 +4,12 @@ id: erp
 source: erp
 tables:
   customers:
-    object: erp.dbo.Customers
+    # The source table: its database and schema, database.schema.Customers
+    object: REPLACE_ME.REPLACE_ME.Customers
     contract: erp.customers
   invoices:
-    object: erp.dbo.Invoices
+    # The source table: its database and schema, database.schema.Invoices
+    object: REPLACE_ME.REPLACE_ME.Invoices
     contract: erp.invoices
     ingest:
       with: { mode: history } # keep every version of an invoice

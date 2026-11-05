@@ -5,4 +5,5 @@ description: The ERP's SQL Server, reachable from the workspace through ExpressR
 connector: sqlserver
 connectivity: workspace
 settings:
-  uc_connection: erp_sqlserver_${environment.name} # created by an administrator beforehand
+  # The Unity Catalog connection to the source, which an administrator creates beforehand
+  uc_connection: REPLACE_ME
