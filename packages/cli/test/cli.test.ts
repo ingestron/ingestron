@@ -11,9 +11,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { run } from "../src/index.js";
+import { filledStarter } from "./starters.js";
 
-const example = join(import.meta.dirname, "../project-templates/retail");
-const privateFiles = join(import.meta.dirname, "../project-templates/private-files");
+const example = filledStarter("retail");
+const privateFiles = filledStarter("private-files");
 
 /** A copy of the example to work in, and a function that runs the CLI there. */
 function workspace(from = example) {

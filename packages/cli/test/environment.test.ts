@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, it } from "vitest";
 import { run } from "../src/index.js";
+import { fillStarter } from "./starters.js";
 
 const variable = "INGESTRON_TEST_VALUE";
 
@@ -16,6 +17,7 @@ function workspace(example: string, value: string): string {
     recursive: true,
     filter: (path) => !path.includes("/build"),
   });
+  fillStarter(folder, example.split("/")[1]!);
   const project = join(folder, "project.yaml");
   writeFileSync(project, readFileSync(project, "utf8").replace(value, `\${envvar:${variable}}`));
   return folder;
@@ -40,9 +42,12 @@ afterEach(() => {
 });
 
 it("leaves ${envvar:…} to the deploying pipeline for packs that build every environment together", () => {
-  const folder = workspace(
-    "project-templates/private-files",
-    "https://kv-stores-prod.vault.azure.net",
+  // The whole Key Vault URL is the variable: Data Factory takes a deploy-time value as a whole value.
+  const folder = workspace("project-templates/private-files", "unused");
+  const platform = join(folder, "platform.yaml");
+  writeFileSync(
+    platform,
+    readFileSync(platform, "utf8").replace(/key_vault: .*/, `key_vault: \${envvar:${variable}}`),
   );
   process.env[variable] = "https://kv-from-host.vault.azure.net";
   const apply = ingestron(folder, "apply");

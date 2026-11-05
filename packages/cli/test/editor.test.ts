@@ -8,9 +8,10 @@ import { describe, expect, it } from "vitest";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { getLanguageService } from "yaml-language-server/lib/umd/languageservice/yamlLanguageService.js";
 import { run } from "../src/index.js";
+import { filledStarter } from "./starters.js";
 
 const folder = mkdtempSync(join(tmpdir(), "ingestron-editor-"));
-cpSync(join(import.meta.dirname, "../project-templates/retail"), folder, {
+cpSync(filledStarter("retail"), folder, {
   recursive: true,
   filter: (path) => !path.includes("/build"),
 });
