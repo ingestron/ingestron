@@ -33,6 +33,50 @@ const code = run(["check"], {
 process.exitCode = code;
 ```
 
+## The files plan would write
+
+`generatedOutputs(files, { envvars?, packs? })` resolves every environment and
+builds every output folder as `ingestron plan` does, and writes nothing. Editors
+use it to preview the generated files and show the problems. `files` is the
+project as a `FileSource` from [`@ingestron/config`](../config/README.md), such
+as `nodeFiles(folder)`. Variables come from `envvars` (default `process.env`)
+and the project's `.env` files; `packs` defaults to the CLI's own.
+
+```ts
+import { nodeFiles } from "@ingestron/config";
+import { generatedOutputs } from "@ingestron/cli";
+
+const generated = generatedOutputs(nodeFiles("definitions"), { envvars: {} });
+if (!generated.ok) console.log(generated.text);
+for (const output of generated.outputs) {
+  console.log(`${output.name} → build/${output.folder} (${output.targets.join(", ")})`);
+  for (const path of Object.keys(output.files)) console.log(`  ${path}`);
+  for (const value of output.deployValues ?? [])
+    console.log(`  ${value.name} supplied as ${value.suppliedAs.join(", ")}`);
+}
+```
+
+The result, `GeneratedOutputs`, has:
+
+- `ok`: whether every environment resolved and every pack built its files;
+- `outputs`: each output folder, as a `GeneratedOutput`, in the standard's
+  pack order and then the passports; none unless `ok`;
+- `environmentReports` and `packReports`: what resolving each environment, and
+  building each pack that builds environments together, found, as `Report`s
+  (`{ name, failed, diagnostics }`);
+- `deployed`: the environments resolved for deploy, whose variables are read
+  only when deploying;
+- `refused`: the `PACK_LOAD` error when a pack cannot be loaded, in place of a
+  throw;
+- `text`: what `plan` prints before planning.
+
+Each `GeneratedOutput` is `{ name, folder, targets, byEnvironment, files,
+deployValues? }`: the pack's id or `products`, the folder under `build/`, the
+environments it covers, whether each has a folder of its own (DuckDB and the
+passports), the files at the paths `apply` writes them, and, for a pack that
+builds environments together, the names the deploying pipeline supplies each
+`${envvar:…}` as.
+
 ## Project builder API
 
 The package also exposes the catalogue that `ingestron init` and VS Code's New
