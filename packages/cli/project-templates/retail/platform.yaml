@@ -15,7 +15,7 @@ permissions:
   - group_name: ${values.analysts}
     level: CAN_VIEW
 schedule:
-  cron: 0 0 5 * * ?
-  timezone: UTC
+  cron: 0 0 5 * * ? # Quartz cron: the refresh job runs once a day
+  timezone: UTC # the time zone the cron is read in
 notifications:
   on_failure: ["${values.on_failure}"]

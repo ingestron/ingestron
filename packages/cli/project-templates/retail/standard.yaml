@@ -4,6 +4,7 @@ kind: Standard
 id: acme
 packs: [databricks@2]
 naming:
+  # One catalog per environment, such as dev_sales
   catalog: "{{ environment }}_sales"
 quality:
   required: drop

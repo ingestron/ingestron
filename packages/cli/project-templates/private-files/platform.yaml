@@ -2,8 +2,8 @@ apiVersion: ingestron.io/v1
 kind: Platform
 id: lakehouse
 schedule:
-  cron: 0 15 * * * ?
-  timezone: UTC
+  cron: 0 15 * * * ? # Quartz cron: the refresh job runs at a quarter past every hour
+  timezone: UTC # the time zone the cron is read in
 settings:
   adf-files: # shared infrastructure, referenced by name
     # Landing folder: the landing container of each environment's storage account
