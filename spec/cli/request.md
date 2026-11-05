@@ -74,10 +74,11 @@ reference (configuration specification, section 4.6), once, in the order
 first referenced, then each value a pack's files take that no environment
 variable gives (below). An environment with neither has no such section.
 
-It starts with one sentence on where to set them: in the pipeline that runs
-Ingestron for this environment, or in `.env.<environment>` (`.env` when no
-environment is selected) on your own computer, kept out of Git. Then one
-line per variable gives:
+It starts with one sentence on where they come from. Where they are read
+when generating, that is: set them in the pipeline that runs Ingestron for
+this environment, or in `.env.<environment>` (`.env` when no environment is
+selected) on your own computer, kept out of Git. Then one line per variable
+gives:
 
 - its name;
 - each value it feeds: the field, as the keys of its JSON Pointer joined with
@@ -88,14 +89,18 @@ line per variable gives:
 
 When the standard names a pack that builds environments together, its files
 take each variable as a deploy-time value: the pipeline that deploys them
-supplies it ([output folders](outputs.md), section 6). Then, after the
-sentence above, the section says that the deploying pipeline supplies these
-values for each environment, and the line for each such variable also gives
+supplies it ([output folders](outputs.md), section 6). Then the first
+sentence says instead that the pipeline that deploys the files supplies each
+value for each environment, under the names each line gives, and that
+`.env.<environment>` on your own computer is read only by a pack that reads
+the values when generating, such as DuckDB; and the line for each such
+variable also gives
 each name under which a pack's files take it, with the pack's id, from that
 pack's `buildEnvironments` (definitions specification, section 2.1); for
 example `BUNDLE_VAR_landing (databricks)`. These names come from building
 every environment as `plan` does, with each environment resolved for deploy;
-when that has problems, the names are left out and the section says to run
+when that has problems, the names are left out, the first sentence is the
+one for values read when generating, and the section says to run
 `ingestron plan` to see why. A variable is still listed as set or not set yet
 on this computer, which matters only to the packs that read it when
 generating. Only the packs this environment is a target of give names, and an
