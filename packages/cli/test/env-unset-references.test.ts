@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { run } from "../src/index.js";
+import { fillStarter } from "./starters.js";
 
 const names = ["INGT_SRC", "INGT_FORMAT"];
 const saved = new Map<string, string | undefined>();
@@ -25,6 +26,7 @@ function workspace(
     recursive: true,
     filter: (path) => !path.includes("/build"),
   });
+  fillStarter(folder, starter);
   writeFileSync(
     join(folder, "flows/orders.yaml"),
     [

@@ -27,15 +27,9 @@ describe("built-in templates", () => {
     ]);
   });
 
-  it("ask their questions with defaults", () => {
-    const minimal = builtInTemplates().find((template) => template.name === "minimal");
-    expect(minimal?.questions).toEqual([
-      {
-        value: "landing",
-        ask: "Where do the source files land?",
-        default: "/Volumes/dev/landing/shop",
-      },
-    ]);
+  it("ask nothing: what a project cannot know is REPLACE_ME in its files", () => {
+    for (const template of builtInTemplates())
+      expect(template.questions, template.name).toEqual([]);
   });
 });
 

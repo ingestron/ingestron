@@ -66,7 +66,12 @@ describe("generatedOutputs", () => {
 
   it("names each value the deploying pipeline supplies, as the files take it", () => {
     const { folder } = workspace("retail", (root) =>
-      edit(root, "connections/shop.yaml", "${values.storage}/shop", "${envvar:INGT_LANDING}/shop"),
+      edit(
+        root,
+        "connections/shop.yaml",
+        "abfss://landing@${values.storage_account}.dfs.core.windows.net/shop",
+        "${envvar:INGT_LANDING}/shop",
+      ),
     );
     const databricks = generatedOutputs(nodeFiles(folder), { envvars: {} }).outputs[0];
     expect(databricks?.deployValues).toEqual([

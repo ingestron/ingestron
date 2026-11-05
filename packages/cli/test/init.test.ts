@@ -32,12 +32,24 @@ describe("ingestron init with flags", () => {
     const { cwd, ingestron } = session();
     const { code, output } = ingestron("init", "shop", "--template", "minimal", "--yes");
     expect(code).toBe(0);
-    expect(output).toContain("Created shop from the template minimal (6 files).");
+    expect(output).toContain("Created shop from the template minimal (7 files).");
     expect(output).toContain("databricks → shop/build/databricks (dev)\ncreate    databricks.yml");
+    expect(output).toMatch(
+      /1 value is still REPLACE_ME: README.md lists each one and where to find it.\n$/,
+    );
     expect(parse(readFileSync(join(cwd, "shop/project.yaml"), "utf8"))).toMatchObject({
       id: "shop",
-      values: { landing: "/Volumes/dev/landing/shop" },
+      values: { landing: "REPLACE_ME" },
     });
+    expect(ingestron("apply", "--definitions", "shop", "--out", "shop/build").code).toBe(0);
+    expect(ingestron("check", "--definitions", "shop", "--out", "shop/build").code).toBe(1);
+  });
+
+  it("writes the --set values, and then check passes", () => {
+    const { ingestron } = session();
+    const set = ["--set", "landing=/Volumes/main/landing/shop"];
+    const { output } = ingestron("init", "shop", "--template", "minimal", "--yes", ...set);
+    expect(output).toMatch(/Nothing to replace: the project runs as written.\n$/);
     expect(ingestron("apply", "--definitions", "shop", "--out", "shop/build").code).toBe(0);
     expect(ingestron("check", "--definitions", "shop", "--out", "shop/build").output).toContain(
       "databricks: up to date",
@@ -79,12 +91,12 @@ describe("ingestron init with flags", () => {
 
   it("says what it added to a .gitignore that was there, and does not count it as created", () => {
     const fresh = session().ingestron("init", "new", "--template", "minimal", "--yes").output;
-    expect(fresh).toContain("Created new from the template minimal (6 files).");
+    expect(fresh).toContain("Created new from the template minimal (7 files).");
 
     const merged = session();
     writeFileSync(join(merged.cwd, ".gitignore"), "node_modules/\n");
     expect(merged.ingestron("init", ".", "--template", "minimal", "--yes").output).toContain(
-      "Created . from the template minimal (5 files); added the .env lines to .gitignore.\n",
+      "Created . from the template minimal (6 files); added the .env lines to .gitignore.\n",
     );
 
     const duckdb = session();
@@ -96,7 +108,7 @@ describe("ingestron init with flags", () => {
     const complete = session();
     writeFileSync(join(complete.cwd, ".gitignore"), ".env\n.env.*\n!.env.example\n");
     expect(complete.ingestron("init", ".", "--template", "minimal", "--yes").output).toContain(
-      "Created . from the template minimal (5 files).\n",
+      "Created . from the template minimal (6 files).\n",
     );
   });
 
@@ -111,7 +123,7 @@ describe("ingestron init with flags", () => {
     });
   });
 
-  it("refuses an answer the template does not ask", () => {
+  it("refuses a value the project does not have, and lists those it has", () => {
     const { ingestron } = session();
     const { code, output } = ingestron(
       "init",
@@ -123,7 +135,9 @@ describe("ingestron init with flags", () => {
       "landng=/x",
     );
     expect(code).toBe(1);
-    expect(output).toBe('The template asks no "landng". It asks: landing.\n');
+    expect(output).toBe(
+      '--set landng: this project has no value "landng". It has: source_path, landing.\n',
+    );
   });
 
   it("writes nothing when a file exists, and lists it", () => {
@@ -144,50 +158,43 @@ describe("ingestron init with flags", () => {
   });
 });
 
-describe("ingestron init asking questions", () => {
-  it("asks for source choices before project settings", () => {
-    const { cwd, asked, ingestron } = session([
-      "",
-      "files",
-      "public",
-      "databricks",
-      "",
-      "dev, prod",
-      "",
-      "/Volumes/y",
-    ]);
+describe("ingestron init asks only what picks the project", () => {
+  it("asks for the source choices and nothing else", () => {
+    const { cwd, asked, ingestron } = session(["", "files", "public", "databricks"]);
     expect(ingestron("init", "shop").code).toBe(0);
+    expect(asked).toHaveLength(4);
     expect(asked[0]).toContain("Source category");
     expect(asked[1]).toContain("Connector");
     expect(asked[2]).toContain("Connectivity");
     expect(asked[3]).toContain("Route");
     expect(parse(readFileSync(join(cwd, "shop/project.yaml"), "utf8"))).toMatchObject({
+      id: "shop",
       environments: { dev: {}, prod: {} },
-      values: { source_path: "/Volumes/y" },
+      values: { landing: "REPLACE_ME" },
     });
   });
 
   it("accepts category and connector numbers from the list", () => {
-    const { cwd, ingestron } = session(["", "", "", "1", "", "", "", ""]);
+    const { cwd, ingestron } = session(["", "", "", "1"]);
     expect(ingestron("init", "shop").code).toBe(0);
     expect(readFileSync(join(cwd, "shop/flows/orders.yaml"), "utf8")).toContain("kind: Flow");
+  });
+
+  it("asks nothing for a template, and takes the id from the folder", () => {
+    const { cwd, asked, ingestron } = session([]);
+    expect(ingestron("init", "Shop-1", "--template", "minimal").code).toBe(0);
+    expect(asked).toEqual([]);
+    expect(parse(readFileSync(join(cwd, "Shop-1/project.yaml"), "utf8")).id).toBe("shop_1");
   });
 });
 
 describe("names are checked up front", () => {
-  it("explains an invalid name and asks again", () => {
-    const { cwd, asked, ingestron } = session(["tmp-01", "tmp_01", "", "", ""]);
-    expect(ingestron("init", "shop", "--template", "minimal").code).toBe(0);
-    expect(asked[1]).toBe(
-      '"tmp-01" is not a valid project name: use lowercase letters, digits and underscores, starting with a letter. Try "tmp_01".\nProject name [shop]: ',
-    );
-    expect(parse(readFileSync(join(cwd, "shop/project.yaml"), "utf8")).id).toBe("tmp_01");
-  });
-
-  it("explains an invalid environment and asks again", () => {
-    const { asked, ingestron } = session(["", "dev, Prod-1", "dev, prod", "", ""]);
-    expect(ingestron("init", "shop", "--template", "minimal").code).toBe(0);
-    expect(asked[2]).toContain('"Prod-1" is not a valid environment name');
+  it("refuses an invalid --env before doing anything else", () => {
+    const { cwd, ingestron } = session();
+    const { code, output } = ingestron("init", "shop", "--template", "minimal", "--env", "Prod-1");
+    expect(code).toBe(1);
+    expect(output).toContain('"Prod-1" is not a valid environment name');
+    expect(existsSync(join(cwd, "shop"))).toBe(false);
   });
 
   it("refuses an invalid --name before doing anything else", () => {

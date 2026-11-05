@@ -117,7 +117,7 @@ exports[`keeps the ADF files generated for private-files 1`] = `
 					"referenceName": "ls_stores_keyvault",
 					"type": "LinkedServiceReference"
 				},
-				"secretName": "fs01-password"
+				"secretName": "stores-share-password"
 			}
 		},
 		"connectVia": {
@@ -391,7 +391,7 @@ exports[`keeps the ADF files generated for private-sql-server 1`] = `
 					"referenceName": "ls_erp_keyvault",
 					"type": "LinkedServiceReference"
 				},
-				"secretName": "erp-sql-password"
+				"secretName": "erp-erp-password"
 			}
 		},
 		"connectVia": {

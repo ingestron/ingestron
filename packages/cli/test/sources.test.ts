@@ -55,7 +55,7 @@ describe("templateSource", () => {
 
   it("clones a Git URL, takes the folder after #, and removes the clone when done", () => {
     const source = templateSource(`${repository()}#templates/lake`, "/");
-    expect(source.template.questions[0]?.value).toBe("landing");
+    expect(source.template.title).toBe("Minimal project");
     source.done();
     expect(existsSync(source.template.folder)).toBe(false);
   });
