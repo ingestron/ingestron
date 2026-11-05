@@ -71,10 +71,22 @@ function composeConnection(
     const key = String(isScalar(pair.key) ? pair.key.value : pair.key);
     const written = isScalar(pair.value) ? pair.value.value : undefined;
     const meta = connector?.settings.find((setting) => setting.name === key);
-    const value = settingValue(written, meta, `${secretPrefix}-${key}`);
-    const comment = meta ? describe(meta, value) : undefined;
-    setWithComment(document, ["settings", key], value, comment);
+    composeSetting(document, key, written, meta, `${secretPrefix}-${key}`);
   }
+}
+
+function composeSetting(
+  document: YamlDocument,
+  key: string,
+  written: unknown,
+  meta: Setting | undefined,
+  secret: string,
+): void {
+  const value = settingValue(written, meta, secret);
+  // A value kept from the example, not a default, says so: nothing else would flag it.
+  const example = value === written && meta?.default === undefined && !isReference(written);
+  const comment = meta ? describe(meta, value, example) : undefined;
+  setWithComment(document, ["settings", key], value, comment);
 }
 
 /** A setting's value by its metadata: a secret, a default, or REPLACE_ME. */
@@ -92,7 +104,7 @@ function settingValue(written: unknown, meta: Setting | undefined, secret: strin
 function kept(written: unknown, meta: Setting | undefined): boolean {
   if (typeof written !== "string") return true;
   if (meta?.values?.includes(written)) return true;
-  return written.includes("${") || written.includes(replaceMe);
+  return isReference(written);
 }
 
 function isSecret(value: unknown): boolean {
@@ -104,11 +116,16 @@ export function secretReference(name: string): string {
   return `\${secret:${name.replaceAll("_", "-")}}`;
 }
 
-function describe(meta: Setting, value: unknown): string {
+function describe(meta: Setting, value: unknown, example: boolean): string {
   const text = commentText(meta.description);
-  return typeof value === "string" && value.startsWith("${secret:")
-    ? commentText(`Key Vault secret: ${text.charAt(0).toLowerCase()}${text.slice(1)}`)
-    : text;
+  if (isSecret(value) && !/^Key Vault secret/i.test(text))
+    return commentText(`Key Vault secret: ${text.charAt(0).toLowerCase()}${text.slice(1)}`);
+  return example ? `${commentText(text).slice(0, 70)}; the example's value, check it` : text;
+}
+
+/** Text that reads another value, or is already REPLACE_ME: the example says what to write. */
+function isReference(value: unknown): boolean {
+  return typeof value === "string" && (value.includes("${") || value.includes(replaceMe));
 }
 
 /** A flow: its method, each table's object, a required query, and its source options. */
