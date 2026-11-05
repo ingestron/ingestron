@@ -1,7 +1,7 @@
 // Source choices are small prompts over the same catalogue the editor consumes.
 import type { Options } from "./args.js";
 import { projectRoutes, projectSources } from "./project-choices.js";
-import { projectRecipe } from "./project-recipes.js";
+import { composableRecipe } from "./project-recipes.js";
 /** The existing init question contract. */
 export type Ask = (
   question: string,
@@ -47,7 +47,7 @@ export function chooseProject(flags: Options["init"], ask: Ask) {
       "--via",
       ask,
     );
-  return { ...projectRecipe(connector, via, connectivity), done: () => {} };
+  return { ...composableRecipe(connector, via, connectivity), done: () => {} };
 }
 function choose(title: string, values: string[], fallback: string, flag: string, ask: Ask): string {
   if (values.length === 1) return values[0]!;
