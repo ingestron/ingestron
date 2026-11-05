@@ -35,14 +35,16 @@ process.exitCode = code;
 
 ## Project builder API
 
-The package also exposes the catalogue and the composed questions that
-`ingestron init` and VS Code's New project use. `projectSources()` returns
-source IDs, titles and categories. `projectRoutes(connector, connectivity?)`
-returns compatible routes, methods, reachability and maturity.
-`projectRecipe(connector, via, connectivity)` returns a `ProjectRecipe`
-containing the selected definition files and a `Template` with configuration
-questions. It reads the packaged recipes but writes no project files. Use `run`
-to apply answers, validate and create the project:
+The package also exposes the catalogue that `ingestron init` and VS Code's New
+project use. `projectSources()` returns source IDs, titles and categories.
+`projectRoutes(connector, connectivity?)` returns compatible routes, methods,
+reachability and maturity. `projectRecipe(connector, via, connectivity)`
+returns a `ProjectRecipe`: the selected definition files as the example writes
+them, and a `Template` that asks nothing. It reads the packaged recipes but
+writes no project files. `run` creates the project: it writes `REPLACE_ME`
+where it cannot know a value, the defaults, and a README.md that lists each
+`REPLACE_ME` and where to find it. `--set <name>=<value>` writes a value by its
+name:
 
 ```ts
 import { projectSources, projectRoutes, projectRecipe, run } from "@ingestron/cli";
@@ -50,7 +52,7 @@ import { projectSources, projectRoutes, projectRecipe, run } from "@ingestron/cl
 const source = projectSources().find((item) => item.id === "postgresql")!;
 const route = projectRoutes(source.id, "private")[0]!;
 const recipe = projectRecipe(source.id, route.via, "private");
-console.log(recipe.template.questions);
+console.log(Object.keys(recipe.files));
 const code = run(
   [
     "init",
@@ -61,6 +63,8 @@ const code = run(
     route.via,
     "--connectivity",
     "private",
+    "--set",
+    "storage_account=saleslake",
     "--yes",
   ],
   { cwd: process.cwd(), write: (text) => process.stdout.write(text) },
