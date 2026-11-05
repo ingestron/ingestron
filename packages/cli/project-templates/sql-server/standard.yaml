@@ -3,4 +3,5 @@ kind: Standard
 id: erp
 packs: [databricks@2]
 naming:
+  # One catalog per environment, such as erp_dev
   catalog: erp_{{ environment }}

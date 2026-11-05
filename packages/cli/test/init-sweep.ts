@@ -89,9 +89,26 @@ export function createsWithPlaceholders({ connector, connectivity, via }: Combin
     expect(above.trim(), `${place} has a comment above it`).toMatch(/^# .{1,98}$/);
     expect(twoAbove.trim(), `${place} has one comment line, not two`).not.toMatch(/^#/);
   }
+  expectDefaultsCommented(files);
   for (const secret of projectValues(files).filter((value) => value.kind === "secret"))
     expect(readme).toContain(`\`${String(secret.value).slice(9, -1)}\``);
   return { cwd, files };
+}
+
+/** The written defaults that say how the project runs each have a comment, beside or above. */
+function expectDefaultsCommented(files: Record<string, string>): void {
+  const defaults: [string, RegExp][] = [
+    ["platform.yaml", /^(schedule: \{|\s+cron:|\s+timezone:)/],
+    ["standard.yaml", /^(packs:|\s+catalog:|\s+every:|\s+start:|\s+layout:)/],
+  ];
+  for (const [file, pattern] of defaults) {
+    const lines = (files[file] ?? "").split("\n");
+    lines.forEach((line, index) => {
+      if (!pattern.test(line)) return;
+      const commented = line.includes(" # ") || /^\s*#/.test(lines[index - 1] ?? "");
+      expect(commented, `${file}:${index + 1} ${line} has a comment`).toBe(true);
+    });
+  }
 }
 
 /** Every `file:line` README.md's table gives, `:line` read with the file before it. */
