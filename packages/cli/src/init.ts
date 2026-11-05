@@ -3,29 +3,17 @@
 // (spec/cli/projects.md). Without a terminal a missing choice is an error that names the flag.
 import { existsSync, readFileSync } from "node:fs";
 import { basename, join, relative, resolve } from "node:path";
-import { memoryFiles } from "@ingestron/config";
-import { isMap, isScalar, parse } from "yaml";
+import { parse } from "yaml";
 import type { Options } from "./args.js";
-import { generateAll, type Generated } from "./build-outputs.js";
-import { generate, replaceMeCount } from "./generate.js";
+import { generate } from "./generate.js";
 import { chooseProject } from "./init-choice.js";
-import { composeRecipe, type RecipeFacts } from "./init-compose.js";
-import { projectReadme, replaceRows } from "./init-readme.js";
-import { applySet } from "./init-set.js";
-import { startToday } from "./init-platform.js";
-import { editYaml } from "./init-yaml.js";
+import { resolvedFiles, type Source } from "./init-files.js";
+import { projectReadme } from "./init-readme.js";
+import { stillToReplace } from "./init-summary.js";
 import type { Io } from "./io.js";
 import { packs } from "./packs.js";
 import { environmentReportsText } from "./reports.js";
-import {
-  ignoredText,
-  nameProblem,
-  projectId,
-  scaffoldFiles,
-  writeScaffold,
-  type Answers,
-  type Content,
-} from "./scaffold.js";
+import { ignoredText, nameProblem, projectId, writeScaffold, type Answers } from "./scaffold.js";
 import { standardSource, templateSource } from "./sources.js";
 import type { Template } from "./templates.js";
 
@@ -36,14 +24,6 @@ type Ask = (
   fallback: string,
   check?: (answer: string) => string | undefined,
 ) => string;
-
-/** Where the project comes from: a template, or a recipe with what composing it needs. */
-interface Source {
-  template: Template;
-  done(): void;
-  files?: Record<string, Content>;
-  facts?: RecipeFacts;
-}
 
 /** Creates the project and shows its plan. Returns the exit code. */
 export function init(options: Options, io: Io): number {
@@ -112,39 +92,19 @@ function asker(options: Options, io: Io): Ask {
   };
 }
 
-/** The project's files: the template's, composed, with the answers given as --set. */
-function projectFiles(
-  source: Source,
-  answers: Answers,
-  set: Options["init"]["set"],
-  today: string,
-) {
-  const files = scaffoldFiles(source.template, answers, source.files);
-  if (source.facts) {
-    const { title } = source.template;
-    composeRecipe(files, source.facts, { ...answers, project: answers.name, today });
-    editYaml(files, "project.yaml", (document) => {
-      const first = isMap(document.contents) ? document.contents.items[0]?.key : undefined;
-      if (isScalar(first)) first.commentBefore = ` ${title}. README.md lists what to fill in.`;
-    });
-  }
-  startToday(files, today);
-  const asked = source.template.questions.map((question) => question.value);
-  applySet(files, set, answers.environments, asked);
-  return files;
-}
-
 /** The project's files and README.md, unless one is there, and every environment generated. */
 function prepare(options: Options, io: Io, target: string, source: Source, answers: Answers) {
   const today = (io.now?.() ?? new Date()).toISOString().slice(0, 10);
-  const files = projectFiles(source, answers, options.init.set, today);
-  const generated = generateAll(memoryFiles(textOf(files)), packs, process.env);
+  // README.md is the user's: one already there is kept, and the values are printed instead.
+  const kept = existsSync(join(target, "README.md"));
+  // A source option given with --set is written, so the answer has a place.
+  const given = Object.keys(options.init.set).filter((name) => name.startsWith("option_"));
+  const writing = { today, kept, keep: new Set(given.map((name) => name.slice("option_".length))) };
+  const { files, generated } = resolvedFiles(options, source, answers, writing);
   if (!generated.resolved)
     throw new Error(
       `The project does not resolve; nothing written.\n${environmentReportsText(generated.environmentReports)}`,
     );
-  // README.md is the user's: one already there is kept, and the values are printed instead.
-  const kept = existsSync(join(target, "README.md"));
   if (!kept) {
     const { title, summary } = source.template;
     const facts = { project: answers.name, title, summary, today, files, generated };
@@ -178,29 +138,6 @@ function create(
   const code = generate({ ...options, ...plan, ...where }, io, packs, generated);
   io.write(stillToReplace(files, generated, kept));
   return code;
-}
-
-/** After the plan: how many values are still REPLACE_ME, and where they are listed. */
-function stillToReplace(
-  files: Record<string, Content>,
-  generated: Generated,
-  kept: boolean,
-): string {
-  const count = replaceMeCount(generated.environmentReports);
-  if (count === 0) return "Nothing to replace: the project runs as written.\n";
-  const values = count === 1 ? "1 value is" : `${count} values are`;
-  if (!kept) return `${values} still REPLACE_ME: README.md lists each one and where to find it.\n`;
-  const rows = replaceRows(files, generated).map(
-    (row) =>
-      `  ${row.name}  ${row.places.map((place) => `${place.file}:${place.line}`).join(", ")}${row.what ? `  ${row.what}` : ""}\n`,
-  );
-  return `${values} still REPLACE_ME (README.md was already there, so it is kept):\n${rows.join("")}`;
-}
-
-function textOf(files: Record<string, Content>): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(files).map(([path, content]) => [path, content.toString()]),
-  );
 }
 
 /** Names given as flags are checked before anything else happens. */
