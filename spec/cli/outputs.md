@@ -159,6 +159,21 @@ a manifest and is not one of the output folders is reported:
 with `<folder>` relative to the working folder. `check` fails while there is
 one.
 
+**REPLACE_ME.** `plan`, `apply` and `check` resolve every environment as
+section 1 says; `check` does so with `replaceMe: "error"` (definitions
+specification, section 1), so a value still `REPLACE_ME` is an error there
+and `check` fails, with nothing planned. In `plan` and `apply` it is a
+warning, shown under the environments that have it, and the files are
+generated with the text as written. After the plans, `plan` and `apply`
+print, when the project has any,
+
+```text
+<n> values are still REPLACE_ME; ingestron check fails until each is written.
+```
+
+where `<n>` counts the places written, each once whatever environments have
+it.
+
 **Exit codes.** 0 when every folder is clean (`plan`), written (`apply`), or up
 to date with nothing extra and no retired folder (`check`); 1 when an
 environment or a pack has problems (sections 1 and 3), a folder is not clean,
