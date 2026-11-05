@@ -3,16 +3,23 @@
 // comes from the connector's metadata and the method's settings schema.
 import type { Connector } from "@ingestron/definitions";
 import { isMap, isScalar } from "yaml";
+import { composeConnection, isSecret, secretReference } from "./init-connection.js";
 import {
   commentAfter,
-  commentText,
+  deleteIfThere,
   editYaml,
   replaceMe,
   setWithComment,
   shapedPlaceholder,
   type YamlDocument,
 } from "./init-yaml.js";
-import { composePlatform, composeStandard, methodSettings, type Route } from "./init-platform.js";
+import {
+  composePlatform,
+  composeSchedule,
+  composeStandard,
+  methodSettings,
+  type Route,
+} from "./init-platform.js";
 import type { Content } from "./scaffold.js";
 
 /** What the recipe is made of: its files and what reads them. */
@@ -28,108 +35,46 @@ export interface Composing {
   project: string;
   environments: string[];
   today: string;
+  /**
+   * The text source options to write as REPLACE_ME: those the connector needs, found by
+   * resolving without them (spec/cli/projects.md). Every other text option is left out.
+   */
+  keep?: ReadonlySet<string>;
 }
 
-type Setting = Connector["settings"][number];
-
-/** How a connectivity is reached, for the comment beside it. */
-const reached: Record<string, string> = {
-  private: "reached only through a self-hosted integration runtime or a private network",
-  workspace: "reached from the workspace's own network",
-  public: "reached over the internet",
-};
-
-/** Writes the recipe's values as a new project has them; the files are edited in place. */
+/**
+ * Writes the recipe's values as a new project has them; the files are edited in place.
+ * Returns the text source options left out, which `init` keeps when it cannot resolve.
+ */
 export function composeRecipe(
   files: Record<string, Content>,
   facts: RecipeFacts,
   composing: Composing,
-): void {
+): string[] {
   let connectionId = "";
+  const leftOut: string[] = [];
   editYaml(files, facts.connection, (document) => {
     connectionId = String(document.get("id"));
     composeConnection(document, facts.connector, `${composing.project}-${connectionId}`);
   });
   const secret = `${composing.project}-${connectionId}`;
   for (const flow of facts.flows)
-    editYaml(files, flow, (document) => composeFlow(document, facts, secret));
+    editYaml(files, flow, (document) =>
+      leftOut.push(...composeFlow(document, facts, secret, composing.keep ?? new Set())),
+    );
   composePlatform(files, facts.route, composing);
+  composeSchedule(files, facts.route);
   composeStandard(files, facts.route, composing);
-}
-
-/** The connection's settings: secrets by name, defaults, and REPLACE_ME for the rest. */
-function composeConnection(
-  document: YamlDocument,
-  connector: Connector | undefined,
-  secretPrefix: string,
-): void {
-  const connectivity = String(document.get("connectivity"));
-  if (reached[connectivity]) commentAfter(document, ["connectivity"], reached[connectivity]);
-  const settings = document.get("settings");
-  if (!isMap(settings)) return;
-  for (const pair of settings.items) {
-    const key = String(isScalar(pair.key) ? pair.key.value : pair.key);
-    const written = isScalar(pair.value) ? pair.value.value : undefined;
-    const meta = connector?.settings.find((setting) => setting.name === key);
-    composeSetting(document, key, written, meta, `${secretPrefix}-${key}`);
-  }
-}
-
-function composeSetting(
-  document: YamlDocument,
-  key: string,
-  written: unknown,
-  meta: Setting | undefined,
-  secret: string,
-): void {
-  const value = settingValue(written, meta, secret);
-  // A value kept from the example, not a default, says so: nothing else would flag it.
-  const example = value === written && meta?.default === undefined && !isReference(written);
-  const comment = meta ? describe(meta, value, example) : undefined;
-  setWithComment(document, ["settings", key], value, comment);
-}
-
-/** A setting's value by its metadata: a secret, a default, or REPLACE_ME. */
-function settingValue(written: unknown, meta: Setting | undefined, secret: string): unknown {
-  if (meta?.secret || isSecret(written)) return secretReference(secret);
-  if (meta?.default !== undefined) return meta.default;
-  return kept(written, meta) ? written : replaceMe;
-}
-
-/**
- * Without a default in the metadata, the example's value stays where it is one of a kind
- * (a number, true or false, or one of the allowed values), or where it says what to write:
- * a value read from project.yaml, or one already REPLACE_ME.
- */
-function kept(written: unknown, meta: Setting | undefined): boolean {
-  if (typeof written !== "string") return true;
-  if (meta?.values?.includes(written)) return true;
-  return isReference(written);
-}
-
-function isSecret(value: unknown): boolean {
-  return typeof value === "string" && value.startsWith("${secret:");
-}
-
-/** `${secret:<name>}`, each `_` written `-`. */
-export function secretReference(name: string): string {
-  return `\${secret:${name.replaceAll("_", "-")}}`;
-}
-
-function describe(meta: Setting, value: unknown, example: boolean): string {
-  const text = commentText(meta.description);
-  if (isSecret(value) && !/^Key Vault secret/i.test(text))
-    return commentText(`Key Vault secret: ${text.charAt(0).toLowerCase()}${text.slice(1)}`);
-  return example ? `${commentText(text).slice(0, 70)}; the example's value, check it` : text;
-}
-
-/** Text that reads another value, or is already REPLACE_ME: the example says what to write. */
-function isReference(value: unknown): boolean {
-  return typeof value === "string" && (value.includes("${") || value.includes(replaceMe));
+  return leftOut;
 }
 
 /** A flow: its method, each table's object, a required query, and its source options. */
-function composeFlow(document: YamlDocument, facts: RecipeFacts, secretPrefix: string): void {
+function composeFlow(
+  document: YamlDocument,
+  facts: RecipeFacts,
+  secretPrefix: string,
+  keep: ReadonlySet<string>,
+): string[] {
   commentAfter(
     document,
     ["ingest", "uses"],
@@ -137,9 +82,13 @@ function composeFlow(document: YamlDocument, facts: RecipeFacts, secretPrefix: s
   );
   composeObjects(document, facts.connector?.object ?? "");
   composeQuery(document, facts);
-  composeOptions(document, facts, secretPrefix);
+  const leftOut = composeOptions(document, facts, secretPrefix, keep);
+  const options = document.getIn(["ingest", "with", "source_options"]);
+  if (isMap(options) && options.items.length === 0)
+    deleteIfThere(document, ["ingest", "with", "source_options"]);
   const settings = document.getIn(["ingest", "with"]);
   if (isMap(settings) && settings.items.length === 0) document.deleteIn(["ingest", "with"]);
+  return leftOut;
 }
 
 /** Each table's object, REPLACE_ME in the connector's shape. */
@@ -151,7 +100,9 @@ function composeObjects(document: YamlDocument, shape: string): void {
     const written = document.getIn(["tables", table, "object"]);
     // An object the example already writes as REPLACE_ME keeps its own shape and comment.
     if (written === undefined || String(written).includes(replaceMe)) continue;
-    const comment = `The source object${shape ? `: ${shape}` : ""}`;
+    // The connector's own example names one object: the other tables have their own.
+    const kind = shape.split(", such as")[0];
+    const comment = `The source object${kind ? `: ${kind}` : ""}`;
     setWithComment(document, ["tables", table, "object"], shapedPlaceholder(shape), comment);
   }
 }
@@ -172,31 +123,57 @@ function composeQuery(document: YamlDocument, facts: RecipeFacts): void {
   );
 }
 
-/** Source options: a default where the schema allows only some values, else by type. */
-function composeOptions(document: YamlDocument, facts: RecipeFacts, secretPrefix: string): void {
+/**
+ * Source options: a secret by name; text left out unless the connector needs it (`keep`),
+ * then REPLACE_ME; anything else as the example writes it. Returns the text left out.
+ */
+function composeOptions(
+  document: YamlDocument,
+  facts: RecipeFacts,
+  secretPrefix: string,
+  keep: ReadonlySet<string>,
+): string[] {
   const options = document.getIn(["ingest", "with", "source_options"]);
-  if (!isMap(options)) return;
+  if (!isMap(options)) return [];
   const schemas = (schemaOf(methodSettings(facts.route.method), "source_options")?.properties ??
     {}) as Record<string, Record<string, unknown>>;
+  const leftOut: string[] = [];
   for (const pair of [...options.items]) {
     const key = String(isScalar(pair.key) ? pair.key.value : pair.key);
     const written = isScalar(pair.value) ? pair.value.value : undefined;
-    const schema = schemas[key] ?? {};
-    const value = optionValue(written, schema, `${secretPrefix}-${key}`);
-    const keys = ["ingest", "with", "source_options", key];
-    if (value !== undefined) setWithComment(document, keys, value, descriptionOf(schema));
+    const option = { key, written, schema: schemas[key] ?? {} };
+    if (!composeOption(document, option, `${secretPrefix}-${key}`, keep.has(key)))
+      leftOut.push(key);
   }
+  return leftOut;
+}
+
+/** One source option; false when it is text left out. */
+function composeOption(
+  document: YamlDocument,
+  { key, written, schema }: { key: string; written: unknown; schema: Record<string, unknown> },
+  secret: string,
+  keep: boolean,
+): boolean {
+  const keys = ["ingest", "with", "source_options", key];
+  if (isSecret(written))
+    setWithComment(document, keys, secretReference(secret), descriptionOf(schema));
+  else if (!freeText(written, schema)) return true;
+  else if (keep) setWithComment(document, keys, replaceMe, descriptionOf(schema));
+  else {
+    document.deleteIn(keys);
+    return false;
+  }
+  return true;
 }
 
 function descriptionOf(schema: Record<string, unknown>): string | undefined {
   return typeof schema.description === "string" ? schema.description : undefined;
 }
 
-/** A source option's new value: a secret by name, REPLACE_ME for free text, else unchanged. */
-function optionValue(written: unknown, schema: Record<string, unknown>, secret: string) {
-  if (isSecret(written)) return secretReference(secret);
-  if (typeof written !== "string" || schema.enum || schema.const !== undefined) return undefined;
-  return replaceMe;
+/** Text whose schema allows any value: only the owner knows it. */
+function freeText(written: unknown, schema: Record<string, unknown>): boolean {
+  return typeof written === "string" && !schema.enum && schema.const === undefined;
 }
 
 /** The JSON Schema of one of the method's settings. */
