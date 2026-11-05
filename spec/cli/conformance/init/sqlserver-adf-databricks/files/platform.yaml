@@ -8,3 +8,5 @@ settings:
     key_vault: https://${values.key_vault}.vault.azure.net
     # Name of the integration runtime that reaches the source
     integration_runtime: REPLACE_ME
+# Databricks refreshes hourly, at half past, to read the files Data Factory lands
+schedule: {cron: 0 30 * * * ?, timezone: UTC}

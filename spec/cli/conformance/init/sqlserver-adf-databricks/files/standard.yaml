@@ -7,4 +7,5 @@ ingest:
     adf-copy:
       # Start of the first window (UTC): midnight on the day this project was created
       start: 2026-11-04T00:00:00Z
+      # Window size: one window every 24 hours
       every: {frequency: Hour, interval: 24}

@@ -98,8 +98,14 @@ describe("README.md", () => {
     expect(code, output).toBe(0);
     expect(read("README.md")).toBe("# Our sales data\n");
     expect(output).toContain(
-      "8 values are still REPLACE_ME (README.md was already there, so it is kept):\n",
+      "6 values are still REPLACE_ME (README.md was already there, so it is kept):\n",
     );
+    expect(output).toContain("    Where to find it: Azure portal: Key vaults; the vault's name\n");
+    expect(output).toMatch(
+      /Secrets to create in the Key Vault:\n {2}[\w-]+-sqlserver-password {2}The login password/,
+    );
+    // project.yaml does not send the reader to a README.md that is not Ingestron's.
+    expect(read("project.yaml")).not.toContain("README.md");
     expect(output).toContain(
       "  source_server  connections/sqlserver.yaml:8  The host name the integration runtime reaches\n",
     );
