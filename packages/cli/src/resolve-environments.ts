@@ -44,11 +44,12 @@ export interface Resolution {
   local: string[];
 }
 
-/** Resolves every environment project.yaml declares, as `plan` does. */
+/** Resolves every environment project.yaml declares, as `plan` does; `check` makes REPLACE_ME an error. */
 export function resolveEnvironments(
   files: FileSource,
   available: readonly Pack[],
   envvars: Readonly<Record<string, string | undefined>>,
+  replaceMe: "warning" | "error" = "warning",
 ): Resolution {
   const declared = projectEnvironments(files);
   const named = standardPacks(files, declared[0]?.environment);
@@ -59,6 +60,7 @@ export function resolveEnvironments(
       ...(environment !== undefined && { environment }),
       envvars,
       environmentsTogether: true,
+      replaceMe,
       ...(deployTime && { deployTime: true }),
     });
   const results = declared.map((item) =>

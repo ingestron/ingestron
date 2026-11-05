@@ -1,5 +1,5 @@
 // ingestron request: what to ask of whoever runs the data platform, for one
-// environment: the environment variables to provide, the identity, what each
+// environment: the values still REPLACE_ME, the environment variables to provide, the identity, what each
 // switched-on capability needs, the features in use but switched off, the
 // shared infrastructure the methods expect, what each pack expects to exist
 // and its schedules, and the SQL to run once. The editor's command writes the
@@ -27,6 +27,7 @@ import { packs } from "./packs.js";
 import { suppliedFor } from "./request-supplied.js";
 import { notKnown as whatIsNotKnown } from "./request-unknown.js";
 import { valuesToProvide } from "./request-values.js";
+import { valuesToReplace } from "./request-replace.js";
 
 /** Prints the request for each environment. Returns the exit code: 1 when any has errors. */
 export function request(options: Options, io: Io): number {
@@ -85,6 +86,7 @@ function requestFor(
   const references = project?.envvarReferences ?? [];
   const text = [
     `# Platform request: ${model.project.id} (${name})`,
+    valuesToReplace(diagnostics),
     valuesToProvide(references, environment, notKnown, suppliedFor(generated, name)),
     identity(model),
     switchedOn(model, capabilities),
