@@ -111,8 +111,17 @@ function identity(model: ResolvedModel): string | undefined {
     [table.ingest, table.transform, table.store].some((step) => step?.pack === "databricks"),
   );
   if (!runAs && !platform) return undefined;
-  const who = runAs ? `\`${Object.values(runAs)[0]}\`` : "the identity that deploys the bundle";
-  return `Pipelines and jobs run as ${who}${workspace.host ? ` in ${workspace.host}` : ""}.`;
+  const principal = runAs ? String(Object.values(runAs)[0]) : undefined;
+  // A value still REPLACE_ME is listed under Values to replace, not quoted as a name.
+  const who =
+    principal === undefined
+      ? "the identity that deploys the bundle"
+      : principal.includes("REPLACE_ME")
+        ? "a principal not written yet (see Values to replace)"
+        : `\`${principal}\``;
+  const host =
+    workspace.host && !workspace.host.includes("REPLACE_ME") ? ` in ${workspace.host}` : "";
+  return `Pipelines and jobs run as ${who}${host}.`;
 }
 
 function switchedOn(model: ResolvedModel, capabilities: Capability[]): string | undefined {
