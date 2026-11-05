@@ -51,11 +51,44 @@ describe("README.md on a route through Data Factory", () => {
     expect(deploy.indexOf("### adf")).toBeLessThan(deploy.indexOf("### databricks"));
     expect(deploy).toContain('"@microsoft/azure-data-factory-utilities": "1.0.3"');
     expect(deploy).toContain("```sh\nnpm install\nnpm run build export build/adf/factory");
-    expect(deploy).toContain("in PowerShell:\n\n```powershell\n./arm/PrePostDeploymentScript.ps1");
+    expect(deploy).toContain(
+      "`az login` (for the deployment):\n\n```powershell\n./arm/PrePostDeploymentScript.ps1",
+    );
     expect(deploy).toContain("`<group>` and `<factory>` are each environment's");
     expect(deploy).toContain("https://docs.ingestron.io/docs/platforms/adf-deploy");
     expect(deploy).toContain("databricks bundle deploy -t <environment>");
     expect(deploy).toContain("sign in to each environment's workspace");
+  });
+
+  it("says how to sign in for the PowerShell step and the deployment", () => {
+    const { readme } = created(...adf);
+    expect(readme).toContain("in PowerShell 7 with the Az modules");
+    expect(readme).toContain("`Connect-AzAccount` (for the script) and `az login`");
+  });
+
+  it("keeps the export's folders out of Git, and a .gitignore already there gains only what it lacks", () => {
+    const fresh = created(...adf);
+    expect(fresh.read(".gitignore")).toMatch(/\nnode_modules\/\ndownloads\/\narm\/\n/);
+    expect(fresh.readme).toContain("which `.gitignore` keeps out of Git");
+    const cwd = mkdtempSync(join(tmpdir(), "ingestron-init-readme-"));
+    writeFileSync(join(cwd, ".gitignore"), "node_modules/\n*.log\n");
+    let output = "";
+    const code = run(["init", ".", ...adf, "--yes"], { cwd, write: (text) => (output += text) });
+    expect(code, output).toBe(0);
+    const lines = readFileSync(join(cwd, ".gitignore"), "utf8").split("\n");
+    expect(lines.slice(0, 2)).toEqual(["node_modules/", "*.log"]);
+    expect(lines.filter((line) => line === "node_modules/")).toHaveLength(1);
+    expect(lines).toEqual(expect.arrayContaining(["downloads/", "arm/"]));
+    expect(output).toContain("added downloads/, arm/ and the .env lines to .gitignore");
+    const direct = [
+      "--connector",
+      "sqlserver",
+      "--connectivity",
+      "workspace",
+      "--via",
+      "databricks",
+    ];
+    expect(created(...direct).read(".gitignore")).not.toContain("downloads/");
   });
 
   it("writes a Databricks schedule that reads what Data Factory lands, with its comment", () => {
