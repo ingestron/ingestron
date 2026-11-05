@@ -6,10 +6,11 @@ import { describe, expect, it } from "vitest";
 import { completionsAt } from "../src/completion.js";
 import { openProject } from "../src/project.js";
 import { cleanEnvironment, fromFile, fromHost } from "./env-workspace.js";
+import { filledTemplates } from "./starters.js";
 
 cleanEnvironment();
 
-const retail = join(import.meta.dirname, "../../cli/project-templates/retail");
+const retail = join(filledTemplates, "retail");
 const read = (path: string) => readFileSync(join(retail, path), "utf8");
 
 /** Completions for `cluster_by:` in the shop flow, with the standard fixing it to `fixed`. */

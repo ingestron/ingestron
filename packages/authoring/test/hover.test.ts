@@ -4,8 +4,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { hoverAt } from "../src/hover.js";
 import { openProject } from "../src/project.js";
+import { filledTemplates } from "./starters.js";
 
-const retail = join(import.meta.dirname, "../../cli/project-templates/retail");
+const retail = join(filledTemplates, "retail");
 const project = openProject(retail, new Map());
 const text = readFileSync(join(retail, "flows/shop.yaml"), "utf8");
 const hover = (needle: string, plus = 1) =>
@@ -38,7 +39,7 @@ describe("hover", () => {
 });
 
 describe("hover on a described field", () => {
-  const erp = join(import.meta.dirname, "../../cli/project-templates/private-sql-server");
+  const erp = join(filledTemplates, "private-sql-server");
   const standard = readFileSync(join(erp, "standard.yaml"), "utf8");
   const docs = (link: string) => `https://docs.example.com${link}`;
   const at = (needle: string, plus: number) =>
@@ -96,9 +97,7 @@ describe("hover on a reference", () => {
         docs: (path) => path,
       },
     );
-    expect(shown).toContain(
-      "`${values.storage}` is `abfss://landing@retailprod.dfs.core.windows.net` in prod.",
-    );
+    expect(shown).toContain("`${values.storage_account}` is `retailprod` in prod.");
   });
 
   it("never shows a secret", () => {

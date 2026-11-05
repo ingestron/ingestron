@@ -7,8 +7,9 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { problems } from "../src/diagnostics.js";
 import { openProject } from "../src/project.js";
+import { filledTemplates } from "./starters.js";
 
-const templates = join(import.meta.dirname, "../../cli/project-templates");
+const templates = filledTemplates;
 const folders: string[] = [];
 
 afterEach(() => {
@@ -35,7 +36,7 @@ describe("an unset variable the deploying pipeline supplies", () => {
     starter(
       "retail",
       "connections/shop.yaml",
-      "${values.storage}/shop",
+      "abfss://landing@${values.storage_account}.dfs.core.windows.net/shop",
       "${envvar:INGT_LANDING_6C}/shop",
     );
 

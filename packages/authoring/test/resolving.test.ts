@@ -9,9 +9,10 @@ import { hoverAt } from "../src/hover.js";
 import { compareEnvironments, platformRequest } from "../src/platform-request.js";
 import { openProject, resolved, resolvedForDisplay } from "../src/project.js";
 import { brokenPackMessage, breakPacks, mendPacks } from "./broken-pack.js";
+import { filledTemplates } from "./starters.js";
 
 const cli = join(import.meta.dirname, "../../cli");
-const retail = join(cli, "project-templates/retail");
+const retail = join(filledTemplates, "retail");
 
 describe("resolving for the editor", () => {
   it("resolves every environment together, so test has the bundle's production mode", () => {

@@ -3,8 +3,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { openProject, projectFolderOf, resolved } from "../src/project.js";
 import { keyPath, offsetAt, positionAt, rangeOf, spotAt } from "../src/yaml.js";
+import { filledTemplates } from "./starters.js";
 
-const templates = join(import.meta.dirname, "../../cli/project-templates");
+const templates = filledTemplates;
 const retail = join(templates, "retail");
 
 describe("projects", () => {

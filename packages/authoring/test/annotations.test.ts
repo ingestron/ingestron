@@ -7,15 +7,16 @@ import { annotationsIn, chosenText, generatedLenses } from "../src/annotations.j
 import type { ResolvedTable } from "@ingestron/definitions";
 import { hoverAt } from "../src/hover.js";
 import { openProject } from "../src/project.js";
+import { filledTemplates } from "./starters.js";
 
-const retail = join(import.meta.dirname, "../../cli/project-templates/retail");
+const retail = join(filledTemplates, "retail");
 const read = (file: string) => readFileSync(join(retail, file), "utf8");
 
 describe("annotationsIn", () => {
   it("shows a variable's value for the environment", () => {
     const project = openProject(retail, new Map());
     const text = read("connections/shop.yaml");
-    const line = text.split("\n").findIndex((item) => item.includes("${values.storage}"));
+    const line = text.split("\n").findIndex((item) => item.includes("${values.storage_account}"));
     const dev = annotationsIn(project, "connections/shop.yaml", text, "dev");
     expect(dev).toContainEqual(
       expect.objectContaining({
@@ -69,7 +70,7 @@ describe("annotationsIn", () => {
   });
 
   it("never shows a secret's or an environment variable's value", () => {
-    const folder = join(import.meta.dirname, "../../cli/project-templates/private-sql-server");
+    const folder = join(filledTemplates, "private-sql-server");
     const project = openProject(folder, new Map());
     const text = readFileSync(join(folder, "connections/erp.yaml"), "utf8");
     const labels = annotationsIn(project, "connections/erp.yaml", text, undefined).map(
@@ -89,7 +90,7 @@ describe("annotationsIn", () => {
   });
 
   it("says when a flow table ends at the landed files, and what chose that", () => {
-    const minimal = join(import.meta.dirname, "../../cli/project-templates/minimal");
+    const minimal = join(filledTemplates, "minimal");
     const file = join(minimal, "flows/orders.yaml");
     const text = readFileSync(file, "utf8").replace(
       "source: shop\n",

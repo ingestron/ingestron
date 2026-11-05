@@ -7,8 +7,9 @@ import type { QuickFix } from "../src/fixes.js";
 import { moveSetting } from "../src/moves.js";
 import { openProject } from "../src/project.js";
 import { offsetAt } from "../src/yaml.js";
+import { filledTemplates } from "./starters.js";
 
-const folder = join(import.meta.dirname, "../../cli/project-templates/private-sql-server");
+const folder = join(filledTemplates, "private-sql-server");
 const disk = (file: string) => readFileSync(join(folder, file), "utf8");
 
 /** The project with `texts` open, and the move offered at `|` in `file`. */
@@ -43,8 +44,8 @@ describe("moveSetting", () => {
   it("moves a platform setting from a flow table to the platform", () => {
     const platform = disk("platform.yaml").replace("    integration_runtime: shir-erp\n", "");
     const flow = disk("flows/erp.yaml").replace(
-      "contract: erp.customers }",
-      "contract: erp.customers, ingest: { with: { integration_|runtime: shir-2 } } }",
+      "    contract: erp.customers\n",
+      "    contract: erp.customers\n    ingest: { with: { integration_|runtime: shir-2 } }\n",
     );
     const { project, moves } = moveAt("flows/erp.yaml", flow, { "platform.yaml": platform });
     expect(moves.map((move) => move.title)).toEqual([
@@ -52,7 +53,7 @@ describe("moveSetting", () => {
     ]);
     const out = applied(project, moves[0]!);
     expect(out["flows/erp.yaml"]).toContain(
-      "customers: { object: erp.dbo.Customers, contract: erp.customers }",
+      "    object: erp.dbo.Customers\n    contract: erp.customers\n  invoices:",
     );
     expect(out["platform.yaml"]).toContain("    integration_runtime: shir-2\n");
   });

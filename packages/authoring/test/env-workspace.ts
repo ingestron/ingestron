@@ -3,8 +3,9 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach } from "vitest";
+import { filledTemplates } from "./starters.js";
 
-const minimal = join(import.meta.dirname, "../../cli/project-templates/minimal");
+const minimal = join(filledTemplates, "minimal");
 export const landing = "abfss://landing@editorenv.dfs.core.windows.net/shop";
 // Names no developer's shell sets, so the "unset" cases are unset everywhere.
 export const unset = "INGESTRON_TEST_UNSET";

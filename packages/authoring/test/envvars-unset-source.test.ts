@@ -11,8 +11,9 @@ import { problems } from "../src/diagnostics.js";
 import { hoverAt } from "../src/hover.js";
 import { generatedFiles } from "../src/preview.js";
 import { openProject, resolvedForDisplay } from "../src/project.js";
+import { filledTemplates } from "./starters.js";
 
-const templates = join(import.meta.dirname, "../../cli/project-templates");
+const templates = filledTemplates;
 const template = join(templates, "minimal");
 const names = ["INGT_SRC", "INGT_CLUSTER", "INGT_CONTRACT"];
 const saved = new Map<string, string | undefined>();

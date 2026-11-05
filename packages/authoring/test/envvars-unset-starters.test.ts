@@ -10,6 +10,7 @@ import { annotationsIn } from "../src/annotations.js";
 import { problems } from "../src/diagnostics.js";
 import { hoverAt } from "../src/hover.js";
 import { openProject } from "../src/project.js";
+import { filledTemplates } from "./starters.js";
 
 const name = "INGT_SRC";
 let previous: string | undefined;
@@ -30,7 +31,7 @@ function workspace(
 ): string {
   const folder = mkdtempSync(join(tmpdir(), "ingestron-authoring-unset-starter-"));
   folders.push(folder);
-  cpSync(join(import.meta.dirname, "../../cli/project-templates", starter.template), folder, {
+  cpSync(join(filledTemplates, starter.template), folder, {
     recursive: true,
     filter: (path) => !path.includes("/build"),
   });

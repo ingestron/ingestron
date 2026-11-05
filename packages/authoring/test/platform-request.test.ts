@@ -4,8 +4,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { platformRequest } from "../src/platform-request.js";
 import { openProject } from "../src/project.js";
+import { filledTemplates } from "./starters.js";
 
-const templates = join(import.meta.dirname, "../../cli/project-templates");
+const templates = filledTemplates;
 const fixtures = join(import.meta.dirname, "../../cli/test/fixtures");
 
 describe("platformRequest", () => {

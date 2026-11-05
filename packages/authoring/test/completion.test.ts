@@ -4,8 +4,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { completionsAt } from "../src/completion.js";
 import { openProject } from "../src/project.js";
+import { filledTemplates } from "./starters.js";
 
-const retail = join(import.meta.dirname, "../../cli/project-templates/retail");
+const retail = join(filledTemplates, "retail");
 const read = (path: string) => readFileSync(join(retail, path), "utf8");
 
 /** Completions where `|` is in the edited text of `path`. */
@@ -22,9 +23,11 @@ describe("completion", () => {
   it("offers the project's values after ${values.", () => {
     expect(
       labels(
-        at("connections/shop.yaml", (text) => text.replace("${values.storage}", "${values.|")),
+        at("connections/shop.yaml", (text) =>
+          text.replace("${values.storage_account}", "${values.|"),
+        ),
       ),
-    ).toEqual(["host", "storage"]);
+    ).toEqual(["analysts", "engineers", "host", "on_failure", "run_as", "storage_account"]);
   });
 
   it("offers the transform's inputs after {{ tables. in its code, never itself", () => {
@@ -142,7 +145,9 @@ describe("completion", () => {
   });
 
   it("offers the forms a reference takes after ${", () => {
-    const items = at("connections/shop.yaml", (text) => text.replace("${values.storage}", "${|"));
+    const items = at("connections/shop.yaml", (text) =>
+      text.replace("${values.storage_account}", "${|"),
+    );
     expect(labels(items)).toEqual([
       "environment.name",
       "envvar:",
@@ -155,7 +160,7 @@ describe("completion", () => {
   });
 
   it("offers only the project fields project.yaml defines", () => {
-    const minimal = join(import.meta.dirname, "../../cli/project-templates/minimal");
+    const minimal = join(filledTemplates, "minimal");
     const file = "connections/shop.yaml";
     const complete = (marked: string) => {
       const text = marked.replace("|", "");
