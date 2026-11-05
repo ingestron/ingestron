@@ -23,7 +23,7 @@ describe("ingestron request with environment variables", () => {
     expect(output).toMatch(/^# Platform request: shop \(dev\)\n\n## Values to provide\n/);
     const values = section(output, "Values to provide");
     expect(values).toContain(
-      "Set them in the pipeline that runs Ingestron for this environment, or in `.env.dev` on your own computer, kept out of Git.",
+      "These values come from environment variables. The pipeline that deploys the files supplies each one for each environment, under the names given; on your own computer, `.env.dev` (kept out of Git) is read only by a pack that reads them when generating, such as DuckDB.",
     );
     expect(values).toContain(
       "- `INGT_REQ_LANDING`, used for `values.landing` in `project.yaml`: not set yet.",
