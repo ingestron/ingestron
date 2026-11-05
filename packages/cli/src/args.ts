@@ -92,10 +92,11 @@ export const flags = [
     summary: "init: use this standard instead of the supplied default.",
   },
   {
-    flag: "--set <value>=<text>",
-    summary: "init: answer one of the project configuration questions (repeatable).",
+    flag: "--set <name>=<text>",
+    summary:
+      "init: write a value in place of REPLACE_ME, by its name, such as source_server or prod.storage_account (repeatable).",
   },
-  { flag: "--yes", summary: "init: take the default for every question not answered." },
+  { flag: "--yes", summary: "init: take the default of each choice not given as a flag." },
   { flag: "--help", summary: "Show this text." },
 ] as const;
 
@@ -201,7 +202,7 @@ function answersOf(pairs: string[]): Record<string, string> | string {
   const answers: Record<string, string> = {};
   for (const pair of pairs) {
     const at = pair.indexOf("=");
-    if (at < 1) return `--set ${pair}: write it as <value>=<text>.`;
+    if (at < 1) return `--set ${pair}: write it as <name>=<text>.`;
     answers[pair.slice(0, at)] = pair.slice(at + 1);
   }
   return answers;

@@ -6,4 +6,6 @@ export interface Io {
   write(text: string): void;
   /** Shows the question and returns one line of answer; absent without a terminal. */
   ask?(question: string): string | undefined;
+  /** The time now, which `init` writes as the day it created a project; the clock when absent. */
+  now?(): Date;
 }
