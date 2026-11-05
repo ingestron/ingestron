@@ -50,28 +50,43 @@ export function setWithComment(
   const node = document.getIn(keys, true);
   if (isScalar(node) && typeof value === "string") node.type = "PLAIN";
   if (comment === undefined) return;
-  const pair = pairAt(document, keys);
-  if (!pair) return;
+  const found = pairAt(document, keys);
+  if (!found) return;
+  const { pair, map } = found;
   const text = ` ${commentText(comment)}`;
   if (trailing && isScalar(pair.value)) pair.value.comment = text;
-  else if (isScalar(pair.key)) pair.key.commentBefore = text;
+  else if (isScalar(pair.key) && !commented(pair, map)) pair.key.commentBefore = text;
+}
+
+/**
+ * Whether a comment line is already above the pair: on its key, or, for a mapping's first
+ * pair, on the mapping, where the yaml parser keeps it. The example's own comment stays.
+ */
+function commented(pair: Pair, map: YAMLMap): boolean {
+  if (isScalar(pair.key) && pair.key.commentBefore) return true;
+  return map.items[0] === pair && Boolean(map.commentBefore);
 }
 
 /**
  * The pair of the last key, with every mapping on the way in block style, and its key a
  * node that can carry a comment (`setIn` adds a new key as plain text).
  */
-function pairAt(document: YamlDocument, keys: string[]): Pair | undefined {
+function pairAt(document: YamlDocument, keys: string[]): { pair: Pair; map: YAMLMap } | undefined {
   let node: unknown = document.contents;
-  let pair: Pair | undefined;
+  let found: { pair: Pair; map: YAMLMap } | undefined;
   for (const key of keys) {
     if (!isMap(node)) return undefined;
-    (node as YAMLMap).flow = false;
-    pair = (node as YAMLMap).items.find((item) => keyText(item.key) === key);
-    if (pair && !isScalar(pair.key)) pair.key = new Scalar(pair.key);
-    node = pair?.value;
+    const map = node as YAMLMap;
+    map.flow = false;
+    const pair = map.items.find((item) => keyText(item.key) === key);
+    if (!pair) return undefined;
+    if (!isScalar(pair.key)) pair.key = new Scalar(pair.key);
+    // A key the example quoted, as JSON does, is written plain where it can be.
+    (pair.key as Scalar).type = "PLAIN";
+    found = { pair, map };
+    node = pair.value;
   }
-  return pair;
+  return found;
 }
 
 function keyText(key: unknown): unknown {
