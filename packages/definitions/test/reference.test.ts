@@ -186,7 +186,16 @@ describe("ranges and the values of a mapping", () => {
   it("gives the Platform's mode its default when environments are generated together", () => {
     const mode = documentReference("Platform").find((field) => field.name === "mode");
     expect(mode?.description).toBe(
-      "Default: production for every environment except dev, when every environment is generated together, as the CLI does from 2.0. Resolved one environment at a time: production for environments named prod or production, otherwise development.",
+      "Default: development in an environment named dev, and production in every other, test and default included. A tool that resolves one environment at a time, without generating them together as the CLI does, gives production only to prod and production.",
+    );
+  });
+
+  it("says schedule.paused stays paused in test, though its mode is production", () => {
+    const paused = documentReference("Platform").find(
+      (field) => field.path.join(".") === "schedule.paused",
+    );
+    expect(paused?.description).toBe(
+      "Default: running in an environment named prod or production, and where the platform sets mode: production itself; paused everywhere else, test included, though its mode is production by default.",
     );
   });
 });
