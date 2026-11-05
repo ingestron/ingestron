@@ -38,11 +38,7 @@ export function generate(
   available: readonly Pack[] = packs,
   prepared?: Generated,
 ): number {
-  const definitions = resolve(io.cwd, options.definitions);
-  // check fails while a value is still REPLACE_ME (spec/cli/outputs.md, section 4).
-  const replaceMe = options.command === "check" ? "error" : "warning";
-  const generated =
-    prepared ?? generateAll(nodeFiles(definitions), available, process.env, replaceMe);
+  const generated = prepared ?? generation(options, io, available);
   printEnvironmentReports(io, generated.environmentReports);
   if (!generated.resolved) return 1;
   printPackReports(io, generated.packReports);
@@ -61,9 +57,19 @@ export function generate(
     io.write(
       `${shown(io, folder)}: no longer generated. Delete the folder, or delete its ${manifestFile} to keep it as your own.\n`,
     );
+  closing(options, io, { done, notDone }, generated);
+  return notDone.length > 0 || (options.command === "check" && retired.length > 0) ? 1 : 0;
+}
+
+/** The lines after the plans: what apply wrote, and for plan and apply what is still REPLACE_ME. */
+function closing(
+  options: Options,
+  io: Io,
+  { done, notDone }: { done: string[]; notDone: string[] },
+  generated: Generated,
+): void {
   if (options.command === "apply") summarise(io, done, notDone);
   if (options.command !== "check") stillToReplace(io, generated.environmentReports);
-  return notDone.length > 0 || (options.command === "check" && retired.length > 0) ? 1 : 0;
 }
 
 /** After plan and apply, how many places are still REPLACE_ME, each counted once. */
@@ -82,6 +88,13 @@ export function replaceMeCount(reports: Generated["environmentReports"]): number
     .filter((diagnostic) => diagnostic.code === "REPLACE_ME")
     .map(({ location }) => `${location?.file}:${location?.line}:${location?.column}`);
   return new Set(places).size;
+}
+
+/** Every environment generated; check fails while a value is still REPLACE_ME (spec/cli/outputs.md, section 4). */
+function generation(options: Options, io: Io, available: readonly Pack[]): Generated {
+  const definitions = resolve(io.cwd, options.definitions);
+  const replaceMe = options.command === "check" ? "error" : "warning";
+  return generateAll(nodeFiles(definitions), available, process.env, replaceMe);
 }
 
 /** A folder relative to the working folder, with `/` between its parts. */
