@@ -40,7 +40,7 @@ describe("REPLACE_ME", () => {
     const { code, output } = ingestron("request", "--env", "prod");
     expect(code).toBe(0);
     expect(output).toMatch(
-      /^# Platform request: erp \(prod\)\n\n## Values to replace\n\nThese values are still `REPLACE_ME`; deploying fails until they are written:\n\n- `settings.server` in `connections\/erp.yaml` \(line \d+\)\n- `settings.adf-copy.integration_runtime` in `platform.yaml` \(line \d+\)\n/,
+      /^# Platform request: erp \(prod\)\n\n## Values to replace\n\nThese values are still `REPLACE_ME`; `ingestron check` fails until they are written:\n\n- `settings.server` in `connections\/erp.yaml` \(line \d+\)\n- `settings.adf-copy.integration_runtime` in `platform.yaml` \(line \d+\)\n/,
     );
   });
 

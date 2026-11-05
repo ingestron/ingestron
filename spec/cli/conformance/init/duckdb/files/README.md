@@ -6,12 +6,18 @@ The table `orders` and the contracts `contracts/customer_totals.yaml`, `contract
 
 ## Run it
 
-    ingestron plan     # what would be generated, and what is still REPLACE_ME
-    ingestron apply    # writes the files under build/
+```sh
+ingestron plan     # what would be generated, and what is still REPLACE_ME
+ingestron apply    # writes the files under build/
+```
 
 ## Values to replace before deploying
 
 Nothing to replace: this project runs on this computer.
+
+## Secrets to create
+
+None: no connection here names a Key Vault secret.
 
 ## Deploy
 
@@ -19,7 +25,9 @@ Nothing to replace: this project runs on this computer.
 
 A folder for each environment. Build its tables on this computer:
 
-    duckdb -bail ingestron.duckdb -c ".read build/duckdb/dev/run.sql"
+```sh
+duckdb -bail ingestron.duckdb -c ".read build/duckdb/<environment>/run.sql"
+```
 
 ## Ask the platform team
 
