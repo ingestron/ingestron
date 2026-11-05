@@ -5,9 +5,10 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { openProject } from "../src/project.js";
 import { referenceAt } from "../src/reference.js";
+import { filledTemplates } from "./starters.js";
 
-const erp = join(import.meta.dirname, "../../cli/project-templates/private-sql-server");
-const retail = join(import.meta.dirname, "../../cli/project-templates/retail");
+const erp = join(filledTemplates, "private-sql-server");
+const retail = join(filledTemplates, "retail");
 
 /** The entry where `|` is in the edited text of `path` in `folder`. */
 function at(folder: string, path: string, edit: (text: string) => string = (text) => text) {

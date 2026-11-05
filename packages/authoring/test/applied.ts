@@ -4,8 +4,9 @@ import { cpSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { run } from "@ingestron/cli";
+import { filledTemplates } from "./starters.js";
 
-const templates = join(import.meta.dirname, "../../cli/project-templates");
+const templates = filledTemplates;
 
 /** A temporary copy of the starter `<name>` after `ingestron apply`. */
 export function appliedSample(name: string): string {

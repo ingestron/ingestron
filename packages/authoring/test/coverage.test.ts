@@ -13,8 +13,9 @@ import { describe, expect, it } from "vitest";
 import { completionsAt } from "../src/completion.js";
 import { openProject } from "../src/project.js";
 import { referenceAt } from "../src/reference.js";
+import { filledTemplates } from "./starters.js";
 
-const retail = join(import.meta.dirname, "../../cli/project-templates/retail");
+const retail = join(filledTemplates, "retail");
 const project = openProject(retail, new Map());
 
 /** The file each kind is written in, and its first lines. */

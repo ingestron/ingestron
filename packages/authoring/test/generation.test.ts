@@ -6,8 +6,9 @@ import { problems } from "../src/diagnostics.js";
 import { generatedFiles } from "../src/preview.js";
 import { openProject } from "../src/project.js";
 import { brokenPackMessage, breakPacks, mendPacks } from "./broken-pack.js";
+import { filledTemplates } from "./starters.js";
 
-const templates = join(import.meta.dirname, "../../cli/project-templates");
+const templates = filledTemplates;
 const erp = join(templates, "private-sql-server");
 
 describe("a pack's notices", () => {

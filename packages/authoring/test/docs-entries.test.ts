@@ -4,11 +4,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { referenceForDocs } from "../src/docs-entries.js";
 import { openProject } from "../src/project.js";
+import { filledTemplates } from "./starters.js";
 
-const project = openProject(
-  join(import.meta.dirname, "../../cli/project-templates/private-sql-server"),
-  new Map(),
-);
+const project = openProject(join(filledTemplates, "private-sql-server"), new Map());
 const open = (path: string) => referenceForDocs(project, path, "dev");
 
 describe("referenceForDocs", () => {
