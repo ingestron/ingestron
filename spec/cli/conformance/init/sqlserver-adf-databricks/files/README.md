@@ -17,12 +17,12 @@ Ingestron cannot know these. `plan` warns about each; `ingestron check` fails un
 
 | Name | File and line | What it is | Where to find it | Environments |
 | --- | --- | --- | --- | --- |
-| `source_server` | `connections/sqlserver.yaml:8` | The host name the integration runtime reaches | The source's own tools; see the connector's documentation: https://learn.microsoft.com/en-us/azure/data-factory/connector-sql-server | all |
-| `source_user` | `connections/sqlserver.yaml:10` | The login; required for SQL or Windows authentication | The source's own tools; see the connector's documentation: https://learn.microsoft.com/en-us/azure/data-factory/connector-sql-server | all |
+| `source_server` | `connections/sqlserver.yaml:8` | The host name the integration runtime reaches | Your database administrator, or the server's overview page in its cloud portal. | all |
+| `source_user` | `connections/sqlserver.yaml:10` | The login; required for SQL or Windows authentication | Your database administrator, who creates a login that may read the tables. | all |
 | `sqlserver_records_object` | `flows/sqlserver.yaml:10` | The source object: database.schema.table | The source's own tools; see the connector's documentation: https://learn.microsoft.com/en-us/azure/data-factory/connector-sql-server | all |
 | `storage_account` | `project.yaml:7`, `:13` | Storage account (ADLS Gen2) that the landing folder is in: its name | Azure portal: Storage accounts; the account's name | dev, prod |
 | `key_vault` | `project.yaml:9`, `:15` | Key Vault that holds the source's secrets: its name, not its URL | Azure portal: Key vaults; the vault's name | dev, prod |
-| `integration_runtime` | `platform.yaml:10` | Name of the integration runtime that reaches the source | Your platform team | all |
+| `integration_runtime` | `platform.yaml:10` | Name of the integration runtime that reaches the source | Data Factory Studio: Manage, then Integration runtimes. | all |
 
 Write each in place, or set it when creating a project with `ingestron init --set <name>=<value>`.
 The storage account and Key Vault are written for each environment in `project.yaml`: where
