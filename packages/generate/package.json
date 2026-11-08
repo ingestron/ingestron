@@ -3,7 +3,7 @@
   "version": "1.0.1",
   "description": "Plan, diff and apply generated files safely, keeping hand edits.",
   "license": "Apache-2.0",
-  "author": "IntentLabs <hello@ingestron.io>",
+  "author": "Ingestron <hello@ingestron.io>",
   "homepage": "https://docs.ingestron.io",
   "repository": {
     "type": "git",

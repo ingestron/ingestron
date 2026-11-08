@@ -46,4 +46,4 @@ security@ingestron.io. Privacy: privacy@ingestron.io.
 
 ## Licence
 
-Apache License 2.0. Made by IntentLabs.
+Apache License 2.0.

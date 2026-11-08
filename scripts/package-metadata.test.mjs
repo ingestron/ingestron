@@ -16,7 +16,7 @@ test("every package is public, with the fields npm shows", () => {
     assert.equal(json.private, undefined, `${json.name}: private`);
     assert.deepEqual(json.publishConfig, { access: "public" }, json.name);
     assert.equal(json.license, "Apache-2.0", json.name);
-    assert.equal(json.author, "IntentLabs <hello@ingestron.io>", json.name);
+    assert.equal(json.author, "Ingestron <hello@ingestron.io>", json.name);
     assert.equal(json.homepage, "https://docs.ingestron.io", json.name);
     assert.match(json.repository?.url ?? "", /^git\+https:\/\/github\.com\/ingestron\//, json.name);
     assert.match(json.bugs?.url ?? "", /^https:\/\/github\.com\/ingestron\/.+\/issues$/, json.name);

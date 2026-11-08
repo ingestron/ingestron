@@ -69,7 +69,7 @@ describe("project API", () => {
 
 describe("loadProject (Node file system)", () => {
   it("loads files from disk and reads environment variables", () => {
-    const root = mkdtempSync(join(tmpdir(), "intentlabs-config-"));
+    const root = mkdtempSync(join(tmpdir(), "ingestron-config-"));
     writeFileSync(join(root, "project.yaml"), project["project.yaml"]);
     writeFileSync(
       join(root, "orders.pipeline.yaml"),
@@ -83,9 +83,9 @@ describe("loadProject (Node file system)", () => {
   });
 
   it("treats a symbolic link that leaves the project as missing", () => {
-    const outside = mkdtempSync(join(tmpdir(), "intentlabs-outside-"));
+    const outside = mkdtempSync(join(tmpdir(), "ingestron-outside-"));
     writeFileSync(join(outside, "secret.yaml"), "password: hunter2\n");
-    const root = mkdtempSync(join(tmpdir(), "intentlabs-config-"));
+    const root = mkdtempSync(join(tmpdir(), "ingestron-config-"));
     mkdirSync(join(root, "shared"));
     symlinkSync(join(outside, "secret.yaml"), join(root, "shared/secret.yaml"));
     writeFileSync(join(root, "project.yaml"), project["project.yaml"]);
@@ -146,7 +146,7 @@ describe("file access edge cases", () => {
   });
 
   it("imports symbolic links to files inside the project", () => {
-    const root = mkdtempSync(join(tmpdir(), "intentlabs-config-"));
+    const root = mkdtempSync(join(tmpdir(), "ingestron-config-"));
     mkdirSync(join(root, "real"));
     writeFileSync(join(root, "project.yaml"), project["project.yaml"]);
     writeFileSync(join(root, "real/orders.yaml"), project["orders.pipeline.yaml"]);
@@ -156,12 +156,12 @@ describe("file access edge cases", () => {
   });
 
   it("uses process.env when envvars is passed as undefined", () => {
-    process.env.INTENTLABS_TEST_TABLE = "from_process";
-    const root = mkdtempSync(join(tmpdir(), "intentlabs-config-"));
+    process.env.INGESTRON_TEST_TABLE = "from_process";
+    const root = mkdtempSync(join(tmpdir(), "ingestron-config-"));
     writeFileSync(join(root, "project.yaml"), project["project.yaml"]);
     writeFileSync(
       join(root, "orders.pipeline.yaml"),
-      project["orders.pipeline.yaml"].replace("raw_orders", "${envvar:INTENTLABS_TEST_TABLE}"),
+      project["orders.pipeline.yaml"].replace("raw_orders", "${envvar:INGESTRON_TEST_TABLE}"),
     );
     const result = loadProject(root, { kinds: [pipeline], envvars: undefined });
     expect(result.project?.get(pipeline, "orders")?.value.table).toBe("from_process");

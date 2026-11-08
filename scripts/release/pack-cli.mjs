@@ -68,7 +68,7 @@ function manifest(version) {
       directory: "packages/cli",
     },
     bugs: { url: "https://github.com/ingestron/ingestron/issues", email: "hello@ingestron.io" },
-    author: "IntentLabs <hello@ingestron.io>",
+    author: "Ingestron <hello@ingestron.io>",
     license: "Apache-2.0",
     type: "module",
     bin: { ingestron: "dist/main.js" },
