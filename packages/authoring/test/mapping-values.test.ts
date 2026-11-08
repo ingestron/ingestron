@@ -2,6 +2,7 @@
 // shows what each value may be, and completion offers no literal `*` key.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import type * as Cli from "@ingestron/cli";
 import { describe, expect, it, vi } from "vitest";
 import { completionsAt } from "../src/completion.js";
 import { hoverAt } from "../src/hover.js";
@@ -10,7 +11,7 @@ import { filledTemplates } from "./starters.js";
 
 // The ADF pack's adf-copy, with a mapping of audit columns whose values are described.
 vi.mock("@ingestron/cli", async (importOriginal) => {
-  const real = await importOriginal<typeof import("@ingestron/cli")>();
+  const real = await importOriginal<typeof Cli>();
   const audit = {
     type: "object",
     description: "Columns added to every landed row, by name.",

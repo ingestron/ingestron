@@ -9,8 +9,11 @@ export type Ask = (
   fallback: string,
   check?: (answer: string) => string | undefined,
 ) => string;
+/** The recipe chosen, with nothing left to clean up. */
+type ChosenProject = ReturnType<typeof composableRecipe> & { done: () => void };
+
 /** Select a connector, reachable network and compatible ingestion route. */
-export function chooseProject(flags: Options["init"], ask: Ask) {
+export function chooseProject(flags: Options["init"], ask: Ask): ChosenProject {
   const sources = projectSources();
   let connector = flags.connector;
   if (!connector) {

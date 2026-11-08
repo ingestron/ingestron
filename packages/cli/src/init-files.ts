@@ -88,7 +88,7 @@ export function resolvedFiles(
   source: Source,
   answers: Answers,
   writing: Writing,
-) {
+): { files: Record<string, Content>; generated: ReturnType<typeof generateAll> } {
   let keep = writing.keep;
   for (;;) {
     const { files, leftOut } = projectFiles(source, answers, options.init.set, {

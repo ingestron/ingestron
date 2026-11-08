@@ -40,7 +40,10 @@ function home(built: ResolvedTable): string {
 }
 
 /** Each output with its table in this environment, as pairs of the output and its tables. */
-export function outputTables(model: ResolvedModel, product: ResolvedProduct) {
+export function outputTables(
+  model: ResolvedModel,
+  product: ResolvedProduct,
+): { output: ResolvedProduct["outputs"][number]; tables: ResolvedTable[] }[] {
   return product.outputs.map((output) => ({
     output,
     tables: output.tables

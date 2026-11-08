@@ -11,7 +11,7 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "validate": "pnpm format:check && pnpm secrets:check && pnpm licences:check && node --test scripts/*.test.mjs scripts/release/*.test.mjs && pnpm -r validate",
+    "validate": "pnpm format:check && pnpm secrets:check && pnpm licences:check && node --test scripts/*.test.mjs scripts/release/*.test.mjs && node scripts/check-modules.mjs && pnpm -r validate",
     "ingestron": "node packages/cli/dist/main.js",
     "secrets:check": "node scripts/scan-secrets.mjs",
     "licences:check": "node scripts/check-licences.mjs",

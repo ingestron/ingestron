@@ -92,7 +92,7 @@ export function tooLarge(
   bytes: number,
   maxFileBytes: number,
   referredFrom?: Location,
-) {
+): Diagnostic {
   return error(
     "FILE_TOO_LARGE",
     `${path} is ${bytes} bytes; the limit is ${maxFileBytes}.`,

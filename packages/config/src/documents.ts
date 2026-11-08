@@ -7,7 +7,8 @@ import { error, type Diagnostic, type Location } from "./diagnostics.js";
 import type { KindDefinition } from "./kinds.js";
 import { resolveNode } from "./resolve.js";
 import type { Scope } from "./scope.js";
-import { createSchemaChecker, locateIn } from "./validate.js";
+import type { createSchemaChecker } from "./validate.js";
+import { locateIn } from "./validate.js";
 
 /** One resolved and validated document. */
 export interface DefinitionDocument<T = unknown> {

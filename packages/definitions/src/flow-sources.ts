@@ -2,7 +2,7 @@
 // yet when the flow's source holds an unset reference (specification section 1).
 import type { DefinitionDocument } from "@ingestron/config";
 import type { Context } from "./context.js";
-import type { ChosenBy } from "./model.js";
+import type { ChosenBy, ResolvedTable } from "./model.js";
 import { kinds, type ConnectionDoc, type FlowDoc } from "./documents.js";
 import { stepOf, type StepResult } from "./steps.js";
 import { holdsUnsetEnvvar } from "./unknown-values.js";
@@ -51,7 +51,11 @@ export function sourceNotKnown(context: Context, flow: Flow): { sourceNotKnown?:
 }
 
 /** The resolved steps as the table records them; none when they are not known. */
-export function tableSteps(steps: Partial<FlowSteps>, connection: ConnectionDoc, object: string) {
+export function tableSteps(
+  steps: Partial<FlowSteps>,
+  connection: ConnectionDoc,
+  object: string,
+): Pick<ResolvedTable, "ingest" | "store" | "endsAtFiles" | "serve"> {
   return {
     ...(steps.ingest && {
       ingest: {
