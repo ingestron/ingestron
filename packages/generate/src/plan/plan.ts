@@ -1,10 +1,10 @@
 // Planning: decides, for each path, what applying would do. Never writes.
-import { digestOf } from "./digest.js";
+import { digestOf } from "../manifest/digest.js";
 import { lineDiff } from "./diff.js";
-import type { Entry, OutputFolder } from "./folder.js";
-import { readManifest } from "./manifest.js";
-import { checkWantedPaths, manifestFile } from "./paths.js";
-import type { Problem } from "./problems.js";
+import type { Entry, OutputFolder } from "../folder/folder.js";
+import { readManifest } from "../manifest/manifest.js";
+import { checkWantedPaths, manifestFile } from "../folder/paths.js";
+import type { Problem } from "../problems/problems.js";
 
 /** What applying does to one path. See the Changes table in README.md. */
 export type ChangeKind =

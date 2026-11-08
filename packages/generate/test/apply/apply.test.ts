@@ -6,7 +6,7 @@ import {
   memoryFolder,
   planGeneration,
   type OutputFolder,
-} from "../src/index.js";
+} from "../../src/index.js";
 
 const wanted = { "a.yml": "a: 2\n", "b.yml": "b: 1\n" };
 

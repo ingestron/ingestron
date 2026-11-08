@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { lineDiff } from "../src/diff.js";
+import { lineDiff } from "../../src/plan/diff.js";
 
 describe("lineDiff", () => {
   it("shows changed lines with two lines of context", () => {

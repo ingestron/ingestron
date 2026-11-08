@@ -11,7 +11,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { applyPlan, nodeFolder, planGeneration } from "../src/index.js";
+import { applyPlan, nodeFolder, planGeneration } from "../../src/index.js";
 
 function temporaryFolder(): string {
   return mkdtempSync(join(tmpdir(), "generate-"));
