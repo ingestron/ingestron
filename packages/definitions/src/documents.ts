@@ -1,10 +1,10 @@
 // The document kinds, their schemas and their TypeScript shapes. The shapes
 // mirror the schemas in ../schemas, which are the source of truth.
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { defineKind, type JsonSchema } from "@ingestron/config";
 import { parse } from "yaml";
+import { schemasFolder } from "./folders.js";
 
 /** An action's method choice and settings, as written in a flow or transform. */
 export interface ActionDoc {
@@ -176,10 +176,7 @@ const productKind = (apiVersion: string) =>
 
 /** A schema shipped in ../schemas. */
 export function packageSchema(file: string): JsonSchema {
-  const text = readFileSync(
-    join(dirname(fileURLToPath(import.meta.url)), "../schemas", file),
-    "utf8",
-  );
+  const text = readFileSync(join(schemasFolder, file), "utf8");
   return (file.endsWith(".json") ? JSON.parse(text) : parse(text)) as JsonSchema;
 }
 
