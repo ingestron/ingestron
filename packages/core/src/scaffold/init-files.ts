@@ -3,7 +3,7 @@
 // (spec/cli/projects.md).
 import { memoryFiles } from "@ingestron/config";
 import { isMap, isScalar, parse } from "yaml";
-import { generateAll } from "../project/index.js";
+import { generateAll } from "../generation/index.js";
 import { composeRecipe, type RecipeFacts } from "./init-compose.js";
 import { startToday } from "./init-platform.js";
 import { applySet } from "./init-set.js";

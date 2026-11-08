@@ -1,7 +1,7 @@
 // A new project's README.md, written once and then the user's: what to replace before
 // deploying, the secrets to create, and how to deploy (spec/cli/projects.md, "README.md").
 import { parse } from "yaml";
-import type { Generated } from "../project/index.js";
+import type { Generated } from "../generation/index.js";
 import { deploySection } from "./init-deploy.js";
 import {
   checkRows,

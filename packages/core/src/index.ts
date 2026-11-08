@@ -17,7 +17,7 @@ export {
   type GeneratedOutputsOptions,
   type Output,
   type Report,
-} from "./project/index.js";
+} from "./generation/index.js";
 
 // Comparing two environments.
 export { compareEnvironments, tableFacts } from "./compare/index.js";

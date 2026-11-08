@@ -1,4 +1,4 @@
-// The project module: what the rest of the package uses.
+// The generation module: what the rest of the package uses.
 export { environmentOutputs, generateAll, type Generated, type Output } from "./build-outputs.js";
 export { environmentsToGenerate } from "./environments.js";
 export {

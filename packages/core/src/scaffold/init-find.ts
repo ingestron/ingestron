@@ -2,7 +2,7 @@
 // connector's documentation (definitions specification, "Connector authoring metadata").
 import type { Connector } from "@ingestron/definitions";
 import { parse } from "yaml";
-import type { Generated } from "../project/index.js";
+import type { Generated } from "../generation/index.js";
 import { methodSettings } from "./init-platform.js";
 import type { ProjectValue } from "./init-values.js";
 import { packs } from "../packs/index.js";
