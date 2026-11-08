@@ -1,9 +1,9 @@
 // Applying: writes a clean plan under the folder's lock, all or nothing.
-import type { Entry, OutputFolder } from "../folder/folder.js";
-import { manifestText } from "../manifest/manifest.js";
-import { manifestFile } from "../folder/paths.js";
-import { seenOf, type Plan } from "../plan/plan.js";
-import { problem, type Problem } from "../problems/problems.js";
+import type { Entry, OutputFolder } from "../folder/index.js";
+import { manifestText } from "../manifest/index.js";
+import { manifestFile } from "../folder/index.js";
+import { seenOf, type Plan } from "../plan/index.js";
+import { problem, type Problem } from "../problems/index.js";
 
 /**
  * The outcome of applying a plan.

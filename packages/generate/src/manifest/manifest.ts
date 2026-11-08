@@ -1,8 +1,8 @@
 // Reads and writes the manifest: which files were generated, with digests.
 import { digestOf } from "./digest.js";
-import type { OutputFolder } from "../folder/folder.js";
-import { manifestFile, pathProblem } from "../folder/paths.js";
-import { problem, type Problem } from "../problems/problems.js";
+import type { OutputFolder } from "../folder/index.js";
+import { manifestFile, pathProblem } from "../folder/index.js";
+import { problem, type Problem } from "../problems/index.js";
 
 /** Path → digest of the content that was generated there. */
 export type Manifest = ReadonlyMap<string, string>;

@@ -1,6 +1,6 @@
 // Rules for wanted paths, so generation stays inside the output folder and
 // works the same on every operating system.
-import { problem, type Problem } from "../problems/problems.js";
+import { problem, type Problem } from "../problems/index.js";
 
 /** The manifest's file name in the output folder. */
 export const manifestFile = ".generated.json";

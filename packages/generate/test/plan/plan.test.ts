@@ -1,6 +1,12 @@
 // Planning details the conformance cases cannot express.
 import { describe, expect, it } from "vitest";
-import { applyPlan, formatPlan, manifestFile, memoryFolder, planGeneration } from "../../src/index.js";
+import {
+  applyPlan,
+  formatPlan,
+  manifestFile,
+  memoryFolder,
+  planGeneration,
+} from "../../src/index.js";
 
 describe("planGeneration", () => {
   it("treats a folder or link at a wanted path as a conflict", () => {
