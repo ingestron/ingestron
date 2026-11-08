@@ -4,9 +4,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadDefinitions, type ResolvedModel } from "@ingestron/definitions";
 import { expect } from "vitest";
-import { packs } from "../src/packs.js";
+import { packs } from "@ingestron/core";
 
-const retail = join(import.meta.dirname, "../project-templates/retail");
+const retail = join(import.meta.dirname, "../../core/project-templates/retail");
 export const customers = `apiVersion: v1.1.0
 kind: DataProduct
 id: customers

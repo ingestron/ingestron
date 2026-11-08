@@ -1,0 +1,67 @@
+{
+  "name": "@ingestron/core",
+  "version": "1.0.0",
+  "description": "The Ingestron API: load a project, plan, apply and check its output, compare environments, write the platform request, and create projects.",
+  "license": "Apache-2.0",
+  "author": "Ingestron <hello@ingestron.io>",
+  "homepage": "https://docs.ingestron.io",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ingestron/ingestron.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/ingestron/ingestron/issues",
+    "email": "hello@ingestron.io"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "project-templates",
+    "NOTICE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "pnpm build && tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "check:docs": "tsx scripts/check-docs.ts",
+    "validate": "pnpm lint && pnpm typecheck && pnpm test && pnpm check:docs && pnpm check:api",
+    "api": "api-extractor run --local",
+    "check:api": "api-extractor run",
+    "prepack": "pnpm build && cp ../../NOTICE NOTICE"
+  },
+  "dependencies": {
+    "@ingestron/config": "workspace:^",
+    "@ingestron/definitions": "workspace:^",
+    "@ingestron/generate": "workspace:^",
+    "@ingestron/pack-adf": "^2.1.0",
+    "@ingestron/pack-databricks": "^2.1.0",
+    "@ingestron/pack-duckdb": "^2.0.0",
+    "@ingestron/pack-synapse": "^2.0.0",
+    "yaml": "2.9.1"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "7.59.4",
+    "@types/node": "22.20.5",
+    "eslint": "10.13.0",
+    "eslint-plugin-jsdoc": "65.4.2",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.0",
+    "vitest": "5.0.5"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -3,14 +3,19 @@
 // found by resolving it rather than written by hand.
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { listSamples, readSample, sampleFacts, templatesFolder } from "../src/samples.js";
+import {
+  listSamples,
+  readSample,
+  sampleFacts,
+  templatesFolder,
+} from "../../src/scaffold/samples.js";
 
-const fixtures = join(import.meta.dirname, "fixtures");
+const fixtures = join(import.meta.dirname, "../../../cli/test/fixtures");
 
 describe("listSamples", () => {
   it("lists the starters in project-templates/, minimal first", () => {
     const starters = listSamples();
-    expect(templatesFolder).toBe(join(import.meta.dirname, "../project-templates"));
+    expect(templatesFolder).toBe(join(import.meta.dirname, "../../project-templates"));
     expect(starters).toHaveLength(9);
     expect(starters[0]?.name).toBe("minimal");
     expect(starters.every((sample) => sample.kind === "starter")).toBe(true);

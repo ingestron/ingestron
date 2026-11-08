@@ -14,9 +14,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { readLine } from "../src/ask.js";
-import { scaffoldFiles, writeScaffold } from "../src/scaffold.js";
+import { scaffoldFiles, writeScaffold } from "@ingestron/core";
 import { standardSource, templateSource, withoutCredentials } from "../src/sources.js";
-import { builtInTemplates, readTemplate } from "../src/templates.js";
+import { builtInTemplates, readTemplate } from "@ingestron/core";
 
 const temp = () => mkdtempSync(join(tmpdir(), "ingestron-hardening-"));
 const minimal = () => builtInTemplates().find((item) => item.name === "minimal")!;

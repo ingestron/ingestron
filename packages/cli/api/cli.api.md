@@ -4,13 +4,10 @@
 
 ```ts
 
-import { AnyDiagnostic } from '@ingestron/config';
-import { FileSource } from '@ingestron/config';
-import { Pack } from '@ingestron/definitions';
-import { SuppliedValue } from '@ingestron/definitions';
+import * as core from '@ingestron/core';
 
-// @public
-export function builtInTemplates(): Template[];
+// @public @deprecated (undocumented)
+export const builtInTemplates: typeof core.builtInTemplates;
 
 // @public
 export const commands: readonly [{
@@ -39,11 +36,11 @@ export const commands: readonly [{
     readonly summary: "Create a project from a connection and supported ingestion route.";
 }];
 
-// @public
-export function compareEnvironments(files: FileSource, a: string, b: string): string;
+// @public @deprecated (undocumented)
+export const compareEnvironments: typeof core.compareEnvironments;
 
-// @public
-export function contractFromSample(text: string, file: string, id: string): string;
+// @public @deprecated (undocumented)
+export const contractFromSample: typeof core.contractFromSample;
 
 // @public
 export const flags: readonly [{
@@ -90,35 +87,17 @@ export const flags: readonly [{
     readonly summary: "Show this text.";
 }];
 
-// @public
-export interface GeneratedOutput {
-    byEnvironment: boolean;
-    deployValues?: SuppliedValue[];
-    files: Record<string, string>;
-    folder: string;
-    name: string;
-    targets: string[];
-}
+// @public @deprecated (undocumented)
+export type GeneratedOutput = core.GeneratedOutput;
 
-// @public
-export interface GeneratedOutputs {
-    deployed: string[];
-    environmentReports: Report[];
-    ok: boolean;
-    outputs: GeneratedOutput[];
-    packReports: Report[];
-    refused?: AnyDiagnostic;
-    text: string;
-}
+// @public @deprecated (undocumented)
+export type GeneratedOutputs = core.GeneratedOutputs;
 
-// @public
-export function generatedOutputs(files: FileSource, options?: GeneratedOutputsOptions): GeneratedOutputs;
+// @public @deprecated (undocumented)
+export const generatedOutputs: typeof core.generatedOutputs;
 
-// @public
-export interface GeneratedOutputsOptions {
-    envvars?: Readonly<Record<string, string | undefined>>;
-    packs?: readonly Pack[];
-}
+// @public @deprecated (undocumented)
+export type GeneratedOutputsOptions = core.GeneratedOutputsOptions;
 
 // @public
 export interface Io {
@@ -130,172 +109,68 @@ export interface Io {
     write(text: string): void;
 }
 
-// @public
-export function listSamples(folder?: string, kind?: Sample["kind"]): Sample[];
+// @public @deprecated (undocumented)
+export const listSamples: typeof core.listSamples;
 
-// @public
-export function nameProblem(text: string, what: "project" | "environment"): string | undefined;
+// @public @deprecated (undocumented)
+export const nameProblem: typeof core.nameProblem;
 
-// @public
-export const packs: Pack[];
+// @public @deprecated (undocumented)
+export const packs: typeof core.packs;
 
-// @public
-export function parseTemplate(text: string, name: string, folder: string): Template;
+// @public @deprecated (undocumented)
+export const parseTemplate: typeof core.parseTemplate;
 
-// @public
-export function platformRequest(files: FileSource, environment: string | undefined): string;
+// @public @deprecated (undocumented)
+export const platformRequest: typeof core.platformRequest;
 
-// @public
-export function projectId(text: string): string;
+// @public @deprecated (undocumented)
+export const projectId: typeof core.projectId;
 
-// @public
-export interface ProjectRecipe {
-    // Warning: (ae-forgotten-export) The symbol "Content" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    files: Record<string, Content>;
-    // (undocumented)
-    template: Template;
-}
+// @public @deprecated (undocumented)
+export type ProjectRecipe = core.ProjectRecipe;
 
-// @public
-export function projectRecipe(connector: string, via: string, connectivity: string): ProjectRecipe;
+// @public @deprecated (undocumented)
+export const projectRecipe: typeof core.projectRecipe;
 
-// @public
-export interface ProjectRoute {
-    // (undocumented)
-    connectivity: string[];
-    // (undocumented)
-    maturity: string;
-    // (undocumented)
-    method: string;
-    // (undocumented)
-    title: string;
-    // (undocumented)
-    via: string;
-}
+// @public @deprecated (undocumented)
+export type ProjectRoute = core.ProjectRoute;
 
-// @public
-export function projectRoutes(connector: string, connectivity?: string): ProjectRoute[];
+// @public @deprecated (undocumented)
+export const projectRoutes: typeof core.projectRoutes;
 
-// @public
-export interface ProjectSource {
-    // (undocumented)
-    category: string;
-    // (undocumented)
-    id: string;
-    // (undocumented)
-    title: string;
-}
+// @public @deprecated (undocumented)
+export type ProjectSource = core.ProjectSource;
 
-// @public
-export function projectSources(): ProjectSource[];
+// @public @deprecated (undocumented)
+export const projectSources: typeof core.projectSources;
 
-// @public
-export function readSample(folder: string, kind: Sample["kind"]): Sample;
+// @public @deprecated (undocumented)
+export const readSample: typeof core.readSample;
 
-// @public
-export interface Report {
-    diagnostics: AnyDiagnostic[];
-    failed: boolean;
-    name: string;
-}
+// @public @deprecated (undocumented)
+export type Report = core.Report;
 
 // @public
 export function run(args: string[], io: Io): number;
 
-// @public
-export interface Sample {
-    // (undocumented)
-    folder: string;
-    // (undocumented)
-    kind: "starter" | "guide";
-    // (undocumented)
-    name: string;
-    // (undocumented)
-    summary: string;
-    // (undocumented)
-    title: string;
-}
+// @public @deprecated (undocumented)
+export type Sample = core.Sample;
 
-// @public
-export interface SampleFacts {
-    // (undocumented)
-    connectivity: string[];
-    // (undocumented)
-    connectors: string[];
-    // (undocumented)
-    environments: string[];
-    features: string[];
-    // (undocumented)
-    methods: string[];
-    // (undocumented)
-    packs: string[];
-}
+// @public @deprecated (undocumented)
+export type SampleFacts = core.SampleFacts;
 
-// @public
-export function sampleFacts(folder: string): SampleFacts;
+// @public @deprecated (undocumented)
+export const sampleFacts: typeof core.sampleFacts;
 
-// @public
-export interface Template {
-    // (undocumented)
-    folder: string;
-    // (undocumented)
-    name: string;
-    // Warning: (ae-forgotten-export) The symbol "Question" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    questions: Question[];
-    // (undocumented)
-    summary: string;
-    // (undocumented)
-    title: string;
-}
+// @public @deprecated (undocumented)
+export type Template = core.Template;
 
-// @public
-export const templateSchema: {
-    title: string;
-    type: string;
-    additionalProperties: boolean;
-    required: string[];
-    properties: {
-        title: {
-            type: string;
-            description: string;
-        };
-        summary: {
-            type: string;
-            description: string;
-        };
-        questions: {
-            type: string;
-            description: string;
-            items: {
-                type: string;
-                additionalProperties: boolean;
-                required: string[];
-                properties: {
-                    value: {
-                        type: string;
-                        pattern: string;
-                        description: string;
-                    };
-                    ask: {
-                        type: string;
-                        description: string;
-                    };
-                    default: {
-                        type: string;
-                        description: string;
-                    };
-                };
-            };
-        };
-    };
-};
+// @public @deprecated (undocumented)
+export const templateSchema: typeof core.templateSchema;
 
-// @public
-export const templatesFolder: string;
+// @public @deprecated (undocumented)
+export const templatesFolder: typeof core.templatesFolder;
 
 // (No @packageDocumentation comment for this package)
 

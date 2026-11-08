@@ -54,7 +54,7 @@ const values: Record<string, [file: string, written: string, value: string][]> =
 
 function fill(): string {
   const folder = mkdtempSync(join(tmpdir(), "ingestron-authoring-starters-"));
-  cpSync(join(import.meta.dirname, "../../cli/project-templates"), folder, {
+  cpSync(join(import.meta.dirname, "../../core/project-templates"), folder, {
     recursive: true,
     filter: (path) => !path.includes("/build"),
   });

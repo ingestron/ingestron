@@ -8,9 +8,12 @@ import { run } from "../src/index.js";
 import { filledStarter } from "./starters.js";
 
 const examples = join(import.meta.dirname, "..");
+/** The package an example kind lives in: starters are in core. */
+const folderOf = (name: string): string =>
+  name.startsWith("project-templates") ? join(examples, "../core") : examples;
 const names = ["project-templates", "test/fixtures"]
   .flatMap((kind) =>
-    readdirSync(join(examples, kind), { withFileTypes: true })
+    readdirSync(join(folderOf(kind), kind), { withFileTypes: true })
       .filter((entry) => entry.isDirectory())
       .map((entry) => `${kind}/${entry.name}`),
   )

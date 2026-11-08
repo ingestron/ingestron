@@ -17,12 +17,15 @@ import { openProject } from "../src/project.js";
 import { referenceAt } from "../src/reference.js";
 
 const cli = join(import.meta.dirname, "../../cli");
+/** The package an example kind lives in: starters are in core. */
+const folderOf = (kind: string): string =>
+  kind === "project-templates" ? join(import.meta.dirname, "../../core") : cli;
 // The starters, the CLI's test fixtures and the ADF connector catalogue, by folder.
 const folders = new Map([
   ...["project-templates", "test/fixtures"].flatMap((kind) =>
-    readdirSync(join(cli, kind))
-      .filter((name) => statSync(join(cli, kind, name)).isDirectory())
-      .map((name): [string, string] => [`${kind}/${name}`, join(cli, kind, name)]),
+    readdirSync(join(folderOf(kind), kind))
+      .filter((name) => statSync(join(folderOf(kind), kind, name)).isDirectory())
+      .map((name): [string, string] => [`${kind}/${name}`, join(folderOf(kind), kind, name)]),
   ),
   ["adf recipes", recipesFolder],
 ]);

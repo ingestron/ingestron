@@ -6,7 +6,7 @@ import { manifestSchema, toEditorSchema, type JsonSchema } from "@ingestron/conf
 import { kinds } from "@ingestron/definitions";
 import type { Options } from "./args.js";
 import type { Io } from "./io.js";
-import { templateSchema } from "./templates.js";
+import { templateSchema } from "@ingestron/core";
 
 /** Writes the schemas to `.ingestron/schemas` and prints the VS Code setting. */
 export function writeSchemas(options: Options, io: Io): number {

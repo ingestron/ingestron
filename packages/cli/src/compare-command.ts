@@ -2,8 +2,8 @@
 import { resolve } from "node:path";
 import { nodeFiles } from "@ingestron/config";
 import type { Options } from "./args.js";
-import { compareEnvironments } from "./compare.js";
-import { environmentsToGenerate } from "./environments.js";
+import { compareEnvironments } from "@ingestron/core";
+import { environmentsToGenerate } from "@ingestron/core";
 import type { Io } from "./io.js";
 
 /** Prints the comparison of the two environments given, else the project's first two. */

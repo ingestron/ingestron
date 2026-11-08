@@ -30,7 +30,6 @@
   "files": [
     "dist",
     "README.md",
-    "project-templates",
     "NOTICE"
   ],
   "scripts": {
@@ -46,6 +45,7 @@
     "prepack": "pnpm build && cp ../../NOTICE NOTICE"
   },
   "dependencies": {
+    "@ingestron/core": "workspace:^",
     "@ingestron/config": "workspace:^",
     "@ingestron/definitions": "workspace:^",
     "@ingestron/generate": "workspace:^",

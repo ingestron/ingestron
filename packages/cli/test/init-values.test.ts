@@ -149,7 +149,9 @@ describe("a template from elsewhere", () => {
   /** A copy of the minimal starter whose template.yaml lists a question, as older templates do. */
   function asking(cwd: string): string {
     const folder = join(cwd, "asking");
-    cpSync(join(import.meta.dirname, "../project-templates/minimal"), folder, { recursive: true });
+    cpSync(join(import.meta.dirname, "../../core/project-templates/minimal"), folder, {
+      recursive: true,
+    });
     writeFileSync(
       join(folder, "template.yaml"),
       'title: Asking\nsummary: Asks.\nquestions:\n  - { value: team, ask: "Which team?", default: sales }\n',

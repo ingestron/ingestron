@@ -18,7 +18,7 @@ function workspace(
   value = /abfss:\/\/landing@\$\{values\.storage_account\}\.dfs\.core\.windows\.net\/stores/g,
 ): string {
   const folder = mkdtempSync(join(tmpdir(), "ingestron-env-files-"));
-  cpSync(join(import.meta.dirname, "../project-templates/private-files"), folder, {
+  cpSync(join(import.meta.dirname, "../../core/project-templates/private-files"), folder, {
     recursive: true,
     filter: (path) => !path.includes("/build"),
   });
@@ -32,7 +32,9 @@ function workspace(
 /** A copy of the duckdb starter, with `text` in its platform or standard read from the variable. */
 function duckdb(files: Record<string, string>, text = "published: ./published"): string {
   const folder = mkdtempSync(join(tmpdir(), "ingestron-env-files-"));
-  cpSync(join(import.meta.dirname, "../project-templates/duckdb"), folder, { recursive: true });
+  cpSync(join(import.meta.dirname, "../../core/project-templates/duckdb"), folder, {
+    recursive: true,
+  });
   const [key] = text.split(":");
   for (const file of ["platform.yaml", "standard.yaml"]) {
     const path = join(folder, file);

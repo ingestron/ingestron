@@ -2,11 +2,11 @@
 import { resolve } from "node:path";
 import { nodeFiles } from "@ingestron/config";
 import type { Options } from "./args.js";
-import { generateAll } from "./build-outputs.js";
-import { environmentsToGenerate } from "./environments.js";
+import { generateAll } from "@ingestron/core";
+import { environmentsToGenerate } from "@ingestron/core";
 import type { Io } from "./io.js";
-import { packs } from "./packs.js";
-import { requestFor } from "./request.js";
+import { packs } from "@ingestron/core";
+import { requestFor } from "@ingestron/core";
 
 /** Prints the request for each environment. Returns the exit code: 1 when any has errors. */
 export function request(options: Options, io: Io): number {

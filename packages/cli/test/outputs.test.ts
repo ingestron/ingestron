@@ -6,7 +6,7 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
-import { packs } from "../src/packs.js";
+import { packs } from "@ingestron/core";
 import { edit, workspace } from "./workspace.js";
 
 describe("--env", () => {

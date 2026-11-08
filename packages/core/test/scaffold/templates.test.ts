@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { builtInFolder, builtInTemplates, readTemplate } from "../src/templates.js";
+import { builtInFolder, builtInTemplates, readTemplate } from "../../src/scaffold/templates.js";
 
 function folderWith(text: string): string {
   const folder = mkdtempSync(join(tmpdir(), "ingestron-tpl-test-"));
@@ -50,6 +50,6 @@ describe("template.yaml", () => {
 
 describe("where built-in templates are", () => {
   it("is project-templates/ beside dist/, the same in the repository and installed", () => {
-    expect(builtInFolder).toBe(join(import.meta.dirname, "../project-templates"));
+    expect(builtInFolder).toBe(join(import.meta.dirname, "../../project-templates"));
   });
 });

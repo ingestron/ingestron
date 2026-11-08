@@ -3,7 +3,7 @@
 import { formatDiagnostics, type AnyDiagnostic, type FileSource } from "@ingestron/config";
 import { packLoadProblem, type Pack, type SuppliedValue } from "@ingestron/definitions";
 import { generateAll } from "./build-outputs.js";
-import { packs } from "./packs.js";
+import { packs } from "../packs/packs.js";
 import { environmentReportsText, packReportsText } from "./report-text.js";
 import type { Report } from "./resolve-environments.js";
 

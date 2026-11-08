@@ -1,6 +1,6 @@
 // The same connector and method facts drive CLI and editor project choices.
 import type { Method } from "@ingestron/definitions";
-import { packs } from "./packs.js";
+import { packs } from "../packs/packs.js";
 /** One source in the project builder's categorised catalogue.
  * @example const source: ProjectSource = projectSources()[0]!;
  */

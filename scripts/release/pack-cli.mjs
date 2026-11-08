@@ -15,7 +15,7 @@ const notGenerated = (path) => !/\/(build|\.generated\.json)(\/|$)/.test(path);
 const folders = [
   ["packages/definitions/schemas", "schemas"],
   ["packages/cli/node_modules/@ingestron/pack-databricks/templates", "templates"],
-  ["packages/cli/project-templates", "project-templates"],
+  ["packages/core/project-templates", "project-templates"],
   ["packages/cli/node_modules/@ingestron/pack-adf/recipes", "recipes"],
 ];
 

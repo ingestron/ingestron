@@ -1,6 +1,6 @@
 // What the passport claims about a table, decided per table (spec/cli/passport.md).
 import { describe, expect, it } from "vitest";
-import { passports } from "../src/passport.js";
+import { passports } from "@ingestron/core";
 import { model, project } from "./passport-fixtures.js";
 
 describe("passport claims", () => {

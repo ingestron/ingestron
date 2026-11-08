@@ -13,10 +13,10 @@ import {
   type Plan,
 } from "@ingestron/generate";
 import type { Options } from "./args.js";
-import { generateAll, type Generated } from "./build-outputs.js";
+import { generateAll, type Generated } from "@ingestron/core";
 import type { Io } from "./io.js";
 import { extraFiles, generatedFolders } from "./outputs.js";
-import { packs } from "./packs.js";
+import { packs } from "@ingestron/core";
 import { printEnvironmentReports, printPackReports } from "./reports.js";
 
 interface Planned {

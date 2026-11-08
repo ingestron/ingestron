@@ -1,8 +1,8 @@
 // What resolving and building found, printed before anything is planned
 // (spec/cli/outputs.md, sections 1 and 3).
 import type { Io } from "./io.js";
-import { environmentReportsText, packReportsText } from "./report-text.js";
-import type { Report } from "./resolve-environments.js";
+import { environmentReportsText, packReportsText } from "@ingestron/core";
+import type { Report } from "@ingestron/core";
 
 /**
  * Each environment's diagnostics, each shown once under every environment that has it:

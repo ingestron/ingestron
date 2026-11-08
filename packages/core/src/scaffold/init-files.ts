@@ -3,12 +3,12 @@
 // (spec/cli/projects.md).
 import { memoryFiles } from "@ingestron/config";
 import { isMap, isScalar, parse } from "yaml";
-import { generateAll } from "./build-outputs.js";
+import { generateAll } from "../project/build-outputs.js";
 import { composeRecipe, type RecipeFacts } from "./init-compose.js";
 import { startToday } from "./init-platform.js";
 import { applySet } from "./init-set.js";
 import { editYaml } from "./init-yaml.js";
-import { packs } from "./packs.js";
+import { packs } from "../packs/packs.js";
 import { scaffoldFiles, type Answers, type Content } from "./scaffold.js";
 import type { Template } from "./templates.js";
 

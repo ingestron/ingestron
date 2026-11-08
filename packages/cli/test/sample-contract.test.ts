@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
 import { run } from "../src/index.js";
-import { contractFromSample } from "../src/sample-contract.js";
+import { contractFromSample } from "@ingestron/core";
 
 const csv = [
   "id,email,total,paid,ordered_on,updated_at,note",

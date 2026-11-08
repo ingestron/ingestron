@@ -7,15 +7,15 @@ import { parse } from "yaml";
 import type { Options } from "./args.js";
 import { generate } from "./generate.js";
 import { chooseProject } from "./init-choice.js";
-import { resolvedFiles, type Source } from "./init-files.js";
-import { projectReadme } from "./init-readme.js";
-import { stillToReplace } from "./init-summary.js";
+import { resolvedFiles, type Source } from "@ingestron/core";
+import { projectReadme } from "@ingestron/core";
+import { stillToReplace } from "@ingestron/core";
 import type { Io } from "./io.js";
-import { packs } from "./packs.js";
-import { environmentReportsText } from "./report-text.js";
-import { ignoredText, nameProblem, projectId, writeScaffold, type Answers } from "./scaffold.js";
+import { packs } from "@ingestron/core";
+import { environmentReportsText } from "@ingestron/core";
+import { ignoredText, nameProblem, projectId, writeScaffold, type Answers } from "@ingestron/core";
 import { standardSource, templateSource } from "./sources.js";
-import type { Template } from "./templates.js";
+import type { Template } from "@ingestron/core";
 
 /** Asks one question; `check` explains an answer that is not valid, and the question is asked again. */
 type Ask = (

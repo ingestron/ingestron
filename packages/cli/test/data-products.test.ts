@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { loadDefinitions } from "@ingestron/definitions";
 import { expect, it } from "vitest";
 import { run } from "../src/index.js";
-import { packs } from "../src/packs.js";
+import { packs } from "@ingestron/core";
 
 const example = join(import.meta.dirname, "fixtures/data-products");
 

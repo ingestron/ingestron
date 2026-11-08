@@ -8,7 +8,7 @@ import { scaffoldFiles, type Content } from "./scaffold.js";
 import { builtInFolder, readTemplate, type Template } from "./templates.js";
 import { projectRoutes, projectSources, routeAliases } from "./project-choices.js";
 import type { RecipeFacts } from "./init-compose.js";
-import { packs } from "./packs.js";
+import { packs } from "../packs/packs.js";
 const directExamples: Record<string, string> = {
   files: "minimal",
   sqlserver: "sql-server",

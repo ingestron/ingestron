@@ -12,8 +12,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
-import { projectId, scaffoldFiles, withEnvIgnores, writeScaffold } from "../src/scaffold.js";
-import { builtInTemplates, readTemplate } from "../src/templates.js";
+import {
+  projectId,
+  scaffoldFiles,
+  withEnvIgnores,
+  writeScaffold,
+} from "../../src/scaffold/scaffold.js";
+import { builtInTemplates, readTemplate } from "../../src/scaffold/templates.js";
 
 const template = (name: string) => builtInTemplates().find((item) => item.name === name)!;
 const temp = () => mkdtempSync(join(tmpdir(), "ingestron-scaffold-test-"));

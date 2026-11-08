@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import type { Options } from "./args.js";
 import type { Io } from "./io.js";
-import { contractFromSample, objectName } from "./sample-contract.js";
+import { contractFromSample, objectName } from "@ingestron/core";
 
 /** Writes contracts/<name>.yaml from the sample. Returns the exit code. */
 export function draftContract(options: Options, io: Io): number {

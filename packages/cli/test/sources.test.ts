@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { isGitUrl, standardSource, templateSource } from "../src/sources.js";
-import { builtInTemplates } from "../src/templates.js";
+import { builtInTemplates } from "@ingestron/core";
 
 const temp = (prefix = "ingestron-sources-test-") => mkdtempSync(join(tmpdir(), prefix));
 

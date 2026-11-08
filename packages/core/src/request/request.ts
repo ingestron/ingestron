@@ -17,8 +17,8 @@ import {
   type RequestSection,
   type ResolvedModel,
 } from "@ingestron/definitions";
-import { environmentOutputs, generateAll, type Generated } from "./build-outputs.js";
-import { packs } from "./packs.js";
+import { environmentOutputs, generateAll, type Generated } from "../project/build-outputs.js";
+import { packs } from "../packs/packs.js";
 import { suppliedFor } from "./request-supplied.js";
 import { notKnown as whatIsNotKnown } from "./request-unknown.js";
 import { valuesToProvide } from "./request-values.js";

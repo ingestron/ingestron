@@ -21,7 +21,7 @@ describe("problems", () => {
   });
 
   it("warns at each value a new project still holds as REPLACE_ME, for the environment", () => {
-    const starter = join(import.meta.dirname, "../../cli/project-templates/minimal");
+    const starter = join(import.meta.dirname, "../../core/project-templates/minimal");
     expect(problems(openProject(starter, new Map()), "dev")).toMatchObject([
       {
         file: "project.yaml",
