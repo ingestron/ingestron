@@ -1,8 +1,8 @@
 // A contract's quality rules that nothing checks, and why (specification
 // section 6): warned where they are written, and kept for the passport.
-import type { Context } from "../context/context.js";
-import type { Source } from "../diagnostics/diagnostics.js";
-import { isRecord } from "../internal/merge.js";
+import type { Context } from "../context/index.js";
+import type { Source } from "../diagnostics/index.js";
+import { isRecord } from "../internal/index.js";
 
 /** An ODCS quality rule, as written. */
 export type Rule = Record<string, unknown>;

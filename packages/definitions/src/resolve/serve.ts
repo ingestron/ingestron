@@ -1,7 +1,14 @@
 // The serve step: after a table's last step, and only when something chooses
 // one (specification section 4).
-import { allowsWritten, choiceOf, NO_STORE, peekMethod, type Facts, type Named } from "../choose/choose.js";
-import type { Context } from "../context/context.js";
+import {
+  allowsWritten,
+  choiceOf,
+  NO_STORE,
+  peekMethod,
+  type Facts,
+  type Named,
+} from "../choose/index.js";
+import type { Context } from "../context/index.js";
 import type { SettingsLayer } from "./settings.js";
 import { resolveStep, type StepResult } from "./steps.js";
 

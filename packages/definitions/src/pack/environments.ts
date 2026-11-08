@@ -2,7 +2,7 @@
 // returns when it folds its targets into one artefact, and the diagnostics for
 // what it could not fold.
 import type { AnyDiagnostic } from "@ingestron/config";
-import type { DefinitionCode } from "../diagnostics/diagnostics.js";
+import type { DefinitionCode } from "../diagnostics/index.js";
 
 /**
  * The codes of the problems a pack may report from `buildEnvironments`, each documented in

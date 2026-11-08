@@ -1,7 +1,7 @@
 // What a rule says: the facts it matches, the method it chooses, and its settings.
-import type { Source } from "../diagnostics/diagnostics.js";
-import type { RuleDoc } from "../documents/documents.js";
-import type { Rule } from "../pack/pack.js";
+import type { Source } from "../diagnostics/index.js";
+import type { RuleDoc } from "../documents/index.js";
+import type { Rule } from "../pack/index.js";
 import type { Facts, Choice } from "./choose.js";
 
 /** A rule's facts: everything but the method it chooses and its settings. */

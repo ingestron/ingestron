@@ -1,16 +1,16 @@
 // Tables brought in by flows: ingest and store steps, contract, quality and names.
 import type { DefinitionDocument } from "@ingestron/config";
-import { allowsWritten, endsAtFiles, NO_STORE, type Facts, type Named } from "../choose/choose.js";
-import type { Context } from "../context/context.js";
-import { contractFor, expectationsFor, expectationsNotChecked } from "../contracts/contract.js";
-import { kinds, type FlowDoc } from "../documents/documents.js";
-import type { ResolvedTable } from "../pack/model.js";
+import { allowsWritten, endsAtFiles, NO_STORE, type Facts, type Named } from "../choose/index.js";
+import type { Context } from "../context/index.js";
+import { contractFor, expectationsFor, expectationsNotChecked } from "../contracts/index.js";
+import { kinds, type FlowDoc } from "../documents/index.js";
+import type { ResolvedTable } from "../pack/index.js";
 import type { SettingsLayer } from "./settings.js";
 import { landedIngest, leftOut } from "./runs-on.js";
 import { serveStep } from "./serve.js";
-import { unusedStoreSettings } from "../context/unused-settings.js";
+import { unusedStoreSettings } from "../context/index.js";
 import { resolveStep, type StepResult } from "./steps.js";
-import { renderTableName, type TableNamer } from "../tables/tables.js";
+import { renderTableName, type TableNamer } from "../tables/index.js";
 import {
   connectionOf,
   sourceNotKnown,

@@ -3,8 +3,8 @@
 // renaming it to the near method (specification section 3).
 import type { DefinitionDocument, Fix } from "@ingestron/config";
 import type { Context } from "./context.js";
-import { isRecord } from "../internal/merge.js";
-import type { Action } from "../pack/pack.js";
+import { isRecord } from "../internal/index.js";
+import type { Action } from "../pack/index.js";
 
 const actions: Action[] = ["ingest", "transform", "store", "serve"];
 

@@ -2,7 +2,7 @@
 // (`UNKNOWN_PACK`, reported at runs-on in project.yaml).
 import type { AnyDiagnostic, FileSource, Fix, Location, Project } from "@ingestron/config";
 import { isNode, LineCounter, parseDocument } from "yaml";
-import { kinds } from "../documents/documents.js";
+import { kinds } from "../documents/index.js";
 import type { PackInfo } from "./pack.js";
 
 /** `UNKNOWN_PACK` when the selected environment runs on a pack the standard does not list. */

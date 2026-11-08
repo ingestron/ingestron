@@ -2,8 +2,8 @@
 // fix that adds each key, empty, where it belongs (specification section 3).
 import type { DefinitionDocument, FixEdit } from "@ingestron/config";
 import type { Context } from "./context.js";
-import { isRecord } from "../internal/merge.js";
-import type { Action, Method } from "../pack/pack.js";
+import { isRecord } from "../internal/index.js";
+import type { Action, Method } from "../pack/index.js";
 
 /** The flow or transform that uses a method, and where in it the problem is shown. */
 export interface SettingsUser {

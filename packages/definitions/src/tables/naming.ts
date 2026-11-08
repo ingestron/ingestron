@@ -1,9 +1,9 @@
 // Builds names from Liquid patterns (specification section 5).
 import { Liquid } from "liquidjs";
-import type { Context } from "../context/context.js";
-import type { Source } from "../diagnostics/diagnostics.js";
-import type { Naming } from "../pack/pack.js";
-import { holdsUnsetEnvvar } from "../diagnostics/unknown-values.js";
+import type { Context } from "../context/index.js";
+import type { Source } from "../diagnostics/index.js";
+import type { Naming } from "../pack/index.js";
+import { holdsUnsetEnvvar } from "../diagnostics/index.js";
 
 /** A pattern and where it was written (none for the pack's default). */
 export interface Pattern {

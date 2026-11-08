@@ -2,7 +2,7 @@
 // path must be the path of an entry of the Platform's field reference, or the
 // pack is refused.
 import type { AnyDiagnostic } from "@ingestron/config";
-import type { PackInfo } from "../pack/pack.js";
+import type { PackInfo } from "../pack/index.js";
 import { documentReference } from "./reference.js";
 
 let known: ReadonlySet<string> | undefined;

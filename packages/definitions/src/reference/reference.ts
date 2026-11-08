@@ -1,10 +1,10 @@
 // Every field described once, from the schemas and the packs, for the editor
 // (completion, hover, the reference panel) and the documentation site alike.
 import { manifestSchema, type JsonSchema } from "@ingestron/config";
-import { contractNotes } from "../documents/contract-notes.js";
-import { kinds } from "../documents/documents.js";
-import { isRecord } from "../internal/merge.js";
-import type { PackInfo } from "../pack/pack.js";
+import { contractNotes } from "../documents/index.js";
+import { kinds } from "../documents/index.js";
+import { isRecord } from "../internal/index.js";
+import type { PackInfo } from "../pack/index.js";
 import { branches, expand, type Schema } from "./schema-nodes.js";
 import { merged, typeWords } from "./type-words.js";
 

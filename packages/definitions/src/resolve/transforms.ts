@@ -1,16 +1,16 @@
 // Tables built by transforms, in dependency order (specification section 5).
 import type { DefinitionDocument } from "@ingestron/config";
-import { NO_STORE } from "../choose/choose.js";
-import { codeWithValues } from "../context/code-values.js";
+import { NO_STORE } from "../choose/index.js";
+import { codeWithValues } from "../context/index.js";
 import { checkTransformColumns } from "./transform-columns.js";
-import type { Context } from "../context/context.js";
-import { contractFor, expectationsFor } from "../contracts/contract.js";
-import { kinds, type TransformDoc } from "../documents/documents.js";
+import type { Context } from "../context/index.js";
+import { contractFor, expectationsFor } from "../contracts/index.js";
+import { kinds, type TransformDoc } from "../documents/index.js";
 import { flowTableNames } from "./flows.js";
-import type { ResolvedTable } from "../pack/model.js";
+import type { ResolvedTable } from "../pack/index.js";
 import { serveStep } from "./serve.js";
 import { resolveStep, stepOf } from "./steps.js";
-import { fullNameText, renderTableName, type TableNamer } from "../tables/tables.js";
+import { fullNameText, renderTableName, type TableNamer } from "../tables/index.js";
 
 type TransformDocument = DefinitionDocument<TransformDoc>;
 

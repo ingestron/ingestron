@@ -1,6 +1,6 @@
 // Reading a JSON Schema as the reference and the pack checks do: a schema with
 // its branches, each local `$ref` followed.
-import { isRecord } from "../internal/merge.js";
+import { isRecord } from "../internal/index.js";
 
 /** A JSON Schema node, read as data. */
 export type Schema = Record<string, unknown>;

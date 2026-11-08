@@ -3,8 +3,8 @@
 // (specification section 4).
 import type { Fix } from "@ingestron/config";
 import { canServe, type Choice, type Facts, type Named } from "./choose.js";
-import type { Context } from "../context/context.js";
-import type { PackInfo } from "../pack/pack.js";
+import type { Context } from "../context/index.js";
+import type { PackInfo } from "../pack/index.js";
 
 /** The problems these fixes solve. */
 export type ReadCode = "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED";

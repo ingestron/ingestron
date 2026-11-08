@@ -1,13 +1,13 @@
 // Merges a method's settings from every layer and checks them (section 3).
 import { withoutUnsetEnvvars } from "@ingestron/config";
 import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
-import type { Context } from "../context/context.js";
-import type { Source } from "../diagnostics/diagnostics.js";
-import { isRecord, merge, sameValue } from "../internal/merge.js";
-import type { Origin } from "../pack/model.js";
-import { reportMissing, type MethodUse, type SettingsUser } from "../context/missing-settings.js";
-import type { Action, Method } from "../pack/pack.js";
-import { holdsUnsetEnvvar } from "../diagnostics/unknown-values.js";
+import type { Context } from "../context/index.js";
+import type { Source } from "../diagnostics/index.js";
+import { isRecord, merge, sameValue } from "../internal/index.js";
+import type { Origin } from "../pack/index.js";
+import { reportMissing, type MethodUse, type SettingsUser } from "../context/index.js";
+import type { Action, Method } from "../pack/index.js";
+import { holdsUnsetEnvvar } from "../diagnostics/index.js";
 import { replaceMe } from "./replace-me.js";
 
 /** Settings from one layer, with where they were written (none for pack defaults). */

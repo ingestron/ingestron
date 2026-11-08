@@ -4,10 +4,10 @@
 // what is generated or what it is called.
 import type { AnyDiagnostic, Project } from "@ingestron/config";
 import type { Context } from "./context.js";
-import { createReporter, type Reporter, type Source } from "../diagnostics/diagnostics.js";
-import { deployValueHint } from "../pack/environments.js";
-import type { DeployValue } from "../pack/model.js";
-import { unsetEnvvarAt, valueAt } from "../diagnostics/unknown-values.js";
+import { createReporter, type Reporter, type Source } from "../diagnostics/index.js";
+import { deployValueHint } from "../pack/index.js";
+import type { DeployValue } from "../pack/index.js";
+import { unsetEnvvarAt, valueAt } from "../diagnostics/index.js";
 
 const actions = ["ingest", "transform", "store", "serve"];
 

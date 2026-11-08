@@ -1,8 +1,8 @@
 // A transform's query against its contract (specification section 5,
 // "Transform columns"): the columns its outermost SELECT names.
 import type { DefinitionDocument } from "@ingestron/config";
-import type { Context } from "../context/context.js";
-import type { Contract } from "../pack/model.js";
+import type { Context } from "../context/index.js";
+import type { Contract } from "../pack/index.js";
 
 /**
  * The column names the outermost SELECT returns, or undefined when the code is

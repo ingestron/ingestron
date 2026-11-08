@@ -1,10 +1,10 @@
 // Governance rules in the standard (specification section 8.1): what each data
 // product must say, and how the columns it publishes are classified and shared.
 import type { DefinitionDocument } from "@ingestron/config";
-import type { Context } from "../context/context.js";
-import { byCodePoint } from "../internal/merge.js";
-import { kinds, type ContractDoc, type GovernanceDoc } from "../documents/documents.js";
-import type { ResolvedProduct } from "../pack/model.js";
+import type { Context } from "../context/index.js";
+import { byCodePoint } from "../internal/index.js";
+import { kinds, type ContractDoc, type GovernanceDoc } from "../documents/index.js";
+import type { ResolvedProduct } from "../pack/index.js";
 
 type ContractDocument = DefinitionDocument<ContractDoc>;
 type Fact = NonNullable<NonNullable<GovernanceDoc["products"]>["require"]>[number];

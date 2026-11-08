@@ -1,7 +1,7 @@
 // Settings written for a step the table does not have (`SETTINGS_UNUSED`).
 import type { DefinitionDocument } from "@ingestron/config";
 import type { Context } from "./context.js";
-import type { FlowDoc } from "../documents/documents.js";
+import type { FlowDoc } from "../documents/index.js";
 
 /** Store settings when the flow ends at the landed files (`SETTINGS_UNUSED`). */
 export function unusedStoreSettings(

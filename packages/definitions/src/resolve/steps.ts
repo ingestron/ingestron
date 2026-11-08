@@ -1,14 +1,14 @@
 // One action of one table: choose the method, check what it reads and
 // receives, and merge its settings (specification sections 3 and 4).
-import { chooseMethod, located, type Choice, type Facts, type Named } from "../choose/choose.js";
-import type { Context } from "../context/context.js";
-import type { DefinitionCode } from "../diagnostics/diagnostics.js";
-import type { Step } from "../pack/model.js";
-import type { Action, Handover, Method } from "../pack/pack.js";
-import { methodFixes } from "../choose/method-fixes.js";
-import type { SettingsUser } from "../context/missing-settings.js";
+import { chooseMethod, located, type Choice, type Facts, type Named } from "../choose/index.js";
+import type { Context } from "../context/index.js";
+import type { DefinitionCode } from "../diagnostics/index.js";
+import type { Step } from "../pack/index.js";
+import type { Action, Handover, Method } from "../pack/index.js";
+import { methodFixes } from "../choose/index.js";
+import type { SettingsUser } from "../context/index.js";
 import { mergeSettings, type SettingsLayer } from "./settings.js";
-import { holdsUnsetEnvvar } from "../diagnostics/unknown-values.js";
+import { holdsUnsetEnvvar } from "../diagnostics/index.js";
 
 /** A resolved step and what it hands to the next action. */
 export type StepResult = Step & { produces: Handover; renames: boolean };

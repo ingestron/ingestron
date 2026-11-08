@@ -1,11 +1,11 @@
 // A flow table's connection and steps as the model records them, and what is not known
 // yet when the flow's source holds an unset reference (specification section 1).
 import type { DefinitionDocument } from "@ingestron/config";
-import type { Context } from "../context/context.js";
-import type { ChosenBy, ResolvedTable } from "../pack/model.js";
-import { kinds, type ConnectionDoc, type FlowDoc } from "../documents/documents.js";
+import type { Context } from "../context/index.js";
+import type { ChosenBy, ResolvedTable } from "../pack/index.js";
+import { kinds, type ConnectionDoc, type FlowDoc } from "../documents/index.js";
 import { stepOf, type StepResult } from "./steps.js";
-import { holdsUnsetEnvvar } from "../diagnostics/unknown-values.js";
+import { holdsUnsetEnvvar } from "../diagnostics/index.js";
 
 type Flow = DefinitionDocument<FlowDoc>;
 

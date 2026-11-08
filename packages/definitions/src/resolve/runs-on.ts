@@ -2,10 +2,10 @@
 // another pack's files ingest becomes the pack's landed method, another
 // pack's ingest that lands no files is left out, and the rest must be the
 // pack's to run.
-import { peekMethod, type Facts, type Named } from "../choose/choose.js";
-import type { Context } from "../context/context.js";
-import type { Source } from "../diagnostics/diagnostics.js";
-import type { ResolvedTable } from "../pack/model.js";
+import { peekMethod, type Facts, type Named } from "../choose/index.js";
+import type { Context } from "../context/index.js";
+import type { Source } from "../diagnostics/index.js";
+import type { ResolvedTable } from "../pack/index.js";
 import { resolveStep, type StepResult } from "./steps.js";
 
 /**

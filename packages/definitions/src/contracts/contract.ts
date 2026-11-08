@@ -1,10 +1,10 @@
 // Reads the parts of a table's ODCS contract that generation uses (section 6).
 import { AT_FILES, notCheckedAtFiles } from "./quality-notes.js";
 import { ruleChecks } from "./quality-rules.js";
-import type { Context } from "../context/context.js";
-import type { Source } from "../diagnostics/diagnostics.js";
-import { kinds, type ContractDoc, type ExpectationDoc } from "../documents/documents.js";
-import type { Column, Contract, Expectation } from "../pack/model.js";
+import type { Context } from "../context/index.js";
+import type { Source } from "../diagnostics/index.js";
+import { kinds, type ContractDoc, type ExpectationDoc } from "../documents/index.js";
+import type { Column, Contract, Expectation } from "../pack/index.js";
 
 type Entry = NonNullable<ContractDoc["schema"]>[number];
 

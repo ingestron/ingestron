@@ -1,6 +1,6 @@
 // Contract rules that compare a count over all rows, as structured checks a
 // pack runs after each refresh (specification section 6).
-import { isRecord } from "../internal/merge.js";
+import { isRecord } from "../internal/index.js";
 
 /** A rule over all rows: what is counted, how it is compared, and what a failure does. */
 export interface TableCheck {

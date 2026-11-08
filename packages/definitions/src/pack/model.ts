@@ -1,7 +1,7 @@
 // The resolved model: everything a pack needs, with every choice made,
 // every name built and every setting merged. Packs only read it.
 
-import type { GovernanceDoc } from "../documents/documents.js";
+import type { GovernanceDoc } from "../documents/index.js";
 import type { StepOutput } from "./pack.js";
 import type { TableCheck } from "./table-checks.js";
 

@@ -1,6 +1,6 @@
 // A column's ODCS logicalTypeOptions as checks of each row: limits on length,
 // pattern, range, multiples and array items (specification section 6).
-import { isRecord } from "../internal/merge.js";
+import { isRecord } from "../internal/index.js";
 
 type Check = (name: string, value: unknown) => string;
 

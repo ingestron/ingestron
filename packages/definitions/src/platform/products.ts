@@ -1,11 +1,11 @@
 // Data products (specification section 8): ODPS documents that publish the
 // tables built from their output ports' contracts.
 import type { DefinitionDocument } from "@ingestron/config";
-import type { Context } from "../context/context.js";
-import { byCodePoint } from "../internal/merge.js";
-import type { Source } from "../diagnostics/diagnostics.js";
-import { kinds, type ProductDoc } from "../documents/documents.js";
-import type { ResolvedProduct, ResolvedTable } from "../pack/model.js";
+import type { Context } from "../context/index.js";
+import { byCodePoint } from "../internal/index.js";
+import type { Source } from "../diagnostics/index.js";
+import { kinds, type ProductDoc } from "../documents/index.js";
+import type { ResolvedProduct, ResolvedTable } from "../pack/index.js";
 
 type ProductDocument = DefinitionDocument<ProductDoc>;
 

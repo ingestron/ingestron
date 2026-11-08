@@ -2,9 +2,9 @@
 // standard names (with one combined view), the one standard and platform,
 // and the reporter.
 import type { DefinitionDocument, Project } from "@ingestron/config";
-import type { Reporter } from "../diagnostics/diagnostics.js";
-import { kinds, type PlatformDoc, type StandardDoc } from "../documents/documents.js";
-import type { Action, Pack, PackInfo } from "../pack/pack.js";
+import type { Reporter } from "../diagnostics/index.js";
+import { kinds, type PlatformDoc, type StandardDoc } from "../documents/index.js";
+import type { Action, Pack, PackInfo } from "../pack/index.js";
 
 /** Shared by the resolution steps. */
 export interface Context {

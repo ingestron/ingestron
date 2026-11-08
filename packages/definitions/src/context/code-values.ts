@@ -3,7 +3,7 @@
 // environment, as code written inline already is (specification section 1).
 import type { DefinitionDocument } from "@ingestron/config";
 import type { Context } from "./context.js";
-import { isRecord } from "../internal/merge.js";
+import { isRecord } from "../internal/index.js";
 
 /** The code with its values in place, or undefined after reporting a name with no value. */
 export function codeWithValues(

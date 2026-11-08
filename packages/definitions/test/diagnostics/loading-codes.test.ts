@@ -7,7 +7,10 @@ import { loadingCodeHelp } from "../../src/index.js";
 
 it("explains every code the loader reports", () => {
   const declarations = readFileSync(
-    join(import.meta.dirname, "../../node_modules/@ingestron/config/dist/diagnostics/diagnostics.d.ts"),
+    join(
+      import.meta.dirname,
+      "../../node_modules/@ingestron/config/dist/diagnostics/diagnostics.d.ts",
+    ),
     "utf8",
   );
   const union = /export type DiagnosticCode = ([^;]+);/.exec(declarations)![1]!;

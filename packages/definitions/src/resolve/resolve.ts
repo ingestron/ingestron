@@ -7,28 +7,28 @@ import {
   type FileSource,
 } from "@ingestron/config";
 import { checkRunsOn } from "./runs-on.js";
-import { checkGrants } from "../context/capabilities.js";
-import { checkContractFields } from "../contracts/contract-use.js";
-import { checkSettingsKeys } from "../context/settings-keys.js";
-import { createContext, type Context } from "../context/context.js";
-import type { Source } from "../diagnostics/diagnostics.js";
-import { checkDeployValues, deployValuesOf, resolutionReporter } from "../context/deploy-values.js";
-import { kinds } from "../documents/documents.js";
+import { checkGrants } from "../context/index.js";
+import { checkContractFields } from "../contracts/index.js";
+import { checkSettingsKeys } from "../context/index.js";
+import { createContext, type Context } from "../context/index.js";
+import type { Source } from "../diagnostics/index.js";
+import { checkDeployValues, deployValuesOf, resolutionReporter } from "../context/index.js";
+import { kinds } from "../documents/index.js";
 import { flowTables } from "./flows.js";
-import { documentFiles, withPlaceholders } from "../internal/placeholders.js";
+import { documentFiles, withPlaceholders } from "../internal/index.js";
 import { withReplaceMe } from "./replace-me.js";
-import { checkGovernance } from "../platform/governance.js";
-import { resolveProducts } from "../platform/products.js";
-import { runsOnProblems } from "../pack/runs-on-pack.js";
-import type { ResolvedModel, ResolvedProduct, ResolvedTable } from "../pack/model.js";
-import { renderName } from "../tables/naming.js";
-import type { PackInfo } from "../pack/pack.js";
-import { resolvePlatform } from "../platform/platform.js";
-import { checkDuplicateNames, createNamer, type TableNamer } from "../tables/tables.js";
+import { checkGovernance } from "../platform/index.js";
+import { resolveProducts } from "../platform/index.js";
+import { runsOnProblems } from "../pack/index.js";
+import type { ResolvedModel, ResolvedProduct, ResolvedTable } from "../pack/index.js";
+import { renderName } from "../tables/index.js";
+import type { PackInfo } from "../pack/index.js";
+import { resolvePlatform } from "../platform/index.js";
+import { checkDuplicateNames, createNamer, type TableNamer } from "../tables/index.js";
 import { transformTables } from "./transforms.js";
-import { holdsUnsetEnvvar } from "../diagnostics/unknown-values.js";
-import { recordOutputs, runPackCheck } from "../context/pack-checks.js";
-import { checkPlatformFields } from "../reference/platform-fields.js";
+import { holdsUnsetEnvvar } from "../diagnostics/index.js";
+import { recordOutputs, runPackCheck } from "../context/index.js";
+import { checkPlatformFields } from "../reference/index.js";
 
 /** Options for {@link resolveDefinitions} and {@link loadDefinitions}. */
 export interface ResolveOptions {

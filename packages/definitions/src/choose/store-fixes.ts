@@ -1,8 +1,8 @@
 // Ways out when nothing chooses a flow's store method (specification section 4).
 import type { Fix } from "@ingestron/config";
 import { NO_STORE, type Named } from "./choose.js";
-import type { Context } from "../context/context.js";
-import type { PackInfo } from "../pack/pack.js";
+import type { Context } from "../context/index.js";
+import type { PackInfo } from "../pack/index.js";
 
 /** End at the landed files (this flow or every flow), or add a pack that stores files. */
 export function storeFixes(context: Context, named: Named): Fix[] {

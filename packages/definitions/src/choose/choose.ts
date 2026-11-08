@@ -1,10 +1,10 @@
 // Chooses the method for one action of one table (specification section 4).
 import type { DefinitionDocument } from "@ingestron/config";
-import type { Context } from "../context/context.js";
-import type { Source } from "../diagnostics/diagnostics.js";
-import { kinds, type ActionDoc } from "../documents/documents.js";
-import type { ChosenBy } from "../pack/model.js";
-import type { Action, Handover, Method } from "../pack/pack.js";
+import type { Context } from "../context/index.js";
+import type { Source } from "../diagnostics/index.js";
+import { kinds, type ActionDoc } from "../documents/index.js";
+import type { ChosenBy } from "../pack/index.js";
+import type { Action, Handover, Method } from "../pack/index.js";
 import { canServe } from "./can-serve.js";
 import { storeFixes } from "./store-fixes.js";
 import { factsOf, fromRule, matches } from "./rule-facts.js";

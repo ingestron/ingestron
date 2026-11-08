@@ -1,8 +1,8 @@
 // What the packs add once the tables resolve: where each step's data lands, and
 // each pack's own checks on the whole model.
 import type { Context } from "./context.js";
-import type { ResolvedModel, ResolvedTable } from "../pack/model.js";
-import { holdsUnsetEnvvar } from "../diagnostics/unknown-values.js";
+import type { ResolvedModel, ResolvedTable } from "../pack/index.js";
+import { holdsUnsetEnvvar } from "../diagnostics/index.js";
 
 /**
  * Each pack's checks on the whole model (`PACK_CHECK`), reported at the platform. Not

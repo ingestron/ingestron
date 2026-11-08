@@ -1,10 +1,10 @@
 // A contract's ODCS quality rules: those that hold for every row become
 // checks a row can be held to; the rest compare counts over all rows, which a
 // check of one row cannot, and are warnings (specification section 6).
-import type { Context } from "../context/context.js";
-import type { Source } from "../diagnostics/diagnostics.js";
-import { isOn } from "../context/capabilities.js";
-import { isRecord } from "../internal/merge.js";
+import type { Context } from "../context/index.js";
+import type { Source } from "../diagnostics/index.js";
+import { isOn } from "../context/index.js";
+import { isRecord } from "../internal/index.js";
 import {
   nameOf,
   notChecked,
@@ -13,7 +13,7 @@ import {
   type Rule,
   type UncheckedRule,
 } from "./quality-notes.js";
-import { tableCheckOf, type TableCheck } from "../pack/table-checks.js";
+import { tableCheckOf, type TableCheck } from "../pack/index.js";
 import { literal, optionChecks } from "./type-options.js";
 
 /** A check made from a contract rule, before its action is chosen. */

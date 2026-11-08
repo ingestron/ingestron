@@ -2,11 +2,11 @@
 // contract writes a field that no pack of the standard uses yet
 // (specification section 6).
 import type { DefinitionDocument } from "@ingestron/config";
-import type { Context } from "../context/context.js";
-import { kinds } from "../documents/documents.js";
-import { isRecord } from "../internal/merge.js";
-import { isOn, warnOff } from "../context/capabilities.js";
-import type { ContractUse, PackInfo } from "../pack/pack.js";
+import type { Context } from "../context/index.js";
+import { kinds } from "../documents/index.js";
+import { isRecord } from "../internal/index.js";
+import { isOn, warnOff } from "../context/index.js";
+import type { ContractUse, PackInfo } from "../pack/index.js";
 
 const documentation = { use: "documentation" } as const;
 const object = "schema.*";

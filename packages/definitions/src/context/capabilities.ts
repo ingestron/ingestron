@@ -3,7 +3,7 @@
 // that turns it on (specification section 7.1).
 import type { DefinitionDocument, Fix } from "@ingestron/config";
 import type { Context } from "./context.js";
-import type { Capability } from "../pack/pack.js";
+import type { Capability } from "../pack/index.js";
 
 type Id = Capability["id"];
 

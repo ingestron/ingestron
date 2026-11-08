@@ -1,5 +1,5 @@
 // A field's type in words, for the field reference (specification section 10).
-import { isRecord } from "../internal/merge.js";
+import { isRecord } from "../internal/index.js";
 import { branches, expand, type Schema } from "./schema-nodes.js";
 
 /** The schema with its branches merged: its own keywords first, then each branch's in order. */

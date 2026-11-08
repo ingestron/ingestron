@@ -1,6 +1,6 @@
 // Whether an ingest method can read a table's source.
 import type { Facts } from "./choose.js";
-import type { Method } from "../pack/pack.js";
+import type { Method } from "../pack/index.js";
 
 /** True when an ingest method reads this connector and connectivity. */
 export function canServe(method: Method | undefined, facts: Facts): boolean {

@@ -1,7 +1,7 @@
 // The Platform document with smart defaults (specification section 7).
-import type { Context } from "../context/context.js";
-import type { PlatformDoc } from "../documents/documents.js";
-import type { ResolvedPlatform, Schedule } from "../pack/model.js";
+import type { Context } from "../context/index.js";
+import type { PlatformDoc } from "../documents/index.js";
+import type { ResolvedPlatform, Schedule } from "../pack/index.js";
 
 /** Environments that are personal copies, when every environment is generated together. */
 const developmentNames = new Set(["dev"]);

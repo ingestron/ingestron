@@ -1,10 +1,10 @@
 // Layers and full names shared by flow and transform tables.
-import type { Context } from "../context/context.js";
-import type { Source } from "../diagnostics/diagnostics.js";
-import type { FullName, ResolvedTable } from "../pack/model.js";
+import type { Context } from "../context/index.js";
+import type { Source } from "../diagnostics/index.js";
+import type { FullName, ResolvedTable } from "../pack/index.js";
 import { namePatterns, renderName, type NameVariables, type Pattern } from "./naming.js";
-import type { Naming } from "../pack/pack.js";
-import { holdsUnsetEnvvar } from "../diagnostics/unknown-values.js";
+import type { Naming } from "../pack/index.js";
+import { holdsUnsetEnvvar } from "../diagnostics/index.js";
 
 /** Layer lookups and the name patterns, prepared once per resolution. */
 export interface TableNamer {
