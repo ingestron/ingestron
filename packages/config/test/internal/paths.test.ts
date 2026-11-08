@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { matchesGlob } from "../src/glob.js";
-import { resolveProjectPath } from "../src/paths.js";
+import { matchesGlob } from "../../src/internal/glob.js";
+import { resolveProjectPath } from "../../src/internal/paths.js";
 
 describe("resolveProjectPath", () => {
   it.each([

@@ -3,12 +3,12 @@
 // other); any other file is returned as literal text.
 
 import { readProjectFile, readYaml } from "./context.js";
-import { error, type Diagnostic, type Location } from "./diagnostics.js";
-import { parsePointer } from "./json-pointer.js";
-import { resolveProjectPath } from "./paths.js";
+import { error, type Diagnostic, type Location } from "../diagnostics/diagnostics.js";
+import { parsePointer } from "../internal/json-pointer.js";
+import { resolveProjectPath } from "../internal/paths.js";
 import { resolveNode } from "./resolve.js";
 import type { Walk } from "./scope.js";
-import { isYamlPath, nodeAtKeys, type YamlFile } from "./yaml-file.js";
+import { isYamlPath, nodeAtKeys, type YamlFile } from "../files/yaml-file.js";
 
 /** Resolves a `file:` reference written in `file`. */
 export function resolveFileReference(

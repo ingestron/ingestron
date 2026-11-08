@@ -1,7 +1,7 @@
 import { Ajv2020 } from "ajv/dist/2020.js";
 import { describe, expect, it } from "vitest";
-import { toEditorSchema } from "../src/editor-schema.js";
-import { parseDefinitionString } from "../src/references.js";
+import { toEditorSchema } from "../../src/kinds/editor-schema.js";
+import { parseDefinitionString } from "../../src/resolve/references.js";
 
 const schema = {
   type: "object",

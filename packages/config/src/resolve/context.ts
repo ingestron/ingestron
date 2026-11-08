@@ -1,11 +1,11 @@
 // State shared by every step of one load: where files come from, the limits,
 // the diagnostics found so far, and files already parsed.
 
-import { error, type Diagnostic, type Location } from "./diagnostics.js";
-import type { FileSource } from "./files.js";
-import type { Limits } from "./limits.js";
+import { error, type Diagnostic, type Location } from "../diagnostics/diagnostics.js";
+import type { FileSource } from "../files/files.js";
+import type { Limits } from "../files/limits.js";
 import type { EnvvarReference } from "./project.js";
-import { parseYamlFile, type YamlFile } from "./yaml-file.js";
+import { parseYamlFile, type YamlFile } from "../files/yaml-file.js";
 
 /** Everything one call to `resolveProject` works with. */
 export interface LoadContext {

@@ -1,16 +1,16 @@
 // Reads the project manifest: identity, values, environments and imports.
 
-import { readYaml, type LoadContext } from "./context.js";
-import { isRecord, mergeValues } from "./data.js";
-import { error, warning } from "./diagnostics.js";
-import { matchesGlob } from "./glob.js";
-import { parsePointer } from "./json-pointer.js";
-import type { JsonSchema } from "./kinds.js";
-import { resolveProjectPath } from "./paths.js";
-import { resolveNode } from "./resolve.js";
-import type { Scope } from "./scope.js";
-import { createSchemaChecker } from "./validate.js";
-import { locationOf, nodeAtKeys, type YamlFile } from "./yaml-file.js";
+import { readYaml, type LoadContext } from "../resolve/context.js";
+import { isRecord, mergeValues } from "../internal/data.js";
+import { error, warning } from "../diagnostics/diagnostics.js";
+import { matchesGlob } from "../internal/glob.js";
+import { parsePointer } from "../internal/json-pointer.js";
+import type { JsonSchema } from "../kinds/kinds.js";
+import { resolveProjectPath } from "../internal/paths.js";
+import { resolveNode } from "../resolve/resolve.js";
+import type { Scope } from "../resolve/scope.js";
+import { createSchemaChecker } from "../validate/validate.js";
+import { locationOf, nodeAtKeys, type YamlFile } from "../files/yaml-file.js";
 
 const idPattern = "^[A-Za-z][A-Za-z0-9_-]*$";
 

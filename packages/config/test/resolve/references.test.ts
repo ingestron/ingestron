@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseDefinitionString } from "../src/references.js";
+import { parseDefinitionString } from "../../src/resolve/references.js";
 
 describe("parseDefinitionString", () => {
   it("returns plain text as a single text segment", () => {

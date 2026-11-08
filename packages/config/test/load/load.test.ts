@@ -10,7 +10,7 @@ import {
   loadProject,
   memoryFiles,
   resolveProject,
-} from "../src/index.js";
+} from "../../src/index.js";
 
 interface Pipeline {
   apiVersion: string;

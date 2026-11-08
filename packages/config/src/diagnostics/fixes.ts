@@ -15,7 +15,7 @@ import {
   type YAMLSeq,
 } from "yaml";
 import type { Fix, FixEdit } from "./diagnostics.js";
-import { parsePointer } from "./json-pointer.js";
+import { parsePointer } from "../internal/json-pointer.js";
 import { removal } from "./remove-edit.js";
 
 /** Replaces the text from offset `start` to `end` of a project file with `text`. */

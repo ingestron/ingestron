@@ -4,10 +4,10 @@
 
 import type { ErrorObject } from "ajv/dist/ajv.js";
 import { stringify } from "yaml";
-import { isRecord } from "./data.js";
-import { nearNames } from "./distance.js";
-import { parsePointer } from "./json-pointer.js";
-import type { JsonSchema } from "./kinds.js";
+import { isRecord } from "../internal/data.js";
+import { nearNames } from "../internal/distance.js";
+import { parsePointer } from "../internal/json-pointer.js";
+import type { JsonSchema } from "../kinds/kinds.js";
 
 type Schema = Record<string, unknown>;
 

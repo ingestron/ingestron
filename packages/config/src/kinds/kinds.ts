@@ -1,5 +1,5 @@
 import { createAjv, dialectOf, supportedDialects, type Dialect } from "./dialects.js";
-import { parsePointer } from "./json-pointer.js";
+import { parsePointer } from "../internal/json-pointer.js";
 
 /**
  * A JSON Schema, as a plain object or `true`/`false`. Draft 2020-12 unless

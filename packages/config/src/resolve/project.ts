@@ -1,5 +1,5 @@
 import type { DefinitionDocument } from "./documents.js";
-import type { KindDefinition } from "./kinds.js";
+import type { KindDefinition } from "../kinds/kinds.js";
 import type { Scope } from "./scope.js";
 
 /**

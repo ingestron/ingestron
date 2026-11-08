@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { isAbsolute, join, relative, sep } from "node:path";
-import type { FileSource } from "./files.js";
+import type { FileSource } from "./files/files.js";
 
 const skippedFolders = new Set([".git", "node_modules"]);
 

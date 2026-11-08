@@ -1,11 +1,11 @@
 // Checks fields that name another document, as declared in a kind's `links`.
 
-import { isRecord } from "./data.js";
-import { error, type Diagnostic, type Fix } from "./diagnostics.js";
-import { nearNames } from "./distance.js";
-import { appendPointer, parsePointer } from "./json-pointer.js";
-import type { LoadedDocument } from "./documents.js";
-import { locateIn } from "./validate.js";
+import { isRecord } from "../internal/data.js";
+import { error, type Diagnostic, type Fix } from "../diagnostics/diagnostics.js";
+import { nearNames } from "../internal/distance.js";
+import { appendPointer, parsePointer } from "../internal/json-pointer.js";
+import type { LoadedDocument } from "../resolve/documents.js";
+import { locateIn } from "../validate/validate.js";
 
 /**
  * Reports every link whose value is not the id of a document of the target

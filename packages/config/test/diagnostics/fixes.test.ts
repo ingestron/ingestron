@@ -1,7 +1,7 @@
 // Applying a fix edits only the values and keys it names: the rest of the
 // file, comments and layout included, stays as written.
 import { describe, expect, it } from "vitest";
-import { applyEdits, fixEdits, type FixEdit } from "../src/core.js";
+import { applyEdits, fixEdits, type FixEdit } from "../../src/core.js";
 
 /** The text of a.yaml after one edit. */
 function after(

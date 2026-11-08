@@ -1,17 +1,17 @@
 // `@ingestron/config/core`: everything except Node file access.
 // Safe to use in browsers, VS Code webviews and tests.
 
-export { defineKind } from "./kinds.js";
-export type { JsonSchema, KindDefinition, KindOptions } from "./kinds.js";
-export { resolveProject } from "./load.js";
-export type { LoadOptions, LoadResult } from "./load.js";
-export type { EnvvarReference, Project } from "./project.js";
-export type { DefinitionDocument } from "./documents.js";
-export { memoryFiles } from "./files.js";
-export type { FileSource } from "./files.js";
-export { formatDiagnostics } from "./diagnostics.js";
-export { applyEdits, fixEdits } from "./fixes.js";
-export type { TextEdit } from "./fixes.js";
+export { defineKind } from "./kinds/kinds.js";
+export type { JsonSchema, KindDefinition, KindOptions } from "./kinds/kinds.js";
+export { resolveProject } from "./load/load.js";
+export type { LoadOptions, LoadResult } from "./load/load.js";
+export type { EnvvarReference, Project } from "./resolve/project.js";
+export type { DefinitionDocument } from "./resolve/documents.js";
+export { memoryFiles } from "./files/files.js";
+export type { FileSource } from "./files/files.js";
+export { formatDiagnostics } from "./diagnostics/diagnostics.js";
+export { applyEdits, fixEdits } from "./diagnostics/fixes.js";
+export type { TextEdit } from "./diagnostics/fixes.js";
 export type {
   AnyDiagnostic,
   Diagnostic,
@@ -20,12 +20,12 @@ export type {
   FixEdit,
   Location,
   Severity,
-} from "./diagnostics.js";
-export { defaultLimits } from "./limits.js";
-export type { Limits } from "./limits.js";
-export { manifestSchema } from "./manifest.js";
-export { toEditorSchema } from "./editor-schema.js";
-export { isSecretReference } from "./resolve-string.js";
-export { withoutUnsetEnvvars } from "./unset-references.js";
-export type { UnsetEnvvarFailure } from "./unset-references.js";
-export type { SecretReference } from "./resolve-string.js";
+} from "./diagnostics/diagnostics.js";
+export { defaultLimits } from "./files/limits.js";
+export type { Limits } from "./files/limits.js";
+export { manifestSchema } from "./load/manifest.js";
+export { toEditorSchema } from "./kinds/editor-schema.js";
+export { isSecretReference } from "./resolve/resolve-string.js";
+export { withoutUnsetEnvvars } from "./validate/unset-references.js";
+export type { UnsetEnvvarFailure } from "./validate/unset-references.js";
+export type { SecretReference } from "./resolve/resolve-string.js";

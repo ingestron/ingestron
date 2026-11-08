@@ -1,12 +1,12 @@
 // Resolves one YAML string: plain text, a whole-value reference, or text
 // with references embedded in it.
 
-import { isRecord } from "./data.js";
-import { error, information, type Location } from "./diagnostics.js";
+import { isRecord } from "../internal/data.js";
+import { error, information, type Location } from "../diagnostics/diagnostics.js";
 import { parseDefinitionString, type Segment } from "./references.js";
 import { resolveFileReference } from "./resolve-file.js";
 import { lookupPath, type Walk } from "./scope.js";
-import type { YamlFile } from "./yaml-file.js";
+import type { YamlFile } from "../files/yaml-file.js";
 
 type ReferenceSegment = Extract<Segment, { type: "reference" }>;
 
