@@ -3,7 +3,6 @@
 // (spec/cli/projects.md).
 import { memoryFiles } from "@ingestron/config";
 import { isMap, isScalar, parse } from "yaml";
-import type { Options } from "./args.js";
 import { generateAll } from "./build-outputs.js";
 import { composeRecipe, type RecipeFacts } from "./init-compose.js";
 import { startToday } from "./init-platform.js";
@@ -32,7 +31,7 @@ export interface Writing {
 function projectFiles(
   source: Source,
   answers: Answers,
-  set: Options["init"]["set"],
+  set: Record<string, string>,
   writing: Writing,
 ) {
   const files = scaffoldFiles(source.template, answers, source.files);
@@ -84,14 +83,14 @@ function ignoreExport(files: Record<string, Content>): void {
  * REPLACE_ME, until it resolves (spec/cli/projects.md).
  */
 export function resolvedFiles(
-  options: Options,
+  set: Record<string, string>,
   source: Source,
   answers: Answers,
   writing: Writing,
 ): { files: Record<string, Content>; generated: ReturnType<typeof generateAll> } {
   let keep = writing.keep;
   for (;;) {
-    const { files, leftOut } = projectFiles(source, answers, options.init.set, {
+    const { files, leftOut } = projectFiles(source, answers, set, {
       ...writing,
       keep,
     });

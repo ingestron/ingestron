@@ -4,7 +4,7 @@ import { formatDiagnostics, type AnyDiagnostic, type FileSource } from "@ingestr
 import { packLoadProblem, type Pack, type SuppliedValue } from "@ingestron/definitions";
 import { generateAll } from "./build-outputs.js";
 import { packs } from "./packs.js";
-import { environmentReportsText, packReportsText } from "./reports.js";
+import { environmentReportsText, packReportsText } from "./report-text.js";
 import type { Report } from "./resolve-environments.js";
 
 export type { Report } from "./resolve-environments.js";

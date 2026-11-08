@@ -12,7 +12,7 @@ import { projectReadme } from "./init-readme.js";
 import { stillToReplace } from "./init-summary.js";
 import type { Io } from "./io.js";
 import { packs } from "./packs.js";
-import { environmentReportsText } from "./reports.js";
+import { environmentReportsText } from "./report-text.js";
 import { ignoredText, nameProblem, projectId, writeScaffold, type Answers } from "./scaffold.js";
 import { standardSource, templateSource } from "./sources.js";
 import type { Template } from "./templates.js";
@@ -100,7 +100,7 @@ function prepare(options: Options, io: Io, target: string, source: Source, answe
   // A source option given with --set is written, so the answer has a place.
   const given = Object.keys(options.init.set).filter((name) => name.startsWith("option_"));
   const writing = { today, kept, keep: new Set(given.map((name) => name.slice("option_".length))) };
-  const { files, generated } = resolvedFiles(options, source, answers, writing);
+  const { files, generated } = resolvedFiles(options.init.set, source, answers, writing);
   if (!generated.resolved)
     throw new Error(
       `The project does not resolve; nothing written.\n${environmentReportsText(generated.environmentReports)}`,

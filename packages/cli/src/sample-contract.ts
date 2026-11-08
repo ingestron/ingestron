@@ -1,32 +1,9 @@
 // ingestron contract <sample>: a draft ODCS contract from a sample file, with
 // each column's name and inferred logical type and no sample values. Keys,
 // required columns and descriptions are left to the person reviewing it.
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, dirname, join, relative, resolve } from "node:path";
+import { basename } from "node:path";
 import { stringify } from "yaml";
-import type { Options } from "./args.js";
-import type { Io } from "./io.js";
 import { readSample } from "./sample-read.js";
-
-/** Writes contracts/<name>.yaml from the sample. Returns the exit code. */
-export function draftContract(options: Options, io: Io): number {
-  const sample = resolve(io.cwd, options.sample ?? "");
-  if (!options.sample || !existsSync(sample)) {
-    io.write(`contract needs a sample file: ingestron contract <file.csv|file.json>\n`);
-    return 2;
-  }
-  const name = options.init.name ?? objectName(sample);
-  const target = join(resolve(io.cwd, options.definitions), "contracts", `${name}.yaml`);
-  const shown = relative(io.cwd, target);
-  if (existsSync(target)) {
-    io.write(`${shown} already exists; nothing written.\n`);
-    return 1;
-  }
-  mkdirSync(dirname(target), { recursive: true });
-  writeFileSync(target, contractFromSample(readFileSync(sample, "utf8"), basename(sample), name));
-  io.write(`Wrote ${shown}. Review the types, then add keys, required columns and descriptions.\n`);
-  return 0;
-}
 
 /**
  * The contract text for a sample's columns, with the object named after the file.
@@ -57,7 +34,7 @@ export function contractFromSample(text: string, file: string, id: string): stri
 }
 
 /** `Daily Sales.csv` → `daily_sales`. */
-function objectName(file: string): string {
+export function objectName(file: string): string {
   return basename(file)
     .replace(/\.[^.]+$/, "")
     .toLowerCase()

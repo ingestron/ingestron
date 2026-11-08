@@ -6,9 +6,9 @@ export { commands, flags } from "./args.js";
 import { generate } from "./generate.js";
 import { init } from "./init.js";
 import type { Io } from "./io.js";
-import { compare } from "./compare.js";
-import { request } from "./request.js";
-import { draftContract } from "./sample-contract.js";
+import { compare } from "./compare-command.js";
+import { request } from "./request-command.js";
+import { draftContract } from "./contract-command.js";
 import { packs } from "./packs.js";
 import { writeSchemas } from "./schemas.js";
 
