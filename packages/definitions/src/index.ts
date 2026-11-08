@@ -1,10 +1,10 @@
 // Public API of @ingestron/definitions.
-export type { DefinitionCode } from "./diagnostics.js";
-export { NO_STORE } from "./choose.js";
-export { codeHelp } from "./codes.js";
-export { contractReads } from "./contract-notes.js";
-export { contractCommon, contractUseOf } from "./contract-use.js";
-export { compareTargets, type TargetComparison, type TargetDifference } from "./compare-targets.js";
+export type { DefinitionCode } from "./diagnostics/diagnostics.js";
+export { NO_STORE } from "./choose/choose.js";
+export { codeHelp } from "./diagnostics/codes.js";
+export { contractReads } from "./documents/contract-notes.js";
+export { contractCommon, contractUseOf } from "./contracts/contract-use.js";
+export { compareTargets, type TargetComparison, type TargetDifference } from "./pack/compare-targets.js";
 export {
   environmentsDiagnostics,
   type EnvironmentsBuild,
@@ -12,13 +12,13 @@ export {
   type EnvironmentsProblem,
   type PackNotice,
   type SuppliedValue,
-} from "./environments.js";
-export { checkFold, splitDeployText, type FoldView } from "./fold.js";
-export { loadingCodeHelp, type LoadingStage } from "./loading-codes.js";
-export { packLoadProblem } from "./platform-fields.js";
-export { replaceMe } from "./replace-me.js";
-export { kinds, packageSchema, type GovernanceDoc } from "./documents.js";
-export { passportFile } from "./products.js";
+} from "./pack/environments.js";
+export { checkFold, splitDeployText, type FoldView } from "./pack/fold.js";
+export { loadingCodeHelp, type LoadingStage } from "./diagnostics/loading-codes.js";
+export { packLoadProblem } from "./reference/platform-fields.js";
+export { replaceMe } from "./resolve/replace-me.js";
+export { kinds, packageSchema, type GovernanceDoc } from "./documents/documents.js";
+export { passportFile } from "./platform/products.js";
 export type {
   ChosenBy,
   Column,
@@ -36,17 +36,17 @@ export type {
   ResolvedTable,
   Schedule,
   Step,
-} from "./model.js";
-export { nameVariables } from "./naming.js";
-export type { TableCheck } from "./table-checks.js";
-export type { Capability } from "./pack.js";
+} from "./pack/model.js";
+export { nameVariables } from "./tables/naming.js";
+export type { TableCheck } from "./pack/table-checks.js";
+export type { Capability } from "./pack/pack.js";
 export {
   anchorOf,
   documentReference,
   methodReference,
   referenceKinds,
   type FieldInfo,
-} from "./reference.js";
+} from "./reference/reference.js";
 export type {
   Action,
   Connector,
@@ -59,14 +59,14 @@ export type {
   PackInfo,
   Rule,
   StepOutput,
-} from "./pack.js";
+} from "./pack/pack.js";
 export {
   loadDefinitions,
   resolveDefinitions,
   type ResolveOptions,
   type ResolveResult,
-} from "./resolve.js";
-export { fullNameText } from "./tables.js";
+} from "./resolve/resolve.js";
+export { fullNameText } from "./tables/tables.js";
 
 // Types from @ingestron/config that appear in this package's API, so a pack
 // needs only @ingestron/definitions.
