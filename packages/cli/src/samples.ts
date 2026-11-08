@@ -4,10 +4,10 @@
 // show one idea (each has sample.yaml); the documentation keeps its own and
 // lists them with the same functions. What a sample uses is found by resolving it.
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { loadDefinitions, type ResolvedModel } from "@ingestron/definitions";
 import { parse } from "yaml";
+import { templatesFolder } from "./folders.js";
 import { packs } from "./packs.js";
 
 /** One sample: where it is, what kind, and how it is listed. */
@@ -30,10 +30,7 @@ export interface SampleFacts {
   features: string[];
 }
 
-const packageRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-
-/** The starters' folder: `project-templates/` beside `dist/`, in the repository and installed. */
-export const templatesFolder = join(packageRoot, "project-templates");
+export { templatesFolder };
 
 /**
  * The samples in `folder`: starters, smallest first, or guides in their order.
