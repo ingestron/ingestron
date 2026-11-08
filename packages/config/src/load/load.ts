@@ -2,17 +2,17 @@
 //   manifest → imported paths → each document (resolve, header, kind, schema)
 //   → duplicate ids → links → result
 
-import { holdsUnsetEnvvar, uniqueDiagnostics, type LoadContext } from "../resolve/context.js";
-import { hasErrors, type Diagnostic } from "../diagnostics/diagnostics.js";
+import { holdsUnsetEnvvar, uniqueDiagnostics, type LoadContext } from "../resolve/index.js";
+import { hasErrors, type Diagnostic } from "../diagnostics/index.js";
 import { envvarsFor } from "./env-files.js";
-import { checkDuplicateIds, loadDocument, type LoadedDocument } from "../resolve/documents.js";
-import type { FileSource } from "../files/files.js";
-import type { KindDefinition } from "../kinds/kinds.js";
-import { defaultLimits, type Limits } from "../files/limits.js";
+import { checkDuplicateIds, loadDocument, type LoadedDocument } from "../resolve/index.js";
+import type { FileSource } from "../files/index.js";
+import type { KindDefinition } from "../kinds/index.js";
+import { defaultLimits, type Limits } from "../files/index.js";
 import { checkLinks } from "./links.js";
 import { importedPaths, readManifest } from "./manifest.js";
-import { createProject, type Project } from "../resolve/project.js";
-import { createSchemaChecker } from "../validate/validate.js";
+import { createProject, type Project } from "../resolve/index.js";
+import { createSchemaChecker } from "../validate/index.js";
 
 /** Options for {@link resolveProject} and `loadProject`. */
 export interface LoadOptions {

@@ -2,13 +2,13 @@
 // at the place the failing value was written.
 
 import type { Ajv, ErrorObject, ValidateFunction } from "ajv/dist/ajv.js";
-import { createAjv, dialectOf, defaultDialect, type Dialect } from "../kinds/dialects.js";
-import { error, type Diagnostic, type Location } from "../diagnostics/diagnostics.js";
-import { appendPointer } from "../internal/json-pointer.js";
+import { createAjv, dialectOf, defaultDialect, type Dialect } from "../kinds/index.js";
+import { error, type Diagnostic, type Location } from "../diagnostics/index.js";
+import { appendPointer } from "../internal/index.js";
 import { schemaFixes } from "./schema-fixes.js";
 import { describeFailure } from "./schema-messages.js";
 import { withoutUnsetEnvvars } from "./unset-references.js";
-import type { JsonSchema } from "../kinds/kinds.js";
+import type { JsonSchema } from "../kinds/index.js";
 
 /** Finds where the value at a JSON Pointer was written. */
 export type Locate = (pointer: string) => Location | undefined;

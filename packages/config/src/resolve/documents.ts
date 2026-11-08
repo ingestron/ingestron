@@ -2,13 +2,13 @@
 // its kind, validate against the kind's schema.
 
 import { errorCount, holdsUnsetEnvvar, readYaml, type LoadContext } from "./context.js";
-import { isRecord } from "../internal/data.js";
-import { error, type Diagnostic, type Location } from "../diagnostics/diagnostics.js";
-import type { KindDefinition } from "../kinds/kinds.js";
+import { isRecord } from "../internal/index.js";
+import { error, type Diagnostic, type Location } from "../diagnostics/index.js";
+import type { KindDefinition } from "../kinds/index.js";
 import { resolveNode } from "./resolve.js";
 import type { Scope } from "./scope.js";
-import type { createSchemaChecker } from "../validate/validate.js";
-import { locateIn } from "../validate/validate.js";
+import type { createSchemaChecker } from "../validate/index.js";
+import { locateIn } from "../validate/index.js";
 
 /** One resolved and validated document. */
 export interface DefinitionDocument<T = unknown> {

@@ -5,11 +5,11 @@
 // The reader's own diagnostics never quote a line or a value. Later problems
 // may quote a value from .env, as they quote any other (specification 4.5).
 
-import { tooLarge } from "../resolve/context.js";
-import { warning, type Diagnostic } from "../diagnostics/diagnostics.js";
-import type { FileSource } from "../files/files.js";
-import { defaultLimits } from "../files/limits.js";
-import type { EnvvarReference } from "../resolve/project.js";
+import { tooLarge } from "../resolve/index.js";
+import { warning, type Diagnostic } from "../diagnostics/index.js";
+import type { FileSource } from "../files/index.js";
+import { defaultLimits } from "../files/index.js";
+import type { EnvvarReference } from "../resolve/index.js";
 
 /** Where a variable's value came from (specification 4.6). */
 type SetIn = NonNullable<EnvvarReference["setIn"]>;

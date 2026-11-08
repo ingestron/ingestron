@@ -10,7 +10,7 @@ import {
   type Document,
   type Node,
 } from "yaml";
-import { error, type Diagnostic, type Location } from "../diagnostics/diagnostics.js";
+import { error, type Diagnostic, type Location } from "../diagnostics/index.js";
 
 /** A parsed YAML file together with what is needed to report locations. */
 export interface YamlFile {

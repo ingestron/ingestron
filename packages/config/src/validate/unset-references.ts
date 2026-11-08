@@ -1,6 +1,6 @@
 // Which schema failures an unset reference causes (spec §5.1): those are left out,
 // because the value they judge is not known on this computer.
-import { isRecord } from "../internal/data.js";
+import { isRecord } from "../internal/index.js";
 
 /** What {@link withoutUnsetEnvvars} reads of a schema failure; Ajv's errors have it all. */
 export interface UnsetEnvvarFailure {

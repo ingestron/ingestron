@@ -15,12 +15,12 @@ import {
   type YAMLMap,
   type YAMLSeq,
 } from "yaml";
-import { isSafeKey, type DataRecord } from "../internal/data.js";
-import { error } from "../diagnostics/diagnostics.js";
-import { appendPointer } from "../internal/json-pointer.js";
+import { isSafeKey, type DataRecord } from "../internal/index.js";
+import { error } from "../diagnostics/index.js";
+import { appendPointer } from "../internal/index.js";
 import { resolveString } from "./resolve-string.js";
 import type { Walk } from "./scope.js";
-import { locationOf, type YamlFile } from "../files/yaml-file.js";
+import { locationOf, type YamlFile } from "../files/index.js";
 
 /**
  * Resolves a node and everything inside it. `pointer` is where the result

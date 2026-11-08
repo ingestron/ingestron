@@ -1,8 +1,8 @@
 // Reads the `${…}` syntax inside one string. Pure text processing: nothing here
 // looks values up or reads files. The grammar is in spec/config/syntax.md §4.1.
 
-import type { DiagnosticCode } from "../diagnostics/diagnostics.js";
-import { nearNames } from "../internal/distance.js";
+import type { DiagnosticCode } from "../diagnostics/index.js";
+import { nearNames } from "../internal/index.js";
 
 /** The names allowed before the first dot in `${root.path}`. */
 export const referenceRoots = ["values", "environment", "project"] as const;

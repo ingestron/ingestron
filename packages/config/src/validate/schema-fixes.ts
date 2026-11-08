@@ -1,11 +1,11 @@
 // Fixes for schema problems with an obvious remedy (specification section 6.1).
 
 import type { ErrorObject } from "ajv/dist/ajv.js";
-import type { Fix } from "../diagnostics/diagnostics.js";
-import { nearNames } from "../internal/distance.js";
-import { appendPointer } from "../internal/json-pointer.js";
-import type { JsonSchema } from "../kinds/kinds.js";
-import { parsePointer } from "../internal/json-pointer.js";
+import type { Fix } from "../diagnostics/index.js";
+import { nearNames } from "../internal/index.js";
+import { appendPointer } from "../internal/index.js";
+import type { JsonSchema } from "../kinds/index.js";
+import { parsePointer } from "../internal/index.js";
 import { schemasAt } from "./schema-messages.js";
 
 /** At most this many allowed values are offered, one fix each. */

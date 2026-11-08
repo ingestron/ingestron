@@ -1,6 +1,6 @@
 // `@ingestron/config`: the core API plus loading from a folder on disk (Node).
 
-import { resolveProject, type LoadOptions, type LoadResult } from "./load/load.js";
+import { resolveProject, type LoadOptions, type LoadResult } from "./load/index.js";
 import { nodeFiles } from "./node-files.js";
 
 export * from "./core.js";

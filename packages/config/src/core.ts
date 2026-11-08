@@ -1,31 +1,44 @@
 // `@ingestron/config/core`: everything except Node file access.
 // Safe to use in browsers, VS Code webviews and tests.
 
-export { defineKind } from "./kinds/kinds.js";
-export type { JsonSchema, KindDefinition, KindOptions } from "./kinds/kinds.js";
-export { resolveProject } from "./load/load.js";
-export type { LoadOptions, LoadResult } from "./load/load.js";
-export type { EnvvarReference, Project } from "./resolve/project.js";
-export type { DefinitionDocument } from "./resolve/documents.js";
-export { memoryFiles } from "./files/files.js";
-export type { FileSource } from "./files/files.js";
-export { formatDiagnostics } from "./diagnostics/diagnostics.js";
-export { applyEdits, fixEdits } from "./diagnostics/fixes.js";
-export type { TextEdit } from "./diagnostics/fixes.js";
-export type {
-  AnyDiagnostic,
-  Diagnostic,
-  DiagnosticCode,
-  Fix,
-  FixEdit,
-  Location,
-  Severity,
-} from "./diagnostics/diagnostics.js";
-export { defaultLimits } from "./files/limits.js";
-export type { Limits } from "./files/limits.js";
-export { manifestSchema } from "./load/manifest.js";
-export { toEditorSchema } from "./kinds/editor-schema.js";
-export { isSecretReference } from "./resolve/resolve-string.js";
-export { withoutUnsetEnvvars } from "./validate/unset-references.js";
-export type { UnsetEnvvarFailure } from "./validate/unset-references.js";
-export type { SecretReference } from "./resolve/resolve-string.js";
+// Files: where definitions are read from, and the size limits.
+export { defaultLimits, memoryFiles, type FileSource, type Limits } from "./files/index.js";
+
+// Kinds: the document kinds a project may hold, and their editor schemas.
+export {
+  defineKind,
+  toEditorSchema,
+  type JsonSchema,
+  type KindDefinition,
+  type KindOptions,
+} from "./kinds/index.js";
+
+// Loading: a project from its files, and the manifest's schema.
+export { manifestSchema, resolveProject, type LoadOptions, type LoadResult } from "./load/index.js";
+
+// Resolving: documents, references and secrets.
+export {
+  isSecretReference,
+  type DefinitionDocument,
+  type EnvvarReference,
+  type Project,
+  type SecretReference,
+} from "./resolve/index.js";
+
+// Validating: values left unset by `${envvar:…}`.
+export { withoutUnsetEnvvars, type UnsetEnvvarFailure } from "./validate/index.js";
+
+// Diagnostics: problems, their fixes, and how they are printed.
+export {
+  applyEdits,
+  fixEdits,
+  formatDiagnostics,
+  type AnyDiagnostic,
+  type Diagnostic,
+  type DiagnosticCode,
+  type Fix,
+  type FixEdit,
+  type Location,
+  type Severity,
+  type TextEdit,
+} from "./diagnostics/index.js";

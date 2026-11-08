@@ -2,8 +2,8 @@
 // and the lookup of one such path.
 
 import type { LoadContext } from "./context.js";
-import { isRecord, isSafeKey } from "../internal/data.js";
-import { error, type Location } from "../diagnostics/diagnostics.js";
+import { isRecord, isSafeKey } from "../internal/index.js";
+import { error, type Location } from "../diagnostics/index.js";
 import type { Expression } from "./references.js";
 
 /** The data that references can read. */
