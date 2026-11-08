@@ -1,8 +1,8 @@
 // The names under which the deploying pipeline supplies each deploy-time value,
 // from building every environment as plan does (spec/cli/request.md, "Values to
 // provide").
-import type { Generated, Output } from "../project/build-outputs.js";
-import type { ResolvedEnvironment } from "../project/resolve-environments.js";
+import type { Generated, Output } from "../project/index.js";
+import type { ResolvedEnvironment } from "../project/index.js";
 
 /** What one environment's request says about the names the deploying pipeline supplies. */
 export interface Supplied {

@@ -1,7 +1,7 @@
 // What `init` prints after the plan: how many values are still REPLACE_ME, counted by name as
 // README.md's rows are. When the folder's README.md is kept, init prints what it would have
 // listed: each value with where to find it, the values to check and the secrets to create.
-import type { Generated } from "../project/build-outputs.js";
+import type { Generated } from "../project/index.js";
 import { checkRows, replaceRows, secretRows } from "./init-rows.js";
 import type { Content } from "./scaffold.js";
 

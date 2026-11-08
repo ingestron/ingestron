@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { loadDefinitions, type ResolvedModel } from "@ingestron/definitions";
 import { parse } from "yaml";
 import { templatesFolder } from "../folders.js";
-import { packs } from "../packs/packs.js";
+import { packs } from "../packs/index.js";
 
 /** One sample: where it is, what kind, and how it is listed. */
 export interface Sample {

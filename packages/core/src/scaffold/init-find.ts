@@ -2,10 +2,10 @@
 // connector's documentation (definitions specification, "Connector authoring metadata").
 import type { Connector } from "@ingestron/definitions";
 import { parse } from "yaml";
-import type { Generated } from "../project/build-outputs.js";
+import type { Generated } from "../project/index.js";
 import { methodSettings } from "./init-platform.js";
 import type { ProjectValue } from "./init-values.js";
-import { packs } from "../packs/packs.js";
+import { packs } from "../packs/index.js";
 import type { Content } from "./scaffold.js";
 
 /** Where to find the values `init` itself composes the URLs from. */

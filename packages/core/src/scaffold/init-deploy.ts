@@ -2,7 +2,7 @@
 // time, what each placeholder is, and the deploy-time values its pack names
 // (spec/cli/projects.md, "README.md"). Data Factory comes first: it lands the files the
 // others read.
-import type { Output } from "../project/build-outputs.js";
+import type { Output } from "../project/index.js";
 
 type Deploy = (output: Output, folder: string) => string[];
 

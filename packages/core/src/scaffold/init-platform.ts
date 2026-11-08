@@ -12,7 +12,7 @@ import {
   type YamlDocument,
 } from "./init-yaml.js";
 import type { Composing } from "./init-compose.js";
-import { packs } from "../packs/packs.js";
+import { packs } from "../packs/index.js";
 import type { Content } from "./scaffold.js";
 
 /** A route's facts for composing: its ingest method and its settings schema, and its packs. */

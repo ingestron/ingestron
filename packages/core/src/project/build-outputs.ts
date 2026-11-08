@@ -7,8 +7,8 @@ import {
   type ResolvedModel,
   type SuppliedValue,
 } from "@ingestron/definitions";
-import { passports } from "../passport/passport.js";
-import { packs } from "../packs/packs.js";
+import { passports } from "../passport/index.js";
+import { packs } from "../packs/index.js";
 import {
   folds,
   isTarget,

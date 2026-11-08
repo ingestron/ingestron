@@ -3,7 +3,7 @@
 // and settings. Secrets are never shown. The editor's command shows the same.
 import { formatDiagnostics, type FileSource } from "@ingestron/config";
 import { resolveDefinitions, type ResolvedModel, type ResolvedTable } from "@ingestron/definitions";
-import { packs } from "../packs/packs.js";
+import { packs } from "../packs/index.js";
 
 type Facts = Record<string, unknown>;
 

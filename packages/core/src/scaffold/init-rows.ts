@@ -1,6 +1,6 @@
 // The rows of a new project's README.md and of init's printout: each value still REPLACE_ME,
 // each example value to check, and each secret to create (spec/cli/projects.md, "README.md").
-import type { Generated } from "../project/build-outputs.js";
+import type { Generated } from "../project/index.js";
 import { exampleValue } from "./init-connection.js";
 import { findFor } from "./init-find.js";
 import { projectValues, type ProjectValue } from "./init-values.js";
