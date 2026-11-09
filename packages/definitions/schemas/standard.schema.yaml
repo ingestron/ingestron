@@ -468,6 +468,11 @@ $defs:
         type: object
         additionalProperties: false
         required: [on]
+        if:
+          properties: { "on": { contains: { const: slow } } }
+          required: ["on"]
+        then:
+          required: [slow_after]
         description: "When to tell someone. Where to tell them belongs in the platform."
         properties:
           "on":

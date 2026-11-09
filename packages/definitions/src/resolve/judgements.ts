@@ -12,7 +12,7 @@ import {
 } from "../intent/index.js";
 import type { Method, ResolvedTable } from "../pack/index.js";
 import { leaves, valueAtIntentPath } from "./intent-values.js";
-import { judgeOf } from "./judging-step.js";
+import { judgeOf, readsSource } from "./judging-step.js";
 
 /** What the judging pack says about a value, when it says anything a project hears. */
 export type Outcome =
@@ -52,6 +52,8 @@ export function judgementsOf(context: Context, table: ResolvedTable): Judgement[
     .filter(judged)
     .flatMap((path) =>
       judgedValues(table.intent, path).flatMap((item) => {
+        if (table.ingest === undefined && readsSource(path, item.value))
+          return withoutSource(table, path, item);
         const judge = judgeOf(path, steps, {
           value: item.value,
           endsAtFiles: table.endsAtFiles !== undefined,
@@ -60,6 +62,22 @@ export function judgementsOf(context: Context, table: ResolvedTable): Judgement[
         return judge && outcome ? [{ path, ...item, pack: judge.pack, outcome }] : [];
       }),
     );
+}
+
+/**
+ * An audit value that only a step reading the source can give, on a table with no ingest
+ * step, a transform's: `NOT_APPLIED` on the pack of its store step, else its transform step,
+ * whatever any pack says.
+ */
+function withoutSource(
+  table: ResolvedTable,
+  path: string,
+  item: { value?: string; text: string },
+): Judgement[] {
+  if (!table.transform) return [];
+  const { pack } = table.store ?? table.transform;
+  const reason = `A transform's table reads no source; ${item.text} comes from a step that reads the source.`;
+  return [{ path, ...item, pack, outcome: { kind: "not-applied", reason } }];
 }
 
 function stepsOf(context: Context, table: ResolvedTable): JudgingStep[] {

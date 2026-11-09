@@ -3,7 +3,7 @@
 // files for a store step, and an ingest whose landed files are the table (`store: none`).
 import { describe, expect, it } from "vitest";
 import type { Handover, Method } from "../../src/index.js";
-import { judgeOf } from "../../src/resolve/judging-step.js";
+import { judgeOf, readsSource } from "../../src/resolve/judging-step.js";
 
 /** A step, named by its action, with a method that hands over `produces`. */
 function step(action: Method["action"], produces: Handover) {
@@ -80,6 +80,30 @@ describe("judgeOf", () => {
     const { steps } = shapes["ingest lands files for a store"];
     expect(judgeOf("audit", steps)).toBeUndefined();
     expect(judgeOf("operations.trigger", steps)).toBeUndefined();
+  });
+
+  it("finds no step for the source's audit values on a transform's table, and flags them as needing one", () => {
+    const steps = [step("transform", "query"), step("store", "table")];
+    const sourceValues = [
+      "source_file",
+      "source_modified_at",
+      "run_id",
+      "window_start",
+      "window_end",
+      "source_object",
+      "source_connection",
+    ];
+    for (const value of sourceValues) {
+      expect(judgeOf("audit", steps, { value })).toBeUndefined();
+      expect(readsSource("audit", value), value).toBe(true);
+    }
+    // The store step still judges what is kept and the load time and row hash.
+    expect(judgeOf("audit", steps, { value: "loaded_at" })?.name).toBe("store");
+    expect(judgeOf("audit", steps, { value: "row_hash" })?.name).toBe("store");
+    expect(judgeOf("history", steps)?.name).toBe("store");
+    for (const value of ["loaded_at", "row_hash"]) expect(readsSource("audit", value)).toBe(false);
+    expect(readsSource("history", undefined)).toBe(false);
+    expect(readsSource("audit", undefined)).toBe(false);
   });
 
   it("does not take the ingest step for what is kept unless the table ends at its files", () => {

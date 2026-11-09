@@ -83,7 +83,8 @@ describe("project operations", () => {
   });
 
   it("judges each alert other than failure and a flow schedule", () => {
-    const standard = "operations: { schedule: { per: flow }, alerts: { on: [failure, slow] } }\n";
+    const standard =
+      "operations: { schedule: { per: flow }, alerts: { on: [failure, slow], slow_after: 1h } }\n";
     expect(messages(resolve(standard, [test])).map(({ message }) => message)).toEqual([
       "operations.schedule: flow isn't applied on test: No pack of this standard runs jobs.",
       "operations.alerts: slow isn't applied on test: No pack of this standard runs jobs.",

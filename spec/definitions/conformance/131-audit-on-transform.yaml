@@ -1,0 +1,80 @@
+description: A transform's table reads no source, so the audit values only a step that reads the source can give (source_file, run_id) are NOT_APPLIED where the layer wrote them, whatever a pack says. loaded_at is the store step's, and a flow table in another layer is unaffected.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    layers:
+      - bronze
+      - { name: silver, audit: [loaded_at, source_file, run_id] }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    layer: bronze
+    tables:
+      orders: { object: orders, contract: orders }
+  daily.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: daily
+    inputs: [orders]
+    code: "SELECT * FROM {{ tables.orders }}"
+    contract: daily
+    layer: silver
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  daily.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: daily
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: daily
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  tables:
+    - name: orders
+    - name: daily
+      intent:
+        audit:
+          - { value: loaded_at, as: _loaded_at }
+          - { value: source_file, as: _source_file }
+          - { value: run_id, as: _run_id }
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: standard.yaml
+      line: 7
+      message: "audit: source_file isn't applied on test: A transform's table reads no source; source_file comes from a step that reads the source."
+    - code: NOT_APPLIED
+      severity: warning
+      file: standard.yaml
+      line: 7
+      message: "audit: run_id isn't applied on test: A transform's table reads no source; run_id comes from a step that reads the source."

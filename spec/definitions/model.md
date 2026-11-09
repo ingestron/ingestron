@@ -1185,15 +1185,15 @@ kept. Each is a duration.
 **Operations.** Policy for runs. Values that differ per environment, such as a
 cron expression or where an alert goes, belong in the platform.
 
-| Field          | Meaning                                                                                                        |
-| -------------- | -------------------------------------------------------------------------------------------------------------- |
-| `schedule`     | `{ per }`: `project` for one schedule, `flow` for one per flow.                                                |
-| `trigger`      | `schedule`, `files`, `upstream` or `continuous`.                                                               |
-| `retries`      | `{ count, interval }`: tries again and the wait between them.                                                  |
-| `timeout`      | How long a run may take before it is stopped.                                                                  |
-| `alerts`       | `{ on, slow_after }`: `on` lists `failure` and `slow`; `slow_after` is the duration after which a run is slow. |
-| `concurrency`  | `{ max_runs, queue }`: the most active runs, and whether one over the limit waits instead of being skipped.    |
-| `require_tags` | Tags the platform must give a value for.                                                                       |
+| Field          | Meaning                                                                                                                                        |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schedule`     | `{ per }`: `project` for one schedule, `flow` for one per flow.                                                                                |
+| `trigger`      | `schedule`, `files`, `upstream` or `continuous`.                                                                                               |
+| `retries`      | `{ count, interval }`: tries again and the wait between them.                                                                                  |
+| `timeout`      | How long a run may take before it is stopped.                                                                                                  |
+| `alerts`       | `{ on, slow_after }`: `on` lists `failure` and `slow`; `slow_after`, the duration after which a run is slow, is required when `on` has `slow`. |
+| `concurrency`  | `{ max_runs, queue }`: the most active runs, and whether one over the limit waits instead of being skipped.                                    |
+| `require_tags` | Tags the platform must give a value for.                                                                                                       |
 
 A **duration** is a whole number and a unit, `s`, `m`, `h` or `d`, matching
 `^[0-9]+(s|m|h|d)$`, such as `30d`.
@@ -1419,7 +1419,20 @@ method applies it:
 Section 11.3 takes the same step for a path when two steps give a default,
 except that there the ingest step stands in for the store step only when it
 produces the table. A table that ends at the landed files has the ingest step
-as its last step, so it judges every value. Each item of a list (`audit`, `storage.features`) is judged as its own
+as its last step, so it judges every value.
+
+**A transform's table.** A table with no ingest step, a transform's, reads no
+source, so no step can give the `audit` values only a step that reads the
+source gives: `source_file` and `source_modified_at`, and `run_id`,
+`window_start`, `window_end`, `source_object` and `source_connection`. Each
+such value whose origin is not `pack` is `NOT_APPLIED` at the place it was
+written, without asking any pack:
+`audit: <value> isn't applied on <pack>: A transform's table reads no source;
+<value> comes from a step that reads the source.`, where `<pack>` is the id of
+the pack of the table's store step, else of its transform step. `loaded_at`
+and `row_hash` are judged by the store step as above.
+
+Each item of a list (`audit`, `storage.features`) is judged as its own
 value. A value of a path with `*` is judged on the path. A value that is not
 one of the path's values in `intentPaths` (such as `rescued: false`) and a
 path no step judges are not judged; nor is any value of a table that holds
@@ -1467,6 +1480,10 @@ nothing, `schedule` is `{ per: project }`, `trigger` is `schedule`, `alerts`
 is `{ on: [failure] }` and `require_tags` is `[]`; `retries`, `timeout` and
 `concurrency` are absent. The model's `qualityResults` is `true` when the
 standard's `quality.results` is `true`, and `false` otherwise.
+
+**Slow alerts.** `alerts.on` with `slow` and no `alerts.slow_after`, in the
+standard or in `fixed.operations`, is a schema error at the `alerts` mapping
+(`operations.alerts needs "slow_after".`).
 
 **Required tags.** Each tag in `require_tags` that the Platform's `tags` does
 not give is `BAD_SETTING`, an error at the Platform's `/tags` (at the document

@@ -27,6 +27,17 @@ function judgeFor(path: string, value: string | undefined): Judge | undefined {
   return path === "audit" && value !== undefined ? auditJudges[value] : undefined;
 }
 
+/**
+ * True for an `audit` value that only a step reading the source can give: the file reader's
+ * (`source_file`, `source_modified_at`) and the ingest step's (`run_id`, `window_start`,
+ * `window_end`, `source_object`, `source_connection`). A table with no ingest step, a
+ * transform's, has no step to give it.
+ */
+export function readsSource(path: string, value: string | undefined): boolean {
+  const judge = judgeFor(path, value);
+  return judge === "ingest" || judge === "reader";
+}
+
 /** What else decides the judging step: the audit value, and whether the table ends at the landed files. */
 export interface JudgeOptions {
   /** For `audit`, the value judged. */
@@ -41,7 +52,8 @@ export interface JudgeOptions {
  * ingest step when it produces the table or the table ends at its files, for what is kept
  * and the `loaded_at` and `row_hash` audit values; for `source_file` and
  * `source_modified_at`, the store step when ingest lands files, else ingest. Undefined for
- * any other path, and for `audit` without a value.
+ * any other path, for `audit` without a value, and for a value only a step that reads the
+ * source can give (`readsSource`) when there is no ingest step.
  */
 export function judgeOf<Candidate extends { method: Method }>(
   path: string,
