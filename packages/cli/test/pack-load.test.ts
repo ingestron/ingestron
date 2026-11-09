@@ -3,7 +3,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { packs } from "../src/index.js";
+import { packs } from "@ingestron/core";
 import { workspace } from "./workspace.js";
 
 const count = packs.length;

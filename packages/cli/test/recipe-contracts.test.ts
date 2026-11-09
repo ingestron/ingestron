@@ -1,7 +1,7 @@
 // A project made from a recipe holds the contracts its flows and transforms use, and no others.
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
-import { projectRecipe } from "../src/index.js";
+import { projectRecipe } from "@ingestron/core";
 
 interface Definition {
   kind?: string;

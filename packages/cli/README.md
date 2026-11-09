@@ -37,10 +37,8 @@ process.exitCode = code;
 
 The command is built on [`@ingestron/core`](../core/README.md): what `plan`
 would write, comparing environments, the platform request, and the starters
-and routes `init` offers. The names this package exported for those before
-2.2, such as `generatedOutputs` and `projectRoutes`, are still exported here,
-as the same values, and marked deprecated until 3.0. Import them from
-`@ingestron/core`.
+and routes `init` offers. Before 2.2 this package exported those too, such as
+`generatedOutputs` and `projectRoutes`; import them from `@ingestron/core`.
 
 `run` creates a project as `ingestron init` does. It writes `REPLACE_ME`
 where it cannot know a value, the defaults, and a README.md that lists each

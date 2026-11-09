@@ -4,11 +4,6 @@
 
 ```ts
 
-import * as core from '@ingestron/core';
-
-// @public @deprecated (undocumented)
-export const builtInTemplates: typeof core.builtInTemplates;
-
 // @public
 export const commands: readonly [{
     readonly name: "plan";
@@ -35,12 +30,6 @@ export const commands: readonly [{
     readonly name: "init";
     readonly summary: "Create a project from a connection and supported ingestion route.";
 }];
-
-// @public @deprecated (undocumented)
-export const compareEnvironments: typeof core.compareEnvironments;
-
-// @public @deprecated (undocumented)
-export const contractFromSample: typeof core.contractFromSample;
 
 // @public
 export const flags: readonly [{
@@ -87,18 +76,6 @@ export const flags: readonly [{
     readonly summary: "Show this text.";
 }];
 
-// @public @deprecated (undocumented)
-export type GeneratedOutput = core.GeneratedOutput;
-
-// @public @deprecated (undocumented)
-export type GeneratedOutputs = core.GeneratedOutputs;
-
-// @public @deprecated (undocumented)
-export const generatedOutputs: typeof core.generatedOutputs;
-
-// @public @deprecated (undocumented)
-export type GeneratedOutputsOptions = core.GeneratedOutputsOptions;
-
 // @public
 export interface Io {
     ask?(question: string): string | undefined;
@@ -109,68 +86,8 @@ export interface Io {
     write(text: string): void;
 }
 
-// @public @deprecated (undocumented)
-export const listSamples: typeof core.listSamples;
-
-// @public @deprecated (undocumented)
-export const nameProblem: typeof core.nameProblem;
-
-// @public @deprecated (undocumented)
-export const packs: typeof core.packs;
-
-// @public @deprecated (undocumented)
-export const parseTemplate: typeof core.parseTemplate;
-
-// @public @deprecated (undocumented)
-export const platformRequest: typeof core.platformRequest;
-
-// @public @deprecated (undocumented)
-export const projectId: typeof core.projectId;
-
-// @public @deprecated (undocumented)
-export type ProjectRecipe = core.ProjectRecipe;
-
-// @public @deprecated (undocumented)
-export const projectRecipe: typeof core.projectRecipe;
-
-// @public @deprecated (undocumented)
-export type ProjectRoute = core.ProjectRoute;
-
-// @public @deprecated (undocumented)
-export const projectRoutes: typeof core.projectRoutes;
-
-// @public @deprecated (undocumented)
-export type ProjectSource = core.ProjectSource;
-
-// @public @deprecated (undocumented)
-export const projectSources: typeof core.projectSources;
-
-// @public @deprecated (undocumented)
-export const readSample: typeof core.readSample;
-
-// @public @deprecated (undocumented)
-export type Report = core.Report;
-
 // @public
 export function run(args: string[], io: Io): number;
-
-// @public @deprecated (undocumented)
-export type Sample = core.Sample;
-
-// @public @deprecated (undocumented)
-export type SampleFacts = core.SampleFacts;
-
-// @public @deprecated (undocumented)
-export const sampleFacts: typeof core.sampleFacts;
-
-// @public @deprecated (undocumented)
-export type Template = core.Template;
-
-// @public @deprecated (undocumented)
-export const templateSchema: typeof core.templateSchema;
-
-// @public @deprecated (undocumented)
-export const templatesFolder: typeof core.templatesFolder;
 
 // (No @packageDocumentation comment for this package)
 
