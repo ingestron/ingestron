@@ -11,6 +11,7 @@ const skippedFolders = new Set([".git", "node_modules"]);
  * folders are not followed.
  * @example
  * nodeFiles("./definitions").read("project.yaml")
+ * @public
  */
 export function nodeFiles(root: string): FileSource {
   const realRoot = realpathSync(root);

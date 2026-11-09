@@ -14,7 +14,10 @@ export interface Spot {
   range: [number, number];
 }
 
-/** A zero-based line and character. */
+/**
+ * A zero-based line and character.
+ * @public
+ */
 export interface Position {
   line: number;
   character: number;
@@ -170,7 +173,10 @@ function shapeOf(line: string) {
   };
 }
 
-/** The line and character of an offset. */
+/**
+ * The line and character of an offset.
+ * @public
+ */
 export function positionAt(text: string, offset: number): Position {
   const before = text.slice(0, offset).split("\n");
   return { line: before.length - 1, character: before.at(-1)!.length };

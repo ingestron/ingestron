@@ -14,7 +14,10 @@ import { importedPaths, readManifest } from "./manifest.js";
 import { createProject, type Project } from "../resolve/index.js";
 import { createSchemaChecker } from "../validate/index.js";
 
-/** Options for {@link resolveProject} and `loadProject`. */
+/**
+ * Options for {@link resolveProject} and `loadProject`.
+ * @public
+ */
 export interface LoadOptions {
   /** The kinds of document the project may contain. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- any kind's document type is accepted
@@ -49,6 +52,7 @@ export interface LoadOptions {
 /**
  * The outcome of a load. `ok` is true when there are no errors; warnings may
  * still be present in `diagnostics`.
+ * @public
  */
 export type LoadResult =
   | { ok: true; project: Project; diagnostics: Diagnostic[] }
@@ -60,6 +64,7 @@ export type LoadResult =
  * @example
  * const result = resolveProject(memoryFiles(files), { kinds: [pipeline] });
  * if (!result.ok) console.error(formatDiagnostics(result.diagnostics));
+ * @public
  */
 export function resolveProject(files: FileSource, options: LoadOptions): LoadResult {
   const context = createLoadContext(files, options);

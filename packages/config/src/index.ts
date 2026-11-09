@@ -15,6 +15,7 @@ export { nodeFiles } from "./node-files.js";
  *   console.error(formatDiagnostics(result.diagnostics));
  *   process.exit(1);
  * }
+ * @public
  */
 export function loadProject(folder: string, options: LoadOptions): LoadResult {
   return resolveProject(nodeFiles(folder), { ...options, envvars: options.envvars ?? process.env });

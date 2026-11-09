@@ -13,7 +13,10 @@ export interface ContractNote {
 
 const column = "schema.*.properties.*";
 
-/** The contract fields Ingestron reads; these need value meanings and examples. */
+/**
+ * The contract fields Ingestron reads; these need value meanings and examples.
+ * @public
+ */
 export const contractReads = [
   "apiVersion",
   "kind",

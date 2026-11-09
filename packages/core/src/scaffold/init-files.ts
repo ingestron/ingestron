@@ -12,7 +12,10 @@ import { packs } from "../packs/index.js";
 import { scaffoldFiles, type Answers, type Content } from "./scaffold.js";
 import type { Template } from "./templates.js";
 
-/** Where the project comes from: a template, or a recipe with what composing it needs. */
+/**
+ * Where the project comes from: a template, or a recipe with what composing it needs.
+ * @internal
+ */
 export interface Source {
   template: Template;
   done(): void;
@@ -81,6 +84,7 @@ function ignoreExport(files: Record<string, Content>): void {
  * The project's files and every environment generated. A text source option is left out
  * unless the project does not resolve without it: then each, in turn, is written as
  * REPLACE_ME, until it resolves (spec/cli/projects.md).
+ * @internal
  */
 export function resolvedFiles(
   set: Record<string, string>,

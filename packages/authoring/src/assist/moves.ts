@@ -12,7 +12,10 @@ import { spotAt } from "../project/index.js";
 const pointerOf = (segments: string[]) =>
   segments.map((segment) => `/${segment.replaceAll("~", "~0").replaceAll("/", "~1")}`).join("");
 
-/** The move for the setting whose key is at `offset`, when it is written outside where it belongs. */
+/**
+ * The move for the setting whose key is at `offset`, when it is written outside where it belongs.
+ * @public
+ */
 export function moveSetting(
   project: Project,
   file: string,

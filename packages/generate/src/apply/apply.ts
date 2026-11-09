@@ -10,6 +10,7 @@ import { problem, type Problem } from "../problems/index.js";
  * @example
  * const result = applyPlan(folder, plan);
  * if (!result.ok) console.error(result.problems.map((p) => p.message).join("\n"));
+ * @public
  */
 export interface ApplyResult {
   ok: boolean;
@@ -23,6 +24,7 @@ export interface ApplyResult {
  * @example
  * const plan = planGeneration(folder, wanted);
  * if (plan.clean) applyPlan(folder, plan);
+ * @public
  */
 export function applyPlan(folder: OutputFolder, plan: Plan): ApplyResult {
   if (!plan.clean) {

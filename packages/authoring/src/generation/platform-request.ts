@@ -6,13 +6,19 @@ import { formatDiagnostics, type AnyDiagnostic } from "@ingestron/config";
 import { refusedPacks } from "../project/index.js";
 import type { Project } from "../project/index.js";
 
-/** The request as Markdown for the environment, as `ingestron request` prints it. */
+/**
+ * The request as Markdown for the environment, as `ingestron request` prints it.
+ * @public
+ */
 export function platformRequest(project: Project, environment: string | undefined): string {
   const refused = refusedPacks();
   return refused ? stopped(refused) : request(project.files, environment);
 }
 
-/** What differs between two environments, as `ingestron compare` prints it. */
+/**
+ * What differs between two environments, as `ingestron compare` prints it.
+ * @public
+ */
 export function compareEnvironments(project: Project, a: string, b: string): string {
   const refused = refusedPacks();
   return refused ? stopped(refused) : compare(project.files, a, b);

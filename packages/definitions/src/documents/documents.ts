@@ -53,7 +53,10 @@ export interface StandardDoc {
   governance?: GovernanceDoc;
 }
 
-/** The standard's governance section (specification section 8.1). */
+/**
+ * The standard's governance section (specification section 8.1).
+ * @public
+ */
 export interface GovernanceDoc {
   products?: { require?: ("owner" | "purpose" | "support" | "domain")[] };
   classification?: { values?: string[]; columns?: "required" | "optional"; sensitive?: string[] };
@@ -174,7 +177,10 @@ const productKind = (apiVersion: string) =>
     links: { "/outputPorts/*/contractId": "DataContract" },
   });
 
-/** A schema shipped in ../schemas. */
+/**
+ * A schema shipped in ../schemas.
+ * @public
+ */
 export function packageSchema(file: string): JsonSchema {
   const text = readFileSync(join(schemasFolder, file), "utf8");
   return (file.endsWith(".json") ? JSON.parse(text) : parse(text)) as JsonSchema;
@@ -182,7 +188,10 @@ export function packageSchema(file: string): JsonSchema {
 
 const apiVersion = "ingestron.io/v1";
 
-/** The document kinds, ready for `@ingestron/config`. */
+/**
+ * The document kinds, ready for `@ingestron/config`.
+ * @public
+ */
 export const kinds = {
   standard: defineKind<StandardDoc>({
     apiVersion,

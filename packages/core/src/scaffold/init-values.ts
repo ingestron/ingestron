@@ -22,7 +22,10 @@ export interface ProjectValue {
 
 const secret = /^\$\{secret:([^}]+)\}$/;
 
-/** Every named value of the files, in path order and the order written. */
+/**
+ * Every named value of the files, in path order and the order written.
+ * @internal
+ */
 export function projectValues(files: Record<string, Content>): ProjectValue[] {
   return Object.keys(files)
     .filter((path) => /\.ya?ml$/.test(path))

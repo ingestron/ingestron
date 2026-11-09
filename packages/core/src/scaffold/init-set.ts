@@ -10,6 +10,7 @@ const composed = ["landing", "synapse_data_source_location", "duckdb_published"]
 /**
  * Writes each answer at its name's locations. `asked` are a template's own questions, which
  * `init` writes to project.yaml itself. Throws an Error that says what to write instead.
+ * @internal
  */
 export function applySet(
   files: Record<string, Content>,

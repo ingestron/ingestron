@@ -9,6 +9,7 @@ import { readSample } from "./sample-read.js";
  * The contract text for a sample's columns, with the object named after the file.
  * @example
  * contractFromSample("id,name\n1,a\n", "customers.csv", "shop.customers");
+ * @public
  */
 export function contractFromSample(text: string, file: string, id: string): string {
   const { columns, rows } = readSample(text, file);
@@ -33,7 +34,10 @@ export function contractFromSample(text: string, file: string, id: string): stri
   ].join("\n");
 }
 
-/** `Daily Sales.csv` → `daily_sales`. */
+/**
+ * `Daily Sales.csv` → `daily_sales`.
+ * @internal
+ */
 export function objectName(file: string): string {
   return basename(file)
     .replace(/\.[^.]+$/, "")

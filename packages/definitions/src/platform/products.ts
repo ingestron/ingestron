@@ -30,6 +30,7 @@ export function resolveProducts(context: Context, tables: ResolvedTable[]): Reso
  * The file name of a product's passport: its id, with anything but letters,
  * digits, `.`, `_` and `-` as `-`.
  * @example passportFile("urn:product:sales") // "urn-product-sales.md"
+ * @public
  */
 export function passportFile(id: string): string {
   return `${id.replace(/[^A-Za-z0-9._-]/g, "-")}.md`;

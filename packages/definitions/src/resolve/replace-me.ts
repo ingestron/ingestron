@@ -4,7 +4,10 @@ import type { AnyDiagnostic, FileSource, Project } from "@ingestron/config";
 import { isMap, isScalar, isSeq, LineCounter, parseDocument, type Node } from "yaml";
 import type { ResolveOptions, ResolveResult } from "./resolve.js";
 
-/** The text that stands for a value only the project's owner knows. */
+/**
+ * The text that stands for a value only the project's owner knows.
+ * @public
+ */
 export const replaceMe = "REPLACE_ME";
 
 const hint =

@@ -1,7 +1,10 @@
 // One completion suggestion, as every completion source returns it.
 import type { QuickFix } from "./fixes.js";
 
-/** One suggestion. */
+/**
+ * One suggestion.
+ * @public
+ */
 export interface Suggestion {
   label: string;
   kind: "field" | "value" | "reference" | "method" | "setting" | "document";

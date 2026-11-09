@@ -3,13 +3,22 @@ import type { JsonSchema } from "@ingestron/config";
 import type { EnvironmentsBuild } from "./environments.js";
 import type { Column, ResolvedModel, ResolvedTable } from "./model.js";
 
-/** The steps a table goes through. */
+/**
+ * The steps a table goes through.
+ * @public
+ */
 export type Action = "ingest" | "transform" | "store" | "serve";
 
-/** What one action hands to the next. */
+/**
+ * What one action hands to the next.
+ * @public
+ */
 export type Handover = "files" | "table" | "query";
 
-/** Facts a `when` rule can match, plus the method it chooses and settings for that case. */
+/**
+ * Facts a `when` rule can match, plus the method it chooses and settings for that case.
+ * @public
+ */
 export interface Rule {
   connectivity?: string;
   connector?: string;
@@ -19,7 +28,10 @@ export interface Rule {
   with?: Record<string, unknown>;
 }
 
-/** One way to perform one action. */
+/**
+ * One way to perform one action.
+ * @public
+ */
 export interface Method {
   action: Action;
   description: string;
@@ -61,7 +73,10 @@ export interface Method {
   reads?: "landed";
 }
 
-/** Where a step's data ends up, for packs that read it. */
+/**
+ * Where a step's data ends up, for packs that read it.
+ * @public
+ */
 export interface StepOutput {
   /** A URL or path: one file, or a pattern with `*` (one level) or `**` (any depth). */
   location: string;
@@ -75,7 +90,10 @@ export interface StepOutput {
   columns?: Column[];
 }
 
-/** Name patterns (Liquid). */
+/**
+ * Name patterns (Liquid).
+ * @public
+ */
 export interface Naming {
   catalog: string;
   schema: string;
@@ -84,7 +102,10 @@ export interface Naming {
   job: string;
 }
 
-/** A kind of source a pack reads, described for the documentation. */
+/**
+ * A kind of source a pack reads, described for the documentation.
+ * @public
+ */
 export interface Connector {
   /** Native table reading facts, derived from the source's validation rules.
    * @example { query: "optional", sourceOptions: [], format: "parquet" }
@@ -137,6 +158,7 @@ export interface Connector {
  * `whole`, the fields under it are read as part of it),
  * `not-yet` (and why), `elsewhere` (another pack or step handles it, and how),
  * or `documentation` (never affects what is generated).
+ * @public
  */
 export type ContractUse =
   | { use: "used"; does: string; whole?: boolean; needs?: string }
@@ -147,6 +169,7 @@ export type ContractUse =
 /**
  * A feature that changes shared objects on the platform, turned on with
  * `manage.<id>` in the platform, with what it needs there, in words.
+ * @public
  */
 export interface Capability {
   id: "schemas" | "tags" | "comments" | "checks";
@@ -155,7 +178,10 @@ export interface Capability {
   needs: string[];
 }
 
-/** Everything about a pack except how it builds files. */
+/**
+ * Everything about a pack except how it builds files.
+ * @public
+ */
 export interface PackInfo {
   id: string;
   version: number;
@@ -188,6 +214,7 @@ export interface PackInfo {
 /**
  * One section of the request for the platform team, such as the schedules.
  * Sections with the same title from several packs are shown as one.
+ * @public
  */
 export interface RequestSection {
   title: string;
@@ -203,6 +230,7 @@ export interface RequestSection {
  * that builds every environment together (specification section 2.1).
  * @example
  * const pack: Pack = { ...info, build: (model) => ({ "README.md": `# ${model.project.id}\n` }) };
+ * @public
  */
 export interface Pack extends PackInfo {
   build(model: ResolvedModel): Record<string, string>;

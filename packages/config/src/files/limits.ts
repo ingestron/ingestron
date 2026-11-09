@@ -1,6 +1,7 @@
 /**
  * Safety limits. They stop a malformed or hostile project from exhausting
  * memory; normal projects never come near them.
+ * @public
  */
 export interface Limits {
   /** Largest single file, in bytes. */
@@ -17,6 +18,7 @@ export interface Limits {
  * The limits used when the caller does not set them.
  * @example
  * loadProject("./definitions", { kinds, limits: { ...defaultLimits, maxIncludes: 5000 } })
+ * @public
  */
 export const defaultLimits: Readonly<Limits> = Object.freeze({
   maxFileBytes: 10 * 1024 * 1024,

@@ -4,7 +4,10 @@ import { problems } from "../diagnostics/index.js";
 import { positioned, type QuickFix } from "./fixes.js";
 import type { Project } from "../project/index.js";
 
-/** One fix for every problem with `code` that has a fix, when there are two or more. */
+/**
+ * One fix for every problem with `code` that has a fix, when there are two or more.
+ * @public
+ */
 export function fixAll(
   project: Project,
   environment: string | undefined,

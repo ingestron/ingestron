@@ -2,9 +2,15 @@
 // works the same on every operating system.
 import { problem, type Problem } from "../problems/index.js";
 
-/** The manifest's file name in the output folder. */
+/**
+ * The manifest's file name in the output folder.
+ * @public
+ */
 export const manifestFile = ".generated.json";
-/** The lock's file name in the output folder. */
+/**
+ * The lock's file name in the output folder.
+ * @public
+ */
 export const lockFile = ".generated.lock";
 
 /** Why `path` cannot be generated, or undefined when it is fine. */

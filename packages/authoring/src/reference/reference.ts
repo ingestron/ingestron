@@ -13,7 +13,10 @@ import { spotAt, type Spot } from "../project/index.js";
 
 export type { ProblemEntry };
 
-/** What the panel shows; every text is plain, with `code` in backticks. */
+/**
+ * What the panel shows; every text is plain, with `code` in backticks.
+ * @public
+ */
 export interface ReferenceEntry {
   title: string;
   subtitle: string;
@@ -33,7 +36,10 @@ export interface ReferenceEntry {
   docs?: string;
 }
 
-/** The entry for `offset` in `text`, the open text of `file`; undefined outside definitions. */
+/**
+ * The entry for `offset` in `text`, the open text of `file`; undefined outside definitions.
+ * @public
+ */
 export function referenceAt(
   project: Project,
   file: string,

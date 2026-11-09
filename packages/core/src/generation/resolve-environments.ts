@@ -23,7 +23,10 @@ export interface ResolvedEnvironment {
   host?: ResolvedModel;
 }
 
-/** What resolving one environment, or building one pack's files, found, to print before anything is planned. */
+/**
+ * What resolving one environment, or building one pack's files, found, to print before anything is planned.
+ * @public
+ */
 export interface Report {
   /** The environment's name, `default` when project.yaml declares none, or the pack's id. */
   name: string;

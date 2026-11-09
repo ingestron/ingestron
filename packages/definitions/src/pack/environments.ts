@@ -7,6 +7,7 @@ import type { DefinitionCode } from "../diagnostics/index.js";
 /**
  * The codes of the problems a pack may report from `buildEnvironments`, each documented in
  * the code help. A notice, `PACK_NOTICE`, is a {@link PackNotice}.
+ * @public
  */
 export type EnvironmentsCode = Extract<
   DefinitionCode,
@@ -20,6 +21,7 @@ export type EnvironmentsCode = Extract<
  * and the warning `SECRET_NAME_DIFFERS`. Located at the definition that causes it.
  * @example
  * { code: "ENVIRONMENTS_DIFFER", severity: "error", message: 'Table "orders" is built in dev but not in prod.', file: "flows/sales.yaml" }
+ * @public
  */
 export interface EnvironmentsProblem {
   /** The diagnostic's code. */
@@ -42,6 +44,7 @@ export interface EnvironmentsProblem {
  * are still written. At the definition that causes it, when one does.
  * @example
  * { code: "PACK_NOTICE", severity: "warning", message: 'The runtime "shir" is written with its name and type only.', hint: "Check its other settings before the first deploy." }
+ * @public
  */
 export interface PackNotice {
   /** The diagnostic's code. */
@@ -58,7 +61,10 @@ export interface PackNotice {
   line?: number;
 }
 
-/** What a deploy-time value is called in the files, for the pipeline that deploys them. */
+/**
+ * What a deploy-time value is called in the files, for the pipeline that deploys them.
+ * @public
+ */
 export interface SuppliedValue {
   /** The variable's name, as in `${envvar:NAME}`. */
   name: string;
@@ -69,6 +75,7 @@ export interface SuppliedValue {
 /**
  * The files for every target at once, with the deploy-time values they take and what
  * stopped them covering every target. With any error, the files are not written.
+ * @public
  */
 export interface EnvironmentsBuild {
   /** Path → text, relative to the pack's output folder. */
@@ -103,6 +110,7 @@ export const deployValueHint = hints.DEPLOY_VALUE;
  * no location when it gives no file.
  * @example
  * const diagnostics = environmentsDiagnostics(pack.buildEnvironments(models).problems);
+ * @public
  */
 export function environmentsDiagnostics(
   problems: readonly (EnvironmentsProblem | PackNotice)[],

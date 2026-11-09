@@ -14,6 +14,7 @@ type Facts = Record<string, unknown>;
  * `options` gives other packs or host values than the built-in packs and `process.env`.
  * @example
  * console.log(compareEnvironments(nodeFiles("definitions"), "dev", "prod"));
+ * @public
  */
 export function compareEnvironments(
   files: FileSource,
@@ -55,7 +56,10 @@ function sectionsOf(model: ResolvedModel): Record<string, Facts> {
   };
 }
 
-/** One table's facts, flattened to dotted keys, for comparing environments. */
+/**
+ * One table's facts, flattened to dotted keys, for comparing environments.
+ * @internal
+ */
 export function tableFacts(table: ResolvedTable): Facts {
   const step = (found?: { method: string; settings: Record<string, unknown> }) =>
     found && { method: found.method, settings: found.settings };

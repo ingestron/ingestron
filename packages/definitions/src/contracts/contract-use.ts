@@ -60,6 +60,7 @@ const identity = {
 /**
  * What every pack does alike: the fields that identify the contract, and
  * those that describe it for people and never affect what is generated.
+ * @public
  */
 export const contractCommon: Record<string, ContractUse> = {
   apiVersion: identity,
@@ -77,7 +78,10 @@ function contractDocumentationOnly(): Record<string, ContractUse> {
   return Object.fromEntries(paths.map((path) => [path, documentation]));
 }
 
-/** The pack's declaration for a field path: its own, else the nearest above that covers it. */
+/**
+ * The pack's declaration for a field path: its own, else the nearest above that covers it.
+ * @public
+ */
 export function contractUseOf(pack: PackInfo, path: string): ContractUse | undefined {
   const declared = pack.contract ?? {};
   if (declared[path]) return declared[path];

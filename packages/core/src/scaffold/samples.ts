@@ -10,7 +10,10 @@ import { parse } from "yaml";
 import { templatesFolder } from "../folders.js";
 import { packs } from "../packs/index.js";
 
-/** One sample: where it is, what kind, and how it is listed. */
+/**
+ * One sample: where it is, what kind, and how it is listed.
+ * @public
+ */
 export interface Sample {
   name: string;
   kind: "starter" | "guide";
@@ -19,7 +22,10 @@ export interface Sample {
   summary: string;
 }
 
-/** What a sample's project uses, across its environments. */
+/**
+ * What a sample's project uses, across its environments.
+ * @public
+ */
 export interface SampleFacts {
   packs: string[];
   connectors: string[];
@@ -35,6 +41,7 @@ export { templatesFolder };
 /**
  * The samples in `folder`: starters, smallest first, or guides in their order.
  * @example listSamples().map((sample) => sample.name) // ["minimal", …]
+ * @public
  */
 export function listSamples(folder = templatesFolder, kind: Sample["kind"] = "starter"): Sample[] {
   const folders = foldersIn(folder);
@@ -45,7 +52,10 @@ export function listSamples(folder = templatesFolder, kind: Sample["kind"] = "st
     : folders.sort((a, b) => orderOf(a) - orderOf(b)).map((path) => readSample(path, kind));
 }
 
-/** The packs, connectors, connectivity, methods, environments and features a sample uses. */
+/**
+ * The packs, connectors, connectivity, methods, environments and features a sample uses.
+ * @public
+ */
 export function sampleFacts(folder: string): SampleFacts {
   const manifest = parse(readFileSync(join(folder, "project.yaml"), "utf8")) as {
     environments?: object;
@@ -117,6 +127,7 @@ function foldersIn(folder: string): string[] {
 /**
  * One sample folder, listed from its `template.yaml` (starter) or `sample.yaml` (guide).
  * @example readSample(folder, "guide").title
+ * @public
  */
 export function readSample(folder: string, kind: Sample["kind"]): Sample {
   const file = kind === "starter" ? "template.yaml" : "sample.yaml";

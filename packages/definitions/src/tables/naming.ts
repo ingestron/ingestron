@@ -21,7 +21,10 @@ export interface NameVariables {
   source?: string;
 }
 
-/** The names a pattern can use, with what each one holds. */
+/**
+ * The names a pattern can use, with what each one holds.
+ * @public
+ */
 export const nameVariables: Record<keyof NameVariables, string> = {
   project: "The project's id, such as sales.",
   environment: "The environment's name, such as dev or prod.",

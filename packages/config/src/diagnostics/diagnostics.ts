@@ -1,4 +1,7 @@
-/** A position in a project file. Lines and columns start at 1. */
+/**
+ * A position in a project file. Lines and columns start at 1.
+ * @public
+ */
 export interface Location {
   /** Path relative to the project root, using "/". */
   file: string;
@@ -9,12 +12,14 @@ export interface Location {
 /**
  * Whether a diagnostic stops the load (`error`), says something is probably
  * wrong (`warning`) or is advice about the surroundings (`information`).
+ * @public
  */
 export type Severity = "error" | "warning" | "information";
 
 /**
  * Every problem the loader can report. Each code is described, with an
  * example and a fix, in docs/reference/diagnostics.md.
+ * @public
  */
 export type DiagnosticCode =
   | "YAML_SYNTAX"
@@ -45,7 +50,10 @@ export type DiagnosticCode =
   | "BROKEN_LINK"
   | "NO_MATCH";
 
-/** One problem found while loading a project. */
+/**
+ * One problem found while loading a project.
+ * @public
+ */
 export interface Diagnostic {
   code: DiagnosticCode;
   severity: Severity;
@@ -58,7 +66,10 @@ export interface Diagnostic {
   fixes?: Fix[];
 }
 
-/** A change that solves a problem: edits applied together (specification section 6.1). */
+/**
+ * A change that solves a problem: edits applied together (specification section 6.1).
+ * @public
+ */
 export interface Fix {
   title: string;
   edits: FixEdit[];
@@ -69,6 +80,7 @@ export interface Fix {
  * writes a value there (a pointer ending in `/-` adds to a list), `rename`
  * renames the key the pointer ends at, `remove` removes the key or list item
  * with its value, and any mapping or list that leaves empty.
+ * @public
  */
 export type FixEdit = { file: string; pointer: string } & (
   { set: unknown } | { rename: string } | { remove: true }
@@ -124,6 +136,7 @@ export function hasErrors(diagnostics: readonly Diagnostic[]): boolean {
  *   "${bundle.target}" is not a definition reference.
  *   To pass it to the output unchanged, write "$${bundle.target}".
  * ```
+ * @public
  */
 export function formatDiagnostics(diagnostics: readonly AnyDiagnostic[]): string {
   return diagnostics.map(formatDiagnostic).join("\n");
@@ -132,6 +145,7 @@ export function formatDiagnostics(diagnostics: readonly AnyDiagnostic[]): string
 /**
  * A diagnostic whose code may come from another package that reports in the
  * same shape, so one formatter prints them all.
+ * @public
  */
 export type AnyDiagnostic = Omit<Diagnostic, "code"> & { code: string };
 

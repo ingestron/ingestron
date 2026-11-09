@@ -19,7 +19,10 @@ import { valueHelp } from "./value-help.js";
 
 export type { Suggestion } from "./suggestion.js";
 
-/** Suggestions for the cursor at `offset` in `text`, the open text of `file`. */
+/**
+ * Suggestions for the cursor at `offset` in `text`, the open text of `file`.
+ * @public
+ */
 export function completionsAt(
   project: Project,
   file: string,

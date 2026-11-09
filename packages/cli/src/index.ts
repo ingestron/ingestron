@@ -11,59 +11,140 @@ export type { Io } from "./terminal/index.js";
 
 // Moved to @ingestron/core in 2.2. Each stays here, as the same value, until 3.0.
 
-/** @deprecated Use `builtInTemplates` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `builtInTemplates` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const builtInTemplates: typeof core.builtInTemplates = core.builtInTemplates;
-/** @deprecated Use `compareEnvironments` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `compareEnvironments` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const compareEnvironments: typeof core.compareEnvironments = core.compareEnvironments;
-/** @deprecated Use `contractFromSample` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `contractFromSample` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const contractFromSample: typeof core.contractFromSample = core.contractFromSample;
-/** @deprecated Use `generatedOutputs` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `generatedOutputs` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const generatedOutputs: typeof core.generatedOutputs = core.generatedOutputs;
-/** @deprecated Use `listSamples` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `listSamples` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const listSamples: typeof core.listSamples = core.listSamples;
-/** @deprecated Use `nameProblem` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `nameProblem` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const nameProblem: typeof core.nameProblem = core.nameProblem;
-/** @deprecated Use `packs` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `packs` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const packs: typeof core.packs = core.packs;
-/** @deprecated Use `parseTemplate` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `parseTemplate` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const parseTemplate: typeof core.parseTemplate = core.parseTemplate;
-/** @deprecated Use `platformRequest` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `platformRequest` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const platformRequest: typeof core.platformRequest = core.platformRequest;
-/** @deprecated Use `projectId` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `projectId` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const projectId: typeof core.projectId = core.projectId;
-/** @deprecated Use `projectRecipe` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `projectRecipe` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const projectRecipe: typeof core.projectRecipe = core.projectRecipe;
-/** @deprecated Use `projectRoutes` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `projectRoutes` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const projectRoutes: typeof core.projectRoutes = core.projectRoutes;
-/** @deprecated Use `projectSources` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `projectSources` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const projectSources: typeof core.projectSources = core.projectSources;
-/** @deprecated Use `readSample` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `readSample` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const readSample: typeof core.readSample = core.readSample;
-/** @deprecated Use `sampleFacts` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `sampleFacts` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const sampleFacts: typeof core.sampleFacts = core.sampleFacts;
-/** @deprecated Use `templateSchema` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `templateSchema` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const templateSchema: typeof core.templateSchema = core.templateSchema;
-/** @deprecated Use `templatesFolder` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `templatesFolder` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export const templatesFolder: typeof core.templatesFolder = core.templatesFolder;
-/** @deprecated Use `GeneratedOutput` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `GeneratedOutput` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export type GeneratedOutput = core.GeneratedOutput;
-/** @deprecated Use `GeneratedOutputs` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `GeneratedOutputs` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export type GeneratedOutputs = core.GeneratedOutputs;
-/** @deprecated Use `GeneratedOutputsOptions` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `GeneratedOutputsOptions` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export type GeneratedOutputsOptions = core.GeneratedOutputsOptions;
-/** @deprecated Use `ProjectRecipe` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `ProjectRecipe` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export type ProjectRecipe = core.ProjectRecipe;
-/** @deprecated Use `ProjectRoute` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `ProjectRoute` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export type ProjectRoute = core.ProjectRoute;
-/** @deprecated Use `ProjectSource` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `ProjectSource` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export type ProjectSource = core.ProjectSource;
-/** @deprecated Use `Report` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `Report` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export type Report = core.Report;
-/** @deprecated Use `Sample` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `Sample` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export type Sample = core.Sample;
-/** @deprecated Use `SampleFacts` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `SampleFacts` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export type SampleFacts = core.SampleFacts;
-/** @deprecated Use `Template` from `@ingestron/core`. Removed in 3.0. */
+/**
+ * @deprecated Use `Template` from `@ingestron/core`. Removed in 3.0.
+ * @public
+ */
 export type Template = core.Template;
 
 /**
@@ -72,6 +153,7 @@ export type Template = core.Template;
  * that cannot be loaded (`PACK_LOAD`, printed in place of running the command).
  * @example
  * process.exitCode = run(process.argv.slice(2), { cwd: process.cwd(), write: (text) => process.stdout.write(text) });
+ * @public
  */
 export function run(args: string[], io: Io): number {
   const options = readArgs(args);

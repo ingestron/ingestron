@@ -8,7 +8,10 @@ import { holdsSecret } from "../project/index.js";
 import { resolveText } from "../navigation/index.js";
 import { allSpots, positionAt, rangeOf } from "../project/index.js";
 
-/** A note at the end of a line, with more on hover. */
+/**
+ * A note at the end of a line, with more on hover.
+ * @public
+ */
 export interface Annotation {
   line: number;
   label: string;
@@ -17,7 +20,10 @@ export interface Annotation {
   language?: string;
 }
 
-/** The methods that build a line's table, how they were chosen, and its generated files. */
+/**
+ * The methods that build a line's table, how they were chosen, and its generated files.
+ * @public
+ */
 export interface GeneratedLens {
   line: number;
   /** Such as `files → streaming-table`. */
@@ -27,7 +33,10 @@ export interface GeneratedLens {
   files: string[];
 }
 
-/** Values of `${…}` references and each table's name and methods, for the environment. */
+/**
+ * Values of `${…}` references and each table's name and methods, for the environment.
+ * @public
+ */
 export function annotationsIn(
   project: Project,
   file: string,
@@ -44,7 +53,10 @@ export function annotationsIn(
   ];
 }
 
-/** For each table in a flow, transform or contract, the files generated for it. */
+/**
+ * For each table in a flow, transform or contract, the files generated for it.
+ * @public
+ */
 export function generatedLenses(
   project: Project,
   file: string,

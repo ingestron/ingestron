@@ -13,6 +13,7 @@ import { access, columns, freshness, provides, quality, table } from "./passport
 /**
  * `README.md` and `<product id>.md` per product; none without products. From a model
  * resolved for deploy, each deploy-time value reads as supplied when deploying.
+ * @internal
  */
 export function passports(model: ResolvedModel): Record<string, string> {
   if (model.products.length === 0) return {};

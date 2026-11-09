@@ -6,20 +6,30 @@ import { readManifest } from "../manifest/index.js";
 import { checkWantedPaths, manifestFile } from "../folder/index.js";
 import type { Problem } from "../problems/index.js";
 
-/** What applying does to one path. See the Changes table in README.md. */
+/**
+ * What applying does to one path. See the Changes table in README.md.
+ * @public
+ */
 export type ChangeKind =
   "create" | "update" | "unchanged" | "adopt" | "delete" | "forget" | "conflict";
 
-/** Why a path cannot be written or deleted safely. */
+/**
+ * Why a path cannot be written or deleted safely.
+ * @public
+ */
 export type ConflictReason = "EDITED" | "NOT_GENERATED" | "NOT_A_FILE";
 
-/** What was at a path when planning: a content digest, "absent" or "other". */
+/**
+ * What was at a path when planning: a content digest, "absent" or "other".
+ * @public
+ */
 export type Seen = string;
 
 /**
  * The planned change for one path.
  * @example
  * { path: "jobs/orders.yml", change: "update", seen: "sha256:…", diff: "@@ -1,1 +1,1 @@\n-a\n+b" }
+ * @public
  */
 export interface Change {
   path: string;
@@ -37,6 +47,7 @@ export interface Change {
  * @example
  * const plan = planGeneration(folder, { "bundle.yml": text });
  * if (plan.upToDate) console.log("Nothing to do.");
+ * @public
  */
 export interface Plan {
   /** One change per path, in path order. */
@@ -56,6 +67,7 @@ export interface Plan {
  * Compares the wanted files with the output folder and its manifest.
  * @example
  * const plan = planGeneration(nodeFolder("build/bundle"), { "bundle.yml": "bundle: {}\n" });
+ * @public
  */
 export function planGeneration(
   folder: OutputFolder,

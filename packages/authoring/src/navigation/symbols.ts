@@ -3,7 +3,10 @@
 import { occurrences } from "./navigation.js";
 import type { Project } from "../project/index.js";
 
-/** One named thing and where it is defined. */
+/**
+ * One named thing and where it is defined.
+ * @public
+ */
 export interface ProjectSymbol {
   name: string;
   /** `table`, `value`, or the document's kind, such as `Flow`. */
@@ -12,7 +15,10 @@ export interface ProjectSymbol {
   range: [number, number];
 }
 
-/** Every definition in the project, a transform named once (as a transform, not also as its table). */
+/**
+ * Every definition in the project, a transform named once (as a transform, not also as its table).
+ * @public
+ */
 export function projectSymbols(project: Project): ProjectSymbol[] {
   const definitions = occurrences(project).filter((item) => item.definition);
   const transforms = new Set(

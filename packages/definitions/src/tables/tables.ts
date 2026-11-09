@@ -48,7 +48,10 @@ export function renderTableName(
   return catalog && schema && name ? { catalog, schema, table: name } : undefined;
 }
 
-/** Text form of a full name. */
+/**
+ * Text form of a full name.
+ * @public
+ */
 export function fullNameText(name: FullName): string {
   return `${name.catalog}.${name.schema}.${name.table}`;
 }

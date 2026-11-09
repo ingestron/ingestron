@@ -15,6 +15,7 @@ import { platformRequest } from "../request/index.js";
  * @example
  * const project = Project.open(nodeFiles("definitions"));
  * const plan = project.plan(nodeFolder("build/duckdb"), "duckdb");
+ * @beta
  */
 export class Project {
   /** Where the project's definitions are read from. */

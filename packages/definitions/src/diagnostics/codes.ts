@@ -2,7 +2,10 @@
 import type { DefinitionCode } from "./diagnostics.js";
 import { environmentCodeHelp } from "./environment-codes.js";
 
-/** Help for every code this package reports. */
+/**
+ * Help for every code this package reports.
+ * @public
+ */
 export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> = {
   ...environmentCodeHelp,
   NO_STANDARD: {

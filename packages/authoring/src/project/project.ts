@@ -14,7 +14,10 @@ import { parse } from "yaml";
 import { refusedPacks } from "./pack-load.js";
 import { withoutEnvFiles } from "./without-env-files.js";
 
-/** A project folder, its files and the environments it declares. */
+/**
+ * A project folder, its files and the environments it declares.
+ * @public
+ */
 export interface Project {
   folder: string;
   files: FileSource;
@@ -22,7 +25,10 @@ export interface Project {
   environments: string[];
 }
 
-/** The nearest folder at or above the file's folder that has project.yaml. */
+/**
+ * The nearest folder at or above the file's folder that has project.yaml.
+ * @public
+ */
 export function projectFolderOf(path: string): string | undefined {
   let folder = dirname(path);
   for (;;) {
@@ -36,13 +42,17 @@ export function projectFolderOf(path: string): string | undefined {
 /**
  * The project in `folder`, with `open` (absolute path → text) read before the disk.
  * Open a fresh project after any edit or disk change to refresh cached editor features.
+ * @public
  */
 export function openProject(folder: string, open: ReadonlyMap<string, string>): Project {
   const files = overlay(folder, open);
   return { folder, files, environments: environmentsOf(files) };
 }
 
-/** A path relative to the project, with forward slashes, or undefined outside it. */
+/**
+ * A path relative to the project, with forward slashes, or undefined outside it.
+ * @public
+ */
 export function inProject(folder: string, path: string): string | undefined {
   const inside = relative(folder, path);
   if (inside.startsWith("..") || inside === "") return undefined;

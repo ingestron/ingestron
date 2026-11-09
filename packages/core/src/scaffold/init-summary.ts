@@ -5,7 +5,10 @@ import type { Generated } from "../generation/index.js";
 import { checkRows, replaceRows, secretRows } from "./init-rows.js";
 import type { Content } from "./scaffold.js";
 
-/** The lines after the plan. */
+/**
+ * The lines after the plan.
+ * @internal
+ */
 export function stillToReplace(
   files: Record<string, Content>,
   generated: Generated,

@@ -15,7 +15,9 @@ import { ResolvedProduct } from '@ingestron/definitions';
 import { ResolvedTable } from '@ingestron/definitions';
 import { SuppliedValue } from '@ingestron/definitions';
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "Answers" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export interface Answers {
     // (undocumented)
     environments: string[];
@@ -30,8 +32,9 @@ export interface Answers {
 }
 
 // Warning: (ae-forgotten-export) The symbol "Content" needs to be exported by the entry point index.d.ts
+// Warning: (ae-internal-missing-underscore) The name "applySet" should be prefixed with an underscore because the declaration is marked as @internal
 //
-// @public
+// @internal
 export function applySet(files: Record<string, Content>, set: Readonly<Record<string, string>>, environments: readonly string[], asked?: readonly string[]): void;
 
 // @public
@@ -40,7 +43,9 @@ export function builtInTemplates(): Template[];
 // @public
 export function compareEnvironments(files: FileSource, a: string, b: string, options?: ProjectOptions): string;
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "composableRecipe" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function composableRecipe(connector: string, given: string, connectivity: string): ProjectRecipe & {
     facts: RecipeFacts;
 };
@@ -48,17 +53,23 @@ export function composableRecipe(connector: string, given: string, connectivity:
 // @public
 export function contractFromSample(text: string, file: string, id: string): string;
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "environmentOutputs" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function environmentOutputs(model: ResolvedModel, environment: string): {
     pack: string;
     label: string;
     files: Record<string, string>;
 }[];
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "environmentReportsText" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function environmentReportsText(reports: readonly Report[]): string;
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "environmentsToGenerate" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function environmentsToGenerate(definitions: string, requested: string[]): (string | undefined)[];
 
 // @public
@@ -107,16 +118,22 @@ export interface GeneratedOutputsOptions {
     packs?: readonly Pack[];
 }
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "ignoredText" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function ignoredText(lines: readonly string[]): string;
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "lineage" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function lineage(model: ResolvedModel, product: ResolvedProduct): string;
 
 // @public
 export function listSamples(folder?: string, kind?: Sample["kind"]): Sample[];
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "methodSettings" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function methodSettings(method: string): Record<string, {
     description?: string;
 }>;
@@ -124,7 +141,9 @@ export function methodSettings(method: string): Record<string, {
 // @public
 export function nameProblem(text: string, what: "project" | "environment"): string | undefined;
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "objectName" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function objectName(file: string): string;
 
 // @public
@@ -139,7 +158,9 @@ export interface Output {
     targets: string[];
 }
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "packReportsText" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function packReportsText(reports: readonly Report[]): string;
 
 // @public
@@ -148,13 +169,15 @@ export const packs: Pack[];
 // @public
 export function parseTemplate(text: string, name: string, folder: string): Template;
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "passports" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function passports(model: ResolvedModel): Record<string, string>;
 
 // @public
 export function platformRequest(files: FileSource, environment: string | undefined, options?: ProjectOptions): string;
 
-// @public
+// @beta
 export class Project {
     compare(a: string, b: string): string;
     readonly envvars: Readonly<Record<string, string | undefined>>;
@@ -179,8 +202,9 @@ export interface ProjectOptions {
 }
 
 // Warning: (ae-forgotten-export) The symbol "ReadmeFacts" needs to be exported by the entry point index.d.ts
+// Warning: (ae-internal-missing-underscore) The name "projectReadme" should be prefixed with an underscore because the declaration is marked as @internal
 //
-// @public
+// @internal
 export function projectReadme(facts: ReadmeFacts): string;
 
 // @public
@@ -225,14 +249,17 @@ export interface ProjectSource {
 export function projectSources(): ProjectSource[];
 
 // Warning: (ae-forgotten-export) The symbol "ProjectValue" needs to be exported by the entry point index.d.ts
+// Warning: (ae-internal-missing-underscore) The name "projectValues" should be prefixed with an underscore because the declaration is marked as @internal
 //
-// @public
+// @internal
 export function projectValues(files: Record<string, Content>): ProjectValue[];
 
 // @public
 export function readSample(folder: string, kind: Sample["kind"]): Sample;
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "readTemplate" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function readTemplate(folder: string, name: string): Template;
 
 // @public
@@ -242,15 +269,18 @@ export interface Report {
     name: string;
 }
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "requestFor" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function requestFor(files: FileSource, environment: string | undefined, generated: Generated, options?: ProjectOptions): {
     text: string;
     resolved: boolean;
 };
 
 // Warning: (ae-forgotten-export) The symbol "Writing" needs to be exported by the entry point index.d.ts
+// Warning: (ae-internal-missing-underscore) The name "resolvedFiles" should be prefixed with an underscore because the declaration is marked as @internal
 //
-// @public
+// @internal
 export function resolvedFiles(set: Record<string, string>, source: Source, answers: Answers, writing: Writing): {
     files: Record<string, Content>;
     generated: ReturnType<typeof generateAll>;
@@ -288,10 +318,14 @@ export interface SampleFacts {
 // @public
 export function sampleFacts(folder: string): SampleFacts;
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "scaffoldFiles" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function scaffoldFiles(template: Template, answers: Answers, prepared?: Record<string, Content>): Record<string, Content>;
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "Source" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export interface Source {
     // (undocumented)
     done(): void;
@@ -303,12 +337,15 @@ export interface Source {
     template: Template;
 }
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "stillToReplace" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function stillToReplace(files: Record<string, Content>, generated: Generated, kept: boolean): string;
 
 // Warning: (ae-forgotten-export) The symbol "Facts" needs to be exported by the entry point index.d.ts
+// Warning: (ae-internal-missing-underscore) The name "tableFacts" should be prefixed with an underscore because the declaration is marked as @internal
 //
-// @public
+// @internal
 export function tableFacts(table: ResolvedTable): Facts;
 
 // @public
@@ -372,7 +409,9 @@ export const templateSchema: {
 // @public
 export const templatesFolder: string;
 
-// @public
+// Warning: (ae-internal-missing-underscore) The name "writeScaffold" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal
 export function writeScaffold(target: string, files: Record<string, Content>): {
     written: string[];
     ignored: string[];
@@ -382,7 +421,7 @@ export function writeScaffold(target: string, files: Record<string, Content>): {
 
 // Warnings were encountered during analysis:
 //
-// dist/scaffold/project-recipes.d.ts:18:5 - (ae-forgotten-export) The symbol "RecipeFacts" needs to be exported by the entry point index.d.ts
+// dist/scaffold/project-recipes.d.ts:23:5 - (ae-forgotten-export) The symbol "RecipeFacts" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

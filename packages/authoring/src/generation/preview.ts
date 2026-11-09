@@ -5,7 +5,10 @@ import { environmentName, generationOf } from "./generation.js";
 import type { Project } from "../project/index.js";
 import { keyPath } from "../project/index.js";
 
-/** One generated file, at its path in the project (under build/). */
+/**
+ * One generated file, at its path in the project (under build/).
+ * @public
+ */
 export interface Generated {
   path: string;
   text: string;
@@ -20,6 +23,7 @@ const built = new WeakMap<Project, Map<string, Files>>();
  * together: a pack that builds them together has one folder for all its environments, such
  * as `build/adf/factory/…`, and the passports and any other pack have a folder for each,
  * such as `build/duckdb/dev/…`, of which only the environment's own is given.
+ * @public
  */
 export function generatedFiles(project: Project, environment: string | undefined): Files {
   let byEnvironment = built.get(project);
@@ -48,6 +52,7 @@ function build(project: Project, environment: string | undefined): Files {
  * lands it, the Lakeflow Connect pipeline that ingests it as `physical`, the
  * Synapse view named `physical`, and DuckDB's `tables/<schema>.<physical>.sql`
  * (any schema when `schema` is not given).
+ * @public
  */
 export function generatedForTable(
   files: Generated[],
@@ -66,7 +71,10 @@ export function generatedForTable(
   );
 }
 
-/** The flow table the cursor is in, or the transform's table. */
+/**
+ * The flow table the cursor is in, or the transform's table.
+ * @public
+ */
 export function tableAtCursor(text: string, offset: number): string | undefined {
   const kind = kindOf(text);
   if (kind === "Transform") return /^id:\s*(\S+)/m.exec(text)?.[1];

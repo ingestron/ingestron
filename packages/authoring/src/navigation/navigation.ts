@@ -25,7 +25,10 @@ const links = Object.values(kinds).flatMap((kind) =>
   })),
 );
 
-/** Where the id or reference at the offset is defined. */
+/**
+ * Where the id or reference at the offset is defined.
+ * @public
+ */
 export function definitionAt(project: Project, file: string, offset: number): Place | undefined {
   const here = occurrencesAt(project, file, offset);
   const path = here.find((item) => item.symbol.startsWith("file:"))?.symbol.slice("file:".length);
@@ -39,6 +42,7 @@ export function definitionAt(project: Project, file: string, offset: number): Pl
 /**
  * Every place that defines or uses what is at the offset. A transform's id
  * names both the transform and its table, so both are followed.
+ * @public
  */
 export function referencesAt(project: Project, file: string, offset: number): Place[] {
   const symbols = new Set(

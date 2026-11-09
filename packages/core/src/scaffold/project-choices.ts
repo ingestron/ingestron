@@ -3,6 +3,7 @@ import type { Method } from "@ingestron/definitions";
 import { packs } from "../packs/index.js";
 /** One source in the project builder's categorised catalogue.
  * @example const source: ProjectSource = projectSources()[0]!;
+ * @public
  */
 export interface ProjectSource {
   id: string;
@@ -11,6 +12,7 @@ export interface ProjectSource {
 }
 /** An ingestion route supported by an installed pack.
  * @example const route: ProjectRoute = projectRoutes("files")[0]!;
+ * @public
  */
 export interface ProjectRoute {
   via: string;
@@ -21,6 +23,7 @@ export interface ProjectRoute {
 }
 /** Available sources, grouped by discovery category and title.
  * @example const sources = projectSources();
+ * @public
  */
 export function projectSources(): ProjectSource[] {
   const sources = new Map<string, ProjectSource>();
@@ -37,6 +40,7 @@ export function projectSources(): ProjectSource[] {
 }
 /** Supported routes for a source, optionally filtered by network reachability.
  * @example const routes = projectRoutes("sqlserver", "private");
+ * @public
  */
 export function projectRoutes(connector: string, connectivity?: string): ProjectRoute[] {
   return packs.flatMap((pack) =>

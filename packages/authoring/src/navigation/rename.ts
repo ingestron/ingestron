@@ -5,7 +5,10 @@ import { dirname, posix } from "node:path";
 import { occurrences, occurrencesAt, referencesAt } from "./navigation.js";
 import type { Project } from "../project/index.js";
 
-/** The edits that rename the id at the offset everywhere, by file. */
+/**
+ * The edits that rename the id at the offset everywhere, by file.
+ * @public
+ */
 export function renameAt(
   project: Project,
   file: string,
@@ -23,6 +26,7 @@ export function renameAt(
  * Why the id at the offset cannot be renamed to `name`, or undefined when it
  * can: a blank name, or one that another table or document of the same kind
  * already has, which would leave two definitions with one name.
+ * @public
  */
 export function renameProblem(
   project: Project,
@@ -55,6 +59,7 @@ function describe(kind: string): string {
  * The edits that keep every `${file:…}` pointing at the same file when the
  * file or folder `from` moves to `to` (project paths with "/"), by file as
  * it is now. A file that moves keeps its own references right too.
+ * @public
  */
 export function fileMoveEdits(
   project: Project,

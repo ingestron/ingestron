@@ -2,7 +2,10 @@
 // because the value they judge is not known on this computer.
 import { isRecord } from "../internal/index.js";
 
-/** What {@link withoutUnsetEnvvars} reads of a schema failure; Ajv's errors have it all. */
+/**
+ * What {@link withoutUnsetEnvvars} reads of a schema failure; Ajv's errors have it all.
+ * @public
+ */
 export interface UnsetEnvvarFailure {
   /** The schema keyword that failed, such as `pattern` or `anyOf`. */
   keyword: string;
@@ -25,6 +28,7 @@ const combinators = new Set(["oneOf", "anyOf", "if"]);
  * one fails any keyword but `type` only because its value is not known yet. A `oneOf`,
  * `anyOf` or `if` is left out, with every failure inside it, when one of its
  * alternatives failed and each failure inside that alternative was left out.
+ * @public
  */
 export function withoutUnsetEnvvars<T extends UnsetEnvvarFailure>(
   failures: readonly T[],

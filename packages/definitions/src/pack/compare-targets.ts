@@ -5,7 +5,10 @@ import type { EnvironmentsProblem } from "./environments.js";
 import { checkDeployNames } from "./deploy-names.js";
 import type { ResolvedModel, ResolvedTable } from "./model.js";
 
-/** One place where the targets' values are not all the same. */
+/**
+ * One place where the targets' values are not all the same.
+ * @public
+ */
 export interface TargetDifference {
   /** A JSON Pointer into the first target's model. */
   pointer: string;
@@ -13,7 +16,10 @@ export interface TargetDifference {
   values: Record<string, unknown>;
 }
 
-/** What {@link compareTargets} finds. */
+/**
+ * What {@link compareTargets} finds.
+ * @public
+ */
 export interface TargetComparison {
   /** `ENVIRONMENTS_DIFFER` and `DEPLOY_VALUE` errors: what no parameter can express. */
   structural: EnvironmentsProblem[];
@@ -31,6 +37,7 @@ const metadata = new Set(["origins", "chosenBy"]);
  * Compares the targets' models, keyed by target name in project.yaml's order.
  * @example
  * const { structural, differing } = compareTargets({ dev: devModel, prod: prodModel });
+ * @public
  */
 export function compareTargets(models: Readonly<Record<string, ResolvedModel>>): TargetComparison {
   const targets = Object.keys(models);

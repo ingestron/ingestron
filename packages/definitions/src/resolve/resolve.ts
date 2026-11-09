@@ -30,7 +30,10 @@ import { holdsUnsetEnvvar } from "../diagnostics/index.js";
 import { recordOutputs, runPackCheck } from "../context/index.js";
 import { checkPlatformFields } from "../reference/index.js";
 
-/** Options for {@link resolveDefinitions} and {@link loadDefinitions}. */
+/**
+ * Options for {@link resolveDefinitions} and {@link loadDefinitions}.
+ * @public
+ */
 export interface ResolveOptions {
   /** The packs available; the project's standard chooses which to use. */
   packs: PackInfo[];
@@ -63,7 +66,10 @@ export interface ResolveOptions {
   replaceMe?: "warning" | "error";
 }
 
-/** The model when there are no errors, and every diagnostic. */
+/**
+ * The model when there are no errors, and every diagnostic.
+ * @public
+ */
 export interface ResolveResult {
   ok: boolean;
   model?: ResolvedModel;
@@ -88,6 +94,7 @@ function loadOptions(options: ResolveOptions) {
  * Throws when a pack lists a `platformFields` path the Platform's field reference does not have.
  * @example
  * const result = resolveDefinitions(memoryFiles(files), { packs: [databricks], environment: "dev" });
+ * @public
  */
 export function resolveDefinitions(files: FileSource, options: ResolveOptions): ResolveResult {
   checkPlatformFields(options.packs);
@@ -114,6 +121,7 @@ export function resolveDefinitions(files: FileSource, options: ResolveOptions): 
  * Throws when a pack lists a `platformFields` path the Platform's field reference does not have.
  * @example
  * const result = loadDefinitions("definitions", { packs: [databricks, adf], environment: "prod" });
+ * @public
  */
 export function loadDefinitions(folder: string, options: ResolveOptions): ResolveResult {
   checkPlatformFields(options.packs);

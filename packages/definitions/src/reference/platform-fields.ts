@@ -30,6 +30,7 @@ function refusal(packs: readonly PackInfo[]): string | undefined {
  * @example
  * const problem = packLoadProblem(packs);
  * if (problem) console.error(formatDiagnostics([problem]));
+ * @public
  */
 export function packLoadProblem(packs: readonly PackInfo[]): AnyDiagnostic | undefined {
   const message = refusal(packs);

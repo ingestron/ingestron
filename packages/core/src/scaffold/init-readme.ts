@@ -24,7 +24,10 @@ export interface ReadmeFacts {
   generated: Generated;
 }
 
-/** README.md's text. */
+/**
+ * README.md's text.
+ * @internal
+ */
 export function projectReadme(facts: ReadmeFacts): string {
   const { files, generated } = facts;
   const factory = throughDataFactory(files);

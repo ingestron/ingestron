@@ -50,6 +50,7 @@ const schemaMapKeys = [
  * The input schema is not changed.
  * @example
  * writeFileSync("pipeline.editor.json", JSON.stringify(toEditorSchema(pipeline.schema)));
+ * @public
  */
 export function toEditorSchema(schema: JsonSchema): JsonSchema {
   // The root is a whole document, never a reference, so only its children change.

@@ -5,7 +5,10 @@ import type { GovernanceDoc } from "../documents/index.js";
 import type { StepOutput } from "./pack.js";
 import type { TableCheck } from "./table-checks.js";
 
-/** A step's chosen method, the pack it belongs to, and its final settings. */
+/**
+ * A step's chosen method, the pack it belongs to, and its final settings.
+ * @public
+ */
 export interface Step {
   method: string;
   pack: string;
@@ -18,7 +21,10 @@ export interface Step {
   output?: StepOutput;
 }
 
-/** How a step's method was chosen, and where that was written. */
+/**
+ * How a step's method was chosen, and where that was written.
+ * @public
+ */
 export interface ChosenBy {
   by:
     "definition" | "standard-rule" | "standard-default" | "pack-rule" | "pack-default" | "runs-on";
@@ -32,7 +38,10 @@ export interface ChosenBy {
   line?: number;
 }
 
-/** Where a setting's value came from. */
+/**
+ * Where a setting's value came from.
+ * @public
+ */
 export interface Origin {
   layer: "pack" | "standard" | "platform" | "rule" | "definition" | "table" | "fixed";
   /** Where it was written; absent for the pack's defaults. */
@@ -40,7 +49,10 @@ export interface Origin {
   line?: number;
 }
 
-/** A column from the table's contract, with its platform type. */
+/**
+ * A column from the table's contract, with its platform type.
+ * @public
+ */
 export interface Column {
   name: string;
   /** `physicalType` from the contract, else the standard's type for its `logicalType`, if any. */
@@ -56,7 +68,10 @@ export interface Column {
   description?: string;
 }
 
-/** The parts of an ODCS contract that generation uses. */
+/**
+ * The parts of an ODCS contract that generation uses.
+ * @public
+ */
 export interface Contract {
   id: string;
   description?: string;
@@ -77,7 +92,10 @@ export interface Contract {
   sla: { property: string; value: string; unit?: string }[];
 }
 
-/** One ODCS role: a group, its access, its purpose and who approves it. */
+/**
+ * One ODCS role: a group, its access, its purpose and who approves it.
+ * @public
+ */
 export interface ContractRole {
   role: string;
   access?: string;
@@ -85,7 +103,10 @@ export interface ContractRole {
   firstLevelApprovers?: string;
 }
 
-/** A row check; `action` decides what happens to a row that fails. */
+/**
+ * A row check; `action` decides what happens to a row that fails.
+ * @public
+ */
 export interface Expectation {
   name: string;
   check: string;
@@ -94,7 +115,10 @@ export interface Expectation {
   from: "contract" | "definition";
 }
 
-/** Where a table's names point: `catalog.schema.table`. */
+/**
+ * Where a table's names point: `catalog.schema.table`.
+ * @public
+ */
 export interface FullName {
   catalog: string;
   schema: string;
@@ -106,6 +130,7 @@ export interface FullName {
  * order: every input before the tables that read it.
  * @example
  * `${table.fullName.catalog}.${table.fullName.schema}.${table.fullName.table}`
+ * @public
  */
 export interface ResolvedTable {
   name: string;
@@ -143,23 +168,35 @@ export interface ResolvedTable {
   sourceNotKnown?: string;
 }
 
-/** A schedule after defaults. */
+/**
+ * A schedule after defaults.
+ * @public
+ */
 export interface Schedule {
   cron: string;
   timezone: string;
   paused: boolean;
 }
 
-/** One permission on generated jobs and pipelines. */
+/**
+ * One permission on generated jobs and pipelines.
+ * @public
+ */
 export type Permission = { level: string } & Record<string, string>;
 
-/** A grant on a generated schema. */
+/**
+ * A grant on a generated schema.
+ * @public
+ */
 export interface Grant {
   principal: string;
   privileges: string[];
 }
 
-/** The Platform document after smart defaults. */
+/**
+ * The Platform document after smart defaults.
+ * @public
+ */
 export interface ResolvedPlatform {
   mode: "development" | "production";
   workspace: { host?: string; root_path?: string };
@@ -177,6 +214,7 @@ export interface ResolvedPlatform {
  * Everything resolved for one environment.
  * @example
  * for (const table of model.tables) console.log(table.fullName.table, table.store?.method);
+ * @public
  */
 export interface ResolvedModel {
   project: { id: string; name?: string; environment: string };
@@ -201,6 +239,7 @@ export interface ResolvedModel {
  * goes; a pack makes it a parameter of its files that no environment sets.
  * @example
  * { name: "LANDING", text: "${envvar:LANDING}", uses: [{ file: "project.yaml", pointer: "/values/landing" }] }
+ * @public
  */
 export interface DeployValue {
   /** The variable's name. */
@@ -214,7 +253,10 @@ export interface DeployValue {
   uses: { file: string; pointer: string; line?: number }[];
 }
 
-/** A data product (ODPS) and the tables that build its outputs in this environment. */
+/**
+ * A data product (ODPS) and the tables that build its outputs in this environment.
+ * @public
+ */
 export interface ResolvedProduct {
   id: string;
   name?: string;

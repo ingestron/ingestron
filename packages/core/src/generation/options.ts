@@ -1,7 +1,10 @@
 // What a project is generated with, when it is not the defaults.
 import type { Pack } from "@ingestron/definitions";
 
-/** The packs and host values a project is generated with. */
+/**
+ * The packs and host values a project is generated with.
+ * @public
+ */
 export interface ProjectOptions {
   /** The packs a standard may name. Default: the built-in packs. */
   packs?: readonly Pack[];

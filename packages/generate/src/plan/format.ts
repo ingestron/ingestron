@@ -1,7 +1,10 @@
 // Turns a plan into text for a terminal or a review comment.
 import type { Change, Plan } from "./plan.js";
 
-/** Options for {@link formatPlan}. */
+/**
+ * Options for {@link formatPlan}.
+ * @public
+ */
 export interface FormatOptions {
   /** Show the line diff under each update. Default: false. */
   diffs?: boolean;
@@ -15,6 +18,7 @@ const order = ["create", "update", "delete", "adopt", "forget", "unchanged", "co
  * under each conflict and problem, and a summary.
  * @example
  * console.log(formatPlan(plan, { diffs: true }));
+ * @public
  */
 export function formatPlan(plan: Plan, options: FormatOptions = {}): string {
   const lines: string[] = [];

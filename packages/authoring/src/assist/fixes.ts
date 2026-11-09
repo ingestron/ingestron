@@ -8,7 +8,10 @@ import { plainText, skeletons } from "./skeletons.js";
 import { occurrences } from "../navigation/index.js";
 import { offsetAt, positionAt, type Position } from "../project/index.js";
 
-/** One quick fix: its title, the problem it solves, and edits that may span files. */
+/**
+ * One quick fix: its title, the problem it solves, and edits that may span files.
+ * @public
+ */
 export interface QuickFix {
   title: string;
   /** The problem it solves; absent for a refactoring, such as moving a setting. */
@@ -18,7 +21,10 @@ export interface QuickFix {
   create?: { file: string; text: string };
 }
 
-/** The fixes for the problems in `file` whose lines meet `at`. */
+/**
+ * The fixes for the problems in `file` whose lines meet `at`.
+ * @public
+ */
 export function quickFixes(
   project: Project,
   environment: string | undefined,

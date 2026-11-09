@@ -37,6 +37,7 @@ import { valuesToReplace } from "./request-replace.js";
  * `options` gives other packs or host values than the built-in packs and `process.env`.
  * @example
  * console.log(platformRequest(nodeFiles("definitions"), "prod"));
+ * @public
  */
 export function platformRequest(
   files: FileSource,
@@ -56,7 +57,10 @@ const resolving = {
   environmentsTogether: true,
 } as const;
 
-/** The request's text, and whether the definitions resolved; false gives the short note. */
+/**
+ * The request's text, and whether the definitions resolved; false gives the short note.
+ * @internal
+ */
 export function requestFor(
   files: FileSource,
   environment: string | undefined,

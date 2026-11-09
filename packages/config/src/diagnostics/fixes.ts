@@ -18,7 +18,10 @@ import type { Fix, FixEdit } from "./diagnostics.js";
 import { parsePointer } from "../internal/index.js";
 import { removal } from "./remove-edit.js";
 
-/** Replaces the text from offset `start` to `end` of a project file with `text`. */
+/**
+ * Replaces the text from offset `start` to `end` of a project file with `text`.
+ * @public
+ */
 export interface TextEdit {
   file: string;
   start: number;
@@ -29,6 +32,7 @@ export interface TextEdit {
 /**
  * The text edits that apply a fix, given each file's current text. An edit
  * that cannot be placed, such as a value written as `${…}`, gives none.
+ * @public
  */
 export function fixEdits(fix: Fix, read: (file: string) => string | undefined): TextEdit[] {
   return fix.edits.flatMap((edit) => {
@@ -38,7 +42,10 @@ export function fixEdits(fix: Fix, read: (file: string) => string | undefined): 
   });
 }
 
-/** One file's text with edits applied; the edits were all made against `text`. */
+/**
+ * One file's text with edits applied; the edits were all made against `text`.
+ * @public
+ */
 export function applyEdits(text: string, edits: readonly Omit<TextEdit, "file">[]): string {
   return [...edits]
     .sort((a, b) => b.start - a.start)

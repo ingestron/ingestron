@@ -18,7 +18,10 @@ import {
   type ResolvedEnvironment,
 } from "./resolve-environments.js";
 
-/** One output folder: its name, its path under the output folder, the environments it covers and its files. */
+/**
+ * One output folder: its name, its path under the output folder, the environments it covers and its files.
+ * @public
+ */
 export interface Output {
   /** The pack's id, or `products`. */
   name: string;
@@ -42,7 +45,10 @@ export interface Built {
   ok: boolean;
 }
 
-/** Every environment generated together, as plan generates it: what it found, and what it gave. */
+/**
+ * Every environment generated together, as plan generates it: what it found, and what it gave.
+ * @public
+ */
 export interface Generated {
   /** Whether the standard names a pack that builds environments together. */
   together: boolean;
@@ -62,7 +68,10 @@ export interface Generated {
   packReports: Report[];
 }
 
-/** Resolves every environment and builds every output folder, writing nothing. */
+/**
+ * Resolves every environment and builds every output folder, writing nothing.
+ * @public
+ */
 export function generateAll(
   files: FileSource,
   available: readonly Pack[],
@@ -161,6 +170,7 @@ function within(folder: string, files: Record<string, string>): [string, string]
  * `label` is `<pack>` for a pack that builds environments together and `<pack>/<environment>`
  * for any other, then `products/<environment>` for the passports. `request` reads the SQL
  * to run once from it.
+ * @internal
  */
 export function environmentOutputs(
   model: ResolvedModel,

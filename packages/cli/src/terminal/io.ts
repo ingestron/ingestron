@@ -1,6 +1,9 @@
 // Where the CLI runs and writes, so tests can run it without a terminal.
 
-/** The working folder, the output stream, and questions when there is a terminal. */
+/**
+ * The working folder, the output stream, and questions when there is a terminal.
+ * @public
+ */
 export interface Io {
   cwd: string;
   write(text: string): void;

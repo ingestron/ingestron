@@ -2,7 +2,10 @@
 // prints problems from loading and from resolving alike.
 import type { AnyDiagnostic, DefinitionDocument, Fix } from "@ingestron/config";
 
-/** Every code this package reports. Each is explained in codes.ts. */
+/**
+ * Every code this package reports. Each is explained in codes.ts.
+ * @public
+ */
 export type DefinitionCode =
   | "NO_STANDARD"
   | "MANY_STANDARDS"

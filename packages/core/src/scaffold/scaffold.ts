@@ -5,7 +5,10 @@ import { dirname, join, relative } from "node:path";
 import { isMap, isScalar, parseDocument, YAMLMap } from "yaml";
 import type { Template } from "./templates.js";
 
-/** What the user chose. */
+/**
+ * What the user chose.
+ * @internal
+ */
 export interface Answers {
   name: string;
   environments: string[];
@@ -27,7 +30,10 @@ const skipped = new Set([
 /** A file's content: text for the files init edits, bytes for everything else. */
 export type Content = string | Buffer;
 
-/** Files to write, path → content; throws on a symbolic link in the template. */
+/**
+ * Files to write, path → content; throws on a symbolic link in the template.
+ * @internal
+ */
 export function scaffoldFiles(
   template: Template,
   answers: Answers,
@@ -105,6 +111,7 @@ function mergedGitignore(existing: string, added: string): string {
  * that is not a folder where the template needs a folder. `written` lists the
  * files created; a .gitignore that was there is added to, and `ignored` lists
  * the lines added to it, comments left out.
+ * @internal
  */
 export function writeScaffold(
   target: string,
@@ -149,6 +156,7 @@ function addedLines(before: string, after: string): string[] {
 /**
  * What init says it added to a .gitignore that was there: its own lines by name, the
  * .env lines together. Empty when nothing was added.
+ * @internal
  */
 export function ignoredText(lines: readonly string[]): string {
   const own = lines.filter((line) => !envIgnores.includes(line));
@@ -180,13 +188,17 @@ function inTheWay(target: string, path: string): string[] {
 /**
  * Why a project or environment name is not valid, with a valid suggestion, or
  * undefined when it is. One rule for the command, its questions and editors.
+ * @public
  */
 export function nameProblem(text: string, what: "project" | "environment"): string | undefined {
   if (projectId(text) === text) return undefined;
   return `"${text}" is not a valid ${what} name: use lowercase letters, digits and underscores, starting with a letter. Try "${projectId(text)}".`;
 }
 
-/** A valid project id from a folder name: lowercase, other characters to `_`, a letter first. */
+/**
+ * A valid project id from a folder name: lowercase, other characters to `_`, a letter first.
+ * @public
+ */
 export function projectId(text: string): string {
   const id = text
     .toLowerCase()

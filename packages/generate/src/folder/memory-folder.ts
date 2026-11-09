@@ -2,13 +2,19 @@
 import type { Entry, OutputFolder } from "./folder.js";
 import { lockFile } from "./paths.js";
 
-/** Options for {@link memoryFolder}. */
+/**
+ * Options for {@link memoryFolder}.
+ * @public
+ */
 export interface MemoryFolderOptions {
   /** Paths that hold something other than a file (a folder or link). */
   others?: string[];
 }
 
-/** A memory folder can also return all its files. */
+/**
+ * A memory folder can also return all its files.
+ * @public
+ */
 export interface MemoryFolder extends OutputFolder {
   /** Every file, path → content, in path order. */
   snapshot(): Record<string, string>;
@@ -18,6 +24,7 @@ export interface MemoryFolder extends OutputFolder {
  * An output folder in memory, starting with `files`.
  * @example
  * const folder = memoryFolder({ "bundle.yml": "bundle: {}\n" });
+ * @public
  */
 export function memoryFolder(
   files: Readonly<Record<string, string>> = {},

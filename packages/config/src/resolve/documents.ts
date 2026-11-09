@@ -10,7 +10,10 @@ import type { Scope } from "./scope.js";
 import type { createSchemaChecker } from "../validate/index.js";
 import { locateIn } from "../validate/index.js";
 
-/** One resolved and validated document. */
+/**
+ * One resolved and validated document.
+ * @public
+ */
 export interface DefinitionDocument<T = unknown> {
   apiVersion: string;
   kind: string;

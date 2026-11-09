@@ -10,7 +10,10 @@ import type { MethodInfo } from "../assist/index.js";
 import type { Project } from "../project/index.js";
 import type { Spot } from "../project/index.js";
 
-/** How the editor shows documentation links. */
+/**
+ * How the editor shows documentation links.
+ * @public
+ */
 export interface HoverOptions {
   /** A full URL for a docs path such as `/docs/reference/errors#SCHEMA`. */
   docs?: (link: string) => string;

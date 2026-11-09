@@ -16,6 +16,7 @@ export interface DeclaredEnvironment {
 /**
  * The environments to generate: the requested ones, else every environment
  * in project.yaml, else one unnamed environment (`undefined`).
+ * @internal
  */
 export function environmentsToGenerate(
   definitions: string,

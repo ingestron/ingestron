@@ -1,7 +1,10 @@
 // The output folder as the planner and applier see it. Implementations:
 // memoryFolder (tests, previews) and nodeFolder (real files).
 
-/** What is at a path: a text file, nothing, or something else (a folder or link). */
+/**
+ * What is at a path: a text file, nothing, or something else (a folder or link).
+ * @public
+ */
 export type Entry = { kind: "file"; content: string } | { kind: "absent" } | { kind: "other" };
 
 /**
@@ -9,6 +12,7 @@ export type Entry = { kind: "file"; content: string } | { kind: "absent" } | { k
  * @example
  * const entry = folder.read("jobs/orders.yml");
  * if (entry.kind === "file") console.log(entry.content);
+ * @public
  */
 export interface OutputFolder {
   read(path: string): Entry;

@@ -7,7 +7,10 @@ import { quickFixes } from "./fixes.js";
 import type { Project } from "../project/index.js";
 import { positionAt } from "../project/index.js";
 
-/** A problem on the cursor's line, explained. */
+/**
+ * A problem on the cursor's line, explained.
+ * @public
+ */
 export interface ProblemEntry {
   code: string;
   severity: "error" | "warning" | "information";

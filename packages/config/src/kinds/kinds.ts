@@ -4,10 +4,14 @@ import { parsePointer } from "../internal/index.js";
 /**
  * A JSON Schema, as a plain object or `true`/`false`. Draft 2020-12 unless
  * `$schema` declares draft-07 or 2019-09.
+ * @public
  */
 export type JsonSchema = { [keyword: string]: unknown } | boolean;
 
-/** What a caller supplies to describe one kind of document. */
+/**
+ * What a caller supplies to describe one kind of document.
+ * @public
+ */
 export interface KindOptions {
   /** Matches the document's `apiVersion` field, for example "example.dev/v1". */
   apiVersion: string;
@@ -23,7 +27,10 @@ export interface KindOptions {
   links?: Record<string, string>;
 }
 
-/** A registered kind of document. Create one with {@link defineKind}. */
+/**
+ * A registered kind of document. Create one with {@link defineKind}.
+ * @public
+ */
 export interface KindDefinition<T = unknown> {
   readonly apiVersion: string;
   readonly kind: string;
@@ -50,6 +57,7 @@ export interface KindDefinition<T = unknown> {
  *   kind: "Pipeline",
  *   schema: { type: "object", required: ["table"] },
  * });
+ * @public
  */
 export function defineKind<T = unknown>(options: KindOptions): KindDefinition<T> {
   const name = `${options.apiVersion} ${options.kind}`;

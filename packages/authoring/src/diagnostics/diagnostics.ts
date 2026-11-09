@@ -10,7 +10,10 @@ import { editorDiagnostics } from "../generation/index.js";
 import { loadedDocuments, type Project } from "../project/index.js";
 import type { Position } from "../project/index.js";
 
-/** One problem in one file of the project. */
+/**
+ * One problem in one file of the project.
+ * @public
+ */
 export interface Problem {
   /** Path relative to the project, with "/". */
   file: string;
@@ -26,7 +29,10 @@ export interface Problem {
 // resolution and navigation do. Cursor requests can share the same checks.
 const snapshots = new WeakMap<Project, Map<string | undefined, Problem[]>>();
 
-/** Every problem for the environment, checked once per project snapshot. */
+/**
+ * Every problem for the environment, checked once per project snapshot.
+ * @public
+ */
 export function problems(project: Project, environment: string | undefined): Problem[] {
   let byEnvironment = snapshots.get(project);
   if (!byEnvironment) snapshots.set(project, (byEnvironment = new Map()));

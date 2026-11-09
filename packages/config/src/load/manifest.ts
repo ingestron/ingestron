@@ -20,6 +20,7 @@ const idPattern = "^[A-Za-z][A-Za-z0-9_-]*$";
  * so it needs no `toEditorSchema` step.
  * @example
  * writeFileSync("project.editor.json", JSON.stringify(manifestSchema));
+ * @public
  */
 export const manifestSchema: JsonSchema = {
   type: "object",

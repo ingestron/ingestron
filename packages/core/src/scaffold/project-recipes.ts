@@ -28,6 +28,7 @@ interface Definition {
 }
 /** One composed project before answers are applied or files written.
  * @example const recipe: ProjectRecipe = projectRecipe("files", "databricks", "public");
+ * @public
  */
 export interface ProjectRecipe {
   template: Template;
@@ -36,13 +37,17 @@ export interface ProjectRecipe {
 /** Select a tested source recipe: its files as the example writes them, before `init` writes
  * REPLACE_ME, the defaults and the secret names. Its template asks no questions.
  * @example const recipe = projectRecipe("postgresql", "adf-databricks", "private");
+ * @public
  */
 export function projectRecipe(connector: string, via: string, connectivity: string): ProjectRecipe {
   const { template, files } = composableRecipe(connector, via, connectivity);
   return { template, files };
 }
 
-/** The recipe, with what `init` needs to compose it. */
+/**
+ * The recipe, with what `init` needs to compose it.
+ * @internal
+ */
 export function composableRecipe(
   connector: string,
   given: string,

@@ -2,7 +2,10 @@
 // pack runs after each refresh (specification section 6).
 import { isRecord } from "../internal/index.js";
 
-/** A rule over all rows: what is counted, how it is compared, and what a failure does. */
+/**
+ * A rule over all rows: what is counted, how it is compared, and what a failure does.
+ * @public
+ */
 export interface TableCheck {
   /** The rule's name, or one made from the column and metric. */
   name: string;

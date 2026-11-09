@@ -2,10 +2,16 @@
 // Ingestron's words. The codes are @ingestron/config's; every one has an entry.
 import type { DiagnosticCode } from "@ingestron/config";
 
-/** When the problem is found, for grouping in the documentation. */
+/**
+ * When the problem is found, for grouping in the documentation.
+ * @public
+ */
 export type LoadingStage = "Files and YAML" | "References" | "Environments and documents";
 
-/** Meaning and fix of every code reported while loading, by code. */
+/**
+ * Meaning and fix of every code reported while loading, by code.
+ * @public
+ */
 export const loadingCodeHelp: Record<
   DiagnosticCode,
   { stage: LoadingStage; meaning: string; fix: string }

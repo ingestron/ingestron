@@ -15,7 +15,10 @@ export interface Question {
   default: string;
 }
 
-/** A template folder and what it asks. */
+/**
+ * A template folder and what it asks.
+ * @public
+ */
 export interface Template {
   name: string;
   folder: string;
@@ -24,7 +27,10 @@ export interface Template {
   questions: Question[];
 }
 
-/** template.yaml's schema, for editors; `readTemplate` checks the same rules. */
+/**
+ * template.yaml's schema, for editors; `readTemplate` checks the same rules.
+ * @public
+ */
 export const templateSchema = {
   title: "Ingestron template",
   type: "object",
@@ -61,7 +67,10 @@ export const templateSchema = {
 /** Where this package's built-ins are. */
 export const builtInFolder = templatesFolder;
 
-/** Built-in templates: the starters, each named by its folder. */
+/**
+ * Built-in templates: the starters, each named by its folder.
+ * @public
+ */
 export function builtInTemplates(): Template[] {
   return readdirSync(builtInFolder, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -70,7 +79,10 @@ export function builtInTemplates(): Template[] {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** Reads and checks `<folder>/template.yaml`; throws an Error with the reason. */
+/**
+ * Reads and checks `<folder>/template.yaml`; throws an Error with the reason.
+ * @internal
+ */
 export function readTemplate(folder: string, name: string): Template {
   for (const required of ["template.yaml", "project.yaml"]) {
     const stat = lstatSync(join(folder, required), { throwIfNoEntry: false });
@@ -80,7 +92,10 @@ export function readTemplate(folder: string, name: string): Template {
   return parseTemplate(readFileSync(join(folder, "template.yaml"), "utf8"), name, folder);
 }
 
-/** Checks template.yaml's text; throws an Error with the reason. */
+/**
+ * Checks template.yaml's text; throws an Error with the reason.
+ * @public
+ */
 export function parseTemplate(text: string, name: string, folder: string): Template {
   const data = parse(text) as Record<string, unknown>;
   const unknown = Object.keys(data ?? {}).find(

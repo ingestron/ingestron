@@ -8,7 +8,10 @@ import type { PackInfo } from "../pack/index.js";
 import { branches, expand, type Schema } from "./schema-nodes.js";
 import { merged, typeWords } from "./type-words.js";
 
-/** One field: what it is, what it accepts, and the page that explains it. */
+/**
+ * One field: what it is, what it accepts, and the page that explains it.
+ * @public
+ */
 export interface FieldInfo {
   /** Keys from the document or settings root; `*` stands for any key or list item. */
   path: string[];
@@ -31,7 +34,10 @@ export interface FieldInfo {
   docs: string;
 }
 
-/** The document kinds with a reference section, by their `kind`; `Project` is project.yaml. */
+/**
+ * The document kinds with a reference section, by their `kind`; `Project` is project.yaml.
+ * @public
+ */
 export const referenceKinds = {
   Project: { schema: withExamples(manifestSchema, { id: "retail", name: "Retail sales" }) },
   Standard: kinds.standard,
@@ -53,7 +59,10 @@ function withExamples(schema: JsonSchema, examples: Record<string, string>): Jso
   return { ...node, properties: { ...properties, ...Object.fromEntries(added) } } as JsonSchema;
 }
 
-/** Every field of a document kind, depth first. */
+/**
+ * Every field of a document kind, depth first.
+ * @public
+ */
 export function documentReference(kind: keyof typeof referenceKinds): FieldInfo[] {
   const schema = referenceKinds[kind].schema as Schema;
   const anchor = (path: string[]) =>
@@ -81,7 +90,10 @@ function withNote(field: FieldInfo): FieldInfo {
   };
 }
 
-/** Every setting of a pack's method, with its default and where it belongs. */
+/**
+ * Every setting of a pack's method, with its default and where it belongs.
+ * @public
+ */
 export function methodReference(pack: PackInfo, id: string): FieldInfo[] {
   const method = pack.methods[id];
   if (!method) return [];
@@ -100,7 +112,10 @@ export function methodReference(pack: PackInfo, id: string): FieldInfo[] {
   });
 }
 
-/** `flow-tables-item-ingest-uses`: lower case, `*` as `item`, joined with `-`. */
+/**
+ * `flow-tables-item-ingest-uses`: lower case, `*` as `item`, joined with `-`.
+ * @public
+ */
 export function anchorOf(parts: string[]): string {
   return parts
     .map((part) => (part === "*" ? "item" : part.toLowerCase().replace(/[^a-z0-9]+/g, "-")))

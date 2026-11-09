@@ -7,6 +7,7 @@ import type { Scope } from "./scope.js";
  * the variable's value.
  * @example
  * { name: "LANDING", file: "project.yaml", pointer: "/values/landing", setIn: ".env.dev" }
+ * @public
  */
 export interface EnvvarReference {
   /** The variable's name. */
@@ -28,7 +29,10 @@ export interface EnvvarReference {
   setIn?: "host" | ".env" | `.env.${string}`;
 }
 
-/** A successfully loaded project. */
+/**
+ * A successfully loaded project.
+ * @public
+ */
 export interface Project {
   id: string;
   name?: string;

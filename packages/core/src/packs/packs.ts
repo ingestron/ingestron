@@ -5,5 +5,8 @@ import { databricks } from "@ingestron/pack-databricks";
 import { duckdb } from "@ingestron/pack-duckdb";
 import { synapse } from "@ingestron/pack-synapse";
 
-/** The packs available to `ingestron`, by id. */
+/**
+ * The packs available to `ingestron`, by id.
+ * @public
+ */
 export const packs: Pack[] = [databricks, adf, synapse, duckdb];

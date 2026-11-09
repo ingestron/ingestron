@@ -32,7 +32,10 @@ const perEnvironment = {
 const storage = (container: string) =>
   `abfss://${container}@\${values.storage_account}.dfs.core.windows.net`;
 
-/** The settings schema of a method of any pack, by the method's id. */
+/**
+ * The settings schema of a method of any pack, by the method's id.
+ * @internal
+ */
 export function methodSettings(method: string): Record<string, { description?: string }> {
   const found = packs.map((pack) => pack.methods[method]).find(Boolean);
   const schema = found?.settings as { properties?: Record<string, { description?: string }> };

@@ -1,6 +1,9 @@
 // Problems that stop a plan from being applied, or an apply from finishing.
 
-/** What went wrong. Each code is explained in README.md. */
+/**
+ * What went wrong. Each code is explained in README.md.
+ * @public
+ */
 export type ProblemCode =
   | "BAD_PATH"
   | "BAD_MANIFEST"
@@ -13,6 +16,7 @@ export type ProblemCode =
  * One problem, with the path it concerns when there is one.
  * @example
  * { code: "BAD_PATH", path: "../x.yml", message: '"../x.yml" leaves the output folder.' }
+ * @public
  */
 export interface Problem {
   code: ProblemCode;

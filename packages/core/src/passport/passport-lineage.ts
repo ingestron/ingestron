@@ -14,7 +14,10 @@ interface Graph {
   edges: Set<string>;
 }
 
-/** The product's lineage as a Mermaid block, with a line for each output not built here. */
+/**
+ * The product's lineage as a Mermaid block, with a line for each output not built here.
+ * @internal
+ */
 export function lineage(model: ResolvedModel, product: ResolvedProduct): string {
   const graph: Graph = { ids: new Map(), labels: new Map(), edges: new Set() };
   const outputs = product.outputs.flatMap(({ tables }) => tables);

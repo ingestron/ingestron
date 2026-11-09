@@ -15,7 +15,10 @@ import { stepsNotKnown, targetOf } from "../project/index.js";
 
 const actions = ["ingest", "transform", "store", "serve"] as const;
 
-/** Markdown for the hover at `offset` in `text`, the open text of `file`, or undefined. */
+/**
+ * Markdown for the hover at `offset` in `text`, the open text of `file`, or undefined.
+ * @public
+ */
 export function hoverAt(
   project: Project,
   file: string,

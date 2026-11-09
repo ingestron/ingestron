@@ -12,12 +12,16 @@ interface Group {
 /**
  * Each environment's diagnostics as text, each shown once under every environment that has it:
  * grouped by those environments, in the order of each group's first diagnostic.
+ * @internal
  */
 export function environmentReportsText(reports: readonly Report[]): string {
   return groupsText(groupsOf(reports));
 }
 
-/** Each pack's problems, or its warnings, as text. */
+/**
+ * Each pack's problems, or its warnings, as text.
+ * @internal
+ */
 export function packReportsText(reports: readonly Report[]): string {
   return groupsText(reports.map(({ name, diagnostics }) => ({ names: [name], diagnostics })));
 }

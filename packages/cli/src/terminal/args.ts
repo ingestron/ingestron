@@ -30,7 +30,10 @@ export interface Options {
   };
 }
 
-/** The commands, in the order help shows them. */
+/**
+ * The commands, in the order help shows them.
+ * @public
+ */
 export const commands = [
   { name: "plan", summary: "Show what would change in each pack's output folder." },
   { name: "apply", summary: "Write the changes. Files edited by hand are never overwritten." },
@@ -51,7 +54,10 @@ export const commands = [
   { name: "init", summary: "Create a project from a connection and supported ingestion route." },
 ] as const;
 
-/** The options, in the order help shows them. */
+/**
+ * The options, in the order help shows them.
+ * @public
+ */
 export const flags = [
   {
     flag: "--connector <id>",

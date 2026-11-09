@@ -20,6 +20,7 @@ import { lockFile } from "./paths.js";
  * The output folder at `root`, created when first written to.
  * @example
  * const folder = nodeFolder("build/bundle");
+ * @public
  */
 export function nodeFolder(root: string): OutputFolder {
   const full = (path: string): string => join(root, path);

@@ -10,6 +10,7 @@ import type { Pack } from "./pack.js";
  * @example
  * splitDeployText("abfss://x@${envvar:ACCOUNT}.dfs", model.deployValues ?? []);
  * // ["abfss://x@", { name: "ACCOUNT", … }, ".dfs"]
+ * @public
  */
 export function splitDeployText(
   text: string,
@@ -37,7 +38,10 @@ function nextValue(text: string, deployValues: readonly DeployValue[]) {
   return found;
 }
 
-/** How a pack's platform reads its folded files, for {@link checkFold}. */
+/**
+ * How a pack's platform reads its folded files, for {@link checkFold}.
+ * @public
+ */
 export interface FoldView {
   /**
    * What the platform makes of the folded files for one target, in the layout `build`
@@ -56,6 +60,7 @@ type Files = Readonly<Record<string, string>>;
  * targets. Returns a sentence for each failure: none when the property holds.
  * @example
  * expect(checkFold(pack, { dev, test, prod }, { view: bundleTarget })).toEqual([]);
+ * @public
  */
 export function checkFold(
   pack: Pack,

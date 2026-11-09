@@ -9,12 +9,18 @@ import {
   referenceKinds,
 } from "@ingestron/definitions";
 
-/** The errors page entry for a problem code, if the code is documented there. */
+/**
+ * The errors page entry for a problem code, if the code is documented there.
+ * @public
+ */
 export function codeDocs(code: string): string | undefined {
   return code in codeHelp || code in loadingCodeHelp ? `/docs/reference/errors#${code}` : undefined;
 }
 
-/** Every documentation link the editor can show, once each. */
+/**
+ * Every documentation link the editor can show, once each.
+ * @public
+ */
 export function docsLinks(): string[] {
   const fields = [
     ...Object.keys(referenceKinds).flatMap((kind) =>
@@ -33,7 +39,10 @@ export function docsLinks(): string[] {
   return [...new Set([...fields, ...methods, ...codes])];
 }
 
-/** A link on the docs site at `base`, such as https://docs.ingestron.io. */
+/**
+ * A link on the docs site at `base`, such as https://docs.ingestron.io.
+ * @public
+ */
 export function docsUrl(base: string, link: string): string {
   return `${base.replace(/\/+$/, "")}${link}`;
 }

@@ -10,7 +10,10 @@ import type { YamlFile } from "../files/index.js";
 
 type ReferenceSegment = Extract<Segment, { type: "reference" }>;
 
-/** The value a `${secret:…}` resolves to. It is passed on, never looked up. */
+/**
+ * The value a `${secret:…}` resolves to. It is passed on, never looked up.
+ * @public
+ */
 export interface SecretReference {
   $secret: string;
 }
@@ -19,6 +22,7 @@ export interface SecretReference {
  * True for the value produced by `${secret:…}`.
  * @example
  * isSecretReference({ $secret: "sales/erp-password" }) // true
+ * @public
  */
 export function isSecretReference(value: unknown): value is SecretReference {
   return isRecord(value) && Object.keys(value).length === 1 && typeof value.$secret === "string";

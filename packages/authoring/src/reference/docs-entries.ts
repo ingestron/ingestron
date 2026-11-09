@@ -22,7 +22,10 @@ const noSpot = {
   range: [0, 0] as [number, number],
 };
 
-/** The entry for a docs path such as `/docs/reference/packs/adf#adf-copy`, else undefined. */
+/**
+ * The entry for a docs path such as `/docs/reference/packs/adf#adf-copy`, else undefined.
+ * @public
+ */
 export function referenceForDocs(
   project: Project,
   path: string,

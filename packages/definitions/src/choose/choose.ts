@@ -21,6 +21,7 @@ export interface Facts {
  * The reserved store choice that ends a flow at the files ingest lands, with
  * no store step (specification section 4).
  * @example store: { uses: none }
+ * @public
  */
 export const NO_STORE = "none";
 

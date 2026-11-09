@@ -9,7 +9,10 @@ import type { Report } from "./resolve-environments.js";
 
 export type { Report } from "./resolve-environments.js";
 
-/** One output folder, as plan writes it under the output folder. */
+/**
+ * One output folder, as plan writes it under the output folder.
+ * @public
+ */
 export interface GeneratedOutput {
   /** The pack's id, or `products` for the passports. */
   name: string;
@@ -31,7 +34,10 @@ export interface GeneratedOutput {
   deployValues?: SuppliedValue[];
 }
 
-/** What {@link generatedOutputs} reads besides the files. */
+/**
+ * What {@link generatedOutputs} reads besides the files.
+ * @public
+ */
 export interface GeneratedOutputsOptions {
   /** The variables to read, as the host's environment; default `process.env`. */
   envvars?: Readonly<Record<string, string | undefined>>;
@@ -39,7 +45,10 @@ export interface GeneratedOutputsOptions {
   packs?: readonly Pack[];
 }
 
-/** What plan would write, and what it found first. */
+/**
+ * What plan would write, and what it found first.
+ * @public
+ */
 export interface GeneratedOutputs {
   /** Whether every environment resolved and every pack built its files. */
   ok: boolean;
@@ -72,6 +81,7 @@ export interface GeneratedOutputs {
  * @example
  * const { outputs } = generatedOutputs(nodeFiles("definitions"));
  * for (const { folder, files } of outputs) console.log(folder, Object.keys(files));
+ * @public
  */
 export function generatedOutputs(
   files: FileSource,
