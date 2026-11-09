@@ -103,6 +103,9 @@ describe("judgeOf", () => {
     expect(judgeOf("history", steps)?.name).toBe("store");
     for (const value of ["loaded_at", "row_hash"]) expect(readsSource("audit", value)).toBe(false);
     expect(readsSource("history", undefined)).toBe(false);
+    // Only the audit values: other paths the ingest step judges are not the rule's concern.
+    expect(readsSource("retention.landed_files", "90d")).toBe(false);
+    expect(readsSource("load.mode", "full")).toBe(false);
     expect(readsSource("audit", undefined)).toBe(false);
   });
 

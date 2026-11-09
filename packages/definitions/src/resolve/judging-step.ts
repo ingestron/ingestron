@@ -28,13 +28,13 @@ function judgeFor(path: string, value: string | undefined): Judge | undefined {
 }
 
 /**
- * True for an `audit` value that only a step reading the source can give: the file reader's
- * (`source_file`, `source_modified_at`) and the ingest step's (`run_id`, `window_start`,
- * `window_end`, `source_object`, `source_connection`). A table with no ingest step, a
- * transform's, has no step to give it.
+ * True for an `audit` value, and for no other path, that only a step reading the source can
+ * give: the file reader's (`source_file`, `source_modified_at`) and the ingest step's
+ * (`run_id`, `window_start`, `window_end`, `source_object`, `source_connection`). A table
+ * with no ingest step, a transform's, has no step to give it.
  */
 export function readsSource(path: string, value: string | undefined): boolean {
-  const judge = judgeFor(path, value);
+  const judge = path === "audit" ? judgeFor(path, value) : undefined;
   return judge === "ingest" || judge === "reader";
 }
 
