@@ -3,7 +3,7 @@
 import { cpSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
-import { applySet } from "../src/init-set.js";
+import { applySet } from "@ingestron/core/internal";
 
 const storage = (dev: string, prod: string) => ({
   "dev.storage_account": dev,
@@ -69,7 +69,9 @@ export function fillStarter(folder: string, starter: string): void {
 /** A copy of the starter, without its README and template.yaml, with every value written. */
 export function filledStarter(starter: string): string {
   const folder = mkdtempSync(join(tmpdir(), `ingestron-${starter}-`));
-  cpSync(join(import.meta.dirname, "../project-templates", starter), folder, { recursive: true });
+  cpSync(join(import.meta.dirname, "../../core/project-templates", starter), folder, {
+    recursive: true,
+  });
   fillStarter(folder, starter);
   return folder;
 }

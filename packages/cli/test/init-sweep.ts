@@ -5,9 +5,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect } from "vitest";
 import { run } from "../src/index.js";
-import { methodSettings } from "../src/init-platform.js";
-import { projectValues } from "../src/init-values.js";
-import { projectRoutes, projectSources } from "../src/project-choices.js";
+import { methodSettings } from "@ingestron/core/internal";
+import { projectValues } from "@ingestron/core/internal";
+import { projectRoutes, projectSources } from "@ingestron/core";
 
 /** One combination init can create. */
 export interface Combination {

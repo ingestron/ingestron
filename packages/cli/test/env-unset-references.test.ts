@@ -22,7 +22,7 @@ function workspace(
 ) {
   const folder = mkdtempSync(join(tmpdir(), "ingestron-env-unset-"));
   folders.push(folder);
-  cpSync(join(import.meta.dirname, "../project-templates", starter), folder, {
+  cpSync(join(import.meta.dirname, "../../core/project-templates", starter), folder, {
     recursive: true,
     filter: (path) => !path.includes("/build"),
   });

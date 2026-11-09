@@ -22,7 +22,7 @@ const folders: string[] = [];
 export function workspace(files: Record<string, string> = {}): string {
   const folder = mkdtempSync(join(tmpdir(), "ingestron-request-"));
   folders.push(folder);
-  cpSync(join(import.meta.dirname, "../project-templates/minimal"), folder, {
+  cpSync(join(import.meta.dirname, "../../core/project-templates/minimal"), folder, {
     recursive: true,
     filter: (path) => !path.includes("/build"),
   });

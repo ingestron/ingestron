@@ -1,7 +1,7 @@
 // Every field the editor and the documentation explain is fully described:
 // what it is, what each allowed value means, and an example of free text.
 // A schema or pack change that leaves a gap fails here.
-import { packs } from "@ingestron/cli";
+import { packs } from "@ingestron/core";
 import {
   contractReads,
   contractUseOf,

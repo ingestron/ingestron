@@ -13,10 +13,18 @@ const supplied =
 /** A copy of an example, with each replacement made in project.yaml. */
 function workspace(example: string, replacements: [string, string][] = []): string {
   const folder = mkdtempSync(join(tmpdir(), "ingestron-request-deploy-"));
-  cpSync(join(import.meta.dirname, "..", example), folder, {
-    recursive: true,
-    filter: (path) => !path.includes("/build"),
-  });
+  cpSync(
+    join(
+      import.meta.dirname,
+      example.startsWith("project-templates/") ? "../../core" : "..",
+      example,
+    ),
+    folder,
+    {
+      recursive: true,
+      filter: (path) => !path.includes("/build"),
+    },
+  );
   fillStarter(folder, example.split("/")[1]!);
   const project = join(folder, "project.yaml");
   let text = readFileSync(project, "utf8");
@@ -122,7 +130,7 @@ describe("ingestron request and values supplied when deploying", () => {
       ],
     ]);
     cpSync(
-      join(import.meta.dirname, "../project-templates/duckdb/connections/shop.yaml"),
+      join(import.meta.dirname, "../../core/project-templates/duckdb/connections/shop.yaml"),
       join(folder, "connections/shop.yaml"),
     );
     const flow = join(folder, "flows/erp.yaml");

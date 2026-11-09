@@ -2,8 +2,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { completionsAt } from "../src/completion.js";
-import { openProject } from "../src/project.js";
+import { completionsAt } from "../src/assist/completion.js";
+import { openProject } from "../src/project/project.js";
 import { filledTemplates } from "./starters.js";
 
 const retail = join(filledTemplates, "retail");

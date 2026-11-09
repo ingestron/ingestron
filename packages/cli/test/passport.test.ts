@@ -5,9 +5,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fullNameText } from "@ingestron/definitions";
 import { describe, expect, it } from "vitest";
-import { environmentOutputs } from "../src/build-outputs.js";
-import { passports } from "../src/passport.js";
-import { lineage } from "../src/passport-lineage.js";
+import { environmentOutputs } from "@ingestron/core/internal";
+import { passports } from "@ingestron/core/internal";
+import { lineage } from "@ingestron/core/internal";
 import { model, project, sales } from "./passport-fixtures.js";
 import { filledStarter } from "./starters.js";
 

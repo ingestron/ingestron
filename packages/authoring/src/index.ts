@@ -1,26 +1,23 @@
 // Public API of @ingestron/authoring: what an editor needs to help write an
-// Ingestron project, as plain functions over the project's files. The VS Code
+// Ingestron project, starting from a ProjectSnapshot. The VS Code
 // extension adapts these to its API; another editor can do the same.
-export {
-  annotationsIn,
-  generatedLenses,
-  type Annotation,
-  type GeneratedLens,
-} from "./annotations.js";
-export { completionsAt, type Suggestion } from "./completion.js";
-export { problems, type Problem } from "./diagnostics.js";
-export { codeDocs, docsLinks, docsUrl } from "./docs.js";
-export { quickFixes, type QuickFix } from "./fixes.js";
-export { moveSetting } from "./moves.js";
-export { fixAll } from "./fix-all.js";
-export { compareEnvironments, platformRequest } from "./platform-request.js";
-export { type HoverOptions } from "./explain.js";
-export { hoverAt } from "./hover.js";
-export { definitionAt, referencesAt } from "./navigation.js";
-export { fileMoveEdits, renameAt, renameProblem } from "./rename.js";
-export { generatedFiles, generatedForTable, tableAtCursor, type Generated } from "./preview.js";
-export { referenceAt, type ProblemEntry, type ReferenceEntry } from "./reference.js";
-export { projectSymbols, type ProjectSymbol } from "./symbols.js";
-export { referenceForDocs } from "./docs-entries.js";
-export { inProject, openProject, projectFolderOf, type Project } from "./project.js";
-export { positionAt, type Position } from "./yaml.js";
+
+// A project as the editor sees it at one moment, with everything an editor asks of it.
+export { ProjectSnapshot } from "./snapshot/index.js";
+
+// The project an open file belongs to, and positions in YAML.
+export { inProject, positionAt, projectFolderOf, type Position } from "./project/index.js";
+
+// What the snapshot's methods give.
+export { type Problem } from "./diagnostics/index.js";
+export { type QuickFix, type Suggestion } from "./assist/index.js";
+export { type HoverOptions } from "./hover/index.js";
+export { type ProjectSymbol } from "./navigation/index.js";
+export { type Annotation, type GeneratedLens } from "./annotations/index.js";
+export { type ProblemEntry, type ReferenceEntry } from "./reference/index.js";
+
+// The generated files: the ones a table under the cursor is generated into.
+export { generatedForTable, tableAtCursor, type Generated } from "./generation/index.js";
+
+// Links into the documentation.
+export { codeDocs, docsLinks, docsUrl } from "./links/index.js";

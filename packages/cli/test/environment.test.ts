@@ -13,10 +13,18 @@ const variable = "INGESTRON_TEST_VALUE";
 /** A copy of an example with one value replaced by a reference to the variable. */
 function workspace(example: string, value: string): string {
   const folder = mkdtempSync(join(tmpdir(), "ingestron-envvar-"));
-  cpSync(join(import.meta.dirname, "..", example), folder, {
-    recursive: true,
-    filter: (path) => !path.includes("/build"),
-  });
+  cpSync(
+    join(
+      import.meta.dirname,
+      example.startsWith("project-templates/") ? "../../core" : "..",
+      example,
+    ),
+    folder,
+    {
+      recursive: true,
+      filter: (path) => !path.includes("/build"),
+    },
+  );
   fillStarter(folder, example.split("/")[1]!);
   const project = join(folder, "project.yaml");
   writeFileSync(project, readFileSync(project, "utf8").replace(value, `\${envvar:${variable}}`));

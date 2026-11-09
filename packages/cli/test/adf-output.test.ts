@@ -3,8 +3,8 @@
 // environment.
 import { nodeFiles } from "@ingestron/config";
 import { expect, it } from "vitest";
-import { packs } from "../src/packs.js";
-import { generateAll } from "../src/build-outputs.js";
+import { packs } from "@ingestron/core";
+import { generateAll } from "@ingestron/core";
 import { filledStarter } from "./starters.js";
 
 it.each(["private-sql-server", "private-files"])(

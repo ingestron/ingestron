@@ -1,9 +1,9 @@
 // What `${envvar:…}` says when a variable is set nowhere, for the command line and the editor.
 import { describe, expect, it } from "vitest";
-import { formatDiagnostics, hasErrors } from "../src/diagnostics.js";
-import { memoryFiles } from "../src/files.js";
-import { defineKind } from "../src/kinds.js";
-import { resolveProject } from "../src/load.js";
+import { formatDiagnostics, hasErrors } from "../src/diagnostics/diagnostics.js";
+import { memoryFiles } from "../src/files/files.js";
+import { defineKind } from "../src/kinds/kinds.js";
+import { resolveProject } from "../src/load/load.js";
 
 describe("a variable set nowhere", () => {
   const pipeline = defineKind({

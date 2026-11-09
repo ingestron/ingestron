@@ -2,17 +2,13 @@
 // suggest unless it is free text, and has a Reference entry: for every
 // document kind, project.yaml included, and every setting of every method.
 import { join } from "node:path";
-import { packs } from "@ingestron/cli";
-import {
-  documentReference,
-  methodReference,
-  referenceKinds,
-  type FieldInfo,
-} from "@ingestron/definitions";
+import { packs } from "@ingestron/core";
+import type { referenceKinds } from "@ingestron/definitions";
+import { documentReference, methodReference, type FieldInfo } from "@ingestron/definitions";
 import { describe, expect, it } from "vitest";
-import { completionsAt } from "../src/completion.js";
-import { openProject } from "../src/project.js";
-import { referenceAt } from "../src/reference.js";
+import { completionsAt } from "../src/assist/completion.js";
+import { openProject } from "../src/project/project.js";
+import { referenceAt } from "../src/reference/reference.js";
 import { filledTemplates } from "./starters.js";
 
 const retail = join(filledTemplates, "retail");

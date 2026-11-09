@@ -1,6 +1,6 @@
 // A pack the CLI's list gains for a test: its list of Platform fields names one the
 // Platform document does not have, so resolution throws, as for a pack's own mistake.
-import { packs } from "@ingestron/cli";
+import { packs } from "@ingestron/core";
 
 const count = packs.length;
 

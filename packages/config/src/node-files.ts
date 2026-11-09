@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { isAbsolute, join, relative, sep } from "node:path";
-import type { FileSource } from "./files.js";
+import type { FileSource } from "./files/index.js";
 
 const skippedFolders = new Set([".git", "node_modules"]);
 
@@ -11,6 +11,7 @@ const skippedFolders = new Set([".git", "node_modules"]);
  * folders are not followed.
  * @example
  * nodeFiles("./definitions").read("project.yaml")
+ * @public
  */
 export function nodeFiles(root: string): FileSource {
   const realRoot = realpathSync(root);

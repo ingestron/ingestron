@@ -2,7 +2,8 @@
 import { join } from "node:path";
 import { nodeFiles } from "@ingestron/config";
 import { describe, expect, it } from "vitest";
-import { compareEnvironments, tableFacts } from "../src/compare.js";
+import { compareEnvironments } from "@ingestron/core";
+import { tableFacts } from "@ingestron/core/internal";
 import type { ResolvedTable } from "@ingestron/definitions";
 import { run } from "../src/index.js";
 import { filledStarter } from "./starters.js";

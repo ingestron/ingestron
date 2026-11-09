@@ -4,14 +4,6 @@
 
 ```ts
 
-import { AnyDiagnostic } from '@ingestron/config';
-import { FileSource } from '@ingestron/config';
-import { Pack } from '@ingestron/definitions';
-import { SuppliedValue } from '@ingestron/definitions';
-
-// @public
-export function builtInTemplates(): Template[];
-
 // @public
 export const commands: readonly [{
     readonly name: "plan";
@@ -38,12 +30,6 @@ export const commands: readonly [{
     readonly name: "init";
     readonly summary: "Create a project from a connection and supported ingestion route.";
 }];
-
-// @public
-export function compareEnvironments(files: FileSource, a: string, b: string): string;
-
-// @public
-export function contractFromSample(text: string, file: string, id: string): string;
 
 // @public
 export const flags: readonly [{
@@ -91,36 +77,6 @@ export const flags: readonly [{
 }];
 
 // @public
-export interface GeneratedOutput {
-    byEnvironment: boolean;
-    deployValues?: SuppliedValue[];
-    files: Record<string, string>;
-    folder: string;
-    name: string;
-    targets: string[];
-}
-
-// @public
-export interface GeneratedOutputs {
-    deployed: string[];
-    environmentReports: Report[];
-    ok: boolean;
-    outputs: GeneratedOutput[];
-    packReports: Report[];
-    refused?: AnyDiagnostic;
-    text: string;
-}
-
-// @public
-export function generatedOutputs(files: FileSource, options?: GeneratedOutputsOptions): GeneratedOutputs;
-
-// @public
-export interface GeneratedOutputsOptions {
-    envvars?: Readonly<Record<string, string | undefined>>;
-    packs?: readonly Pack[];
-}
-
-// @public
 export interface Io {
     ask?(question: string): string | undefined;
     // (undocumented)
@@ -131,171 +87,7 @@ export interface Io {
 }
 
 // @public
-export function listSamples(folder?: string, kind?: Sample["kind"]): Sample[];
-
-// @public
-export function nameProblem(text: string, what: "project" | "environment"): string | undefined;
-
-// @public
-export const packs: Pack[];
-
-// @public
-export function parseTemplate(text: string, name: string, folder: string): Template;
-
-// @public
-export function platformRequest(files: FileSource, environment: string | undefined): string;
-
-// @public
-export function projectId(text: string): string;
-
-// @public
-export interface ProjectRecipe {
-    // Warning: (ae-forgotten-export) The symbol "Content" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    files: Record<string, Content>;
-    // (undocumented)
-    template: Template;
-}
-
-// @public
-export function projectRecipe(connector: string, via: string, connectivity: string): ProjectRecipe;
-
-// @public
-export interface ProjectRoute {
-    // (undocumented)
-    connectivity: string[];
-    // (undocumented)
-    maturity: string;
-    // (undocumented)
-    method: string;
-    // (undocumented)
-    title: string;
-    // (undocumented)
-    via: string;
-}
-
-// @public
-export function projectRoutes(connector: string, connectivity?: string): ProjectRoute[];
-
-// @public
-export interface ProjectSource {
-    // (undocumented)
-    category: string;
-    // (undocumented)
-    id: string;
-    // (undocumented)
-    title: string;
-}
-
-// @public
-export function projectSources(): ProjectSource[];
-
-// @public
-export function readSample(folder: string, kind: Sample["kind"]): Sample;
-
-// @public
-export interface Report {
-    diagnostics: AnyDiagnostic[];
-    failed: boolean;
-    name: string;
-}
-
-// @public
 export function run(args: string[], io: Io): number;
-
-// @public
-export interface Sample {
-    // (undocumented)
-    folder: string;
-    // (undocumented)
-    kind: "starter" | "guide";
-    // (undocumented)
-    name: string;
-    // (undocumented)
-    summary: string;
-    // (undocumented)
-    title: string;
-}
-
-// @public
-export interface SampleFacts {
-    // (undocumented)
-    connectivity: string[];
-    // (undocumented)
-    connectors: string[];
-    // (undocumented)
-    environments: string[];
-    features: string[];
-    // (undocumented)
-    methods: string[];
-    // (undocumented)
-    packs: string[];
-}
-
-// @public
-export function sampleFacts(folder: string): SampleFacts;
-
-// @public
-export interface Template {
-    // (undocumented)
-    folder: string;
-    // (undocumented)
-    name: string;
-    // Warning: (ae-forgotten-export) The symbol "Question" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    questions: Question[];
-    // (undocumented)
-    summary: string;
-    // (undocumented)
-    title: string;
-}
-
-// @public
-export const templateSchema: {
-    title: string;
-    type: string;
-    additionalProperties: boolean;
-    required: string[];
-    properties: {
-        title: {
-            type: string;
-            description: string;
-        };
-        summary: {
-            type: string;
-            description: string;
-        };
-        questions: {
-            type: string;
-            description: string;
-            items: {
-                type: string;
-                additionalProperties: boolean;
-                required: string[];
-                properties: {
-                    value: {
-                        type: string;
-                        pattern: string;
-                        description: string;
-                    };
-                    ask: {
-                        type: string;
-                        description: string;
-                    };
-                    default: {
-                        type: string;
-                        description: string;
-                    };
-                };
-            };
-        };
-    };
-};
-
-// @public
-export const templatesFolder: string;
 
 // (No @packageDocumentation comment for this package)
 

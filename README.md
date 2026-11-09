@@ -46,13 +46,14 @@ Documentation: [docs.ingestron.io](https://docs.ingestron.io).
 
 The `ingestron` command and the libraries it is built from:
 
-| Package                                           | Job                                                             |
-| ------------------------------------------------- | --------------------------------------------------------------- |
-| [`@ingestron/cli`](packages/cli/)                 | The `ingestron` command and its project templates               |
-| [`@ingestron/definitions`](packages/definitions/) | Schemas, loading, resolving standards, and the pack interface   |
-| [`@ingestron/generate`](packages/generate/)       | Plans and applies generated files safely, keeping hand edits    |
-| [`@ingestron/config`](packages/config/)           | Multi-file YAML loading with references and environments        |
-| [`@ingestron/authoring`](packages/authoring/)     | Editor features as plain functions: problems, fixes, completion |
+| Package                                           | Job                                                                  |
+| ------------------------------------------------- | -------------------------------------------------------------------- |
+| [`@ingestron/cli`](packages/cli/)                 | The `ingestron` command                                              |
+| [`@ingestron/core`](packages/core/)               | The API the command is built on: projects, plans, requests, starters |
+| [`@ingestron/definitions`](packages/definitions/) | Schemas, loading, resolving standards, and the pack interface        |
+| [`@ingestron/generate`](packages/generate/)       | Plans and applies generated files safely, keeping hand edits         |
+| [`@ingestron/config`](packages/config/)           | Multi-file YAML loading with references and environments             |
+| [`@ingestron/authoring`](packages/authoring/)     | Editor features as plain functions: problems, fixes, completion      |
 
 Each package's public API is recorded in `packages/<name>/api/`; a change to it
 is reviewed like any other. [`spec/`](spec/) holds the rules each package

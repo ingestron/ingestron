@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // The `ingestron` command.
-import { askInTerminal } from "./ask.js";
+import { askInTerminal } from "./terminal/index.js";
 import { run } from "./index.js";
 
 process.exitCode = run(process.argv.slice(2), {

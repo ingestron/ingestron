@@ -5,9 +5,9 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative, sep } from "node:path";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
-import { readArgs, usage } from "../src/args.js";
-import { generate } from "../src/generate.js";
-import { generatedFolders } from "../src/outputs.js";
+import { readArgs, usage } from "../src/terminal/args.js";
+import { generate } from "../src/commands/generate.js";
+import { generatedFolders } from "../src/commands/outputs.js";
 import { standIns, type Notice } from "./outputs-packs.js";
 
 interface Case {

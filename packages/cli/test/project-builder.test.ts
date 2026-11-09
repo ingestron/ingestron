@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { expect, it } from "vitest";
 import { parse } from "yaml";
 import { run } from "../src/index.js";
-import { projectSources, projectRoutes } from "../src/project-choices.js";
+import { projectSources, projectRoutes } from "@ingestron/core";
 const cases = JSON.parse(
   readFileSync(new URL("../../../spec/cli/conformance/projects.json", import.meta.url), "utf8"),
 ) as {

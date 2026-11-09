@@ -15,7 +15,10 @@ const packageFolder = join(import.meta.dirname, "..");
 export function workspace(example = "retail", change: (folder: string) => void = () => {}) {
   const folder = mkdtempSync(join(tmpdir(), "ingestron-outputs-"));
   const from = example.includes("/") ? example : `project-templates/${example}`;
-  cpSync(join(packageFolder, from), folder, {
+  const base = from.startsWith("project-templates/")
+    ? join(packageFolder, "../core")
+    : packageFolder;
+  cpSync(join(base, from), folder, {
     recursive: true,
     filter: (path) => !path.includes("/build"),
   });

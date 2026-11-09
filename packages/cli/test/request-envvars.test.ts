@@ -4,7 +4,7 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { nodeFiles } from "@ingestron/config";
 import { describe, expect, it } from "vitest";
-import { platformRequest } from "../src/index.js";
+import { platformRequest } from "@ingestron/core";
 import {
   cleanUp,
   folderValue,

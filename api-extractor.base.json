@@ -13,7 +13,8 @@
     "compilerMessageReporting": { "default": { "logLevel": "warning" } },
     "extractorMessageReporting": {
       "default": { "logLevel": "warning" },
-      "ae-missing-release-tag": { "logLevel": "none" }
+      "ae-missing-release-tag": { "logLevel": "error" },
+      "ae-internal-missing-underscore": { "logLevel": "none" }
     },
     "tsdocMessageReporting": { "default": { "logLevel": "none" } }
   }

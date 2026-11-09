@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { nodeFiles } from "@ingestron/config";
 import { describe, expect, it } from "vitest";
-import { generatedOutputs, packs } from "../src/index.js";
+import { generatedOutputs, packs } from "@ingestron/core";
 import { edit, workspace } from "./workspace.js";
 
 describe("generatedOutputs", () => {
