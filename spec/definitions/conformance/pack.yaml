@@ -98,7 +98,8 @@ methods:
         cluster: { enum: [auto, none] }
         cluster_by: { anyOf: [{ enum: [auto, none] }, { type: array, items: { type: string } }] }
         retries: { type: integer }
-        mode: { enum: [append, upsert] }
+        # snapshot is a mode no alias value lists: it stands for no intent.
+        mode: { enum: [append, upsert, snapshot] }
         sequence_by: { type: string }
         properties: { type: object }
   view:

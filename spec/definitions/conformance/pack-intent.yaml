@@ -1,0 +1,55 @@
+# A data-only pack whose ingest and store methods both give intent defaults, and
+# whose store has a setting that stands for intent on two paths (sections 11.3
+# and 11.4). Its connector is its own, so it offers no fixes in the other cases.
+id: intent
+version: 1
+defaults:
+  naming:
+    catalog: "{{ environment }}"
+    schema: "{{ layer }}"
+    table: "{{ table }}"
+    pipeline: "{{ project }}"
+    job: "{{ project }}_refresh"
+  layers: [bronze, silver, gold]
+  types:
+    {
+      string: STRING,
+      integer: BIGINT,
+      number: DOUBLE,
+      boolean: BOOLEAN,
+      date: DATE,
+      timestamp: TIMESTAMP,
+    }
+  quality: { required: warn, default: warn }
+rules:
+  ingest: { default: intent-copy }
+  store: { default: intent-table }
+methods:
+  intent-copy:
+    action: ingest
+    description: Copies a source's files to a landing folder.
+    connectors: [intent]
+    produces: files
+    intentDefaults:
+      load: { mode: files }
+      history: none
+      audit: [{ value: source_file, as: _source_file }]
+    settings: { type: object }
+  intent-table:
+    action: store
+    description: Keeps the landed files as a table.
+    accepts: [files]
+    produces: table
+    intentDefaults:
+      load: { mode: full }
+      history: latest
+      audit: [{ value: loaded_at, as: _loaded_at }]
+    aliases:
+      mode:
+        values:
+          replace: { load: { mode: full }, history: none }
+          upsert: { history: latest }
+    settings:
+      type: object
+      additionalProperties: false
+      properties: { mode: { enum: [replace, upsert] } }

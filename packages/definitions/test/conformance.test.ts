@@ -61,6 +61,7 @@ const packs = [
   "pack-checked.yaml",
   "pack-plain.yaml",
   "pack-three.yaml",
+  "pack-intent.yaml",
 ].map((file) =>
   packOf(
     parse(readFileSync(join(folder, file), "utf8")) as PackInfo & { buildEnvironments?: true },

@@ -1,0 +1,54 @@
+description: An aliased setting written from intent is checked on its own, so another setting that holds an unset reference does not make it a BAD_SETTING.
+environment: dev
+envvars: {}
+missingEnvvars: information
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    layers:
+      - { name: bronze, history: latest }
+      - silver
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    store: { with: { cluster: "${envvar:C}" } }
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  diagnostics:
+    - { code: ENVVAR_MISSING, severity: information, file: sales.yaml, line: 5 }
+  tables:
+    - name: orders
+      intent: { history: latest }
+      store:
+        method: stream
+        settings: { cluster: "${envvar:C}", mode: upsert }
+        origins:
+          mode: { layer: layer, file: standard.yaml, line: 6 }

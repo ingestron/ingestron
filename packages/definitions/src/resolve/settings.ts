@@ -118,9 +118,25 @@ function fixedRespected(
   return respected;
 }
 
-/** True when the settings meet the method's schema; nothing is reported. */
-export function meetsSchema(method: Method, settings: Record<string, unknown>): boolean {
-  return validatorOf(method)(settings);
+/**
+ * True when the method's schema refuses the value of one top-level setting; failures of
+ * other settings, such as one that holds an unset reference, do not count. Nothing is reported.
+ */
+export function refusesSetting(
+  method: Method,
+  settings: Record<string, unknown>,
+  setting: string,
+): boolean {
+  const validate = validatorOf(method);
+  if (validate(settings)) return false;
+  const pointer = `/${setting.replaceAll("~", "~0").replaceAll("/", "~1")}`;
+  return (validate.errors ?? []).some(
+    ({ instancePath, params }) =>
+      instancePath === pointer ||
+      instancePath.startsWith(`${pointer}/`) ||
+      (instancePath === "" &&
+        (params as { additionalProperty?: string }).additionalProperty === setting),
+  );
 }
 
 function validatorOf(method: Method): ValidateFunction {

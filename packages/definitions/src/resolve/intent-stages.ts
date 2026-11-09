@@ -14,6 +14,17 @@ export interface IntentStage {
   at: (path: string) => Source;
 }
 
+/** The positions of the precedence (section 11.2), earliest first. */
+const positions: Origin["layer"][] = ["standard", "layer", "rule", "definition", "table", "fixed"];
+
+/**
+ * A layer's position in the precedence, later winning: the platform's settings take the
+ * standard's, and a pack's default comes before all.
+ */
+export function positionOf(layer: Origin["layer"]): number {
+  return positions.indexOf(layer === "platform" ? "standard" : layer);
+}
+
 /** A table's intent, the origin of each value and where it was written, keyed by intent path. */
 export interface MergedIntent {
   intent: Intent;

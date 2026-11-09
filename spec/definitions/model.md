@@ -886,8 +886,9 @@ config conformance cases), an optional `deployTime: true` (section 1.1), an
 optional `environmentsTogether: true` (section 7), an optional
 `replaceMe: error` (section 1), and
 `expect`: `tables` (partial objects, in order,
-with `fullName` written as `catalog.schema.table`, and `null` for a step the
-table does not have, such as `serve: null`), `products` (partial objects,
+with `fullName` written as `catalog.schema.table`, and `null` at any key for
+a value the table does not have, such as `serve: null` for a step or
+`settings: { mode: null }` for a setting), `products` (partial objects,
 in order), `platform`, `names`, `deployValues` (the model's, exactly) or
 `diagnostics` (matched in order on the fields given; `fixes` lists the fix
 titles, and `fixes: []` means the diagnostic has none), and optionally
@@ -897,8 +898,9 @@ data-only packs [conformance/pack.yaml](conformance/pack.yaml),
 [conformance/pack-local.yaml](conformance/pack-local.yaml),
 [conformance/pack-fold.yaml](conformance/pack-fold.yaml),
 [conformance/pack-checked.yaml](conformance/pack-checked.yaml),
-[conformance/pack-plain.yaml](conformance/pack-plain.yaml) and
-[conformance/pack-three.yaml](conformance/pack-three.yaml), all available. A
+[conformance/pack-plain.yaml](conformance/pack-plain.yaml),
+[conformance/pack-three.yaml](conformance/pack-three.yaml) and
+[conformance/pack-intent.yaml](conformance/pack-intent.yaml), all available. A
 pack file with `buildEnvironments: true` stands for a pack that builds
 environments together: the runner gives it a `buildEnvironments` member. A
 pack or a method with `checks`, a list of messages, stands for one with a
@@ -1176,10 +1178,15 @@ declared intent (section 11.2) is completed in this order:
 
 1. each chosen method's aliased settings become intent at their places
    (section 11.4);
-2. each chosen method's `intentDefaults`, in step order (ingest or transform,
-   then store, then serve), fill every intent path still unset, an earlier
-   step's default winning. A path filled this way has the origin `pack`, with
-   no file or line;
+2. the chosen methods' `intentDefaults` fill every intent path still unset.
+   When several steps give a default for the same path, the step that judges
+   the path gives it: the ingest step for `load.*` and
+   `retention.landed_files`; the store step for `history`, `sequence`,
+   `storage.*`, `retention.time_travel`, `retention.log` and `rescued` (else
+   an ingest step that produces the table); for any other path, or when the
+   judging step gives none, the later step (in the order ingest or
+   transform, store, serve). A path filled this way has the origin `pack`,
+   with no file or line;
 3. each chosen method's aliased settings are written from the result
    (section 11.4).
 
@@ -1252,17 +1259,28 @@ and counts as no intent. A definition's setting that differs from
 does not resolve.
 
 **Writing settings from intent.** Last, each aliased setting of each chosen
-method is written from the completed intent, when the intent at its path has
-an origin other than `pack`: a `path` alias takes the value at the path, a
-`values` alias the first listed value whose intent the completed intent
-holds. The setting's origin becomes that intent path's origin. When the path
-has no value, or no listed value matches (`history: full` for `mode` above),
-the setting keeps its merged value. So a setting is never added from pack
+method is written from the completed intent. A `path` alias takes the value
+at the path; a `values` alias the first listed value whose intent the
+completed intent holds, and that value's intent paths are the ones that
+count. At least one of those paths MUST have an origin other than `pack`, and
+the setting's origin becomes the origin, other than `pack`, that comes latest
+in the precedence (section 11.2). So a setting is never written from pack
 defaults alone, and a project that declares no intent keeps the settings it
-had. A written value the method's settings schema refuses is `BAD_SETTING`
-where the intent was written: `Settings for "<method>": the intent written
-here makes "<setting>" <value>, which the method does not accept.`, and the
-setting keeps its merged value.
+had. The setting keeps its merged value when:
+
+- the path has no value, or no listed value matches (`history: full` for
+  `mode` above);
+- the setting holds an unset reference (section 1): it stands for no intent,
+  but is kept as written;
+- the last place that wrote it (section 3) comes later in the precedence than
+  that origin, the platform's settings counting as the standard's: such a
+  setting either is the intent at its place or stands for none, and is kept.
+
+A written value the method's settings schema refuses is `BAD_SETTING` where
+the intent was written: `Settings for "<method>": the intent written here
+makes "<setting>" <value>, which the method does not accept.`, and the
+setting keeps its merged value. Only failures of that setting count, so a
+setting elsewhere that holds an unset reference does not make it one.
 
 ## Connector authoring metadata
 
