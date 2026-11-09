@@ -5,6 +5,12 @@ import { join } from "node:path";
 import { defineKind, type JsonSchema } from "@ingestron/config";
 import { parse } from "yaml";
 import { schemasFolder } from "../folders.js";
+import type {
+  FlowIntentDoc,
+  LayerDoc,
+  StandardIntentDoc,
+  TableIntentDoc,
+} from "../intent/index.js";
 
 /** An action's method choice and settings, as written in a flow or transform. */
 export interface ActionDoc {
@@ -39,13 +45,19 @@ export interface RulesDoc {
 }
 
 /** A `Standard` document. */
-export interface StandardDoc {
+export interface StandardDoc extends StandardIntentDoc {
   id: string;
   packs: string[];
+  features?: "ga" | "preview";
+  origin?: { standard: string; version: string };
   naming?: Record<string, string>;
-  layers?: string[];
+  layers?: (string | LayerDoc)[];
   types?: Record<string, string>;
-  quality?: { required?: "warn" | "drop" | "fail"; default?: "warn" | "drop" | "fail" };
+  quality?: {
+    required?: "warn" | "drop" | "fail";
+    default?: "warn" | "drop" | "fail";
+    results?: boolean;
+  };
   ingest?: RulesDoc;
   transform?: RulesDoc;
   store?: RulesDoc;
@@ -90,7 +102,7 @@ export interface ConnectionDoc {
 }
 
 /** One table of a flow. */
-export interface FlowTableDoc {
+export interface FlowTableDoc extends FlowIntentDoc {
   object: string;
   contract: string;
   expectations?: ExpectationDoc[];
@@ -100,7 +112,7 @@ export interface FlowTableDoc {
 }
 
 /** A `Flow` document. */
-export interface FlowDoc {
+export interface FlowDoc extends FlowIntentDoc {
   id: string;
   source: string;
   layer?: string;
@@ -111,7 +123,7 @@ export interface FlowDoc {
 }
 
 /** A `Transform` document. */
-export interface TransformDoc {
+export interface TransformDoc extends TableIntentDoc {
   id: string;
   layer?: string;
   inputs: string[];

@@ -610,7 +610,9 @@ the flow's `ingest.uses`.
 - Flow tables are named by their key and land in the flow's `layer`, else
   the first layer. A transform's table is named by its id and lands in its
   `layer`, else the second layer (the first if there is only one). A layer
-  that is not in the list is `UNKNOWN_LAYER`.
+  that is not in the list is `UNKNOWN_LAYER`. A layer in the list is its name
+  or an object with a `name` (section 11.1); the layers are the names, in
+  order.
 - Each name is rendered from its Liquid pattern with the variables
   `project`, `environment`, `layer`, `table`, `flow` (flow tables) and
   `source` (the connection id, flow tables). A pattern that does not render
@@ -970,6 +972,104 @@ first of these that applies to the merged schema:
 | `integer` | `a whole number`   |
 | `boolean` | `true or false`    |
 | any other | the type, as it is |
+
+## 11. Intent
+
+Intent is what a standard, a flow or a transform says about how data is
+loaded, kept and run, in words that belong to no engine. Every section is
+optional; a document that leaves them all out behaves as it did before they
+existed. This section defines the words. Which pack uses which, and how a
+value is resolved for each table, come later in this section.
+
+### 11.1 Vocabulary
+
+**Layers.** An item of the standard's `layers` is either a name (text matching
+`^[a-z][a-z0-9_]*$`) or an object whose `name` is required and of the same
+form. The standard's layers, in order, are the names: everything in this
+specification that reads `layers` (a table's default layer, `UNKNOWN_LAYER`,
+the `layer` naming variable) reads the names. An object may also give, as the
+defaults for the tables in the layer, `history`, `audit`, `rescued`,
+`retention` and `quality` (its `required` and `default`, as in the standard's
+`quality`). An object without a `name` is a load error at the item.
+
+**Standard.** Beside `layers`, the standard may give:
+
+| Field                                      | Meaning                                                                                                                                                                                                                        |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `features`                                 | `ga` or `preview`: whether platform features in preview may be used.                                                                                                                                                           |
+| `origin`                                   | `{ standard, version }`: the published standard this one was made from.                                                                                                                                                        |
+| `load`                                     | `default` (a load mode), `deletes` (a delete mode) and `when`, a list of rules, each with some of the facts `connectivity`, `connector`, `input` and `layer`, and `use`, a load mode.                                          |
+| `audit`, `rescued`, `retention`, `storage` | The same as a layer's or a table's, for every table.                                                                                                                                                                           |
+| `quality.results`                          | `true`: keep the results of checks as a table.                                                                                                                                                                                 |
+| `operations`                               | Policy for runs, below.                                                                                                                                                                                                        |
+| `fixed`                                    | Intent that no layer, flow or transform may change: any of `load`, `history`, `sequence`, `audit`, `rescued`, `retention`, `storage` and `operations`, in the forms below. It is separate from each action's `fixed` settings. |
+
+**Flows and transforms.** A flow and a flow table may give `load`, `history`,
+`sequence` and `audit`; a transform may give `history`, `sequence` and
+`audit`.
+
+**Load.** How a flow table's data leaves the source. A table's `load` is
+`{ mode, cursor, deletes: { mode, when } }`.
+
+| Mode          | Meaning                                                                   |
+| ------------- | ------------------------------------------------------------------------- |
+| `files`       | New files only, each read once.                                           |
+| `incremental` | Rows whose `cursor` column is past the last value seen.                   |
+| `changes`     | The source's change log or change feed.                                   |
+| `full`        | The whole object each run; any history is derived by comparing snapshots. |
+
+`deletes.mode` is `soft` (deleted rows are marked and kept), `hard` (removed)
+or `keep` (deletes at the source are ignored). `deletes.when` is a SQL
+condition that is true for a row deleted at the source.
+
+**History.** What is kept per key; keys are the contract's primary key.
+`none` keeps every row as it arrived, `latest` the latest row per key, `full`
+every version, and `bitemporal` every version with valid and recorded time.
+`sequence` is the column that orders changes to a key; without it the load
+`cursor` orders them.
+
+**Audit.** A list of the values `loaded_at`, `run_id`, `source_file`,
+`source_modified_at`, `source_object`, `source_connection`, `window_start`,
+`window_end` and `row_hash`, each as text or as `{ value, as }`. Each is a
+column added after the contract's columns; it is not a contract column. Its
+name is `_<value>` unless `as` gives another, which MUST match
+`^[a-z_][a-z0-9_]*$`.
+
+**Rescued.** `rescued: true` keeps data that does not fit the contract in a
+rescued column instead of losing it.
+
+**Retention.** `time_travel`, `log` and `landed_files`: how long earlier
+versions of a table, its change log and the files an ingest step landed are
+kept. Each is a duration.
+
+**Storage.** `clustering` is `auto` (the platform chooses), `none`, or `keys`
+(the contract's partitioned columns). `features` lists any of `change_feed`,
+`row_tracking`, `deletion_vectors`, `type_widening` and `iceberg_reads`.
+
+**Operations.** Policy for runs. Values that differ per environment, such as a
+cron expression or where an alert goes, belong in the platform.
+
+| Field          | Meaning                                                                                                        |
+| -------------- | -------------------------------------------------------------------------------------------------------------- |
+| `schedule`     | `{ per }`: `project` for one schedule, `flow` for one per flow.                                                |
+| `trigger`      | `schedule`, `files`, `upstream` or `continuous`.                                                               |
+| `retries`      | `{ count, interval }`: tries again and the wait between them.                                                  |
+| `timeout`      | How long a run may take before it is stopped.                                                                  |
+| `alerts`       | `{ on, slow_after }`: `on` lists `failure` and `slow`; `slow_after` is the duration after which a run is slow. |
+| `concurrency`  | `{ max_runs, queue }`: the most active runs, and whether one over the limit waits instead of being skipped.    |
+| `require_tags` | Tags the platform must give a value for.                                                                       |
+
+A **duration** is a whole number and a unit, `s`, `m`, `h` or `d`, matching
+`^[0-9]+(s|m|h|d)$`, such as `30d`.
+
+**Paths.** Every intent path and its values are listed in the implementation
+as `intentPaths`, for coverage maps: `load.mode`, `load.cursor`,
+`load.deletes.mode`, `load.deletes.when`, `history`, `sequence`, `audit`,
+`rescued`, `retention.time_travel`, `retention.log`, `retention.landed_files`,
+`storage.clustering`, `storage.features`, `operations.trigger`,
+`operations.retries`, `operations.timeout`, `operations.alerts`,
+`operations.concurrency` and `quality.results`. A value of `*` stands for any
+text.
 
 ## Connector authoring metadata
 

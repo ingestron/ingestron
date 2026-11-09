@@ -58,6 +58,18 @@ export {
 // Documents: the kinds a project holds and the schemas the package ships.
 export { contractReads, kinds, packageSchema, type GovernanceDoc } from "./documents/index.js";
 
+// Intent: the words a standard, flow or transform uses for how data is loaded and kept.
+export {
+  intentPaths,
+  layerNames,
+  type AuditValue,
+  type DeleteMode,
+  type History,
+  type Intent,
+  type LoadMode,
+  type StorageFeature,
+} from "./intent/index.js";
+
 // Choosing methods: the store choice that keeps landed files as they are.
 export { NO_STORE } from "./choose/index.js";
 

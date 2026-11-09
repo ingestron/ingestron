@@ -29,6 +29,27 @@ properties:
       description: "Layer the tables land in. Default: the standard's first layer.",
       examples: [bronze],
     }
+  load:
+    {
+      $ref: "#/$defs/load",
+      description: "How data leaves the source, for every table of this flow.",
+    }
+  history:
+    {
+      $ref: "#/$defs/history",
+      description: "What is kept per key, for every table of this flow. Default: the layer's.",
+    }
+  sequence:
+    {
+      type: string,
+      description: "The column that orders changes to a key. Default: the load cursor.",
+      examples: [updated_at],
+    }
+  audit:
+    {
+      $ref: "#/$defs/audit",
+      description: "Audit columns for every table of this flow, after the contract's columns.",
+    }
   tables:
     type: object
     minProperties: 1
@@ -49,6 +70,21 @@ properties:
           }
         expectations:
           { $ref: "#/$defs/expectations", description: Your own checks on this table's rows. }
+        load:
+          { $ref: "#/$defs/load", description: "How data leaves the source, for this table only." }
+        history:
+          { $ref: "#/$defs/history", description: "What is kept per key, for this table only." }
+        sequence:
+          {
+            type: string,
+            description: "The column that orders changes to a key, for this table only.",
+            examples: [updated_at],
+          }
+        audit:
+          {
+            $ref: "#/$defs/audit",
+            description: "Audit columns for this table only, after the contract's columns.",
+          }
         ingest: { $ref: "#/$defs/with", description: Method settings for this table only. }
         store: { $ref: "#/$defs/with", description: Method settings for this table only. }
         serve: { $ref: "#/$defs/with", description: Method settings for this table only. }
@@ -61,6 +97,96 @@ properties:
   serve:
     { $ref: "#/$defs/serve", description: Where the data is made available after its last step. }
 $defs:
+  loadMode:
+    enum: [files, incremental, changes, full]
+    enumDescriptions:
+      - New files only, each read once.
+      - Rows whose cursor column is past the last value seen.
+      - The source's change log or change feed.
+      - The whole object each run; any history is derived by comparing snapshots.
+  load:
+    type: object
+    additionalProperties: false
+    properties:
+      mode:
+        {
+          $ref: "#/$defs/loadMode",
+          description: "How data leaves the source. Default: the standard's.",
+        }
+      cursor:
+        {
+          type: string,
+          description: "The column that grows as rows arrive, for the `incremental` mode.",
+          examples: [updated_at],
+        }
+      deletes:
+        type: object
+        additionalProperties: false
+        description: "What happens to a row deleted at the source."
+        properties:
+          mode:
+            enum: [soft, hard, keep]
+            description: "How a delete is treated. Default: the standard's."
+            enumDescriptions:
+              - Deleted rows are marked and kept.
+              - Deleted rows are removed.
+              - Deletes at the source are ignored.
+          when:
+            {
+              type: string,
+              description: "A SQL condition that is true for a row that was deleted at the source.",
+              examples: ["op = 'D'"],
+            }
+  history:
+    enum: [none, latest, full, bitemporal]
+    enumDescriptions:
+      - Every row as it arrived.
+      - Only the latest row per key.
+      - Every version of each key, with when it applied.
+      - Every version with both valid time and recorded time. Preview on some platforms.
+  audit:
+    type: array
+    uniqueItems: true
+    items:
+      oneOf:
+        - { $ref: "#/$defs/auditValue" }
+        - type: object
+          additionalProperties: false
+          required: [value, as]
+          properties:
+            value: { $ref: "#/$defs/auditValue", description: "The audit value this column holds." }
+            as:
+              {
+                type: string,
+                pattern: "^[a-z_][a-z0-9_]*$",
+                description: "The column's name. Default: the value's name with a leading underscore.",
+                examples: [_ingested_at],
+              }
+    examples:
+      - - loaded_at
+        - value: source_file
+          as: _file
+  auditValue:
+    enum:
+      - loaded_at
+      - run_id
+      - source_file
+      - source_modified_at
+      - source_object
+      - source_connection
+      - window_start
+      - window_end
+      - row_hash
+    enumDescriptions:
+      - When the row was written to the table.
+      - The id of the run that wrote the row.
+      - The file the row was read from.
+      - When the file the row was read from was last changed.
+      - The object at the source the row came from.
+      - The connection the row came from.
+      - The start of the window of source data the run read.
+      - The end of the window of source data the run read.
+      - A hash of the row's values.
   with:
     type: object
     additionalProperties: false

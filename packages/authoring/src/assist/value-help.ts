@@ -4,7 +4,7 @@
 // layers, a connection's settings, and for a mapping or list a block of its
 // fields or a new line that asks for them.
 import { packs } from "@ingestron/core";
-import type { FieldInfo } from "@ingestron/definitions";
+import { layerNames, type FieldInfo } from "@ingestron/definitions";
 import { stringify } from "yaml";
 import type { Suggestion } from "./completion.js";
 import type { Place } from "../navigation/index.js";
@@ -112,9 +112,19 @@ function connectorIds(project: Project): Suggestion[] {
     }));
 }
 
+/** A layer written as an object, whatever else it holds. */
+function isNamed(layer: unknown): layer is { name: string } {
+  return (
+    typeof layer === "object" &&
+    layer !== null &&
+    typeof (layer as { name?: unknown }).name === "string"
+  );
+}
+
 function layersOf(project: Project, place: Place): string[] {
   const written = place.kind === "Standard" ? (place.data.layers as unknown) : undefined;
-  if (Array.isArray(written)) return written.map(String);
+  if (Array.isArray(written))
+    return layerNames(written.map((layer) => (isNamed(layer) ? layer : String(layer)))) ?? [];
   return standardPacks(project)[0]?.defaults.layers ?? [];
 }
 

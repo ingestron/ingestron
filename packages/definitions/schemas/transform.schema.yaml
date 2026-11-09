@@ -77,11 +77,77 @@ properties:
               ],
           }
     description: Your own checks on the table's rows.
+  history:
+    {
+      $ref: "#/$defs/history",
+      description: "What is kept per key in the result. Default: the layer's.",
+    }
+  sequence:
+    {
+      type: string,
+      description: "The column that orders changes to a key.",
+      examples: [updated_at],
+    }
+  audit:
+    {
+      $ref: "#/$defs/audit",
+      description: "Audit columns for the result, after the contract's columns.",
+    }
   transform: { $ref: "#/$defs/transform", description: How the code runs. }
   store: { $ref: "#/$defs/store", description: How the result is kept. }
   serve:
     { $ref: "#/$defs/serve", description: Where the result is made available after it is kept. }
 $defs:
+  history:
+    enum: [none, latest, full, bitemporal]
+    enumDescriptions:
+      - Every row as it arrived.
+      - Only the latest row per key.
+      - Every version of each key, with when it applied.
+      - Every version with both valid time and recorded time. Preview on some platforms.
+  audit:
+    type: array
+    uniqueItems: true
+    items:
+      oneOf:
+        - { $ref: "#/$defs/auditValue" }
+        - type: object
+          additionalProperties: false
+          required: [value, as]
+          properties:
+            value: { $ref: "#/$defs/auditValue", description: "The audit value this column holds." }
+            as:
+              {
+                type: string,
+                pattern: "^[a-z_][a-z0-9_]*$",
+                description: "The column's name. Default: the value's name with a leading underscore.",
+                examples: [_ingested_at],
+              }
+    examples:
+      - - loaded_at
+        - value: source_file
+          as: _file
+  auditValue:
+    enum:
+      - loaded_at
+      - run_id
+      - source_file
+      - source_modified_at
+      - source_object
+      - source_connection
+      - window_start
+      - window_end
+      - row_hash
+    enumDescriptions:
+      - When the row was written to the table.
+      - The id of the run that wrote the row.
+      - The file the row was read from.
+      - When the file the row was read from was last changed.
+      - The object at the source the row came from.
+      - The connection the row came from.
+      - The start of the window of source data the run read.
+      - The end of the window of source data the run read.
+      - A hash of the row's values.
   transform:
     type: object
     additionalProperties: false

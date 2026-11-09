@@ -19,6 +19,7 @@ const deciding: Record<string, string[]> = {
   Standard: [
     "/packs/*",
     "/layers/*",
+    "/layers/*/name",
     "/naming/*",
     ...actions.flatMap((action) => [
       `/${action}/default`,

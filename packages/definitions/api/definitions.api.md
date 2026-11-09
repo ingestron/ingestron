@@ -19,6 +19,9 @@ export function anchorOf(parts: string[]): string;
 export { AnyDiagnostic }
 
 // @public
+export type AuditValue = "loaded_at" | "run_id" | "source_file" | "source_modified_at" | "source_object" | "source_connection" | "window_start" | "window_end" | "row_hash";
+
+// @public
 export interface Capability {
     // (undocumented)
     does: string;
@@ -171,6 +174,9 @@ export function contractUseOf(pack: PackInfo, path: string): ContractUse | undef
 export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "PACK_VERSION" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "REPLACE_ME" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS" | "DEPLOY_VALUE" | "ENVIRONMENTS_DIFFER" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS" | "PACK_NOTICE" | "PACK_LOAD";
 
 // @public
+export type DeleteMode = "soft" | "hard" | "keep";
+
+// @public
 export interface DeployValue {
     name: string;
     text: string;
@@ -296,6 +302,47 @@ export interface Grant {
 // @public
 export type Handover = "files" | "table" | "query";
 
+// @public
+export type History = "none" | "latest" | "full" | "bitemporal";
+
+// @public
+export interface Intent {
+    // (undocumented)
+    audit?: {
+        value: AuditValue;
+        as: string;
+    }[];
+    // (undocumented)
+    history?: History;
+    // (undocumented)
+    load?: {
+        mode?: LoadMode;
+        cursor?: string;
+        deletes?: {
+            mode?: DeleteMode;
+            when?: string;
+        };
+    };
+    // (undocumented)
+    rescued?: boolean;
+    // (undocumented)
+    retention?: {
+        time_travel?: string;
+        log?: string;
+        landed_files?: string;
+    };
+    // (undocumented)
+    sequence?: string;
+    // (undocumented)
+    storage?: {
+        clustering?: "auto" | "none" | "keys";
+        features?: StorageFeature[];
+    };
+}
+
+// @public
+export const intentPaths: Record<string, readonly string[]>;
+
 export { JsonSchema }
 
 export { KindDefinition }
@@ -313,6 +360,11 @@ export const kinds: {
 };
 
 // @public
+export function layerNames<Layer extends string | {
+    name: string;
+}>(layers: readonly Layer[] | undefined): string[] | undefined;
+
+// @public
 export function loadDefinitions(folder: string, options: ResolveOptions): ResolveResult;
 
 // @public
@@ -324,6 +376,9 @@ export const loadingCodeHelp: Record<DiagnosticCode, {
 
 // @public
 export type LoadingStage = "Files and YAML" | "References" | "Environments and documents";
+
+// @public
+export type LoadMode = "files" | "incremental" | "changes" | "full";
 
 // @public
 export interface Method {
@@ -694,6 +749,9 @@ export interface StepOutput {
 }
 
 // @public
+export type StorageFeature = "change_feed" | "row_tracking" | "deletion_vectors" | "type_widening" | "iceberg_reads";
+
+// @public
 export interface SuppliedValue {
     name: string;
     suppliedAs: string[];
@@ -727,13 +785,13 @@ export interface TargetDifference {
 
 // Warnings were encountered during analysis:
 //
-// dist/documents/documents.d.ts:231:5 - (ae-forgotten-export) The symbol "StandardDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:232:5 - (ae-forgotten-export) The symbol "PlatformDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:233:5 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:234:5 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:235:5 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:236:5 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:238:5 - (ae-forgotten-export) The symbol "ProductDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:238:5 - (ae-forgotten-export) The symbol "StandardDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:239:5 - (ae-forgotten-export) The symbol "PlatformDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:240:5 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:241:5 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:242:5 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:243:5 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:245:5 - (ae-forgotten-export) The symbol "ProductDoc" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

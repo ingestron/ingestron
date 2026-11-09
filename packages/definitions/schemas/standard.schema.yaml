@@ -30,6 +30,31 @@ properties:
     description: >-
       The packs to use, each with its major version, such as `[databricks@2, adf@2]`. The first
       provides the defaults.
+  features:
+    enum: [ga, preview]
+    description: >-
+      Which release status of platform features this standard may use. Default: `ga`.
+    enumDescriptions:
+      - Only features that are generally available.
+      - Features in preview as well; they may change or be withdrawn.
+  origin:
+    type: object
+    additionalProperties: false
+    required: [standard, version]
+    description: "The published standard this one was made from, so it can be compared with that standard later."
+    properties:
+      standard:
+        {
+          type: string,
+          description: "The published standard's name.",
+          examples: [databricks/lakehouse-streaming],
+        }
+      version:
+        {
+          type: string,
+          description: "The version of the published standard, such as a date.",
+          examples: [2026-11-01],
+        }
   naming:
     {
       $ref: "#/$defs/naming",
@@ -39,9 +64,19 @@ properties:
     type: array
     minItems: 1
     uniqueItems: true
-    items: { type: string, pattern: "^[a-z][a-z0-9_]*$" }
-    description: "Layers in order. Flow tables land in the first, transforms in the second. Default:
-      bronze, silver, gold."
+    items:
+      oneOf:
+        - { type: string, pattern: "^[a-z][a-z0-9_]*$" }
+        - $ref: "#/$defs/layer"
+    description: >-
+      Layers in order, each a name or an object with a `name` and the intent every table in the
+      layer starts from. Flow tables land in the first, transforms in the second. Default: bronze,
+      silver, gold.
+    examples:
+      - - bronze
+        - name: silver
+          history: latest
+        - gold
   types:
     type: object
     description:
@@ -66,7 +101,148 @@ properties:
           - Keep the row and record that it failed.
           - Leave the row out of the table.
           - Stop the update.
+      results:
+        type: boolean
+        description: "Whether the results of the checks are kept as a table that can be queried. Default: false."
     description: "What happens to rows that fail a check: required columns and your own expectations."
+  load:
+    type: object
+    additionalProperties: false
+    description: "How a flow table's data leaves the source."
+    properties:
+      default:
+        {
+          $ref: "#/$defs/loadMode",
+          description: "How data is loaded when no rule matches and the flow says nothing. Default: the pack's.",
+        }
+      deletes:
+        {
+          $ref: "#/$defs/deleteMode",
+          description: "What happens to a row deleted at the source. Default: the pack's.",
+        }
+      when:
+        type: array
+        description: >-
+          Checked in order; the first whose facts all match chooses how data is loaded. The facts
+          are the ones method rules match.
+        items:
+          type: object
+          additionalProperties: false
+          required: [use]
+          minProperties: 2
+          properties:
+            connectivity:
+              {
+                enum: [public, workspace, private],
+                description: "Matches the connection's connectivity: public, workspace or private.",
+                enumDescriptions:
+                  [
+                    The data platform reaches the source directly.,
+                    "The platform reaches it over private networking, such as ExpressRoute or a peered network.",
+                    The platform cannot reach it; something inside the source's network must bring the data.,
+                  ],
+              }
+            connector:
+              {
+                type: string,
+                description: "Matches the connection's connector, such as files or sqlserver.",
+                examples: [oracle],
+              }
+            input:
+              {
+                enum: [files, table, query],
+                description: "Matches what the previous action hands over: files, table or query.",
+                enumDescriptions:
+                  [
+                    "Files in storage, such as those an ingest method lands.",
+                    "A table, such as one a managed connector writes, or a transform's inputs.",
+                    "A query, such as a transform's SQL, for the store method to keep.",
+                  ],
+              }
+            layer:
+              {
+                type: string,
+                description: "Matches the table's layer, such as bronze.",
+                examples: [bronze],
+              }
+            use:
+              {
+                $ref: "#/$defs/loadMode",
+                description: "How data is loaded when this rule matches.",
+              }
+        examples:
+          - - connector: oracle
+              use: incremental
+  storage:
+    {
+      $ref: "#/$defs/storage",
+      description: "How tables are laid out and which storage features they use. Packs map what their platform has.",
+    }
+  retention:
+    {
+      $ref: "#/$defs/retention",
+      description: "How long history and landed files are kept. Packs map what their platform has.",
+    }
+  audit:
+    {
+      $ref: "#/$defs/audit",
+      description: "Audit columns added to every table, unless its layer or flow says otherwise.",
+    }
+  rescued:
+    {
+      type: boolean,
+      description: "Whether data that does not fit the contract is kept in a rescued column instead of being lost. Default: false.",
+    }
+  operations:
+    {
+      $ref: "#/$defs/operations",
+      description: "Policy for running what is generated: schedule, trigger, retries, timeout, alerts and concurrency. Values that differ per environment, such as a cron expression, belong in the platform.",
+    }
+  fixed:
+    type: object
+    additionalProperties: false
+    description: "Intent that no layer, flow or transform may change. A table that sets a different value is refused."
+    properties:
+      load:
+        type: object
+        additionalProperties: false
+        description: "Load intent that is fixed."
+        properties:
+          mode: { $ref: "#/$defs/loadMode", description: "The load mode every table uses." }
+          cursor:
+            {
+              type: string,
+              description: "The cursor column every table uses.",
+              examples: [updated_at],
+            }
+          deletes:
+            type: object
+            additionalProperties: false
+            description: "How deletes at the source are treated."
+            properties:
+              mode:
+                {
+                  $ref: "#/$defs/deleteMode",
+                  description: "The delete treatment every table uses.",
+                }
+              when:
+                {
+                  type: string,
+                  description: "The condition that marks a source row as deleted.",
+                  examples: ["op = 'D'"],
+                }
+      history: { $ref: "#/$defs/history", description: "The history every table keeps." }
+      sequence:
+        {
+          type: string,
+          description: "The column that orders changes to a key.",
+          examples: [updated_at],
+        }
+      audit: { $ref: "#/$defs/audit", description: "The audit columns every table has." }
+      rescued: { type: boolean, description: "Whether the rescued column is always kept." }
+      retention: { $ref: "#/$defs/retention", description: "Retention that is fixed." }
+      storage: { $ref: "#/$defs/storage", description: "Storage intent that is fixed." }
+      operations: { $ref: "#/$defs/operations", description: "Operations policy that is fixed." }
   ingest:
     {
       $ref: "#/$defs/rules",
@@ -135,6 +311,231 @@ properties:
                 items: { enum: [access, description, firstLevelApprovers] }
                 description: "Fields each role of a sensitive contract must give: its access, its purpose (description) and who approves it."
 $defs:
+  layerName: { type: string, pattern: "^[a-z][a-z0-9_]*$" }
+  duration:
+    type: string
+    pattern: "^[0-9]+(s|m|h|d)$"
+    examples: [30d, 2h, 5m]
+  loadMode:
+    enum: [files, incremental, changes, full]
+    enumDescriptions:
+      - New files only, each read once.
+      - Rows whose cursor column is past the last value seen.
+      - The source's change log or change feed.
+      - The whole object each run; any history is derived by comparing snapshots.
+  deleteMode:
+    enum: [soft, hard, keep]
+    enumDescriptions:
+      - Deleted rows are marked and kept.
+      - Deleted rows are removed.
+      - Deletes at the source are ignored.
+  history:
+    enum: [none, latest, full, bitemporal]
+    enumDescriptions:
+      - Every row as it arrived.
+      - Only the latest row per key.
+      - Every version of each key, with when it applied.
+      - Every version with both valid time and recorded time. Preview on some platforms.
+  audit:
+    type: array
+    uniqueItems: true
+    items:
+      oneOf:
+        - { $ref: "#/$defs/auditValue" }
+        - type: object
+          additionalProperties: false
+          required: [value, as]
+          properties:
+            value: { $ref: "#/$defs/auditValue", description: "The audit value this column holds." }
+            as:
+              {
+                type: string,
+                pattern: "^[a-z_][a-z0-9_]*$",
+                description: "The column's name. Default: the value's name with a leading underscore.",
+                examples: [_ingested_at],
+              }
+    description: >-
+      Audit columns the steps add after the contract's columns, each a value or a value with the
+      column's name. They are not contract columns.
+    examples:
+      - - loaded_at
+        - value: source_file
+          as: _file
+  auditValue:
+    enum:
+      - loaded_at
+      - run_id
+      - source_file
+      - source_modified_at
+      - source_object
+      - source_connection
+      - window_start
+      - window_end
+      - row_hash
+    enumDescriptions:
+      - When the row was written to the table.
+      - The id of the run that wrote the row.
+      - The file the row was read from.
+      - When the file the row was read from was last changed.
+      - The object at the source the row came from.
+      - The connection the row came from.
+      - The start of the window of source data the run read.
+      - The end of the window of source data the run read.
+      - A hash of the row's values.
+  retention:
+    type: object
+    additionalProperties: false
+    properties:
+      time_travel:
+        {
+          $ref: "#/$defs/duration",
+          description: "How long earlier versions of a table can be queried, such as 30d.",
+        }
+      log:
+        {
+          $ref: "#/$defs/duration",
+          description: "How long the table's change log is kept, such as 30d.",
+        }
+      landed_files:
+        {
+          $ref: "#/$defs/duration",
+          description: "How long files landed by an ingest step are kept, such as 90d.",
+        }
+  storage:
+    type: object
+    additionalProperties: false
+    properties:
+      clustering:
+        enum: [auto, none, keys]
+        description: "How table data is organised for reads. Default: the pack's."
+        enumDescriptions:
+          - The platform chooses.
+          - No clustering.
+          - By the contract's partitioned columns.
+      features:
+        type: array
+        uniqueItems: true
+        items:
+          enum: [change_feed, row_tracking, deletion_vectors, type_widening, iceberg_reads]
+          enumDescriptions:
+            - Record row-level changes so readers can ask what changed.
+            - Give each row a stable identity across rewrites.
+            - Mark deleted rows instead of rewriting files.
+            - Allow a column to change to a wider type without rewriting data.
+            - Let Iceberg readers read the table.
+        description: "Storage features to turn on. A pack that cannot provide one reports it."
+        examples:
+          - [change_feed]
+  operations:
+    type: object
+    additionalProperties: false
+    properties:
+      schedule:
+        type: object
+        additionalProperties: false
+        required: [per]
+        description: "How runs are scheduled."
+        properties:
+          per:
+            enum: [project, flow]
+            description: "Whether one schedule runs the whole project or each flow has its own."
+            enumDescriptions:
+              - One schedule for the whole project.
+              - Each flow may set its own schedule.
+      trigger:
+        enum: [schedule, files, upstream, continuous]
+        description: "What starts a run."
+        enumDescriptions:
+          - The time in the schedule.
+          - New files arriving.
+          - The run of something this depends on finishing.
+          - A run that never stops.
+      retries:
+        type: object
+        additionalProperties: false
+        required: [count, interval]
+        description: "What happens when a run fails."
+        properties:
+          count: { type: integer, minimum: 0, description: "How many times to try again." }
+          interval:
+            { $ref: "#/$defs/duration", description: "How long to wait between tries, such as 5m." }
+      timeout:
+        {
+          $ref: "#/$defs/duration",
+          description: "How long a run may take before it is stopped, such as 2h.",
+        }
+      alerts:
+        type: object
+        additionalProperties: false
+        required: [on]
+        description: "When to tell someone. Where to tell them belongs in the platform."
+        properties:
+          "on":
+            type: array
+            minItems: 1
+            uniqueItems: true
+            items:
+              enum: [failure, slow]
+              enumDescriptions:
+                - A run failed.
+                - A run took longer than `slow_after`.
+            description: "The events to alert on."
+          slow_after:
+            {
+              $ref: "#/$defs/duration",
+              description: "How long a run may take before it is slow, such as 1h.",
+            }
+      concurrency:
+        type: object
+        additionalProperties: false
+        required: [max_runs, queue]
+        description: "How many runs may be active at once."
+        properties:
+          max_runs: { type: integer, minimum: 1, description: "The most runs active at once." }
+          queue:
+            {
+              type: boolean,
+              description: "Whether a run that starts over the limit waits, instead of being skipped.",
+            }
+      require_tags:
+        type: array
+        uniqueItems: true
+        items: { type: string }
+        description: "Tags the platform must give a value for, such as `cost_centre`."
+  layer:
+    type: object
+    additionalProperties: false
+    required: [name]
+    description: "A layer with the intent every table in it starts from."
+    properties:
+      name: { $ref: "#/$defs/layerName", description: "The layer's name.", examples: [silver] }
+      history: { $ref: "#/$defs/history", description: "What is kept per key in this layer." }
+      audit: { $ref: "#/$defs/audit", description: "Audit columns for tables in this layer." }
+      rescued:
+        {
+          type: boolean,
+          description: "Whether data that does not fit the contract is kept in a rescued column.",
+        }
+      retention: { $ref: "#/$defs/retention", description: "Retention for tables in this layer." }
+      quality:
+        type: object
+        additionalProperties: false
+        description: "What happens to rows that fail a check in this layer."
+        properties:
+          required:
+            enum: [warn, drop, fail]
+            description: "Action for rows missing a contract `required` column."
+            enumDescriptions:
+              - Keep the row and record that it failed.
+              - Leave the row out of the table.
+              - Stop the update.
+          default:
+            enum: [warn, drop, fail]
+            description: "Action for expectations that name none."
+            enumDescriptions:
+              - Keep the row and record that it failed.
+              - Leave the row out of the table.
+              - Stop the update.
   method: { type: string, pattern: "^[a-z][a-z0-9-]*$" }
   naming:
     type: object
