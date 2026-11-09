@@ -1,6 +1,6 @@
 // What a pack declares: its methods, its smart defaults and how it builds files.
 import type { JsonSchema } from "@ingestron/config";
-import type { History, Intent, LoadMode, SettingAlias } from "../intent/index.js";
+import type { History, Intent, IntentUse, LoadMode, SettingAlias } from "../intent/index.js";
 import type { EnvironmentsBuild } from "./environments.js";
 import type { Column, ResolvedModel, ResolvedTable } from "./model.js";
 
@@ -66,6 +66,12 @@ export interface Method {
    * @example aliases: { mode: { values: { append: { history: "none" } } }, sequence_by: { path: "sequence" } }
    */
   aliases?: Record<string, SettingAlias>;
+  /**
+   * What differs on this method from its pack's `intent`: found first when the method's
+   * step judges a value (specification section 11.5).
+   * @example intent: { history: { use: "not-applicable", reason: "A view keeps no history." } }
+   */
+  intent?: Record<string, IntentUse>;
   /**
    * Where settings usually belong: `platform` (such as shared infrastructure)
    * or `standard` (such as a schedule). The others belong in the definitions.
@@ -223,6 +229,12 @@ export interface PackInfo {
   platformFields?: string[];
   /** What the pack does with each ODCS contract field, by field path (`*` for any item). */
   contract?: Record<string, ContractUse>;
+  /**
+   * What the pack does with each intent path and value, by `path` or `path=value`; a path
+   * takes its own entry, else the nearest above it (specification section 11.5).
+   * @example intent: { "history=full": { use: "not-yet", reason: "History is not kept yet." } }
+   */
+  intent?: Record<string, IntentUse>;
   /** The connectors this pack's ingest methods read, for the documentation. */
   connectors?: Connector[];
   /** Checks on the whole resolved model, such as platform settings the pack cannot build yet. */

@@ -1,6 +1,13 @@
 // The intent module: what the rest of the package uses.
 export type { IntentFragment, SettingAlias } from "./aliases.js";
 export {
+  intentCoverageGaps,
+  intentUseOf,
+  type FeatureStatus,
+  type IntentCoverage,
+  type IntentUse,
+} from "./coverage.js";
+export {
   type AuditDoc,
   type FlowIntentDoc,
   type LayerDoc,

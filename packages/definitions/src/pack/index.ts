@@ -21,6 +21,7 @@ export type {
   Grant,
   Origin,
   Permission,
+  PreviewFeature,
   ResolvedModel,
   ResolvedPlatform,
   ResolvedProduct,

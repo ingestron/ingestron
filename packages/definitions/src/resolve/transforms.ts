@@ -10,6 +10,7 @@ import { flowTableNames } from "./flows.js";
 import type { ResolvedTable } from "../pack/index.js";
 import { transformFacts } from "./rule-facts.js";
 import { tableIntent } from "./complete.js";
+import { judgeIntent } from "./judge.js";
 import { serveStep } from "./serve.js";
 import { resolveStep, stepOf } from "./steps.js";
 import { fullNameText, renderTableName, type TableNamer } from "../tables/index.js";
@@ -107,7 +108,7 @@ function transformTable(
   if (!layer) return undefined;
   const { facts, declared } = transformFacts(context, doc, layer);
   const steps = transformSteps(context, doc, facts);
-  const intent = tableIntent(context, declared, steps);
+  const { intentSources, ...intent } = tableIntent(context, declared, steps);
   const contract = contractFor(context, value.id, value.contract, {
     document: doc,
     pointer: "/contract",
@@ -120,7 +121,7 @@ function transformTable(
   const inputs = Object.fromEntries(
     value.inputs.map((input) => [input, inputName(resolved, input)]),
   );
-  return {
+  const table: ResolvedTable = {
     name: value.id,
     layer,
     fullName,
@@ -132,6 +133,8 @@ function transformTable(
     store: stepOf(steps.store),
     ...(steps.serve && { serve: stepOf(steps.serve) }),
   };
+  judgeIntent(context, table, intentSources);
+  return table;
 }
 
 /** A transform reads tables and hands its result to the store step. */

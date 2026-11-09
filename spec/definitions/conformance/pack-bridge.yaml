@@ -22,3 +22,7 @@ methods:
       additionalProperties: false
       required: [landing]
       properties: { landing: { type: string } }
+# What it does with intent paths and values (section 11.5).
+intent:
+  load.mode=full: { use: used, does: Copies the whole object each run. }
+  load.mode=changes: { use: not-yet, reason: Changes are not copied yet. }

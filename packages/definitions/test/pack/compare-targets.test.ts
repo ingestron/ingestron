@@ -42,6 +42,15 @@ describe("compareTargets", () => {
     ]);
   });
 
+  it("leaves out the preview features, which follow from the tables' intent", () => {
+    const models = modelsOf(project(paths));
+    const status = { level: "preview", checked: "2026-11-09", source: "https://example.com" };
+    const feature = { table: "orders", path: "history", value: "full", pack: "test", status };
+    const prod = { ...models.prod!, previewFeatures: [feature as never] };
+    const { differing } = compareTargets({ ...models, prod });
+    expect(differing.filter(({ pointer }) => pointer.startsWith("/previewFeatures"))).toEqual([]);
+  });
+
   it("reports a table that some targets do not build, naming them", () => {
     const models = modelsOf(project(paths));
     const { structural } = compareTargets({ ...models, prod: { ...models.prod!, tables: [] } });

@@ -97,3 +97,10 @@ expect:
         audit: [{ value: loaded_at, as: _refreshed_at }]
       intentOrigins:
         audit: { layer: definition, file: daily.yaml, line: 7 }
+  diagnostics:
+    # The test pack keeps no full history (section 11.5).
+    - code: NOT_APPLIED
+      severity: warning
+      file: sales.yaml
+      line: 8
+      message: "history: full isn't applied on test: History is not kept yet."

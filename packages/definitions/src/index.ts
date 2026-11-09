@@ -40,6 +40,7 @@ export {
   type PackInfo,
   type PackNotice,
   type Permission,
+  type PreviewFeature,
   type RequestSection,
   type ResolvedModel,
   type ResolvedPlatform,
@@ -60,13 +61,18 @@ export { contractReads, kinds, packageSchema, type GovernanceDoc } from "./docum
 
 // Intent: the words a standard, flow or transform uses for how data is loaded and kept.
 export {
+  intentCoverageGaps,
   intentPaths,
+  intentUseOf,
   layerNames,
   type AuditValue,
   type DeleteMode,
+  type FeatureStatus,
   type History,
   type Intent,
+  type IntentCoverage,
   type IntentFragment,
+  type IntentUse,
   type LoadMode,
   type SettingAlias,
   type StorageFeature,

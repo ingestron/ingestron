@@ -2,7 +2,7 @@
 // every name built and every setting merged. Packs only read it.
 
 import type { GovernanceDoc } from "../documents/index.js";
-import type { Intent } from "../intent/index.js";
+import type { FeatureStatus, Intent } from "../intent/index.js";
 import type { StepOutput } from "./pack.js";
 import type { TableCheck } from "./table-checks.js";
 
@@ -245,6 +245,29 @@ export interface ResolvedModel {
    * files supplies, once per name, in the order first resolved (specification section 1.1).
    */
   deployValues?: DeployValue[];
+  /**
+   * Each intent value a table uses through a platform feature in preview, whatever the
+   * standard's `features` says (specification section 11.5); empty when there are none.
+   */
+  previewFeatures: PreviewFeature[];
+}
+
+/**
+ * An intent value a table uses through a platform feature in preview.
+ * @example { table: "orders", path: "load.mode", value: "changes", pack: "databricks", status }
+ * @public
+ */
+export interface PreviewFeature {
+  /** The table's name. */
+  table: string;
+  /** The intent path, such as `load.mode`. */
+  path: string;
+  /** The value, such as `changes`; absent for a path whose value is any text. */
+  value?: string;
+  /** The pack of the step that applies it. */
+  pack: string;
+  /** The feature's release status, as the pack declares it. */
+  status: FeatureStatus;
 }
 
 /**

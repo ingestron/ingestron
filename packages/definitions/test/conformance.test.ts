@@ -44,6 +44,7 @@ interface Case {
     names?: Record<string, unknown>;
     platform?: Record<string, unknown>;
     deployValues?: Record<string, unknown>[];
+    previewFeatures?: Record<string, unknown>[];
     diagnostics?: Record<string, unknown>[];
     fixed?: { diagnostic: number; title: string; files: Record<string, string> }[];
   };
@@ -112,6 +113,7 @@ function checkModel(model: ResolvedModel, wanted: Case["expect"]): void {
   if (wanted.names) expect(model.names).toMatchObject(wanted.names);
   if (wanted.platform) expect(model.platform).toMatchObject(wanted.platform);
   if (wanted.deployValues) expect(model.deployValues).toEqual(wanted.deployValues);
+  if (wanted.previewFeatures) expect(model.previewFeatures).toEqual(wanted.previewFeatures);
 }
 
 /** Each named fix, applied to the case's files, gives the files expected. */
@@ -187,6 +189,10 @@ describe("conformance", () => {
       if (diagnostics && testCase.expect.tables) {
         expect(result.model, "the project resolves").toBeDefined();
         checkTables(result.model!, testCase.expect.tables);
+      }
+      if (diagnostics && testCase.expect.previewFeatures) {
+        expect(result.model, "the project resolves").toBeDefined();
+        expect(result.model!.previewFeatures).toEqual(testCase.expect.previewFeatures);
       }
       if (diagnostics) {
         const actual = result.diagnostics.map(

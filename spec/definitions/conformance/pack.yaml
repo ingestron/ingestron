@@ -47,6 +47,9 @@ methods:
     description: Copies to a landing folder first.
     connectors: [files, sqlserver]
     produces: files
+    # What differs on this method from the pack's coverage (section 11.5).
+    intent:
+      load.mode=changes: { use: not-yet, reason: It copies whole files and reads no change feed. }
     settings:
       type: object
       additionalProperties: false
@@ -131,5 +134,18 @@ contract:
   schema.*.properties.*.encryptedName: { use: not-yet, reason: Columns are not decrypted yet. }
   schema.*.properties.*.description: { use: documentation }
   schema.*.properties.*.tags: { use: used, does: Tags the column., needs: tags }
+# What it does with intent paths and values (section 11.5). A path or value it
+# does not list reports nothing.
+intent:
+  history=full: { use: not-yet, reason: History is not kept yet. }
+  load.mode=changes:
+    use: used
+    does: Reads the source's change feed.
+    status:
+      level: preview
+      label: Beta
+      checked: "2026-11-09"
+      source: "https://example.com/changes"
+  storage: { use: elsewhere, reason: The platform team lays out storage. }
 capabilities:
   - { id: tags, title: Tags, does: Tags tables and columns., needs: [APPLY TAG on the tables] }

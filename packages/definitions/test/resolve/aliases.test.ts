@@ -141,6 +141,8 @@ describe("setting aliases", () => {
         file: "sales.yaml",
         line: 5,
       },
+      // The test pack keeps no full history (specification section 11.5).
+      { code: "NOT_APPLIED", file: "sales.yaml", line: 5 },
     ]);
   });
 });

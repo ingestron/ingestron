@@ -407,7 +407,9 @@ code's:
 **Comparing targets.** Every pack compares its targets' models the same way,
 so the definitions package provides it, as `compareTargets(models)`. The
 models are compared as data, leaving out each step's `origins` and
-`chosenBy` and the model's `deployValues`. Tables are matched by name. It
+`chosenBy` and the model's `deployValues` and `previewFeatures` (which
+follow from the tables' intent, compared with the tables). Tables are matched
+by name. It
 gives:
 
 - `structural`: an `ENVIRONMENTS_DIFFER` error, in table order then target
@@ -889,10 +891,13 @@ optional `environmentsTogether: true` (section 7), an optional
 with `fullName` written as `catalog.schema.table`, and `null` at any key for
 a value the table does not have, such as `serve: null` for a step or
 `settings: { mode: null }` for a setting), `products` (partial objects,
-in order), `platform`, `names`, `deployValues` (the model's, exactly) or
+in order), `platform`, `names`, `deployValues` and `previewFeatures` (the
+model's, exactly) or
 `diagnostics` (matched in order on the fields given; `fixes` lists the fix
 titles, and `fixes: []` means the diagnostic has none), and optionally
-`fixed`, as in the config conformance cases. All cases use the
+`fixed`, as in the config conformance cases. A case that expects
+`diagnostics` also checks `tables` and `previewFeatures` when it gives them.
+All cases use the
 data-only packs [conformance/pack.yaml](conformance/pack.yaml),
 [conformance/pack-bridge.yaml](conformance/pack-bridge.yaml),
 [conformance/pack-local.yaml](conformance/pack-local.yaml),
@@ -1015,9 +1020,10 @@ Intent is what a standard, a flow or a transform says about how data is
 loaded, kept and run, in words that belong to no engine. Every section is
 optional; a document that leaves them all out behaves as it did before they
 existed. Section 11.1 defines the words, section 11.2 how a value is
-declared for each table, section 11.3 how the chosen methods fill what is left
-and section 11.4 the method settings that are other names for intent. Which
-pack uses which is in each pack's own specification.
+declared for each table, section 11.3 how the chosen methods fill what is left,
+section 11.4 the method settings that are other names for intent and section
+11.5 how each pack says what it does with each value. Which pack uses which is
+in each pack's own specification.
 
 ### 11.1 Vocabulary
 
@@ -1281,6 +1287,82 @@ the intent was written: `Settings for "<method>": the intent written here
 makes "<setting>" <value>, which the method does not accept.`, and the
 setting keeps its merged value. Only failures of that setting count, so a
 setting elsewhere that holds an unset reference does not make it one.
+
+### 11.5 Coverage
+
+A pack MAY declare `intent`, beside `contract`: what it does with each intent
+path and value, keyed by the path (`history`) or by the path and a value
+(`history=full`), the paths and values of `intentPaths` (section 11.1). Each
+entry is one of:
+
+- `{ use: used, does, status }`: the pack applies it, and `does` says how.
+  `status`, optional, is the platform feature's release status:
+  `{ level, label, checked, source }`, `level` being `ga` or `preview`,
+  `label` for a preview (`Public Preview`, `Beta` or `Private Preview`),
+  `checked` the date it was checked and `source` the page that says so;
+- `{ use: not-yet, reason }`: the pack does not apply it yet;
+- `{ use: elsewhere, reason }`: another step or pack does it;
+- `{ use: not-applicable, reason }`: it means nothing on the pack's platform.
+
+A method MAY declare `intent` in the same form, for what differs on that
+method from the pack. The entry for a path and value is found in this order:
+`path=value`, then `path`, then each path above it, nearest first (`load.cursor`
+takes `load`'s entry), first in the method's `intent`, then in the pack's.
+Every pack's own tests SHOULD check that its `intent` covers every path and
+value; the implementation gives the gaps as `intentCoverageGaps`. A value of
+`*` in `intentPaths` is covered by the path's entry.
+
+**Judging.** Once a table's intent is completed (sections 11.3 and 11.4),
+each value whose origin is not `pack` is judged by one step, the step whose
+method applies it:
+
+- the ingest step: `load.*`, `retention.landed_files` and the `audit` values
+  `run_id`, `window_start`, `window_end`, `source_object` and
+  `source_connection`;
+- the store step, else an ingest step that produces the table: `history`,
+  `sequence`, `storage.*`, `retention.time_travel`, `retention.log`,
+  `rescued` and the `audit` values `loaded_at` and `row_hash`;
+- the store step when the ingest step produces files, else the ingest step:
+  the `audit` values `source_file` and `source_modified_at`.
+
+Section 11.3 takes the same step for a path when two steps give a default.
+Each item of a list (`audit`, `storage.features`) is judged as its own
+value. A value of a path with `*` is judged on the path. A value that is not
+one of the path's values in `intentPaths` (such as `rescued: false`) and a
+path no step judges are not judged; nor is any value of a table that holds
+an unset reference (section 1), except when resolving for deploy (section
+1.1), nor of a table whose steps are not known.
+
+**`NOT_APPLIED`.** A warning at the value, where it was written:
+
+- when the entry found is `not-yet` or `not-applicable`:
+  `<path>: <value> isn't applied on <pack>: <reason>`, where `<pack>` is the
+  judging step's pack's id;
+- when the entry found is `used` in the pack's `intent` (not the method's),
+  or there is none, and the judging step's method has an alias (section 11.4)
+  whose `values` give the path, but no alias stands for the value:
+  `<path>: <value> isn't applied on <pack>: "<method>" has no setting for it.`
+  A `path` alias at the path, or above it, stands for every value.
+
+An `elsewhere` entry, and a path and value with no entry and no such alias,
+report nothing: whether a pack covers every value is its own tests' concern,
+not the project's.
+
+**`PREVIEW_FEATURE`.** The standard's `features` says which release status a
+project may use: `ga` or `preview`. With `features: ga`, a judged value whose
+entry is `used` with a `status` whose `level` is `preview`, and that is not
+`NOT_APPLIED`, is
+`PREVIEW_FEATURE`, a warning at the value: `<path>: <value> is <label> on
+<pack> (checked <checked>); this standard uses only generally available
+features.` (`in preview` when the status has no `label`), with the fix
+`Allow preview features`, which sets the standard's `features` to `preview`.
+With `features: preview`, or without `features`, nothing is reported.
+
+**Preview features.** The model's `previewFeatures` lists each such value,
+whatever `features` says: its
+`table`, `path`, `value` (left out for a path with `*`), the judging step's
+`pack` and the `status`, in the order of the tables, then of `intentPaths`.
+It is `[]` when there are none.
 
 ## Connector authoring metadata
 

@@ -13,6 +13,7 @@ import { resolveStep, type StepResult } from "./steps.js";
 import { renderTableName, type TableNamer } from "../tables/index.js";
 import { flowFacts } from "./rule-facts.js";
 import { tableIntent } from "./complete.js";
+import { judgeIntent } from "./judge.js";
 import {
   connectionOf,
   sourceNotKnown,
@@ -70,7 +71,7 @@ function flowTable(
   });
   const steps = stepsOf(context, flow, name, facts);
   if (steps === false) return undefined;
-  const intent = tableIntent(context, declared, steps);
+  const { intentSources, ...intent } = tableIntent(context, declared, steps);
   const contract = flowContract(context, flow, name, steps?.endsAtFiles !== undefined);
   const fullName = renderTableName(context, namer, {
     layer,
@@ -79,7 +80,7 @@ function flowTable(
     source: flow.value.source,
   });
   if (!steps || !contract || !fullName) return undefined;
-  return {
+  const table: ResolvedTable = {
     name,
     layer,
     fullName,
@@ -90,6 +91,8 @@ function flowTable(
     ...tableSteps(steps, connection, doc.object),
     ...sourceNotKnown(context, flow),
   };
+  judgeIntent(context, table, intentSources);
+  return table;
 }
 
 /**

@@ -23,6 +23,8 @@ export type DefinitionCode =
   | "FIXED_SETTING"
   | "SETTING_MOVED"
   | "INTENT_CONFLICT"
+  | "NOT_APPLIED"
+  | "PREVIEW_FEATURE"
   | "BAD_SETTING"
   | "METHOD_CHECK"
   | "PACK_CHECK"
