@@ -47,3 +47,6 @@ export {
   type SampleFacts,
   type Template,
 } from "./scaffold/index.js";
+
+// Kits: published, dated standards.
+export { installedKits, kitSchema, parseKitSpec, readKit, type Kit } from "./kits/index.js";

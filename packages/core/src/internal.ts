@@ -26,3 +26,4 @@ export {
   type Answers,
   type Source,
 } from "./scaffold/index.js";
+export { compareVersions, isRange, satisfies, standardsKitsFolder } from "./kits/index.js";

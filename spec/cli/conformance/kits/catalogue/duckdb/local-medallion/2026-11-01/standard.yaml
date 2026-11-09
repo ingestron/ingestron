@@ -1,0 +1,7 @@
+apiVersion: ingestron.io/v1
+kind: Standard
+id: defaults
+packs: [duckdb@2]
+origin:
+  standard: duckdb/local-medallion
+  version: 2026-11-01

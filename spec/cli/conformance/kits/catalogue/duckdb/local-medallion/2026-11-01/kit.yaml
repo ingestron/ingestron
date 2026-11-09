@@ -1,0 +1,11 @@
+id: duckdb/local-medallion
+version: 2026-11-01
+title: Local medallion on DuckDB
+summary: Bronze, silver and gold tables in one DuckDB file.
+packs: [duckdb@2]
+features: ga
+requires: { ingestron: ">=2.4.0" }
+maintainers: [ingestron]
+replaces: null
+notes: |
+  First version.

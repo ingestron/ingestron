@@ -1,0 +1,11 @@
+id: databricks/lakehouse-streaming
+version: 2026-11-01-preview
+title: Streaming lakehouse on Databricks
+summary: Bronze streaming tables, silver and gold.
+packs: [databricks@2]
+features: preview
+requires: { ingestron: ">=2.4.0" }
+maintainers: [ingestron]
+replaces: 2026-10-01
+notes: |
+  Tries preview features.

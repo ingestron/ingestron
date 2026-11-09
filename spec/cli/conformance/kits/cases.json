@@ -1,0 +1,405 @@
+{
+  "description": "Kits (spec/cli/kits.md). readKit: the valid kit is read; each broken case starts from a copy of the valid kit, applies edits (text replacements in a file), files (whole file replaced) and remove (files deleted), and must fail with the message. A case with place puts the copy at that path below a catalogue root and reads it as installedKits does.",
+  "valid": {
+    "folder": "catalogue/duckdb/local-medallion/2026-11-01",
+    "kit": {
+      "id": "duckdb/local-medallion",
+      "version": "2026-11-01",
+      "title": "Local medallion on DuckDB",
+      "summary": "Bronze, silver and gold tables in one DuckDB file.",
+      "packs": ["duckdb@2"],
+      "features": "ga",
+      "requires": {
+        "ingestron": ">=2.4.0"
+      },
+      "maintainers": ["ingestron"],
+      "replaces": null,
+      "notes": "First version.\n"
+    }
+  },
+  "broken": [
+    {
+      "name": "no kit.yaml",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "remove": ["kit.yaml"],
+      "error": "kit.yaml is missing. A kit folder needs kit.yaml, standard.yaml, platform.yaml, project.yaml and README.md."
+    },
+    {
+      "name": "kit.yaml is not a mapping",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "files": {
+        "kit.yaml": "- a\n- b\n"
+      },
+      "error": "kit.yaml: it must be a list of keys and values, such as id: and version:."
+    },
+    {
+      "name": "unknown key",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["title:", "titel:"]]
+      },
+      "error": "kit.yaml: unknown key \"titel\". Check its spelling or remove it."
+    },
+    {
+      "name": "unknown key under requires",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["{ ingestron: \">=2.4.0\" }", "{ ingestron: \">=2.4.0\", node: \">=22\" }"]]
+      },
+      "error": "kit.yaml: unknown key \"requires.node\". Only \"ingestron\" is allowed there."
+    },
+    {
+      "name": "missing title",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["title: Local medallion on DuckDB\n", ""]]
+      },
+      "error": "kit.yaml: \"title\" is missing. Add it."
+    },
+    {
+      "name": "missing requires",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["requires: { ingestron: \">=2.4.0\" }\n", ""]]
+      },
+      "error": "kit.yaml: \"requires\" is missing. Add it, such as requires: { ingestron: \">=2.4.0\" }."
+    },
+    {
+      "name": "requires without ingestron",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["{ ingestron: \">=2.4.0\" }", "{}"]]
+      },
+      "error": "kit.yaml: \"requires.ingestron\" is missing. Add it, such as \">=2.4.0\"."
+    },
+    {
+      "name": "title is not text",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["title: Local medallion on DuckDB", "title: [a, b]"]]
+      },
+      "error": "kit.yaml: \"title\" must be text."
+    },
+    {
+      "name": "packs is not a list",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["packs: [duckdb@2]", "packs: duckdb@2"]]
+      },
+      "error": "kit.yaml: \"packs\" must be a list of pack ids, such as [duckdb@2]."
+    },
+    {
+      "name": "no packs",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["packs: [duckdb@2]", "packs: []"]]
+      },
+      "error": "kit.yaml: \"packs\" is empty. List the packs the kit uses, such as [duckdb@2]."
+    },
+    {
+      "name": "pack without a major version",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["packs: [duckdb@2]", "packs: [duckdb]"]]
+      },
+      "error": "kit.yaml: pack \"duckdb\" is not <id>@<major>. Write it as duckdb@2."
+    },
+    {
+      "name": "maintainers is not a list",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["maintainers: [ingestron]", "maintainers: ingestron"]]
+      },
+      "error": "kit.yaml: \"maintainers\" must be a list of names, such as [ingestron]."
+    },
+    {
+      "name": "id is not platform/name",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["id: duckdb/local-medallion", "id: local-medallion"]]
+      },
+      "error": "kit.yaml: id \"local-medallion\" is not <platform>/<name>. Use lower-case words joined by \"-\", such as \"duckdb/local-medallion\"."
+    },
+    {
+      "name": "id has capitals",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["id: duckdb/local-medallion", "id: duckdb/Local-Medallion"]]
+      },
+      "error": "kit.yaml: id \"duckdb/Local-Medallion\" is not <platform>/<name>. Use lower-case words joined by \"-\", such as \"duckdb/local-medallion\"."
+    },
+    {
+      "name": "id platform is not the first pack",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["id: duckdb/local-medallion", "id: databricks/local-medallion"]]
+      },
+      "error": "kit.yaml: id \"databricks/local-medallion\" starts with \"databricks\", but the first pack is \"duckdb@2\". Start the id with the first pack's name, or put that pack first."
+    },
+    {
+      "name": "version is not a date",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["version: 2026-11-01", "version: next"]]
+      },
+      "error": "kit.yaml: version \"next\" is not a date. Use YYYY-MM-DD, or YYYY-MM-DD-preview for a preview kit."
+    },
+    {
+      "name": "version has no day",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["version: 2026-11-01", "version: 2026-11"]]
+      },
+      "error": "kit.yaml: version \"2026-11\" is not a date. Use YYYY-MM-DD, or YYYY-MM-DD-preview for a preview kit."
+    },
+    {
+      "name": "version is not a real date",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["version: 2026-11-01", "version: 2026-02-30"]]
+      },
+      "error": "kit.yaml: version \"2026-02-30\" is not a real date. Check the month and the day."
+    },
+    {
+      "name": "features is neither ga nor preview",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["features: ga", "features: stable"]]
+      },
+      "error": "kit.yaml: features must be \"ga\" or \"preview\"."
+    },
+    {
+      "name": "ga with a preview version",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["version: 2026-11-01", "version: 2026-11-01-preview"]]
+      },
+      "error": "kit.yaml: features is \"ga\", but version \"2026-11-01-preview\" ends in -preview. Set features: preview, or drop the suffix from the version."
+    },
+    {
+      "name": "preview without the suffix",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["features: ga", "features: preview"]]
+      },
+      "error": "kit.yaml: features is \"preview\", but version \"2026-11-01\" does not end in -preview. Add the suffix to the version, or set features: ga."
+    },
+    {
+      "name": "range is a word",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [[">=2.4.0", "latest"]]
+      },
+      "error": "kit.yaml: requires.ingestron \"latest\" is not a version range. Use >=X.Y.Z, ^X.Y.Z or ~X.Y.Z, such as \">=2.4.0\"."
+    },
+    {
+      "name": "range with two parts",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [[">=2.4.0", ">=2.4.0 <3.0.0"]]
+      },
+      "error": "kit.yaml: requires.ingestron \">=2.4.0 <3.0.0\" is not a version range. Use >=X.Y.Z, ^X.Y.Z or ~X.Y.Z, such as \">=2.4.0\"."
+    },
+    {
+      "name": "range without a patch",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [[">=2.4.0", ">=2.4"]]
+      },
+      "error": "kit.yaml: requires.ingestron \">=2.4\" is not a version range. Use >=X.Y.Z, ^X.Y.Z or ~X.Y.Z, such as \">=2.4.0\"."
+    },
+    {
+      "name": "replaces is not a version",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["replaces: null", "replaces: last-week"]]
+      },
+      "error": "kit.yaml: replaces \"last-week\" is not a version. Use null, or the previous version, such as 2026-10-01."
+    },
+    {
+      "name": "replaces is the same version",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["replaces: null", "replaces: 2026-11-01"]]
+      },
+      "error": "kit.yaml: replaces \"2026-11-01\" must be earlier than version \"2026-11-01\"."
+    },
+    {
+      "name": "replaces is a later version",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["replaces: null", "replaces: 2026-12-01"]]
+      },
+      "error": "kit.yaml: replaces \"2026-12-01\" must be earlier than version \"2026-11-01\"."
+    },
+    {
+      "name": "no standard.yaml",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "remove": ["standard.yaml"],
+      "error": "standard.yaml is missing. A kit folder needs kit.yaml, standard.yaml, platform.yaml, project.yaml and README.md."
+    },
+    {
+      "name": "no platform.yaml",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "remove": ["platform.yaml"],
+      "error": "platform.yaml is missing. A kit folder needs kit.yaml, standard.yaml, platform.yaml, project.yaml and README.md."
+    },
+    {
+      "name": "no project.yaml",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "remove": ["project.yaml"],
+      "error": "project.yaml is missing. A kit folder needs kit.yaml, standard.yaml, platform.yaml, project.yaml and README.md."
+    },
+    {
+      "name": "no README.md",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "remove": ["README.md"],
+      "error": "README.md is missing. A kit folder needs kit.yaml, standard.yaml, platform.yaml, project.yaml and README.md."
+    },
+    {
+      "name": "standard.yaml is not a mapping",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "files": {
+        "standard.yaml": "- a\n"
+      },
+      "error": "standard.yaml: it must be a list of keys and values, such as packs: and origin:."
+    },
+    {
+      "name": "standard packs differ",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "standard.yaml": [["packs: [duckdb@2]", "packs: [duckdb@2, adf@2]"]]
+      },
+      "error": "standard.yaml: packs is [duckdb@2, adf@2], but kit.yaml says [duckdb@2]. Make the two lists the same."
+    },
+    {
+      "name": "standard has no packs",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "standard.yaml": [["packs: [duckdb@2]\n", ""]]
+      },
+      "error": "standard.yaml: packs is [], but kit.yaml says [duckdb@2]. Make the two lists the same."
+    },
+    {
+      "name": "standard has no origin",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "standard.yaml": [
+          ["origin:\n  standard: duckdb/local-medallion\n  version: 2026-11-01\n", ""]
+        ]
+      },
+      "error": "standard.yaml: origin must say standard: duckdb/local-medallion and version: 2026-11-01, the same as kit.yaml. Add it."
+    },
+    {
+      "name": "standard origin names another version",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "standard.yaml": [["version: 2026-11-01", "version: 2026-10-01"]]
+      },
+      "error": "standard.yaml: origin must say standard: duckdb/local-medallion and version: 2026-11-01, the same as kit.yaml. Correct it."
+    },
+    {
+      "name": "standard origin names another kit",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "standard.yaml": [["standard: duckdb/local-medallion", "standard: duckdb/other"]]
+      },
+      "error": "standard.yaml: origin must say standard: duckdb/local-medallion and version: 2026-11-01, the same as kit.yaml. Correct it."
+    },
+    {
+      "name": "folder is not named by the version",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "place": "duckdb/local-medallion/2026-10-01",
+      "error": "The kit is in duckdb/local-medallion/2026-10-01, but kit.yaml says duckdb/local-medallion/2026-11-01. Move the folder to duckdb/local-medallion/2026-11-01, or correct id and version."
+    },
+    {
+      "name": "folder is not named by the id",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "place": "duckdb/other/2026-11-01",
+      "error": "The kit is in duckdb/other/2026-11-01, but kit.yaml says duckdb/local-medallion/2026-11-01. Move the folder to duckdb/local-medallion/2026-11-01, or correct id and version."
+    }
+  ],
+  "catalogue": {
+    "root": "catalogue",
+    "order": [
+      "databricks/lakehouse-streaming@2026-10-01",
+      "databricks/lakehouse-streaming@2026-11-01-preview",
+      "databricks/lakehouse-streaming@2026-11-01",
+      "duckdb/local-medallion@2026-11-01"
+    ]
+  },
+  "specs": [
+    {
+      "spec": "duckdb/local-medallion@2026-11-01",
+      "result": {
+        "id": "duckdb/local-medallion",
+        "version": "2026-11-01"
+      }
+    },
+    {
+      "spec": "databricks/lakehouse-streaming@2026-11-01-preview",
+      "result": {
+        "id": "databricks/lakehouse-streaming",
+        "version": "2026-11-01-preview"
+      }
+    },
+    {
+      "spec": "duckdb/local-medallion",
+      "result": {
+        "id": "duckdb/local-medallion"
+      }
+    },
+    {
+      "spec": "https://github.com/acme/kits.git#team/orders@team/orders@2026-11-01",
+      "result": {
+        "url": "https://github.com/acme/kits.git",
+        "path": "team/orders",
+        "tag": "team/orders@2026-11-01"
+      }
+    },
+    {
+      "spec": "git@github.com:acme/kits.git#kits/x/y@v1",
+      "result": {
+        "url": "git@github.com:acme/kits.git",
+        "path": "kits/x/y",
+        "tag": "v1"
+      }
+    },
+    {
+      "spec": "file:///tmp/kits#databricks/a@databricks/a@2026-11-01",
+      "result": {
+        "url": "file:///tmp/kits",
+        "path": "databricks/a",
+        "tag": "databricks/a@2026-11-01"
+      }
+    },
+    {
+      "spec": "",
+      "error": "A kit is named <id>, <id>@<version> or <git-url>#<path>@<tag>, such as \"duckdb/local-medallion@2026-11-01\". Nothing was given."
+    },
+    {
+      "spec": "local-medallion",
+      "error": "The kit \"local-medallion\" is not <platform>/<name>, such as \"duckdb/local-medallion\". A kit is named <id>, <id>@<version> or <git-url>#<path>@<tag>."
+    },
+    {
+      "spec": "duckdb/local-medallion@latest",
+      "error": "The version \"latest\" in \"duckdb/local-medallion@latest\" is not a date. Use YYYY-MM-DD, or YYYY-MM-DD-preview."
+    },
+    {
+      "spec": "duckdb/local-medallion@",
+      "error": "The version \"\" in \"duckdb/local-medallion@\" is not a date. Use YYYY-MM-DD, or YYYY-MM-DD-preview."
+    },
+    {
+      "spec": "https://github.com/acme/kits.git#team/orders",
+      "error": "The kit \"https://github.com/acme/kits.git#team/orders\" needs a tag after the folder: <git-url>#<path>@<tag>."
+    },
+    {
+      "spec": "https://github.com/acme/kits.git#@v1",
+      "error": "The kit \"https://github.com/acme/kits.git#@v1\" needs the kit's folder before the tag: <git-url>#<path>@<tag>."
+    },
+    {
+      "spec": "#team/orders@v1",
+      "error": "The kit \"#team/orders@v1\" needs a git URL before the \"#\": <git-url>#<path>@<tag>."
+    }
+  ]
+}

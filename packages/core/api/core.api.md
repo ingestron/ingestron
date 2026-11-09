@@ -68,6 +68,95 @@ export interface GeneratedOutputsOptions {
 }
 
 // @public
+export function installedKits(root?: string): Kit[];
+
+// @public
+export interface Kit {
+    features: "ga" | "preview";
+    folder: string;
+    id: string;
+    maintainers: string[];
+    notes: string;
+    packs: string[];
+    replaces: string | null;
+    requires: {
+        ingestron: string;
+    };
+    summary: string;
+    title: string;
+    version: string;
+}
+
+// @public
+export const kitSchema: {
+    title: string;
+    type: string;
+    additionalProperties: boolean;
+    required: string[];
+    properties: {
+        id: {
+            type: string;
+            pattern: string;
+            description: string;
+        };
+        version: {
+            type: string;
+            pattern: string;
+            description: string;
+        };
+        title: {
+            type: string;
+            description: string;
+        };
+        summary: {
+            type: string;
+            description: string;
+        };
+        packs: {
+            type: string;
+            minItems: number;
+            items: {
+                type: string;
+                pattern: string;
+            };
+            description: string;
+        };
+        features: {
+            enum: string[];
+            description: string;
+        };
+        requires: {
+            type: string;
+            additionalProperties: boolean;
+            required: string[];
+            properties: {
+                ingestron: {
+                    type: string;
+                    pattern: string;
+                    description: string;
+                };
+            };
+        };
+        maintainers: {
+            type: string;
+            items: {
+                type: string;
+            };
+            description: string;
+        };
+        replaces: {
+            type: string[];
+            pattern: string;
+            description: string;
+        };
+        notes: {
+            type: string;
+            description: string;
+        };
+    };
+};
+
+// @public
 export function listSamples(folder?: string, kind?: Sample["kind"]): Sample[];
 
 // @public
@@ -87,6 +176,16 @@ export interface Output {
 
 // @public
 export const packs: Pack[];
+
+// @public
+export function parseKitSpec(spec: string): {
+    id: string;
+    version?: string;
+} | {
+    url: string;
+    path: string;
+    tag: string;
+};
 
 // @public
 export function parseTemplate(text: string, name: string, folder: string): Template;
@@ -160,6 +259,9 @@ export interface ProjectSource {
 
 // @public
 export function projectSources(): ProjectSource[];
+
+// @public
+export function readKit(folder: string, root?: string): Kit;
 
 // @public
 export function readSample(folder: string, kind: Sample["kind"]): Sample;

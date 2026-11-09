@@ -1,0 +1,7 @@
+apiVersion: ingestron.io/v1
+kind: Standard
+id: defaults
+packs: [databricks@2]
+origin:
+  standard: databricks/lakehouse-streaming
+  version: 2026-10-01
