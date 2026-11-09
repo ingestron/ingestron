@@ -169,4 +169,15 @@ describe("connection settings", () => {
     const field = fieldAt(project, place, ["settings", "path"], "dev");
     expect(field?.find).toMatch(/Catalog Explorer/);
   });
+
+  it("carries what the setting could look like from its connector", () => {
+    const folder = retail;
+    const path = "connections/shop.yaml";
+    const marked = readFileSync(join(folder, path), "utf8").replace("  path:", "  pa|th:");
+    const text = marked.replace("|", "");
+    const project = openProject(folder, new Map([[join(folder, path), text]]));
+    const place = placeAt(path, text, marked.indexOf("|"));
+    const field = fieldAt(project, place, ["settings", "path"], "dev");
+    expect(field?.suggest).toBe("/Volumes/<catalog>/<schema>/<volume>");
+  });
 });

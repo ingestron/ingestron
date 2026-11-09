@@ -30,7 +30,8 @@ export interface FieldInfo {
   example?: unknown;
   /**
    * What a new value could look like, with `<placeholders>` for the parts the author fills in,
-   * from the schema's `suggest`; unlike `example`, it is not meant to be taken as it stands.
+   * from the schema's `suggest`; for a connection setting, the `suggest` of the connector's
+   * setting. Unlike `example`, it is not meant to be taken as it stands.
    */
   suggest?: string;
   /**
@@ -148,6 +149,8 @@ export function anchorOf(parts: string[]): string {
     .join("-");
 }
 
+const mappingSays = ["description", "values", "minimum", "maximum", "default", "example"] as const;
+
 function walk(
   root: Schema,
   schema: Schema,
@@ -160,17 +163,16 @@ function walk(
   if (reference && seen.has(reference)) return [];
   const inside = reference ? new Set([...seen, reference]) : seen;
   const parts = branches(root, schema);
-  const properties = Object.assign({}, ...parts.map((part) => part.properties ?? {})) as Record<
-    string,
-    Schema
-  >;
+  const declared = parts.map((part) => part.properties ?? {});
+  const properties: Record<string, Schema> = Object.assign({}, ...declared);
   const required = requiredOf(root, schema);
   const own = Object.entries(properties).flatMap(([name, child]) => {
     const field = describe(root, child, [...path, name], required.includes(name), anchor);
     return [field, ...walk(root, child, [...path, name], anchor, inside)];
   });
   const nested = parts.flatMap((part) => [
-    ...mappingValues(root, part.additionalProperties, [...path, "*"], anchor),
+    ...starField(root, part.additionalProperties, [...path, "*"], anchor, mappingSays),
+    ...starField(root, part.items, [...path, "*"], anchor, ["find", "suggest"]),
     ...[part.items, part.additionalProperties]
       .filter(isRecord)
       .flatMap((child) => walk(root, child, [...path, "*"], anchor, inside)),
@@ -179,20 +181,21 @@ function walk(
 }
 
 /**
- * The values of a mapping, its `additionalProperties`, as the field `*`, when they say
- * something of their own: a description, allowed values, a range, a default or an example.
- * Otherwise the mapping's own field says all there is.
+ * The values of a mapping (`additionalProperties`) or the items of a list as the field `*`,
+ * when they say one of `says` of their own. A mapping's values do with a description, allowed
+ * values, a range, a default or an example; a list's items only with where to find the value or
+ * what it could look like, such as an alert's address. Otherwise the field above says all.
  */
-function mappingValues(
+function starField(
   root: Schema,
-  values: unknown,
+  schema: unknown,
   path: string[],
   anchor: (path: string[]) => string,
+  says: readonly (keyof FieldInfo)[],
 ): FieldInfo[] {
-  if (!isRecord(values)) return [];
-  const field = describe(root, values, path, false, anchor);
-  const own = ["description", "values", "minimum", "maximum", "default", "example"] as const;
-  return own.some((key) => field[key] !== undefined) ? [field] : [];
+  if (!isRecord(schema)) return [];
+  const field = describe(root, schema, path, false, anchor);
+  return says.some((key) => field[key] !== undefined) ? [field] : [];
 }
 
 /** What every form requires: the schema's own `required` and its `allOf` parts', not one alternative's. */

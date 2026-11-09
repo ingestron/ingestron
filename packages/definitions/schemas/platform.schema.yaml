@@ -225,12 +225,15 @@ properties:
           properties:
             kind: { const: email, description: "An email alert." }
             to:
-              {
-                type: array,
-                items: { type: string },
-                description: Email addresses told.,
-                examples: [[data-team@example.com]],
-              }
+              type: array
+              items:
+                type: string
+                description: An email address told when the alert fires.
+                find: "Your team decides it: a shared mailbox or mailing list that the people who look after these pipelines read."
+                suggest: "<team>@<domain>"
+                examples: [data-team@example.com]
+              description: Email addresses told.
+              examples: [[data-team@example.com]]
             on: { $ref: "#/$defs/alertOn" }
         - type: object
           additionalProperties: false

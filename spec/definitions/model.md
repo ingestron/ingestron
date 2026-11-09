@@ -1053,8 +1053,11 @@ schema is an entry `*` under the mapping when that schema has a description,
 allowed values, a `minimum`, a `maximum`, a `default` or an example, in
 itself or any of its branches; then come the entries under its `items` and
 under its `additionalProperties`, each at `*`. An entry under `*` whose path
-an earlier one has is left out. A list's `items` schema is never an entry of
-its own. A `$ref` already being followed further up is not followed again, so
+an earlier one has is left out. A list's `items` schema is an entry `*` under
+the list only when it has a `find` or a `suggest`, in itself or any of its
+branches, so a value the owner writes one item at a time, such as an alert's
+address, is explained; it comes after the `additionalProperties` entry.
+Otherwise a list's `items` schema is never an entry of its own. A `$ref` already being followed further up is not followed again, so
 a schema that contains itself, such as a column with nested columns, is
 described once.
 
@@ -1075,7 +1078,8 @@ described once.
   annotation of the field's schema, else of the first of its branches that
   gives one (see Connector authoring metadata). An entry has it only when
   a schema gives one. The entry of a Connection's setting carries the `find`
-  of the connector's setting of that name, when the connector has one.
+  and the `suggest` of the connector's setting of that name, when the
+  connector has them.
 - `values`: the schema's `const` as the only value, else each of its `enum`,
   with the meaning at the same position in `enumDescriptions`; each taken
   from the field's schema, else the first branch that gives one.
@@ -1598,7 +1602,7 @@ conditional fields explain the condition in their description. Snippets include
 only that default path's required fields. This metadata describes authoring;
 the selected method still validates the resolved definition.
 
-Two more fields serve project creation, both optional:
+Three more fields serve project creation and the editor, all optional:
 
 - `default`: a value `ingestron init` writes for the setting, a number, `true`
   or `false`, or one of its `values`. It is a choice that suits most projects,
@@ -1606,6 +1610,10 @@ Two more fields serve project creation, both optional:
 - `find`: one sentence on where the owner finds the value, such as
   `Data Factory Studio: Manage, Integration runtimes`. A new project's
   README.md shows it beside each `REPLACE_ME`.
+- `suggest`: what the value could look like, with `<placeholders>` for the
+  parts the owner fills in, such as `/Volumes/<catalog>/<schema>/<volume>`.
+  It agrees with `find`. The editor shows it beside a `REPLACE_ME`; unlike
+  `default`, `ingestron init` never writes it.
 
 A method's settings schema MAY carry `find` too, on any property, as an
 annotation that validation ignores, for the settings that belong in the

@@ -112,6 +112,7 @@ export interface Connector {
         values?: string[];
         default?: string | number | boolean;
         find?: string;
+        suggest?: string;
     }[];
     title: string;
 }

@@ -136,6 +136,7 @@ function connectorFields(place: Place, project: Project, environment?: string): 
     required: !setting.optional,
     ...(setting.values && { values: setting.values.map((value) => ({ value })) }),
     ...(setting.find && { find: setting.find }),
+    ...(setting.suggest && { suggest: setting.suggest }),
     docs: `/docs/connectors/${connector.id}`,
   }));
 }

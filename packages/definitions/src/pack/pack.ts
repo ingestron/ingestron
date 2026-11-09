@@ -164,6 +164,12 @@ export interface Connector {
      * @example "Your database administrator; SSMS shows it as the server name."
      */
     find?: string;
+    /**
+     * What the value could look like, with `<placeholders>` for the parts the owner fills in;
+     * shown beside a `REPLACE_ME`, never written by `ingestron init`.
+     * @example "/Volumes/<catalog>/<schema>/<volume>"
+     */
+    suggest?: string;
   }[];
   /** What the pack generates for it, in a short phrase. */
   generates: string;

@@ -27,7 +27,8 @@ export interface ReplaceMeHelp {
 
 /**
  * Explains the `REPLACE_ME` at `pointer` (a JSON Pointer) in `file`, a path in the project: the
- * field it fills, where to find the value and a suggestion. For a `values.<name>` in
+ * field it fills, where to find the value and a suggestion. An item of a list, such as
+ * `/alerts/0/to/0`, is explained by the list's items, named by the list. For a `values.<name>` in
  * project.yaml, the field is the one that reads `${values.<name>}` as its whole value, else the
  * first that contains it. Undefined when no field describes the spot.
  */
@@ -41,7 +42,7 @@ export function replaceMeHelp(
   if (!field) return undefined;
   const suggest = suggestion(field);
   return {
-    field: field.name,
+    field: fieldName(field),
     ...(field.description && { description: field.description }),
     ...(field.find && { find: field.find }),
     ...(suggest && { suggest: suggest.text }),
@@ -61,7 +62,7 @@ export function explainReplaceMe(
   if (!field) return undefined;
   const suggest = suggestion(field);
   return [
-    `**${field.name}** still needs a value.`,
+    `**${fieldName(field)}** still needs a value.`,
     field.description,
     field.find && `Where to find it: ${field.find}`,
     suggest && `${suggest.kind}: \`${suggest.text}\`.`,
@@ -69,6 +70,13 @@ export function explainReplaceMe(
   ]
     .filter(Boolean)
     .join("\n\n");
+}
+
+/** The field's name; an item of a list, described as `*`, is named by its list. */
+function fieldName(field: FieldInfo): string {
+  return field.name === "*"
+    ? (field.path.findLast((key) => key !== "*") ?? field.name)
+    : field.name;
 }
 
 /** A suggestion, else the example as text. */

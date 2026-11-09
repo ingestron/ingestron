@@ -100,6 +100,28 @@ describe("hover on REPLACE_ME", () => {
   });
 });
 
+describe("a REPLACE_ME inside a list", () => {
+  it("explains a list item by its index in the pointer", () => {
+    const platform = read("platform.yaml").replace('["${values.on_failure}"]', "[REPLACE_ME]");
+    const opens = opened({ "platform.yaml": platform });
+    const help = replaceMeHelp(opens, "platform.yaml", "/alerts/0/to/0", "dev");
+    expect(help).toMatchObject({
+      field: "to",
+      description: "An email address told when the alert fires.",
+      suggest: "<team>@<domain>",
+    });
+    expect(help?.find).toMatch(/^Your team decides it/);
+    const shown = hoverAt(
+      opens,
+      "platform.yaml",
+      platform,
+      platform.indexOf("REPLACE_ME") + 2,
+      "dev",
+    )!;
+    expect(shown).toContain("Suggested: `<team>@<domain>`");
+  });
+});
+
 describe("a project value that two files read", () => {
   it("prefers the field that reads it as its whole value", () => {
     const project = read("project.yaml").replace(/host: \S+/, "host: REPLACE_ME");
