@@ -31,7 +31,7 @@ export interface TargetComparison {
 export type Models = Readonly<Record<string, ResolvedModel>>;
 const steps = ["ingest", "transform", "store", "serve"] as const;
 /** Where a value was written or how a method was chosen: not values that reach files. */
-const metadata = new Set(["origins", "chosenBy"]);
+const metadata = new Set(["origins", "chosenBy", "intentOrigins"]);
 
 /**
  * Compares the targets' models, keyed by target name in project.yaml's order.

@@ -11,16 +11,47 @@ import { unsetEnvvarAt, valueAt } from "../diagnostics/index.js";
 
 const actions = ["ingest", "transform", "store", "serve"];
 
+/** The values of a flow or flow table that decide how its data is loaded and kept (section 11.2). */
+const flowIntent = (base: string) =>
+  ["/history", "/load/mode", "/load/deletes/mode"].map((path) => base + path);
+
 /** The values, by document kind, that choose what is generated or name it; `*` is any key. */
 const deciding: Record<string, string[]> = {
   Connection: ["/connector", "/connectivity"],
-  Flow: ["/source", "/layer", "/ingest/uses", "/store/uses", "/serve/uses", "/tables/*/contract"],
-  Transform: ["/layer", "/contract", "/inputs/*", "/transform/uses", "/store/uses", "/serve/uses"],
+  Flow: [
+    "/source",
+    "/layer",
+    "/ingest/uses",
+    "/store/uses",
+    "/serve/uses",
+    "/tables/*/contract",
+    ...flowIntent(""),
+    ...flowIntent("/tables/*"),
+  ],
+  Transform: [
+    "/layer",
+    "/contract",
+    "/inputs/*",
+    "/transform/uses",
+    "/store/uses",
+    "/serve/uses",
+    "/history",
+  ],
   Standard: [
     "/packs/*",
     "/layers/*",
     "/layers/*/name",
     "/naming/*",
+    "/features",
+    "/load/default",
+    "/load/deletes",
+    "/load/when/*/*",
+    "/layers/*/history",
+    "/storage/features/*",
+    "/fixed/history",
+    "/fixed/load/mode",
+    "/fixed/load/deletes/mode",
+    "/fixed/storage/features/*",
     ...actions.flatMap((action) => [
       `/${action}/default`,
       `/${action}/allowed/*`,

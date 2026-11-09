@@ -1,0 +1,99 @@
+description: Intent is resolved per table from the standard, the table's layer, the flow, the flow table and the transform, later winning, and each value records where it came from.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    load: { default: files }
+    audit: [run_id]
+    layers:
+      - { name: bronze, history: none, audit: [loaded_at] }
+      - silver
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    history: latest
+    tables:
+      orders: { object: orders, contract: orders }
+      refunds: { object: refunds, contract: refunds, history: full, load: { mode: full } }
+  daily.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: daily
+    inputs: [orders]
+    code: "SELECT * FROM {{ tables.orders }}"
+    contract: daily
+    audit: [{ value: loaded_at, as: _refreshed_at }]
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  refunds.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: refunds
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: refunds
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  daily.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: daily
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: daily
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  tables:
+    - name: orders
+      intent:
+        load: { mode: files }
+        history: latest
+        audit: [{ value: loaded_at, as: _loaded_at }]
+      intentOrigins:
+        load.mode: { layer: standard, file: standard.yaml, line: 5 }
+        history: { layer: definition, file: sales.yaml, line: 5 }
+        audit: { layer: layer, file: standard.yaml, line: 8 }
+    - name: refunds
+      intent:
+        load: { mode: full }
+        history: full
+        audit: [{ value: loaded_at, as: _loaded_at }]
+      intentOrigins:
+        load.mode: { layer: table, file: sales.yaml, line: 8 }
+        history: { layer: table, file: sales.yaml, line: 8 }
+        audit: { layer: layer }
+    - name: daily
+      intent:
+        audit: [{ value: loaded_at, as: _refreshed_at }]
+      intentOrigins:
+        audit: { layer: definition, file: daily.yaml, line: 7 }

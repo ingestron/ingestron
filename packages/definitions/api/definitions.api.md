@@ -433,7 +433,7 @@ export const NO_STORE = "none";
 export interface Origin {
     file?: string;
     // (undocumented)
-    layer: "pack" | "standard" | "platform" | "rule" | "definition" | "table" | "fixed";
+    layer: "pack" | "standard" | "platform" | "layer" | "rule" | "definition" | "table" | "fixed";
     // (undocumented)
     line?: number;
 }
@@ -657,6 +657,8 @@ export interface ResolvedTable {
         object: string;
         renamed: boolean;
     };
+    intent: Intent;
+    intentOrigins: Record<string, Origin>;
     // (undocumented)
     layer: string;
     // (undocumented)

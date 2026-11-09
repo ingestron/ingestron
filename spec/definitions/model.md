@@ -192,6 +192,12 @@ at the value, for each one that holds a deploy-time value:
   `transform.uses`, `store.uses` and `serve.uses`;
 - a Standard's `packs`, `layers` and `naming`, and in each action its
   `default`, `allowed`, and each `when` rule's facts and `use`;
+- a Standard's `features`, `load.default`, `load.deletes`, each `load.when`
+  rule's facts and `use`, each layer's `history`, `storage.features`, and the
+  same values under `fixed` (`history`, `load.mode`, `load.deletes.mode`,
+  `storage.features`);
+- a Flow's, a flow table's and a Transform's `history`, and a Flow's and a
+  flow table's `load.mode` and `load.deletes.mode`;
 - a Platform's `naming` and `mode`;
 - a DataProduct's output ports' `contractId`.
 
@@ -979,8 +985,9 @@ first of these that applies to the merged schema:
 Intent is what a standard, a flow or a transform says about how data is
 loaded, kept and run, in words that belong to no engine. Every section is
 optional; a document that leaves them all out behaves as it did before they
-existed. This section defines the words. Which pack uses which, and how a
-value is resolved for each table, come later in this section.
+existed. Section 11.1 defines the words and section 11.2 how a value is
+resolved for each table. Which pack uses which is in each pack's own
+specification.
 
 ### 11.1 Vocabulary
 
@@ -998,15 +1005,15 @@ defaults for the tables in the layer, `history`, `audit`, `rescued`,
 
 **Standard.** Beside `layers`, the standard may give:
 
-| Field                                      | Meaning                                                                                                                                                                                                                        |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `features`                                 | `ga` or `preview`: whether platform features in preview may be used.                                                                                                                                                           |
-| `origin`                                   | `{ standard, version }`: the published standard this one was made from.                                                                                                                                                        |
-| `load`                                     | `default` (a load mode), `deletes` (a delete mode) and `when`, a list of rules, each with some of the facts `connectivity`, `connector`, `input` and `layer`, and `use`, a load mode.                                          |
-| `audit`, `rescued`, `retention`, `storage` | The same as a layer's or a table's, for every table.                                                                                                                                                                           |
-| `quality.results`                          | `true`: keep the results of checks as a table.                                                                                                                                                                                 |
-| `operations`                               | Policy for runs, below.                                                                                                                                                                                                        |
-| `fixed`                                    | Intent that no layer, flow or transform may change: any of `load`, `history`, `sequence`, `audit`, `rescued`, `retention`, `storage` and `operations`, in the forms below. It is separate from each action's `fixed` settings. |
+| Field                                      | Meaning                                                                                                                                                                                                                                                                |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `features`                                 | `ga` or `preview`: whether platform features in preview may be used.                                                                                                                                                                                                   |
+| `origin`                                   | `{ standard, version }`: the published standard this one was made from.                                                                                                                                                                                                |
+| `load`                                     | `default` (a load mode), `deletes` (a delete mode) and `when`, a list of rules, each with some of the facts `connectivity`, `connector`, `input` and `layer`, and `use`, a load mode. Rules are checked in order: the first whose facts all match chooses `load.mode`. |
+| `audit`, `rescued`, `retention`, `storage` | The same as a layer's or a table's, for every table.                                                                                                                                                                                                                   |
+| `quality.results`                          | `true`: keep the results of checks as a table.                                                                                                                                                                                                                         |
+| `operations`                               | Policy for runs, below.                                                                                                                                                                                                                                                |
+| `fixed`                                    | Intent that no layer, flow or transform may change: any of `load`, `history`, `sequence`, `audit`, `rescued`, `retention`, `storage` and `operations`, in the forms below. It is separate from each action's `fixed` settings.                                         |
 
 **Flows and transforms.** A flow and a flow table may give `load`, `history`,
 `sequence` and `audit`; a transform may give `history`, `sequence` and
@@ -1074,6 +1081,60 @@ as `intentPaths`, for coverage maps: `load.mode`, `load.cursor`,
 `operations.retries`, `operations.timeout`, `operations.alerts`,
 `operations.concurrency` and `quality.results`. A value of `*` stands for any
 text.
+
+### 11.2 Precedence
+
+Each table's declared intent is resolved before any method is chosen, from
+these layers, a later one winning over an earlier one. Mappings are merged key
+by key, so a flow's `load: { cursor }` leaves the load mode the standard gave;
+a list (`audit`, `storage.features`) is replaced whole.
+
+1. `standard`: the standard's `load.default` (as `load.mode`), `load.deletes`
+   (as `load.deletes.mode`), `audit`, `rescued`, `retention` and `storage`.
+2. `layer`: the standard's object for the table's layer (`history`, `audit`,
+   `rescued`, `retention`). A layer written as a name gives nothing.
+3. `rule`: the first of the standard's `load.when` rules whose facts all match
+   the table; its `use` is `load.mode`. The facts are the table's `connectivity`
+   and `connector` (its connection's) and `layer`. A fact the table does not
+   have does not match, so a rule that names `input` never matches here.
+4. `definition`: the flow's or the transform's `load`, `history`, `sequence`
+   and `audit`.
+5. `table`: the flow table's own `load`, `history`, `sequence` and `audit`.
+6. `fixed`: the standard's `fixed` intent.
+
+The pack's own intent defaults come after methods are chosen and fill only
+what these layers left unset; they are not part of declared intent. A
+transform's table has no `load`: the standard's `load` sections and `fixed.load`
+do not apply to it.
+
+An audit entry written as a bare value becomes `{ value, as: "_<value>" }`, so
+every resolved entry names its column.
+
+A value that holds a deploy-time value (section 1.1) in a value that decides
+what is generated (`load.mode`, `load.deletes.mode`, `history` and the items
+of `storage.features`) is not declared: it sets nothing, and is `DEPLOY_VALUE`
+when resolving for deploy. Any other value, such as a `cursor`, may hold one.
+
+**Fixed intent.** A flow, flow table or transform that gives a value different
+from the standard's `fixed` value at the same path is `FIXED_SETTING`, an error
+at that value, with the message `The standard fixes "<path>" to <value>.`
+(the path joined with `.`, the value as JSON, as for settings) and the fix
+`Remove this setting`. Mappings are compared key by key, so keys beside the
+fixed ones are allowed. A value that holds an unset reference changes nothing,
+except when resolving for deploy (section 1.1). Layers and rules of the
+standard may differ from `fixed`: it wins. The table is still resolved, with
+the fixed value.
+
+**Resolved intent.** Each table has `intent`, the values above in the shape of
+section 11.1 (`{}` when nothing is declared), and `intentOrigins`, for each
+intent path that has a value, the layer that last set it (`standard`, `layer`,
+`rule`, `definition`, `table` or `fixed`) with the `file` and `line` where it
+was written. The paths are those of `intentPaths`: `load.mode`, `load.cursor`,
+`load.deletes.mode`, `load.deletes.when`, `history`, `sequence`, `audit`,
+`rescued`, `retention.time_travel`, `retention.log`, `retention.landed_files`,
+`storage.clustering` and `storage.features`; a list has one origin, under its
+path. The origin's layer name `layer` is used only for intent. Comparing
+targets (section 2.1) leaves `intentOrigins` out, as it leaves out `origins`.
 
 ## Connector authoring metadata
 

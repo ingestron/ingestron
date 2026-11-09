@@ -11,6 +11,7 @@ import { serveStep } from "./serve.js";
 import { unusedStoreSettings } from "../context/index.js";
 import { resolveStep, type StepResult } from "./steps.js";
 import { renderTableName, type TableNamer } from "../tables/index.js";
+import { flowIntent } from "./declared-intent.js";
 import {
   connectionOf,
   sourceNotKnown,
@@ -79,6 +80,7 @@ function flowTable(
     origin: { kind: "Flow", id: flow.value.id, file: flow.file },
     contract,
     expectations: expectationsFor(context, contract, doc.expectations),
+    ...flowIntent(context, flow, name, facts),
     ...tableSteps(steps, connection, doc.object),
     ...sourceNotKnown(context, flow),
   };

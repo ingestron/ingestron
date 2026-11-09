@@ -2,6 +2,7 @@
 // every name built and every setting merged. Packs only read it.
 
 import type { GovernanceDoc } from "../documents/index.js";
+import type { Intent } from "../intent/index.js";
 import type { StepOutput } from "./pack.js";
 import type { TableCheck } from "./table-checks.js";
 
@@ -43,7 +44,7 @@ export interface ChosenBy {
  * @public
  */
 export interface Origin {
-  layer: "pack" | "standard" | "platform" | "rule" | "definition" | "table" | "fixed";
+  layer: "pack" | "standard" | "platform" | "layer" | "rule" | "definition" | "table" | "fixed";
   /** Where it was written; absent for the pack's defaults. */
   file?: string;
   line?: number;
@@ -139,6 +140,17 @@ export interface ResolvedTable {
   origin: { kind: "Flow" | "Transform"; id: string; file: string };
   contract: Contract;
   expectations: Expectation[];
+  /**
+   * What the standard, the table's layer, its flow or transform and the table itself say
+   * about how it is loaded, kept and audited, before any pack's defaults (specification
+   * section 11.2). `{}` when nothing is declared.
+   */
+  intent: Intent;
+  /**
+   * For each intent path in `intent`, such as `load.mode` or `audit`, the layer that last
+   * set it and where it was written.
+   */
+  intentOrigins: Record<string, Origin>;
   /** Flow tables: how data leaves the source. Missing when `sourceNotKnown` is set and no `uses` names the method. */
   ingest?: Step & {
     connection: {

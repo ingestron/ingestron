@@ -3,11 +3,12 @@ import { withoutUnsetEnvvars } from "@ingestron/config";
 import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
 import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
-import { isRecord, merge, sameValue } from "../internal/index.js";
+import { isRecord, merge } from "../internal/index.js";
 import type { Origin } from "../pack/index.js";
 import { reportMissing, type MethodUse, type SettingsUser } from "../context/index.js";
 import type { Action, Method } from "../pack/index.js";
 import { holdsUnsetEnvvar } from "../diagnostics/index.js";
+import { changedFixed, placed, reportFixed } from "./fixed-values.js";
 import { replaceMe } from "./replace-me.js";
 
 /** Settings from one layer, with where they were written (none for pack defaults). */
@@ -102,48 +103,12 @@ function fixedRespected(
     // A deploy-time value differs from any fixed value (specification section 1.1).
     const unknown = (value: unknown) =>
       !context.deployTime && holdsUnsetEnvvar(context.project, value);
-    for (const { path, value } of changedFixed(fixed, layer.value, [], unknown)) {
-      const pointer = path.map((key) => `/${key.replaceAll("~", "~0").replaceAll("/", "~1")}`);
-      const at = layer.at && {
-        document: layer.at.document,
-        pointer: layer.at.pointer + pointer.join(""),
-      };
-      const remove = at && {
-        title: "Remove this setting",
-        edits: [{ file: at.document.file, pointer: at.pointer, remove: true as const }],
-      };
-      context.reporter.error(
-        "FIXED_SETTING",
-        `The standard fixes "${path.join(".")}" to ${JSON.stringify(value)}.`,
-        at,
-        "Remove this setting, or change the standard.",
-        remove ? [remove] : [],
-      );
+    for (const change of changedFixed(fixed, layer.value, [], unknown)) {
+      reportFixed(context, change, layer.at && placed(layer.at, change.path));
       respected = false;
     }
   }
   return respected;
-}
-
-/**
- * The fixed values that `value` changes, with their key paths. Mappings in
- * both are compared key by key, so keys beside the fixed ones are allowed. A
- * value that is `unknown`, such as one holding an unset reference, changes nothing.
- */
-function changedFixed(
-  fixed: Record<string, unknown>,
-  value: Record<string, unknown>,
-  path: string[],
-  unknown: (value: unknown) => boolean,
-): { path: string[]; value: unknown }[] {
-  return Object.entries(value).flatMap(([key, given]) => {
-    if (!(key in fixed)) return [];
-    const wanted = fixed[key];
-    if (isRecord(wanted) && isRecord(given))
-      return changedFixed(wanted, given, [...path, key], unknown);
-    if (unknown(given)) return [];
-    return sameValue(wanted, given) ? [] : [{ path: [...path, key], value: wanted }];
-  });
 }
 
 /**
