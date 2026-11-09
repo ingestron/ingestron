@@ -4,7 +4,7 @@
 
 ```ts
 
-import type { FileSource } from '@ingestron/config';
+import { FileSource } from '@ingestron/config';
 import type { Fix } from '@ingestron/config';
 
 // @public
@@ -213,6 +213,21 @@ export interface ReferenceEntry {
         current?: boolean;
     }[];
 }
+
+// @public
+export interface ReplaceMeHelp {
+    // (undocumented)
+    description?: string;
+    docs: string;
+    field: string;
+    find?: string;
+    suggest?: string;
+}
+
+// Warning: (ae-forgotten-export) The symbol "Project" needs to be exported by the entry point index.d.ts
+//
+// @public
+export function replaceMeHelp(project: Project, file: string, pointer: string, environment: string | undefined): ReplaceMeHelp | undefined;
 
 // @public
 export interface Suggestion {

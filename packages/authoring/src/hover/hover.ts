@@ -6,7 +6,9 @@ import { type ResolvedTable, type Step } from "@ingestron/definitions";
 import { kindOf, placeAt, type Place } from "../navigation/index.js";
 import { referenceAround, referenceValue } from "../navigation/index.js";
 import { explainField, methodText, type HoverOptions } from "./explain.js";
+import { intentText } from "./intent-text.js";
 import { from } from "./origin-text.js";
+import { explainReplaceMe } from "./replace-me.js";
 import { methodAt, methodInfo } from "../assist/index.js";
 import { resolvedForDisplay, type Project } from "../project/index.js";
 import { holdsSecret } from "../project/index.js";
@@ -62,6 +64,10 @@ function explainSpot(
   environment: string | undefined,
   options: HoverOptions,
 ): string | undefined {
+  if (spot.part === "value" && spot.text.includes("REPLACE_ME")) {
+    const help = explainReplaceMe(project, file, spot.pointer, environment, options);
+    if (help) return help;
+  }
   const setting = settingAt(spot);
   const key = spot.part === "key";
   const parts = [
@@ -151,7 +157,9 @@ function explainTable(
   const target = table.endsAtFiles
     ? `\`${targetOf(table)}\``
     : `\`${catalog}\`.\`${schema}\`.\`${tableName}\``;
-  return [`**\`${name}\`** → ${target}`, ...stepsNotKnown(table, true), ...steps].join("\n\n");
+  return [`**\`${name}\`** → ${target}`, ...stepsNotKnown(table, true), ...steps, intentText(table)]
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 /** A step's method, then the settings something chose, then the pack's defaults on one line. */
