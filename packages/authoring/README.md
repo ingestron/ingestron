@@ -17,11 +17,13 @@ editor shows. A snapshot never changes, so each answer is worked out once; open
 a new one after an edit or a change on disk.
 
 ```ts
+import { readFileSync } from "node:fs";
 import { ProjectSnapshot } from "@ingestron/authoring";
 
 const snapshot = ProjectSnapshot.open("/work/shop", new Map());
 for (const problem of snapshot.problems("dev")) console.log(problem.file, problem.message);
-console.log(snapshot.hoverAt("flows/shop.yaml", text, offset, "dev"));
+const text = readFileSync("/work/shop/flows/shop.yaml", "utf8");
+console.log(snapshot.hoverAt("flows/shop.yaml", text, text.indexOf("upsert"), "dev"));
 ```
 
 File paths are relative to the project folder, with forward slashes. Offsets
