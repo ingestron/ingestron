@@ -2,3 +2,12 @@
 export { checkGovernance } from "./governance.js";
 export { resolvePlatform } from "./platform.js";
 export { passportFile, productDocuments, resolveProducts } from "./products.js";
+export {
+  alertsOf,
+  movedFields,
+  movedTo,
+  notificationAlert,
+  sectionsOf,
+  withMovedFields,
+  type MovedField,
+} from "./sections.js";

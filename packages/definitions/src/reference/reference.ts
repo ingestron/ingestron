@@ -113,6 +113,22 @@ export function methodReference(pack: PackInfo, id: string): FieldInfo[] {
 }
 
 /**
+ * Every field of a pack's section of the Platform, depth first, each path prefixed with the
+ * pack's id (specification section 7.2); none when the pack has no `platformSection`.
+ * @public
+ */
+export function platformSectionReference(pack: PackInfo): FieldInfo[] {
+  if (!pack.platformSection) return [];
+  const schema = pack.platformSection as Schema;
+  const anchor = (path: string[]) =>
+    `/docs/reference/packs/${pack.id}#${anchorOf(["platform", ...path])}`;
+  return walk(schema, schema, [], anchor).map((field) => ({
+    ...field,
+    path: [pack.id, ...field.path],
+  }));
+}
+
+/**
  * `flow-tables-item-ingest-uses`: lower case, `*` as `item`, joined with `-`.
  * @public
  */

@@ -1,0 +1,6 @@
+description: A path starting with the pack's own id that its platformSection does not have is refused like any other.
+platformFields:
+  bridge: [bridge.warehouse_id, bridge.nope]
+files: {}
+expect:
+  refused: 'The pack "bridge" lists the platform field "bridge.nope", which the Platform document does not have.'

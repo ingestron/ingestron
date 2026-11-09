@@ -227,6 +227,13 @@ export interface PackInfo {
    * @example ["mode", "schedule.paused", "manage.checks"]
    */
   platformFields?: string[];
+  /**
+   * The schema of the pack's section of the Platform, the mapping under the key named for
+   * the pack's id (specification section 7.2). Without it the section may only be empty.
+   * `platformFields` may then list its fields as `<id>.<path>`.
+   * @example { type: "object", additionalProperties: false, properties: { warehouse_id: { type: "string" } } }
+   */
+  platformSection?: JsonSchema;
   /** What the pack does with each ODCS contract field, by field path (`*` for any item). */
   contract?: Record<string, ContractUse>;
   /**

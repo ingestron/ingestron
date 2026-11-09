@@ -4,6 +4,7 @@ export {
   anchorOf,
   documentReference,
   methodReference,
+  platformSectionReference,
   referenceKinds,
   type FieldInfo,
 } from "./reference.js";

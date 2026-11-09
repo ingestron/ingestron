@@ -17,6 +17,7 @@ export {
   environmentsDiagnostics,
   splitDeployText,
   type Action,
+  type Alert,
   type Capability,
   type ChosenBy,
   type Column,
@@ -97,6 +98,7 @@ export {
   documentReference,
   methodReference,
   packLoadProblem,
+  platformSectionReference,
   referenceKinds,
   type FieldInfo,
 } from "./reference/index.js";

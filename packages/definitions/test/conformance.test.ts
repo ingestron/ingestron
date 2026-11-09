@@ -66,6 +66,7 @@ const packs = [
   "pack-three.yaml",
   "pack-intent.yaml",
   "pack-ops.yaml",
+  "pack-databricks.yaml",
 ].map((file) =>
   packOf(
     parse(readFileSync(join(folder, file), "utf8")) as PackInfo & { buildEnvironments?: true },

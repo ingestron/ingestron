@@ -4,6 +4,7 @@ export {
   kinds,
   packageSchema,
   type ActionDoc,
+  type AlertDoc,
   type ConnectionDoc,
   type ContractDoc,
   type ExpectationDoc,

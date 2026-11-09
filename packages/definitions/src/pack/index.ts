@@ -11,6 +11,7 @@ export {
 } from "./environments.js";
 export { checkFold, splitDeployText, type FoldView } from "./fold.js";
 export type {
+  Alert,
   ChosenBy,
   Column,
   Contract,

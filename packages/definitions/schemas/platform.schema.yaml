@@ -6,6 +6,10 @@ description: >-
 type: object
 additionalProperties: false
 required: [apiVersion, kind, id]
+# A section per pack: any lower-case name that is not a field above or one reserved for later.
+patternProperties:
+  "^(?!(apiVersion|kind|id|description|workspace|mode|run_as|compute|settings|naming|tags|permissions|schedule|notifications|manage|grants|alerts|accept|principals)$)[a-z][a-z0-9-]*$":
+    type: object
 properties:
   apiVersion: { const: ingestron.io/v1, description: Always ingestron.io/v1. }
   kind: { const: Platform, description: The document kind. }
@@ -211,6 +215,43 @@ properties:
           examples: [[data-team@example.com]],
         }
     description: Who is emailed when an update fails.
+  alerts:
+    type: array
+    items:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required: [kind, to]
+          properties:
+            kind: { const: email, description: "An email alert." }
+            to:
+              {
+                type: array,
+                items: { type: string },
+                description: Email addresses told.,
+                examples: [[data-team@example.com]],
+              }
+            on: { $ref: "#/$defs/alertOn" }
+        - type: object
+          additionalProperties: false
+          required: [kind, id]
+          properties:
+            kind:
+              {
+                const: destination,
+                description: "A destination the platform holds, such as a chat channel.",
+              }
+            id:
+              {
+                type: string,
+                description: The destination's id on the platform.,
+                examples: ["${values.teams_destination}"],
+              }
+            on: { $ref: "#/$defs/alertOn" }
+    description: Who is told when a pipeline or job fails or runs slowly.
+    examples:
+      - - kind: email
+          to: [data-team@example.com]
   manage:
     type: object
     additionalProperties: false
@@ -262,3 +303,8 @@ properties:
             privileges:
               - USE_SCHEMA
               - SELECT
+$defs:
+  alertOn:
+    type: array
+    items: { enum: [failure, slow] }
+    description: "When to tell: failure or slow. Default: failure."

@@ -22,6 +22,7 @@ export type DefinitionCode =
   | "HANDOVER"
   | "FIXED_SETTING"
   | "SETTING_MOVED"
+  | "PLATFORM_FIELD_MOVED"
   | "INTENT_CONFLICT"
   | "NOT_APPLIED"
   | "PREVIEW_FEATURE"

@@ -790,6 +790,42 @@ It then reads, checks and generates nothing.
 The list changes nothing else; what a pack reads is still the model's
 `platform`.
 
+**Common fields, alerts and moved fields.** The Platform keeps the fields
+every pack reads (`tags`, `naming`, `schedule`, `settings`) and gains `alerts`
+and one section per pack (section 7.2). Each item of `alerts` is either
+`{ kind: email, to: [<address>…], on: […] }` or
+`{ kind: destination, id: <text>, on: […] }`, a destination that the platform
+holds; `on` lists `failure` and `slow` and is `[failure]` when left out. The
+model's `platform.alerts` has every alert, `on` filled in.
+
+`mode`, `workspace`, `run_as`, `compute`, `permissions`, `manage` and `grants`
+belong to Databricks and are written in the Platform's `databricks` section.
+The model's `platform` keeps them where it always had them, with the same
+meaning and defaults, so a pack reads them as before: each is the value in the
+`databricks` section, else the value at the top of the Platform, else its
+default. Written at the top, a field is still accepted, and is
+`PLATFORM_FIELD_MOVED`, a warning at the field:
+`"<field>" now belongs in the databricks section of the Platform.`, with the
+fix `Move to databricks.<field>`, which sets the value at
+`/databricks/<field>` and removes the old key. The warning is given only when
+the standard names a pack `databricks` that has a Platform section, because
+there is nowhere else to move the field to. Written in both places with the
+same value (compared as data), it is only that warning. Written with different
+values, it is `BAD_SETTING`, an error at the old place and not that warning; a
+value that holds an unset reference is not compared.
+
+`notifications.on_failure` is also still accepted: its addresses fill
+`platform.notifications.on_failure` as before, and become the alert
+`{ kind: email, to: <the addresses>, on: [failure] }` in `platform.alerts`.
+With the `databricks` section's pack named (above), `PLATFORM_FIELD_MOVED`
+is also given at `notifications`:
+`"notifications.on_failure" now belongs in "alerts" of the Platform.`, with
+the fix `Move to alerts`; both kinds of warning are given on the same
+condition. A list with no address makes no alert. When the Platform writes
+both `notifications` and `alerts`, `alerts` is used as written, and the alert
+from `notifications` is added after them only when no email alert that has
+`failure` in `on` already lists all of those addresses.
+
 ### 7.1 Capabilities
 
 Some features change shared objects on the platform, such as schemas, tags
@@ -804,6 +840,45 @@ off, that is `CAPABILITY_OFF`, a warning at the field naming the capability,
 what it needs, and a fix that sets `manage.<capability>: true` in the
 platform. Grants in the platform with `manage.schemas` off are
 `CAPABILITY_OFF` at `grants`, with the same fix.
+
+### 7.2 Pack sections
+
+A pack MAY declare, as data, `platformSection`: a JSON Schema for its section
+of the Platform, the mapping under the key that is the pack's id. The
+Platform's other keys are reserved: `apiVersion`, `kind`, `id`,
+`description`, `workspace`, `mode`, `run_as`, `compute`, `settings`, `naming`,
+`tags`, `permissions`, `schedule`, `notifications`, `manage`, `grants`,
+`alerts`, `accept` and `principals`. Any other key that is a lower-case name
+(letters, digits and hyphens, starting with a letter) is a section, and its
+value MUST be a mapping.
+
+Resolution checks each section the Platform writes:
+
+1. A section whose key is not the id of a pack the standard names is
+   `UNKNOWN_PACK`, an error at the key. When a pack of that id is available,
+   the fix is `Add the "<pack>" pack`, which adds `<pack>@<version>` to the
+   standard's `packs`.
+2. A section of a pack that declares no `platformSection` has no fields: it
+   may be written, and may only be empty.
+3. Otherwise the section is checked against the pack's `platformSection`, as
+   a method's settings are checked against its schema (section 3): each
+   failure is `BAD_SETTING`, an error at the failing key, or at the section
+   for a missing field, except a failure that a value holding an unset
+   reference or `REPLACE_ME` causes. The message names the section:
+   `Platform section "<pack>": <what failed>.`
+
+The model's `platform.sections` maps each such pack id to its section as
+written, after the check; a pack names no section the Platform does not write.
+A pack reads its own, such as `platform.sections.<id>`.
+
+A pack MAY also list the fields of its section in `platformFields`, written
+`<id>.<path>` with its own id first and the path as the field reference
+describes it (section 10); each is checked against `platformSectionReference`,
+the field reference of its `platformSection`: every entry's path prefixed with
+the pack's id, with docs anchors `/docs/reference/packs/<id>#<anchor>` of
+`platform` followed by the path (the anchor as in section 10). A path that has
+no entry is refused as in section 7. Other paths are checked against the
+Platform's field reference, as before.
 
 ## 8. Data products
 
@@ -907,7 +982,9 @@ data-only packs [conformance/pack.yaml](conformance/pack.yaml),
 [conformance/pack-plain.yaml](conformance/pack-plain.yaml),
 [conformance/pack-three.yaml](conformance/pack-three.yaml),
 [conformance/pack-intent.yaml](conformance/pack-intent.yaml) and
-[conformance/pack-ops.yaml](conformance/pack-ops.yaml), all available. A
+[conformance/pack-ops.yaml](conformance/pack-ops.yaml) and
+[conformance/pack-databricks.yaml](conformance/pack-databricks.yaml), all
+available. A
 pack file with `buildEnvironments: true` stands for a pack that builds
 environments together: the runner gives it a `buildEnvironments` member. A
 pack or a method with `checks`, a list of messages, stands for one with a

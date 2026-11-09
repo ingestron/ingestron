@@ -3,6 +3,7 @@ import type { DefinitionCode } from "./diagnostics.js";
 import { environmentCodeHelp } from "./environment-codes.js";
 import { intentCodeHelp } from "./intent-codes.js";
 import { layerCodeHelp } from "./layer-codes.js";
+import { platformCodeHelp } from "./platform-codes.js";
 
 /**
  * Help for every code this package reports.
@@ -12,6 +13,7 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
   ...environmentCodeHelp,
   ...layerCodeHelp,
   ...intentCodeHelp,
+  ...platformCodeHelp,
   NO_STANDARD: {
     meaning: "The project has no Standard document.",
     fix: "Add a Standard, or import your organisation's standard in project.yaml.",
@@ -30,8 +32,8 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
     fix: "Install a version of Ingestron, or of the editor extension, that fixes the pack.",
   },
   UNKNOWN_PACK: {
-    meaning: "The standard names a pack that is not available.",
-    fix: "Check the spelling in packs, or use a pack this tool provides.",
+    meaning: "The standard or a Platform section names a pack that is not available or not named.",
+    fix: "Check the spelling, use a pack this tool provides, or add the pack to the standard.",
   },
   METHOD_CONFLICT: {
     meaning: "Two of the standard's packs have a method with the same name.",

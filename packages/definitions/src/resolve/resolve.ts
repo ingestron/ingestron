@@ -26,6 +26,7 @@ import { checkDuplicateNames, createNamer } from "../tables/index.js";
 import { transformTables } from "./transforms.js";
 import { buildModel } from "./build-model.js";
 import { checkOperations } from "./operations.js";
+import { checkPlatform } from "./platform-sections.js";
 import { holdsUnsetEnvvar } from "../diagnostics/index.js";
 import { recordOutputs, runPackCheck } from "../context/index.js";
 import { checkPlatformFields } from "../reference/index.js";
@@ -157,6 +158,7 @@ function resolveLoaded(
   if (!context) return { ok: false, diagnostics: reporter.diagnostics };
   if (deployTime) checkDeployValues(context);
   checkSettingsKeys(context);
+  checkPlatform(context);
   checkGrants(context);
   const namer = createNamer(context);
   const flows = flowTables(context, namer);

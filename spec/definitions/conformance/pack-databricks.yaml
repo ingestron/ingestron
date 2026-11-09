@@ -1,0 +1,25 @@
+# A data-only pack with a section of the Platform and no methods, for the cases about
+# the Databricks fields that moved into it (section 7).
+id: databricks
+version: 1
+defaults:
+  naming: { catalog: unused, schema: unused, table: unused, pipeline: unused, job: unused }
+  layers: [unused]
+  types: {}
+  quality: { required: fail, default: fail }
+rules: {}
+methods: {}
+platformSection:
+  type: object
+  additionalProperties: false
+  properties:
+    mode: { enum: [development, production] }
+    workspace:
+      type: object
+      additionalProperties: false
+      properties: { host: { type: string }, root_path: { type: string } }
+    run_as: { type: object }
+    compute: { type: object }
+    permissions: { type: array }
+    manage: { type: object }
+    grants: { type: object }

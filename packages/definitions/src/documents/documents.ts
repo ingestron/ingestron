@@ -57,7 +57,15 @@ export interface GovernanceDoc {
   access?: { sensitive?: { require?: ("access" | "description" | "firstLevelApprovers")[] } };
 }
 
-/** A `Platform` document; see platform.schema.yaml for every field. */
+/** An alert as the Platform writes it: `on` is `[failure]` when left out. */
+export type AlertDoc =
+  | { kind: "email"; to: string[]; on?: ("failure" | "slow")[] }
+  | { kind: "destination"; id: string; on?: ("failure" | "slow")[] };
+
+/**
+ * A `Platform` document; see platform.schema.yaml for every field. The section of each pack
+ * is a further key named for the pack: read them with `sectionsOf`.
+ */
 export interface PlatformDoc {
   id: string;
   workspace?: { host?: string; root_path?: string };
@@ -71,6 +79,7 @@ export interface PlatformDoc {
   permissions?: ({ level: string } & Record<string, string>)[];
   schedule?: { cron: string; timezone?: string; paused?: boolean };
   notifications?: { on_failure?: string[] };
+  alerts?: AlertDoc[];
   manage?: { schemas?: boolean; tags?: boolean; comments?: boolean; checks?: boolean };
   grants?: Record<string, { principal: string; privileges: string[] }[]>;
 }

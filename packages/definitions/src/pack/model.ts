@@ -207,7 +207,19 @@ export interface Grant {
 }
 
 /**
- * The Platform document after smart defaults.
+ * Who is told when a pipeline or job fails or runs slowly: an email address list, or a
+ * destination the platform holds (specification section 7).
+ * @example { kind: "email", to: ["data-team@example.com"], on: ["failure"] }
+ * @public
+ */
+export type Alert =
+  | { kind: "email"; to: string[]; on: ("failure" | "slow")[] }
+  | { kind: "destination"; id: string; on: ("failure" | "slow")[] };
+
+/**
+ * The Platform document after smart defaults. The Databricks fields (`mode`, `workspace`,
+ * `run_as`, `compute`, `permissions`, `manage`, `grants`) are here as they always were,
+ * whether the Platform writes them at the top or in its `databricks` section.
  * @public
  */
 export interface ResolvedPlatform {
@@ -219,6 +231,10 @@ export interface ResolvedPlatform {
   permissions: Permission[];
   schedule?: Schedule;
   notifications: { on_failure: string[] };
+  /** Every alert: the Platform's `alerts`, and `notifications.on_failure` as an email alert. */
+  alerts: Alert[];
+  /** Each pack's section of the Platform as written, by pack id, after it was checked (section 7.2). */
+  sections: Record<string, Record<string, unknown>>;
   manage: { schemas: boolean; tags: boolean; comments: boolean; checks: boolean };
   grants: Record<string, Grant[]>;
 }
