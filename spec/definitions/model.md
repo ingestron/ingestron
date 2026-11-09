@@ -807,12 +807,17 @@ default. Written at the top, a field is still accepted, and is
 `PLATFORM_FIELD_MOVED`, a warning at the field:
 `"<field>" now belongs in the databricks section of the Platform.`, with the
 fix `Move to databricks.<field>`, which sets the value at
-`/databricks/<field>` and removes the old key. The warning is given only when
+`/databricks/<field>`, exactly as written (a `${…}` reference stays a reference,
+so no environment's value is copied into the file), and removes the old key.
+When the value cannot be read as written, such as one included from another
+file, the warning has no fix. The warning is given only when
 the standard names a pack `databricks` that has a Platform section, because
 there is nowhere else to move the field to. Written in both places with the
 same value (compared as data), it is only that warning. Written with different
 values, it is `BAD_SETTING`, an error at the old place and not that warning; a
-value that holds an unset reference is not compared.
+value that holds an unset reference is not compared. Values are compared as
+they are for the selected environment, so a field can agree in one
+environment and differ in another.
 
 `notifications.on_failure` is also still accepted: its addresses fill
 `platform.notifications.on_failure` as before, and become the alert
@@ -820,7 +825,8 @@ value that holds an unset reference is not compared.
 With the `databricks` section's pack named (above), `PLATFORM_FIELD_MOVED`
 is also given at `notifications`:
 `"notifications.on_failure" now belongs in "alerts" of the Platform.`, with
-the fix `Move to alerts`; both kinds of warning are given on the same
+the fix `Move to alerts`, which writes the addresses as written, references
+included; both kinds of warning are given on the same
 condition. A list with no address makes no alert. When the Platform writes
 both `notifications` and `alerts`, `alerts` is used as written, and the alert
 from `notifications` is added after them only when no email alert that has
@@ -1320,7 +1326,8 @@ removes the setting:
   as a name becomes `{ name, history }`, and a standard with no `layers` gets
   the pack's default layers written that way;
 - in a rule's `with` or the platform, or for a path the standard has no field
-  for, there is no fix.
+  for, there is no fix; nor when the setting is written as, or with, a
+  `${…}` reference, which intent cannot keep.
 
 The standard's `fixed.<method>` is not `SETTING_MOVED`: it is read as fixed
 intent for that method's tables and keeps its force as it is written.

@@ -3,6 +3,7 @@
 import type { Fix, FixEdit } from "@ingestron/config";
 import type { Context } from "../context/index.js";
 import type { AliasStage } from "./aliases.js";
+import { holdsReference, writtenValue } from "../internal/index.js";
 import { intentPointer, leaves, valueAtIntentPath } from "./intent-values.js";
 
 /** Intent paths the standard's top-level sections hold under another name. */
@@ -14,12 +15,20 @@ const standardPointers: Record<string, string> = {
 /** The standard's top-level sections that hold intent paths as `Intent` names them. */
 const standardSections = ["audit", "rescued", "retention", "storage"];
 
+/** True unless the setting is plainly written: a `${…}` reference cannot become intent. */
+function plainlyWritten(context: Context, alias: AliasStage): boolean {
+  const text = writtenValue(context.files, alias.at.document.file, alias.at.pointer);
+  return text !== undefined && !holdsReference(text.value);
+}
+
 /**
  * `Write as intent`: in a flow, transform or flow table, its own intent; in the standard's
  * settings, its top-level sections, or every layer for `history`. None when the place has
- * no field for the intent, as in a rule's `with` or the platform.
+ * no field for the intent, as in a rule's `with` or the platform. None either when the
+ * setting is written as a `${…}` reference, which the intent cannot keep.
  */
 export function settingMovedFix(context: Context, alias: AliasStage): Fix | undefined {
+  if (!plainlyWritten(context, alias)) return undefined;
   const edits = intentEdits(context, alias);
   if (!edits) return undefined;
   const { document, pointer } = alias.at;

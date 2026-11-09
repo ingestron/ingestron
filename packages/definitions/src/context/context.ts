@@ -1,7 +1,7 @@
 // What every resolution step reads: the loaded project, the packs the
 // standard names (with one combined view), the one standard and platform,
 // and the reporter.
-import type { DefinitionDocument, Project } from "@ingestron/config";
+import type { DefinitionDocument, FileSource, Project } from "@ingestron/config";
 import type { Reporter } from "../diagnostics/index.js";
 import { kinds, type PlatformDoc, type StandardDoc } from "../documents/index.js";
 import type { Action, Pack, PackInfo } from "../pack/index.js";
@@ -9,6 +9,8 @@ import type { Action, Pack, PackInfo } from "../pack/index.js";
 /** Shared by the resolution steps. */
 export interface Context {
   project: Project;
+  /** The project's files, for fixes that move a value exactly as it is written. */
+  files: FileSource;
   /** The packs the standard names, in its order. */
   packs: PackInfo[];
   /** Every pack that could be named, for fixes that add one. */
@@ -38,6 +40,7 @@ export function createContext(
   project: Project,
   available: PackInfo[],
   reporter: Reporter,
+  files: FileSource,
   deployTime = false,
 ): Context | undefined {
   const standard = oneStandard(project, available, reporter);
@@ -52,6 +55,7 @@ export function createContext(
   const environment = project.environment ?? "default";
   return {
     project,
+    files,
     packs,
     available,
     pack: combine(packs),

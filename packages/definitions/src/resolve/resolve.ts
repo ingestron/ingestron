@@ -107,7 +107,7 @@ export function resolveDefinitions(files: FileSource, options: ResolveOptions): 
           files,
           loaded.project,
           options,
-          resolveLoaded(loaded.project, options, [
+          resolveLoaded(loaded.project, options, files, [
             ...loaded.diagnostics,
             ...runsOnProblems(files, loaded.project, options.packs),
           ]),
@@ -134,7 +134,7 @@ export function loadDefinitions(folder: string, options: ResolveOptions): Resolv
           nodeFiles(folder),
           loaded.project,
           options,
-          resolveLoaded(loaded.project, options, [
+          resolveLoaded(loaded.project, options, nodeFiles(folder), [
             ...loaded.diagnostics,
             ...runsOnProblems(nodeFiles(folder), loaded.project, options.packs),
           ]),
@@ -147,6 +147,7 @@ export function loadDefinitions(folder: string, options: ResolveOptions): Resolv
 function resolveLoaded(
   project: Parameters<typeof createContext>[0],
   options: ResolveOptions,
+  files: FileSource,
   warnings: ResolveResult["diagnostics"],
 ): ResolveResult {
   // Loading succeeded, so what it reported are warnings, kept with the result.
@@ -154,7 +155,7 @@ function resolveLoaded(
   // it, except a settings failure: the settings check has already left out what it causes.
   const deployTime = options.deployTime === true;
   const reporter = resolutionReporter(project, warnings, deployTime);
-  const context = createContext(project, options.packs, reporter, deployTime);
+  const context = createContext(project, options.packs, reporter, files, deployTime);
   if (!context) return { ok: false, diagnostics: reporter.diagnostics };
   if (deployTime) checkDeployValues(context);
   checkSettingsKeys(context);

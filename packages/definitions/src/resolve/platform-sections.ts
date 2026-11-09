@@ -5,7 +5,7 @@ import { withoutUnsetEnvvars, type Fix, type FixEdit } from "@ingestron/config";
 import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
 import type { Context } from "../context/index.js";
 import { holdsUnsetEnvvar, type Source } from "../diagnostics/index.js";
-import { sameValue } from "../internal/index.js";
+import { sameValue, writtenValue } from "../internal/index.js";
 import type { PackInfo } from "../pack/index.js";
 import { movedFields, movedTo, notificationAlert, sectionsOf } from "../platform/index.js";
 import { replaceMe } from "./replace-me.js";
@@ -148,9 +148,11 @@ function checkMoved(context: Context): void {
       );
       continue;
     }
+    // The value moves as written, with its references; without it the fix is left out.
+    const text = writtenValue(context.files, platform.file, `/${field}`);
     const edits: FixEdit[] = [
-      ...(other === undefined
-        ? [{ file: platform.file, pointer: `/${movedTo}/${field}`, set: value }]
+      ...(other === undefined && text
+        ? [{ file: platform.file, pointer: `/${movedTo}/${field}`, set: text.value }]
         : []),
       { file: platform.file, pointer: `/${field}`, remove: true },
     ];
@@ -159,7 +161,7 @@ function checkMoved(context: Context): void {
       `"${field}" now belongs in the ${movedTo} section of the Platform.`,
       at,
       `Move it to ${movedTo}.${field}.`,
-      [{ title: `Move to ${movedTo}.${field}`, edits }],
+      text || other !== undefined ? [{ title: `Move to ${movedTo}.${field}`, edits }] : [],
     );
   }
 }
@@ -171,27 +173,38 @@ function differ(context: Context, first: unknown, second: unknown): boolean {
   return !sameValue(first, second) && !unknown(first) && !unknown(second);
 }
 
-/** `PLATFORM_FIELD_MOVED` for `notifications.on_failure`, which `alerts` replaces. */
+/**
+ * The edits that move `notifications.on_failure` to `alerts`, with the addresses as written
+ * (references included); undefined when they cannot be read as written.
+ */
+function notificationEdits(context: Context): FixEdit[] | undefined {
+  const platform = context.platform!;
+  const added = notificationAlert(platform.value);
+  const remove: FixEdit = { file: platform.file, pointer: "/notifications", remove: true };
+  if (!added) return [remove];
+  const to = writtenValue(context.files, platform.file, "/notifications/on_failure")?.value;
+  if (!Array.isArray(to)) return undefined;
+  const alert = { ...added, to };
+  const at = platform.value.alerts ? "/alerts/-" : "/alerts";
+  return [
+    { file: platform.file, pointer: at, set: platform.value.alerts ? alert : [alert] },
+    remove,
+  ];
+}
+
+/**
+ * `PLATFORM_FIELD_MOVED` for `notifications.on_failure`, which `alerts` replaces. Its fix
+ * writes the addresses as written; without them it is left out.
+ */
 function checkNotifications(context: Context): void {
   const platform = context.platform!;
   if (platform.value.notifications?.on_failure === undefined) return;
-  const added = notificationAlert(platform.value);
-  const alerts = platform.value.alerts;
-  const edits: FixEdit[] = [
-    ...(added
-      ? [
-          alerts
-            ? { file: platform.file, pointer: "/alerts/-", set: added }
-            : { file: platform.file, pointer: "/alerts", set: [added] },
-        ]
-      : []),
-    { file: platform.file, pointer: "/notifications", remove: true },
-  ];
+  const edits = notificationEdits(context);
   context.reporter.warning(
     "PLATFORM_FIELD_MOVED",
     `"notifications.on_failure" now belongs in "alerts" of the Platform.`,
     { document: platform, pointer: "/notifications" },
     "Write an email alert with on: [failure] in alerts.",
-    [{ title: "Move to alerts", edits }],
+    edits ? [{ title: "Move to alerts", edits }] : [],
   );
 }

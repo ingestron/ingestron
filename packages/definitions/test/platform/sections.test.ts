@@ -102,6 +102,17 @@ describe("moved fields", () => {
   });
 });
 
+describe("the fix that moves a field", () => {
+  it("keeps an ${envvar:…} reference, so the variable's value is not written to the file", () => {
+    const result = resolve("workspace: { host: '${envvar:HOST}' }", undefined, { HOST: "secret" });
+    const edits = result.diagnostics[0]?.fixes?.[0]?.edits;
+    expect(edits).toEqual([
+      { file: "platform.yaml", pointer: "/databricks/workspace", set: { host: "${envvar:HOST}" } },
+      { file: "platform.yaml", pointer: "/workspace", remove: true },
+    ]);
+  });
+});
+
 describe("alerts", () => {
   it("adds nothing for notifications that an email alert for failure already lists", () => {
     const result = resolve(
