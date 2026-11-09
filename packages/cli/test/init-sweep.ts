@@ -5,8 +5,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect } from "vitest";
 import { run } from "../src/index.js";
-import { methodSettings } from "@ingestron/core";
-import { projectValues } from "@ingestron/core";
+import { methodSettings } from "@ingestron/core/internal";
+import { projectValues } from "@ingestron/core/internal";
 import { projectRoutes, projectSources } from "@ingestron/core";
 
 /** One combination init can create. */

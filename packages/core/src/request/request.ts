@@ -96,7 +96,7 @@ export function requestFor(
     infrastructure(project, usedMethods(model)),
     ...packSections(model, available),
     // Files are never generated from a table whose source is not known.
-    notKnown.sources.size > 0 ? undefined : sql(model, name),
+    notKnown.sources.size > 0 ? undefined : sql(model, name, available),
   ]
     .filter(Boolean)
     .join("\n\n")
@@ -211,8 +211,8 @@ function packSections(model: ResolvedModel, available: readonly Pack[]): string[
 }
 
 /** The first pack's SQL to run once: `prerequisites.sql`, or this environment's `prerequisites/<name>.sql`. */
-function sql(model: ResolvedModel, name: string): string | undefined {
-  const text = environmentOutputs(model, name)
+function sql(model: ResolvedModel, name: string, available: readonly Pack[]): string | undefined {
+  const text = environmentOutputs(model, name, available)
     .map(({ files }) => files["prerequisites.sql"] ?? files[`prerequisites/${name}.sql`])
     .find(Boolean);
   return text && `## SQL to run once (review first)\n\n\`\`\`sql\n${text}\`\`\``;

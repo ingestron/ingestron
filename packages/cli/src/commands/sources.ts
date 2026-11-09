@@ -4,7 +4,8 @@ import { execFileSync } from "node:child_process";
 import { existsSync, lstatSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, relative, resolve } from "node:path";
-import { builtInTemplates, readTemplate, type Template } from "@ingestron/core";
+import { builtInTemplates, type Template } from "@ingestron/core";
+import { readTemplate } from "@ingestron/core/internal";
 
 /** The URL without `user:password@`, for messages and the standard's "From" line. */
 export function withoutCredentials(text: string): string {

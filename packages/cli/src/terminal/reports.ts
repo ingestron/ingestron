@@ -1,7 +1,7 @@
 // What resolving and building found, printed before anything is planned
 // (spec/cli/outputs.md, sections 1 and 3).
 import type { Io } from "./io.js";
-import { environmentReportsText, packReportsText } from "@ingestron/core";
+import { environmentReportsText, packReportsText } from "@ingestron/core/internal";
 import type { Report } from "@ingestron/core";
 
 /**

@@ -3,7 +3,7 @@
 import { cpSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
-import { applySet } from "@ingestron/core";
+import { applySet } from "@ingestron/core/internal";
 
 const storage = (dev: string, prod: string) => ({
   "dev.storage_account": dev,

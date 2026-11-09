@@ -3,10 +3,10 @@ import { resolve } from "node:path";
 import { nodeFiles } from "@ingestron/config";
 import type { Options } from "../terminal/index.js";
 import { generateAll } from "@ingestron/core";
-import { environmentsToGenerate } from "@ingestron/core";
+import { environmentsToGenerate } from "@ingestron/core/internal";
 import type { Io } from "../terminal/index.js";
 import { packs } from "@ingestron/core";
-import { requestFor } from "@ingestron/core";
+import { requestFor } from "@ingestron/core/internal";
 
 /** Prints the request for each environment. Returns the exit code: 1 when any has errors. */
 export function request(options: Options, io: Io): number {

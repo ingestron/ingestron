@@ -169,14 +169,15 @@ function within(folder: string, files: Record<string, string>): [string, string]
  * The files each pack the standard names builds from one environment's model on its own:
  * `label` is `<pack>` for a pack that builds environments together and `<pack>/<environment>`
  * for any other, then `products/<environment>` for the passports. `request` reads the SQL
- * to run once from it.
+ * to run once from it. `available` defaults to the built-in packs.
  * @internal
  */
 export function environmentOutputs(
   model: ResolvedModel,
   environment: string,
+  available: readonly Pack[] = packs,
 ): { pack: string; label: string; files: Record<string, string> }[] {
-  const used = packs.filter((pack) => model.standard.packs.includes(packRef(pack)));
+  const used = available.filter((pack) => model.standard.packs.includes(packRef(pack)));
   const outputs = used.map((pack) => ({
     pack: pack.id,
     label: folds(pack) ? pack.id : `${pack.id}/${environment}`,

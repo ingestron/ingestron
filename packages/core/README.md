@@ -17,8 +17,10 @@ Requires Node 22.13 or later.
 `Project.open(files, options?)` holds a project's files, the packs its standard
 may name and the values `${envvar:…}` reads. Its generation, every environment
 resolved and each pack's output, is worked out on first use and kept until
-`refresh()`. `plan`, `compare` and `request` all use it. Nothing is written:
-apply a plan with [`@ingestron/generate`](../generate/README.md).
+`refresh()`. `plan` and `request` use it; `compare` resolves the two
+environments it is asked about. Nothing is written: apply a plan with
+[`@ingestron/generate`](../generate/README.md). The values `${envvar:…}` reads
+are never shown, so logging a project is safe.
 
 `Project` is `@beta`: it may change in a minor release.
 
@@ -39,7 +41,8 @@ console.log(project.request("prod"));
 `files` is the project as a `FileSource` from
 [`@ingestron/config`](../config/README.md), such as `nodeFiles(folder)`.
 `options.packs` defaults to the built-in packs, and `options.envvars` to
-`process.env`. After the definitions change, call `project.refresh()`.
+`process.env`. After the definitions change, call `project.refresh()`. `plan`
+throws when the definitions have problems, listing them.
 
 ## The files plan would write
 
