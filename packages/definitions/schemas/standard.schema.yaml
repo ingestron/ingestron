@@ -634,6 +634,40 @@ $defs:
                 description: "Matches the table's layer, such as gold.",
                 examples: [gold],
               }
+            load:
+              {
+                $ref: "#/$defs/loadMode",
+                description: "Matches the load mode the table declares as intent. Not the pack's default, and not a table that declares none.",
+              }
+            history:
+              {
+                $ref: "#/$defs/history",
+                description: "Matches the history the table declares as intent. Not the pack's default, and not a table that declares none.",
+              }
+            classification:
+              {
+                type: string,
+                description: "Matches the highest classification of the contract's columns, in the order of governance.classification.values. Needs that list.",
+                examples: [restricted],
+              }
+            tag:
+              {
+                type: string,
+                description: "Matches a tag of the table's contract.",
+                examples: [finance],
+              }
+            product:
+              {
+                type: string,
+                description: "Matches the id of the data product that publishes the table's contract.",
+                examples: [sales],
+              }
+            domain:
+              {
+                type: string,
+                description: "Matches the domain of the data product that publishes the table's contract.",
+                examples: [retail],
+              }
             use:
               {
                 $ref: "#/$defs/method",

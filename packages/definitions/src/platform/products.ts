@@ -11,10 +11,7 @@ type ProductDocument = DefinitionDocument<ProductDoc>;
 
 /** Each product, by id, after reporting the problems in its output ports. */
 export function resolveProducts(context: Context, tables: ResolvedTable[]): ResolvedProduct[] {
-  const documents = [
-    ...context.project.all(kinds.product),
-    ...context.project.all(kinds.productV1),
-  ].sort((a, b) => byCodePoint(a.file, b.file));
+  const documents = productDocuments(context);
   const named = namedContracts(context);
   const publisher = new Map<string, string>();
   const products: ResolvedProduct[] = [];
@@ -24,6 +21,13 @@ export function resolveProducts(context: Context, tables: ResolvedTable[]): Reso
     products.push(productOf(document, outputsOf(context, document, tables, named, publisher)));
   }
   return products.sort((a, b) => byCodePoint(a.id, b.id));
+}
+
+/** Every ODPS data product document, in path order. */
+export function productDocuments(context: Context): ProductDocument[] {
+  return [...context.project.all(kinds.product), ...context.project.all(kinds.productV1)].sort(
+    (a, b) => byCodePoint(a.file, b.file),
+  );
 }
 
 /**

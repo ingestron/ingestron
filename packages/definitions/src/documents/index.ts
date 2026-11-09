@@ -11,7 +11,7 @@ export {
   type GovernanceDoc,
   type PlatformDoc,
   type ProductDoc,
-  type RuleDoc,
   type StandardDoc,
   type TransformDoc,
 } from "./documents.js";
+export type { RuleDoc, RulesDoc } from "./rules.js";

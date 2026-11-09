@@ -1,5 +1,6 @@
 // What a pack declares: its methods, its smart defaults and how it builds files.
 import type { JsonSchema } from "@ingestron/config";
+import type { History, LoadMode } from "../intent/index.js";
 import type { EnvironmentsBuild } from "./environments.js";
 import type { Column, ResolvedModel, ResolvedTable } from "./model.js";
 
@@ -24,6 +25,12 @@ export interface Rule {
   connector?: string;
   input?: Handover;
   layer?: string;
+  load?: LoadMode;
+  history?: History;
+  classification?: string;
+  tag?: string;
+  product?: string;
+  domain?: string;
   use: string;
   with?: Record<string, unknown>;
 }

@@ -4,18 +4,13 @@ import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
 import { kinds, type ActionDoc } from "../documents/index.js";
 import type { ChosenBy } from "../pack/index.js";
-import type { Action, Handover, Method } from "../pack/index.js";
+import type { Action, Method } from "../pack/index.js";
 import { canServe } from "./can-serve.js";
+import type { Facts } from "./facts.js";
 import { storeFixes } from "./store-fixes.js";
 import { factsOf, fromRule, matches } from "./rule-facts.js";
 
-/** Facts that `when` rules can match. */
-export interface Facts {
-  connectivity?: string;
-  connector?: string;
-  input?: Handover;
-  layer: string;
-}
+export type { Facts } from "./facts.js";
 
 /**
  * The reserved store choice that ends a flow at the files ingest lands, with

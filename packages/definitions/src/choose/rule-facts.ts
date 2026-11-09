@@ -23,9 +23,15 @@ export function fromRule(rule: Rule | RuleDoc, at?: Source): Omit<Choice, "metho
   return { id: rule.use, ...(origin && { origin }), ...(ruleWith && { ruleWith }) };
 }
 
-/** A rule matches when every fact it names equals the table's. */
+/**
+ * A rule matches when every fact it names equals the table's; `tag` matches
+ * when the table's contract has that tag. A fact the table does not have
+ * does not match.
+ */
 export function matches(rule: Rule | RuleDoc, facts: Facts): boolean {
-  return Object.entries(rule).every(
-    ([key, value]) => key === "use" || key === "with" || facts[key as keyof Facts] === value,
-  );
+  return Object.entries(rule).every(([key, value]) => {
+    if (key === "use" || key === "with") return true;
+    if (key === "tag") return facts.tags?.includes(value as string) === true;
+    return facts[key as keyof Facts] === value;
+  });
 }

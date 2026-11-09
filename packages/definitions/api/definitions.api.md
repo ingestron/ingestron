@@ -702,13 +702,25 @@ export interface ResolveResult {
 // @public
 export interface Rule {
     // (undocumented)
+    classification?: string;
+    // (undocumented)
     connectivity?: string;
     // (undocumented)
     connector?: string;
     // (undocumented)
+    domain?: string;
+    // (undocumented)
+    history?: History;
+    // (undocumented)
     input?: Handover;
     // (undocumented)
     layer?: string;
+    // (undocumented)
+    load?: LoadMode;
+    // (undocumented)
+    product?: string;
+    // (undocumented)
+    tag?: string;
     // (undocumented)
     use: string;
     // (undocumented)
@@ -787,13 +799,13 @@ export interface TargetDifference {
 
 // Warnings were encountered during analysis:
 //
-// dist/documents/documents.d.ts:238:5 - (ae-forgotten-export) The symbol "StandardDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:239:5 - (ae-forgotten-export) The symbol "PlatformDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:240:5 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:241:5 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:242:5 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:243:5 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:245:5 - (ae-forgotten-export) The symbol "ProductDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:222:5 - (ae-forgotten-export) The symbol "StandardDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:223:5 - (ae-forgotten-export) The symbol "PlatformDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:224:5 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:225:5 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:226:5 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:227:5 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:229:5 - (ae-forgotten-export) The symbol "ProductDoc" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

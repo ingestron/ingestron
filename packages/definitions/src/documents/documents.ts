@@ -11,6 +11,7 @@ import type {
   StandardIntentDoc,
   TableIntentDoc,
 } from "../intent/index.js";
+import type { RulesDoc } from "./rules.js";
 
 /** An action's method choice and settings, as written in a flow or transform. */
 export interface ActionDoc {
@@ -23,25 +24,6 @@ export interface ExpectationDoc {
   name: string;
   check: string;
   action?: "warn" | "drop" | "fail";
-}
-
-/** A `when` rule as written in a standard. */
-export interface RuleDoc {
-  connectivity?: string;
-  connector?: string;
-  input?: string;
-  layer?: string;
-  use: string;
-  with?: Record<string, unknown>;
-}
-
-/** Per-action rules as written in a standard. */
-export interface RulesDoc {
-  default?: string;
-  allowed?: string[];
-  when?: RuleDoc[];
-  settings?: Record<string, Record<string, unknown>>;
-  fixed?: Record<string, Record<string, unknown>>;
 }
 
 /** A `Standard` document. */

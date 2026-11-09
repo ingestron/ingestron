@@ -11,7 +11,7 @@ import { serveStep } from "./serve.js";
 import { unusedStoreSettings } from "../context/index.js";
 import { resolveStep, type StepResult } from "./steps.js";
 import { renderTableName, type TableNamer } from "../tables/index.js";
-import { flowIntent } from "./declared-intent.js";
+import { flowFacts } from "./rule-facts.js";
 import {
   connectionOf,
   sourceNotKnown,
@@ -62,7 +62,11 @@ function flowTable(
   const layer = namer.layerOf(flow.value.layer, 0, { document: flow, pointer: "/layer" });
   const connection = connectionOf(context, flow.value.source);
   if (!doc || !layer || !connection) return undefined;
-  const facts = { connectivity: connection.connectivity, connector: connection.connector, layer };
+  const { facts, declared } = flowFacts(context, flow, name, {
+    connectivity: connection.connectivity,
+    connector: connection.connector,
+    layer,
+  });
   const steps = stepsOf(context, flow, name, facts);
   if (steps === false) return undefined;
   const contract = flowContract(context, flow, name, steps?.endsAtFiles !== undefined);
@@ -80,7 +84,7 @@ function flowTable(
     origin: { kind: "Flow", id: flow.value.id, file: flow.file },
     contract,
     expectations: expectationsFor(context, contract, doc.expectations),
-    ...flowIntent(context, flow, name, facts),
+    ...declared,
     ...tableSteps(steps, connection, doc.object),
     ...sourceNotKnown(context, flow),
   };

@@ -503,9 +503,30 @@ For each action of each table:
 2. Otherwise the first matching rule of the standard's `when`, then of the
    packs' `when`. A rule matches when every fact it names equals the table's:
    `connectivity` and `connector` of the flow's connection, `input` (what the
-   previous action produces) and `layer`. A pack's rule is skipped when its
-   method cannot read the connection's connector or connectivity, so another
-   pack can serve that source.
+   previous action produces) and `layer`. A standard's rules also match these
+   facts of the table:
+
+   - `load` and `history`: the load mode and history the table declares
+     (section 11.2). Only intent written as intent counts. A pack's defaults,
+     which fill what is left after methods are chosen, are not facts, and
+     neither is a method setting that stands for intent (an alias, whose
+     meaning depends on the method being chosen). A table that declares none
+     has no such fact, and a transform's table has no `load`.
+   - `classification`: the highest classification among the columns of the
+     table's contract, by the order of the standard's
+     `governance.classification.values`. A column whose classification is not
+     in the list does not count. Without that list there is no order, so the
+     table has no `classification` fact.
+   - `tag`: matches when the contract has that tag, whichever schema object it
+     is on.
+   - `product` and `domain`: the id and the `domain` of the first data
+     product, in path order, whose output port names the table's contract. A
+     table no product publishes has neither.
+
+   A fact the table does not have does not match. A pack's rule is skipped
+   when its method cannot read the connection's connector or connectivity, so
+   another pack can serve that source.
+
 3. Otherwise the standard's `default`, else the pack's.
 
 Each step records how its method was chosen (`chosenBy`): `by` is

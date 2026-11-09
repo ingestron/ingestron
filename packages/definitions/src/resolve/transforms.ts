@@ -1,6 +1,6 @@
 // Tables built by transforms, in dependency order (specification section 5).
 import type { DefinitionDocument } from "@ingestron/config";
-import { NO_STORE } from "../choose/index.js";
+import { NO_STORE, type Facts } from "../choose/index.js";
 import { codeWithValues } from "../context/index.js";
 import { checkTransformColumns } from "./transform-columns.js";
 import type { Context } from "../context/index.js";
@@ -8,7 +8,7 @@ import { contractFor, expectationsFor } from "../contracts/index.js";
 import { kinds, type TransformDoc } from "../documents/index.js";
 import { flowTableNames } from "./flows.js";
 import type { ResolvedTable } from "../pack/index.js";
-import { transformIntent } from "./declared-intent.js";
+import { transformFacts } from "./rule-facts.js";
 import { serveStep } from "./serve.js";
 import { resolveStep, stepOf } from "./steps.js";
 import { fullNameText, renderTableName, type TableNamer } from "../tables/index.js";
@@ -104,7 +104,8 @@ function transformTable(
   const value = doc.value;
   const layer = namer.layerOf(value.layer, 1, { document: doc, pointer: "/layer" });
   if (!layer) return undefined;
-  const steps = transformSteps(context, doc, layer);
+  const { facts, declared } = transformFacts(context, doc, layer);
+  const steps = transformSteps(context, doc, facts);
   const contract = contractFor(context, value.id, value.contract, {
     document: doc,
     pointer: "/contract",
@@ -124,7 +125,7 @@ function transformTable(
     origin: { kind: "Transform", id: value.id, file: doc.file },
     contract,
     expectations: expectationsFor(context, contract, value.expectations),
-    ...transformIntent(context, doc, layer),
+    ...declared,
     transform: {
       ...stepOf(steps.transform),
       code,
@@ -136,13 +137,13 @@ function transformTable(
 }
 
 /** A transform reads tables and hands its result to the store step. */
-function transformSteps(context: Context, doc: TransformDocument, layer: string) {
+function transformSteps(context: Context, doc: TransformDocument, facts: Facts) {
   const owner = { owner: doc, doc: doc.value.transform };
-  const transform = resolveStep(context, "transform", owner, { layer, input: "table" }, [], {
+  const transform = resolveStep(context, "transform", owner, { ...facts, input: "table" }, [], {
     method: "inputs",
     produces: "table",
   });
-  const storeFacts = { layer, input: transform?.produces ?? "query" };
+  const storeFacts = { ...facts, input: transform?.produces ?? "query" };
   const store =
     doc.value.store?.uses === NO_STORE
       ? refuseNoStore(context, doc)
@@ -155,7 +156,7 @@ function transformSteps(context: Context, doc: TransformDocument, layer: string)
           transform,
         );
   if (!transform || !store) return undefined;
-  const serve = serveStep(context, { owner: doc, doc: doc.value.serve }, { layer }, store);
+  const serve = serveStep(context, { owner: doc, doc: doc.value.serve }, facts, store);
   if (serve === false) return undefined;
   return serve ? { transform, store, serve } : { transform, store };
 }
