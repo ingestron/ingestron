@@ -26,3 +26,4 @@ methods:
 intent:
   load.mode=full: { use: used, does: Copies the whole object each run. }
   load.mode=changes: { use: not-yet, reason: Changes are not copied yet. }
+  audit=loaded_at: { use: not-yet, reason: Landed files carry no load time yet. }

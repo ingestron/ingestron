@@ -52,7 +52,10 @@ export function judgementsOf(context: Context, table: ResolvedTable): Judgement[
     .filter(judged)
     .flatMap((path) =>
       judgedValues(table.intent, path).flatMap((item) => {
-        const judge = judgeOf(path, steps, item.value);
+        const judge = judgeOf(path, steps, {
+          value: item.value,
+          endsAtFiles: table.endsAtFiles !== undefined,
+        });
         const outcome = judge && outcomeOf(context, judge, path, item);
         return judge && outcome ? [{ path, ...item, pack: judge.pack, outcome }] : [];
       }),

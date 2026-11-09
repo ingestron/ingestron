@@ -1,0 +1,52 @@
+description: A table that ends at the files ingest lands has no store step, so the ingest step judges every value, what is kept and the loaded_at audit column included. Its pack's entries decide; the store pack's are not asked.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, bridge@1]
+    ingest:
+      settings:
+        bridge-copy: { landing: /landing }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: sqlserver
+    connectivity: private
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    store: { uses: none }
+    tables:
+      orders: { object: orders, contract: orders, history: full, audit: [loaded_at] }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  tables:
+    - name: orders
+      ingest: { method: bridge-copy, pack: bridge }
+      store: null
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: sales.yaml
+      line: 7
+      message: "audit: loaded_at isn't applied on bridge: Landed files carry no load time yet."

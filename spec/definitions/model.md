@@ -1319,14 +1319,17 @@ method applies it:
 - the ingest step: `load.*`, `retention.landed_files` and the `audit` values
   `run_id`, `window_start`, `window_end`, `source_object` and
   `source_connection`;
-- the store step, else an ingest step that produces the table: `history`,
-  `sequence`, `storage.*`, `retention.time_travel`, `retention.log`,
-  `rescued` and the `audit` values `loaded_at` and `row_hash`;
+- the store step, else the ingest step (when it produces the table or the
+  table ends at the landed files): `history`, `sequence`, `storage.*`,
+  `retention.time_travel`, `retention.log`, `rescued` and the `audit` values
+  `loaded_at` and `row_hash`;
 - the store step when the ingest step produces files, else the ingest step:
   the `audit` values `source_file` and `source_modified_at`.
 
-Section 11.3 takes the same step for a path when two steps give a default.
-Each item of a list (`audit`, `storage.features`) is judged as its own
+Section 11.3 takes the same step for a path when two steps give a default,
+except that there the ingest step stands in for the store step only when it
+produces the table. A table that ends at the landed files has the ingest step
+as its last step, so it judges every value. Each item of a list (`audit`, `storage.features`) is judged as its own
 value. A value of a path with `*` is judged on the path. A value that is not
 one of the path's values in `intentPaths` (such as `rescued: false`) and a
 path no step judges are not judged; nor is any value of a table that holds
