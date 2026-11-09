@@ -2,13 +2,13 @@
 // default, example and usual place, or for a method which tables use it and
 // what chose it; each with a link to its reference.
 import type { FieldInfo } from "@ingestron/definitions";
-import type { Place } from "../navigation/context.js";
-import { contractUses } from "../assist/contract-uses.js";
-import { fieldAt } from "../assist/fields.js";
+import type { Place } from "../navigation/index.js";
+import { contractUses } from "../assist/index.js";
+import { fieldAt } from "../assist/index.js";
 import { shown } from "./hover.js";
-import type { MethodInfo } from "../assist/methods.js";
-import type { Project } from "../project/project.js";
-import type { Spot } from "../project/yaml.js";
+import type { MethodInfo } from "../assist/index.js";
+import type { Project } from "../project/index.js";
+import type { Spot } from "../project/index.js";
 
 /** How the editor shows documentation links. */
 export interface HoverOptions {

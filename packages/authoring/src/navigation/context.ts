@@ -4,9 +4,9 @@
 // does not parse, because the user is in the middle of typing.
 import { parseDocument } from "yaml";
 import { occurrences } from "./navigation.js";
-import type { Project } from "../project/project.js";
-import { flowPlace, lineStart } from "../project/flow.js";
-import { itemIndex, keyPath } from "../project/yaml.js";
+import type { Project } from "../project/index.js";
+import { flowPlace, lineStart } from "../project/index.js";
+import { itemIndex, keyPath } from "../project/index.js";
 
 /** The place being edited in one open file. */
 export interface Place {

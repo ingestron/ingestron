@@ -3,10 +3,10 @@
 // use it and what chose it, so a method that no file names is explained.
 import { packs } from "@ingestron/core";
 import { methodReference, type ChosenBy, type FieldInfo } from "@ingestron/definitions";
-import type { Place } from "../navigation/context.js";
+import type { Place } from "../navigation/index.js";
 import { settingsAt } from "./fields.js";
-import { resolved, type Project } from "../project/project.js";
-import type { Spot } from "../project/yaml.js";
+import { resolved, type Project } from "../project/index.js";
+import type { Spot } from "../project/index.js";
 
 /** What the editor shows about one method. */
 export interface MethodInfo {

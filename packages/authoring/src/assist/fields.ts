@@ -10,9 +10,9 @@ import {
   type Connector,
   type FieldInfo,
 } from "@ingestron/definitions";
-import type { Place } from "../navigation/context.js";
+import type { Place } from "../navigation/index.js";
 import { parse, stringify } from "yaml";
-import { openProject, resolved, type Project } from "../project/project.js";
+import { openProject, resolved, type Project } from "../project/index.js";
 
 /** A method's settings at a place: the method and the keys below its settings. */
 export interface SettingsAt {

@@ -1,6 +1,6 @@
 // Method names to complete after `uses`, from the standard's packs.
 import { NO_STORE } from "@ingestron/definitions";
-import type { Project } from "../project/project.js";
+import type { Project } from "../project/index.js";
 import { standardPacks } from "./smart.js";
 import type { Suggestion } from "./suggestion.js";
 

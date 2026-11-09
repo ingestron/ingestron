@@ -7,8 +7,8 @@ import { packs } from "@ingestron/core";
 import type { FieldInfo } from "@ingestron/definitions";
 import { stringify } from "yaml";
 import type { Suggestion } from "./completion.js";
-import type { Place } from "../navigation/context.js";
-import type { Project } from "../project/project.js";
+import type { Place } from "../navigation/index.js";
+import type { Project } from "../project/index.js";
 import { packIds, packLists } from "./pack-lists.js";
 import { standardPacks } from "./smart.js";
 

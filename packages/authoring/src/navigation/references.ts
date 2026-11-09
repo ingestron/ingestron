@@ -2,7 +2,7 @@
 // document has a problem and the project does not load: values for the
 // environment, the environment's name, and the project's id and name.
 import { parseDocument } from "yaml";
-import type { Project } from "../project/project.js";
+import type { Project } from "../project/index.js";
 
 type Manifest = {
   id?: unknown;

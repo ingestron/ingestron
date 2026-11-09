@@ -3,7 +3,7 @@
 // from the same index as go to definition and references.
 import { dirname, posix } from "node:path";
 import { occurrences, occurrencesAt, referencesAt } from "./navigation.js";
-import type { Project } from "../project/project.js";
+import type { Project } from "../project/index.js";
 
 /** The edits that rename the id at the offset everywhere, by file. */
 export function renameAt(

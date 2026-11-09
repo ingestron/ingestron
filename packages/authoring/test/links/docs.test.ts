@@ -1,6 +1,6 @@
 // The documentation links the editor shows.
 import { describe, expect, it } from "vitest";
-import { codeDocs, docsLinks, docsUrl } from "../../src/docs/docs.js";
+import { codeDocs, docsLinks, docsUrl } from "../../src/links/docs.js";
 
 describe("docs links", () => {
   it("link a problem code to its entry on the errors page", () => {

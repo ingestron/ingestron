@@ -3,10 +3,10 @@
 import { basename } from "node:path";
 import { projectId } from "@ingestron/core";
 import type { Suggestion } from "./completion.js";
-import { occurrences } from "../navigation/navigation.js";
+import { occurrences } from "../navigation/index.js";
 import { packIds } from "./pack-lists.js";
-import type { Project } from "../project/project.js";
-import { idsOf } from "../navigation/context.js";
+import type { Project } from "../project/index.js";
+import { idsOf } from "../navigation/index.js";
 import { objectOf, standardPacks, unusedContracts } from "./smart.js";
 
 /** A tab stop with a choice of values, or with one default. */

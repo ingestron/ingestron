@@ -4,8 +4,8 @@
 // that already depends on it, which would make a cycle.
 import type { Suggestion } from "./completion.js";
 import { positioned } from "./fixes.js";
-import { occurrences } from "../navigation/navigation.js";
-import type { Project } from "../project/project.js";
+import { occurrences } from "../navigation/index.js";
+import type { Project } from "../project/index.js";
 import { parse } from "yaml";
 
 /** A transform document: its file, id and declared inputs. */

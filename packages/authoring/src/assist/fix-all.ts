@@ -1,8 +1,8 @@
 // Fix all: every problem of one code fixed by one action, each with its first
 // fix, and an edit that several problems share made once.
-import { problems } from "../diagnostics/diagnostics.js";
+import { problems } from "../diagnostics/index.js";
 import { positioned, type QuickFix } from "./fixes.js";
-import type { Project } from "../project/project.js";
+import type { Project } from "../project/index.js";
 
 /** One fix for every problem with `code` that has a fix, when there are two or more. */
 export function fixAll(

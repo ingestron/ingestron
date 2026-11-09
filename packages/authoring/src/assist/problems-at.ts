@@ -1,11 +1,11 @@
 // The problems on the cursor's line, explained for the Reference panel: the
 // problem's own hint, its code's meaning and fix, and the quick fixes offered.
 import { codeHelp, loadingCodeHelp } from "@ingestron/definitions";
-import { problems } from "../diagnostics/diagnostics.js";
-import { codeDocs } from "../docs/docs.js";
+import { problems } from "../diagnostics/index.js";
+import { codeDocs } from "../links/index.js";
 import { quickFixes } from "./fixes.js";
-import type { Project } from "../project/project.js";
-import { positionAt } from "../project/yaml.js";
+import type { Project } from "../project/index.js";
+import { positionAt } from "../project/index.js";
 
 /** A problem on the cursor's line, explained. */
 export interface ProblemEntry {

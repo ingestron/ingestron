@@ -3,8 +3,8 @@
 // the project's files with open editors read first.
 import { compareEnvironments as compare, platformRequest as request } from "@ingestron/core";
 import { formatDiagnostics, type AnyDiagnostic } from "@ingestron/config";
-import { refusedPacks } from "../project/pack-load.js";
-import type { Project } from "../project/project.js";
+import { refusedPacks } from "../project/index.js";
+import type { Project } from "../project/index.js";
 
 /** The request as Markdown for the environment, as `ingestron request` prints it. */
 export function platformRequest(project: Project, environment: string | undefined): string {

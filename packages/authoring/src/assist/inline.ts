@@ -4,7 +4,7 @@
 import { nameVariables } from "@ingestron/definitions";
 import { parse } from "yaml";
 import { names, type Suggestion } from "./completion.js";
-import type { Project } from "../project/project.js";
+import type { Project } from "../project/index.js";
 
 /** What can follow `${`, as the definitions' syntax allows. */
 const referenceForms: Record<string, string> = {

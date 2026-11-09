@@ -6,9 +6,9 @@ import { parseTemplate } from "@ingestron/core";
 import { kinds } from "@ingestron/definitions";
 import { digestOf } from "@ingestron/generate";
 import type { Fix } from "@ingestron/config";
-import { editorDiagnostics } from "../generation/generation.js";
-import { loadedDocuments, type Project } from "../project/project.js";
-import type { Position } from "../project/yaml.js";
+import { editorDiagnostics } from "../generation/index.js";
+import { loadedDocuments, type Project } from "../project/index.js";
+import type { Position } from "../project/index.js";
 
 /** One problem in one file of the project. */
 export interface Problem {

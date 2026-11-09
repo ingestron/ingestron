@@ -1,9 +1,9 @@
 // The generated files, in memory, exactly as the CLI would write them, and
 // the ones that belong to the table at the cursor.
-import { kindOf } from "../navigation/context.js";
+import { kindOf } from "../navigation/index.js";
 import { environmentName, generationOf } from "./generation.js";
-import type { Project } from "../project/project.js";
-import { keyPath } from "../project/yaml.js";
+import type { Project } from "../project/index.js";
+import { keyPath } from "../project/index.js";
 
 /** One generated file, at its path in the project (under build/). */
 export interface Generated {

@@ -5,7 +5,7 @@
 import { generatedOutputs, type GeneratedOutputs } from "@ingestron/core";
 import type { AnyDiagnostic } from "@ingestron/config";
 import { deployAdvice } from "./deploy-advice.js";
-import { resolved, type Project } from "../project/project.js";
+import { resolved, type Project } from "../project/index.js";
 
 const generations = new WeakMap<Project, GeneratedOutputs>();
 

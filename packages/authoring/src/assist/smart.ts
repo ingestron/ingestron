@@ -5,9 +5,9 @@
 import { packs } from "@ingestron/core";
 import type { Method } from "@ingestron/definitions";
 import type { Suggestion } from "./completion.js";
-import { documentOf, flowFacts, idsOf, type Place } from "../navigation/context.js";
-import { occurrences } from "../navigation/navigation.js";
-import type { Project } from "../project/project.js";
+import { documentOf, flowFacts, idsOf, type Place } from "../navigation/index.js";
+import { occurrences } from "../navigation/index.js";
+import type { Project } from "../project/index.js";
 
 /** The packs the project's standard names, as the CLI provides them. */
 export function standardPacks(project: Project): typeof packs {

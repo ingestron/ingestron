@@ -1,7 +1,7 @@
 // The project's named things: tables, documents and values, where each is
 // defined, for "Go to Symbol in Workspace" and a file's outline.
 import { occurrences } from "./navigation.js";
-import type { Project } from "../project/project.js";
+import type { Project } from "../project/index.js";
 
 /** One named thing and where it is defined. */
 export interface ProjectSymbol {

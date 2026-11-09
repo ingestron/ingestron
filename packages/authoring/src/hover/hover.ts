@@ -3,15 +3,15 @@
 // under `with`, that one value and where it was set; for any described field
 // its meaning, values, default, example, usual place and documentation.
 import { type Origin, type ResolvedTable, type Step } from "@ingestron/definitions";
-import { kindOf, placeAt, type Place } from "../navigation/context.js";
-import { referenceAround, referenceValue } from "../navigation/references.js";
+import { kindOf, placeAt, type Place } from "../navigation/index.js";
+import { referenceAround, referenceValue } from "../navigation/index.js";
 import { explainField, methodText, type HoverOptions } from "./explain.js";
-import { methodAt, methodInfo } from "../assist/methods.js";
-import { resolvedForDisplay, type Project } from "../project/project.js";
-import { holdsSecret } from "../project/without-env-files.js";
-import { schemaFor, schemasAt } from "../project/schema.js";
-import { spotAt, type Spot } from "../project/yaml.js";
-import { stepsNotKnown, targetOf } from "../project/target.js";
+import { methodAt, methodInfo } from "../assist/index.js";
+import { resolvedForDisplay, type Project } from "../project/index.js";
+import { holdsSecret } from "../project/index.js";
+import { schemaFor, schemasAt } from "../project/index.js";
+import { spotAt, type Spot } from "../project/index.js";
+import { stepsNotKnown, targetOf } from "../project/index.js";
 
 const actions = ["ingest", "transform", "store", "serve"] as const;
 

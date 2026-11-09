@@ -1,6 +1,6 @@
 // What each of the project's packs does with a contract field, in words.
 import { contractUseOf, type ContractUse, type PackInfo } from "@ingestron/definitions";
-import { resolved, type Project } from "../project/project.js";
+import { resolved, type Project } from "../project/index.js";
 import { standardPacks } from "./smart.js";
 
 const statuses = {

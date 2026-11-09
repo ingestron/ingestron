@@ -3,11 +3,11 @@
 import type { Fix } from "@ingestron/config";
 import { packs } from "@ingestron/core";
 import { parse } from "yaml";
-import { placeAt } from "../navigation/context.js";
+import { placeAt } from "../navigation/index.js";
 import { settingsAt } from "./fields.js";
 import { positioned, type QuickFix } from "./fixes.js";
-import { openProject, resolved, type Project } from "../project/project.js";
-import { spotAt } from "../project/yaml.js";
+import { openProject, resolved, type Project } from "../project/index.js";
+import { spotAt } from "../project/index.js";
 
 const pointerOf = (segments: string[]) =>
   segments.map((segment) => `/${segment.replaceAll("~", "~0").replaceAll("/", "~1")}`).join("");

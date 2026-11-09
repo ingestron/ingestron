@@ -1,15 +1,15 @@
 // The reference entry for the place under the cursor, for a panel beside the
 // editor: the problems on that line with their meaning and fixes, then the
 // field or value there, or else the document kind and its fields.
-import { problemsAt, type ProblemEntry } from "../assist/problems-at.js";
+import { problemsAt, type ProblemEntry } from "../assist/index.js";
 import { documentReference, referenceKinds, type FieldInfo } from "@ingestron/definitions";
-import { placeAt, type Place } from "../navigation/context.js";
-import { connectorOf, fieldAt, settingsAt } from "../assist/fields.js";
-import { methodAt, methodInfo, type MethodInfo } from "../assist/methods.js";
-import { shown } from "../hover/hover.js";
-import type { Project } from "../project/project.js";
-import { contractUses } from "../assist/contract-uses.js";
-import { spotAt, type Spot } from "../project/yaml.js";
+import { placeAt, type Place } from "../navigation/index.js";
+import { connectorOf, fieldAt, settingsAt } from "../assist/index.js";
+import { methodAt, methodInfo, type MethodInfo } from "../assist/index.js";
+import { shown } from "../hover/index.js";
+import type { Project } from "../project/index.js";
+import { contractUses } from "../assist/index.js";
+import { spotAt, type Spot } from "../project/index.js";
 
 export type { ProblemEntry };
 

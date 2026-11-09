@@ -1,12 +1,12 @@
 // What a line resolves to, shown beside it: a variable's value, a table's full
 // name with the methods that build it, and the files generated from it.
 import { NO_STORE, type ChosenBy, type ResolvedTable } from "@ingestron/definitions";
-import { stepsNotKnown, targetOf } from "../project/target.js";
-import { generatedFiles, generatedForTable } from "../generation/preview.js";
-import { documentsOf, resolvedForDisplay, type Project } from "../project/project.js";
-import { holdsSecret } from "../project/without-env-files.js";
-import { resolveText } from "../navigation/references.js";
-import { allSpots, positionAt, rangeOf } from "../project/yaml.js";
+import { stepsNotKnown, targetOf } from "../project/index.js";
+import { generatedFiles, generatedForTable } from "../generation/index.js";
+import { documentsOf, resolvedForDisplay, type Project } from "../project/index.js";
+import { holdsSecret } from "../project/index.js";
+import { resolveText } from "../navigation/index.js";
+import { allSpots, positionAt, rangeOf } from "../project/index.js";
 
 /** A note at the end of a line, with more on hover. */
 export interface Annotation {

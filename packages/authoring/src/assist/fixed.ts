@@ -2,10 +2,10 @@
 // standard's `fixed` sets, completion offers that value first and marks the
 // others, so nobody picks a value that is then refused.
 import type { Suggestion } from "./completion.js";
-import type { Place } from "../navigation/context.js";
+import type { Place } from "../navigation/index.js";
 import { settingsAt } from "./fields.js";
-import { documentsOf, type Project } from "../project/project.js";
-import { holdsSecret } from "../project/without-env-files.js";
+import { documentsOf, type Project } from "../project/index.js";
+import { holdsSecret } from "../project/index.js";
 
 /** `items` with the fixed value first and the others marked, or unchanged when nothing is fixed here. */
 export function markFixed(

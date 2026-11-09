@@ -2,11 +2,11 @@
 // as text edits with line and character positions.
 import { fixEdits, type Fix } from "@ingestron/config";
 import { parse } from "yaml";
-import { problems, type Problem } from "../diagnostics/diagnostics.js";
-import type { Project } from "../project/project.js";
+import { problems, type Problem } from "../diagnostics/index.js";
+import type { Project } from "../project/index.js";
 import { plainText, skeletons } from "./skeletons.js";
-import { occurrences } from "../navigation/navigation.js";
-import { offsetAt, positionAt, type Position } from "../project/yaml.js";
+import { occurrences } from "../navigation/index.js";
+import { offsetAt, positionAt, type Position } from "../project/index.js";
 
 /** One quick fix: its title, the problem it solves, and edits that may span files. */
 export interface QuickFix {

@@ -3,14 +3,14 @@
 // settings of the method a table resolves to.
 import { packs } from "@ingestron/core";
 import { kinds, referenceKinds, type FieldInfo, type Method } from "@ingestron/definitions";
-import { occurrences } from "../navigation/navigation.js";
-import type { Project } from "../project/project.js";
+import { occurrences } from "../navigation/index.js";
+import type { Project } from "../project/index.js";
 import { inlineCompletions, patternNames } from "./inline.js";
-import { schemaFor, schemasAt } from "../project/schema.js";
+import { schemaFor, schemasAt } from "../project/index.js";
 import { skeletons } from "./skeletons.js";
 import { firstFields, itemSnippets, newTables, preferred, rankMethods } from "./smart.js";
 import { methodChoices } from "./method-suggestions.js";
-import { flowFacts, placeAt, writtenKeys, type Place } from "../navigation/context.js";
+import { flowFacts, placeAt, writtenKeys, type Place } from "../navigation/index.js";
 import { fieldAt, fieldsIn } from "./fields.js";
 import { markFixed } from "./fixed.js";
 import type { Suggestion } from "./suggestion.js";

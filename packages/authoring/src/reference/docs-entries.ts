@@ -10,8 +10,8 @@ import {
   referenceKinds,
   type FieldInfo,
 } from "@ingestron/definitions";
-import { methodInfo } from "../assist/methods.js";
-import type { Project } from "../project/project.js";
+import { methodInfo } from "../assist/index.js";
+import type { Project } from "../project/index.js";
 import { documentEntry, fieldEntry, methodEntry, type ReferenceEntry } from "./reference.js";
 
 const noSpot = {

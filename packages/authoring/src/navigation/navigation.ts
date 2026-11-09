@@ -2,8 +2,8 @@
 // place an id is defined or used; these and rename all read from it, so they agree.
 import { kinds } from "@ingestron/definitions";
 import { dirname, join, normalize } from "node:path";
-import type { Project } from "../project/project.js";
-import { allSpots, type Spot } from "../project/yaml.js";
+import type { Project } from "../project/index.js";
+import { allSpots, type Spot } from "../project/index.js";
 
 /** A range of text in a project file (offsets). */
 export interface Place {
