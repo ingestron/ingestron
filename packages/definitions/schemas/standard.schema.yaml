@@ -33,7 +33,8 @@ properties:
   features:
     enum: [ga, preview]
     description: >-
-      Which release status of platform features this standard may use. Default: `ga`.
+      Which release status of platform features this standard may use. Without it, nothing is
+      reported.
     enumDescriptions:
       - Only features that are generally available.
       - Features in preview as well; they may change or be withdrawn.

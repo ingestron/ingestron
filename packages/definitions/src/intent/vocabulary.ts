@@ -94,6 +94,7 @@ export const intentPaths: Record<string, readonly string[]> = {
     "type_widening",
     "iceberg_reads",
   ],
+  "operations.schedule": ["project", "flow"],
   "operations.trigger": ["schedule", "files", "upstream", "continuous"],
   "operations.retries": ["*"],
   "operations.timeout": ["*"],

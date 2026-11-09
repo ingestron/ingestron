@@ -3,6 +3,7 @@
 import { merge } from "../internal/index.js";
 import type { Intent } from "../intent/index.js";
 import type { Method } from "../pack/index.js";
+import type { PackRuleAlias } from "./aliases.js";
 import type { MergedIntent } from "./intent-stages.js";
 import { intentAt, leaves, valueAtIntentPath } from "./intent-values.js";
 import { judgeOf } from "./judging-step.js";
@@ -32,6 +33,22 @@ export function fillDefaults(completed: MergedIntent, chosen: ChosenStep[]): voi
     ) as Intent;
     completed.origins[path] = { layer: "pack" };
   }
+}
+
+/**
+ * Fills every intent path still unset from the aliased settings of the packs' own rules,
+ * with the origin `pack` naming the setting: before the methods' defaults, so they win.
+ */
+export function fillPackRules(completed: MergedIntent, rules: PackRuleAlias[]): void {
+  for (const { setting, intent } of rules)
+    for (const path of leaves(intent)) {
+      if (valueAtIntentPath(completed.intent, path) !== undefined) continue;
+      completed.intent = merge(
+        completed.intent as Record<string, unknown>,
+        intentAt(path, valueAtIntentPath(intent, path)) as Record<string, unknown>,
+      ) as Intent;
+      completed.origins[path] = { layer: "pack", alias: setting };
+    }
 }
 
 function defaultAt(method: Method, path: string): unknown {

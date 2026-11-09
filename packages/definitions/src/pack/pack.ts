@@ -1,6 +1,6 @@
 // What a pack declares: its methods, its smart defaults and how it builds files.
 import type { JsonSchema } from "@ingestron/config";
-import type { History, Intent, IntentUse, LoadMode, SettingAlias } from "../intent/index.js";
+import type { Intent, IntentUse, SettingAlias } from "../intent/index.js";
 import type { EnvironmentsBuild } from "./environments.js";
 import type { Column, ResolvedModel, ResolvedTable } from "./model.js";
 
@@ -17,7 +17,9 @@ export type Action = "ingest" | "transform" | "store" | "serve";
 export type Handover = "files" | "table" | "query";
 
 /**
- * Facts a `when` rule can match, plus the method it chooses and settings for that case.
+ * Facts a pack's `when` rule can match, plus the method it chooses and settings for that
+ * case. A standard's rules may also match the table's declared load mode and history,
+ * classification, tag, product and domain; a pack's rules match only these.
  * @public
  */
 export interface Rule {
@@ -25,12 +27,6 @@ export interface Rule {
   connector?: string;
   input?: Handover;
   layer?: string;
-  load?: LoadMode;
-  history?: History;
-  classification?: string;
-  tag?: string;
-  product?: string;
-  domain?: string;
   use: string;
   with?: Record<string, unknown>;
 }

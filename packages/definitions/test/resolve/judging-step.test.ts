@@ -21,7 +21,7 @@ const shapes = {
 
 /** Paths and audit values, with the step that judges each in every shape. */
 const cases: { path: string; value?: string; judge: Record<keyof typeof shapes, string> }[] = [
-  ...["load.mode", "load.cursor", "load.deletes.mode", "retention.landed_files"].map((path) => ({
+  ...["load.mode", "load.cursor", "retention.landed_files"].map((path) => ({
     path,
     judge: {
       "ingest writes the table": "ingest",
@@ -30,6 +30,8 @@ const cases: { path: string; value?: string; judge: Record<keyof typeof shapes, 
     },
   })),
   ...[
+    "load.deletes.mode",
+    "load.deletes.when",
     "history",
     "sequence",
     "rescued",

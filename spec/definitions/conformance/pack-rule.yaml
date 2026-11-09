@@ -1,0 +1,42 @@
+# A data-only pack whose own rule writes `with`, for the cases about a pack's rules and
+# intent (section 11.4). Its connectors are its own, so it offers no fixes in the other
+# cases.
+id: ruled
+version: 1
+defaults:
+  naming:
+    catalog: "{{ environment }}"
+    schema: "{{ layer }}"
+    table: "{{ table }}"
+    pipeline: "{{ project }}"
+    job: "{{ project }}_refresh"
+  layers: [bronze, silver, gold]
+  types:
+    {
+      string: STRING,
+      integer: BIGINT,
+      number: DOUBLE,
+      boolean: BOOLEAN,
+      date: DATE,
+      timestamp: TIMESTAMP,
+    }
+  quality: { required: warn, default: warn }
+rules:
+  ingest:
+    default: stream-read
+    when:
+      - { connector: stream, use: stream-read, with: { mode: append } }
+methods:
+  stream-read:
+    action: ingest
+    description: Reads a stream or a log of changes into a table.
+    connectors: [stream, changes]
+    produces: table
+    defaults: { mode: upsert }
+    intentDefaults: { history: latest }
+    aliases:
+      mode: { values: { append: { history: none }, upsert: { history: latest } } }
+    settings:
+      type: object
+      additionalProperties: false
+      properties: { mode: { enum: [append, upsert] } }

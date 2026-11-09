@@ -7,7 +7,7 @@ import type { AliasStage } from "./aliases.js";
 import { changedFixed, reportFixed } from "./fixed-values.js";
 import type { IntentStage } from "./intent-stages.js";
 import { describeIntent, leaves, valueAtIntentPath } from "./intent-values.js";
-import { settingMovedFix } from "./setting-moved.js";
+import { settingMovedFix, settingMovedHint } from "./setting-moved.js";
 
 type Written = Record<string, unknown>;
 
@@ -41,7 +41,7 @@ export function checkedAliases(
       "SETTING_MOVED",
       `"${alias.setting}" is now written as intent: ${describeIntent(alias.intent)}.`,
       alias.at,
-      undefined,
+      fix ? undefined : settingMovedHint,
       fix ? [fix] : [],
     );
     return true;

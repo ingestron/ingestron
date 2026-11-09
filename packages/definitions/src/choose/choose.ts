@@ -25,7 +25,8 @@ export interface Choice {
   id: string;
   method: Method;
   origin?: Source;
-  ruleWith?: { value: Record<string, unknown>; at?: Source };
+  /** The matching rule's settings; `facts` names the rule in messages. */
+  ruleWith?: { value: Record<string, unknown>; at?: Source; facts: string };
   /** How it was chosen; `at` is where a written choice is. */
   chosenBy: Omit<ChosenBy, "file" | "line"> & { at?: Source };
 }

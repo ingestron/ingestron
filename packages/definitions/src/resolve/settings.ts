@@ -19,6 +19,8 @@ export interface SettingsLayer {
   definition?: boolean;
   /** Which layer this is, recorded in each setting's origin. */
   origin: Origin["layer"];
+  /** For a pack's own rule's `with`, the rule's facts as messages write them (`connector kafka`). */
+  packRule?: string;
 }
 
 // Verbose, so each failure carries the failing value: for messages and unset references.

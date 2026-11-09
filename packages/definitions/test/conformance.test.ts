@@ -67,6 +67,7 @@ const packs = [
   "pack-intent.yaml",
   "pack-ops.yaml",
   "pack-databricks.yaml",
+  "pack-rule.yaml",
 ].map((file) =>
   packOf(
     parse(readFileSync(join(folder, file), "utf8")) as PackInfo & { buildEnvironments?: true },

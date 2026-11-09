@@ -198,7 +198,8 @@ at the value, for each one that holds a deploy-time value:
   `storage.features`);
 - a Flow's, a flow table's and a Transform's `history`, and a Flow's and a
   flow table's `load.mode` and `load.deletes.mode`;
-- a Platform's `naming` and `mode`;
+- a Platform's `naming` and `mode`, and `mode` in its `databricks` section
+  (section 7);
 - a DataProduct's output ports' `contractId`.
 
 Any other error that section 1 would leave out at a value that holds a
@@ -847,6 +848,18 @@ what it needs, and a fix that sets `manage.<capability>: true` in the
 platform. Grants in the platform with `manage.schemas` off are
 `CAPABILITY_OFF` at `grants`, with the same fix.
 
+`manage` and `grants` are read as the model's `platform` has them (section 7):
+written in the `databricks` section, they count exactly as at the top, and
+grants written there are reported at `/databricks/grants`. When the standard
+names a pack `databricks` that has a Platform section, the fix
+`Turn on manage.<capability>` sets `/databricks/manage/<capability>` and the
+hint names `databricks.manage.<capability>`; when the Platform writes `manage`
+only at the top, the fix instead sets `/databricks/manage` to that mapping,
+as written, with the capability turned on, and removes the old key, so the
+section and the top never disagree (when that mapping cannot be read as
+written, the fix sets `/manage/<capability>`). Without that pack, the fix sets
+`/manage/<capability>`.
+
 ### 7.2 Pack sections
 
 A pack MAY declare, as data, `platformSection`: a JSON Schema for its section
@@ -1169,7 +1182,16 @@ every version, and `bitemporal` every version with valid and recorded time.
 `window_end` and `row_hash`, each as text or as `{ value, as }`. Each is a
 column added after the contract's columns; it is not a contract column. Its
 name is `_<value>` unless `as` gives another, which MUST match
-`^[a-z_][a-z0-9_]*$`.
+`^[a-z_][a-z0-9_]*$`. Each column has a name of its own: once a table's intent
+is resolved (sections 11.2 to 11.4), an entry of its `audit` whose name an
+earlier entry has, or a column of the table's contract has (compared without
+case), is `BAD_SETTING`, an error at that entry where it was written (at the
+place the list was written when it came from a setting, and without a place
+when it came from a pack's default):
+`The audit column "<as>" is named twice.` or
+`The audit column "<as>" has the name of a contract column.`, with the hint
+`Give each audit column a name of its own with "as".` The table is still
+resolved.
 
 **Rescued.** `rescued: true` keeps data that does not fit the contract in a
 rescued column instead of losing it.
@@ -1202,9 +1224,9 @@ A **duration** is a whole number and a unit, `s`, `m`, `h` or `d`, matching
 as `intentPaths`, for coverage maps: `load.mode`, `load.cursor`,
 `load.deletes.mode`, `load.deletes.when`, `history`, `sequence`, `audit`,
 `rescued`, `retention.time_travel`, `retention.log`, `retention.landed_files`,
-`storage.clustering`, `storage.features`, `operations.trigger`,
-`operations.retries`, `operations.timeout`, `operations.alerts`,
-`operations.concurrency` and `quality.results`. A value of `*` stands for any
+`storage.clustering`, `storage.features`, `operations.schedule`,
+`operations.trigger`, `operations.retries`, `operations.timeout`,
+`operations.alerts`, `operations.concurrency` and `quality.results`. A value of `*` stands for any
 text.
 
 ### 11.2 Precedence
@@ -1273,16 +1295,18 @@ declared intent (section 11.2) is completed in this order:
 
 1. each chosen method's aliased settings become intent at their places
    (section 11.4);
-2. the chosen methods' `intentDefaults` fill every intent path still unset.
+2. the aliased settings of the packs' own rules fill every intent path still
+   unset, with the origin `pack` (section 11.4);
+3. the chosen methods' `intentDefaults` fill every intent path still unset.
    When several steps give a default for the same path, the step that judges
-   the path gives it: the ingest step for `load.*` and
-   `retention.landed_files`; the store step for `history`, `sequence`,
-   `storage.*`, `retention.time_travel`, `retention.log` and `rescued` (else
-   an ingest step that produces the table); for any other path, or when the
-   judging step gives none, the later step (in the order ingest or
-   transform, store, serve). A path filled this way has the origin `pack`,
-   with no file or line;
-3. each chosen method's aliased settings are written from the result
+   the path gives it: the ingest step for `load.mode`, `load.cursor` and
+   `retention.landed_files`; the store step for `load.deletes.*`, `history`,
+   `sequence`, `storage.*`, `retention.time_travel`, `retention.log` and
+   `rescued` (else an ingest step that produces the table); for any other
+   path, or when the judging step gives none, the later step (in the order
+   ingest or transform, store, serve). A path filled this way has the origin
+   `pack`, with no file or line;
+4. each chosen method's aliased settings are written from the result
    (section 11.4).
 
 Pack defaults are not rule facts (section 4): they come after the methods are
@@ -1314,6 +1338,17 @@ and line of the setting. A method's own `defaults` are not intent. A value
 that holds an unset reference (section 1) stands for nothing, as in section
 11.2. Aliases are not rule facts (section 4).
 
+**A pack's rules.** A pack's own `when` rule may write `with` (section 4).
+Its aliased settings are not declared intent: they are read as intent with
+the origin `pack`, naming the setting as `alias`, with no file or line, after
+the declared intent and the aliased settings at their places and before the
+methods' `intentDefaults` (section 11.3). So they fill only what is still
+unset, and win over a method's defaults: the conformance pack's rule
+`{ connector: stream, use: stream-read, with: { mode: append } }` makes
+`history: none` the table's intent when nothing declares another. Like a
+pack's default, such a value is not judged (section 11.5) and is not
+`SETTING_MOVED`.
+
 **Origins.** The origin of a value that came from an aliased setting also
 names the setting, as `alias` (`mode`), beside the layer, file and line of the
 setting. The origin of intent written as intent, and of a pack's default, has
@@ -1326,20 +1361,17 @@ existed.
 **`SETTING_MOVED`.** Each aliased setting outside the standard's `fixed` is
 `SETTING_MOVED`, a warning at the setting: `"<setting>" is now written as
 intent: <intent>.`, the intent written as `<path>: <value>`, joined with
-`, `. Its fix, `Write as intent`, writes the intent at the same place and
-removes the setting:
-
-- in a flow's or transform's `<action>.with`, as the flow's or transform's
-  own intent; in a flow table's, as the table's;
-- in the standard's `settings.<method>`, in its top-level sections
-  (`load.mode` as `load.default`, `load.deletes.mode` as `load.deletes`,
-  `audit`, `rescued`, `retention`, `storage`). `history` has no top-level
-  field, so it is written to every layer that does not set it: a layer written
-  as a name becomes `{ name, history }`, and a standard with no `layers` gets
-  the pack's default layers written that way;
-- in a rule's `with` or the platform, or for a path the standard has no field
-  for, there is no fix; nor when the setting is written as, or with, a
-  `${…}` reference, which intent cannot keep.
+`, `. Intent reaches more than the setting did: written for a whole standard,
+layer or transform, it also applies to other methods and steps, which may
+read it where the setting meant nothing to them. So a fix is offered only
+in a flow's `ingest.with`, `store.with` or `serve.with`, or a flow table's
+`<action>.with`, where the intent covers only that flow's tables. Its fix,
+`Write as intent`, writes the intent as the flow's or the table's own intent
+and removes the setting. Elsewhere (the standard's `settings.<method>`, the
+platform, a rule's `with`, a transform's `<action>.with`) there is no fix;
+nor is there one when the setting is written as, or with, a `${…}`
+reference, which intent cannot keep. Without a fix, the hint is
+`Write the intent by hand where it should apply, and remove this setting.`
 
 The standard's `fixed.<method>` is not `SETTING_MOVED`: it is read as fixed
 intent for that method's tables and keeps its force as it is written.
@@ -1379,7 +1411,31 @@ had. The setting keeps its merged value when:
   but is kept as written;
 - the last place that wrote it (section 3) comes later in the precedence than
   that origin, the platform's settings counting as the standard's: such a
-  setting either is the intent at its place or stands for none, and is kept.
+  setting either is the intent at its place or stands for none, and is kept;
+- the last place that wrote it is a pack's rule: the pack chose that value,
+  and intent never changes it;
+- the last place that wrote it (not a method's `defaults`) wrote a value that
+  a `values` alias does not list: it stands for no intent, and intent never
+  changes it.
+
+**Not applied.** Intent that a setting kept for one of the last two reasons
+does not follow is `NOT_APPLIED`, a warning at the intent's value where it
+was written, `<pack>` being the step's pack:
+
+- kept for a pack's rule: each path of the intent the rule's value stands for
+  whose value has an origin other than `pack` and differs, or, for a value
+  the alias does not list, the path the setting would have been written from
+  when that gives another value:
+  `<path>: <value> isn't applied on <pack>: the pack's rule for <facts> writes "<setting>: <value>".`,
+  the rule's facts written `<fact> <value>` and joined with "and"
+  (`connector kafka`);
+- kept for a value the alias does not list: when the completed intent would
+  have written another value, from a path whose origin comes at the same
+  place as the setting's last writer or later:
+  `<path>: <value> isn't applied on <pack>: the setting "<setting>: <written value>" in <file> decides it.`,
+  the file being where the setting was written last.
+
+A value reported here is not judged again (section 11.5).
 
 A written value the method's settings schema refuses is `BAD_SETTING` where
 the intent was written: `Settings for "<method>": the intent written here
@@ -1415,11 +1471,12 @@ value; the implementation gives the gaps as `intentCoverageGaps`. A value of
 each value whose origin is not `pack` is judged by one step, the step whose
 method applies it:
 
-- the ingest step: `load.*`, `retention.landed_files` and the `audit` values
-  `run_id`, `window_start`, `window_end`, `source_object` and
-  `source_connection`;
+- the ingest step: `load.mode`, `load.cursor`, `retention.landed_files` and
+  the `audit` values `run_id`, `window_start`, `window_end`, `source_object`
+  and `source_connection`;
 - the store step, else the ingest step (when it produces the table or the
-  table ends at the landed files): `history`, `sequence`, `storage.*`,
+  table ends at the landed files): `load.deletes.*`, which the step that
+  writes the table applies, `history`, `sequence`, `storage.*`,
   `retention.time_travel`, `retention.log`, `rescued` and the `audit` values
   `loaded_at` and `row_hash`;
 - the store step when the ingest step produces files, else the ingest step:

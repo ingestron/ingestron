@@ -41,6 +41,7 @@ describe("intentPaths", () => {
       "retention.landed_files",
       "storage.clustering",
       "storage.features",
+      "operations.schedule",
       "operations.trigger",
       "operations.retries",
       "operations.timeout",
@@ -56,6 +57,7 @@ describe("intentPaths", () => {
     expect(intentPaths.audit).toHaveLength(9);
     expect(intentPaths["storage.features"]).toHaveLength(5);
     expect(intentPaths["operations.alerts"]).toEqual(["failure", "slow"]);
+    expect(intentPaths["operations.schedule"]).toEqual(["project", "flow"]);
     expect(intentPaths.rescued).toEqual(["true"]);
   });
 });

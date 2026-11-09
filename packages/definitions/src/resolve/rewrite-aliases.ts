@@ -4,33 +4,35 @@ import { holdsUnsetEnvvar, type Source } from "../diagnostics/index.js";
 import { sameValue } from "../internal/index.js";
 import type { Intent, SettingAlias } from "../intent/index.js";
 import type { Method, Origin } from "../pack/index.js";
+import { keptSetting, type Match } from "./kept-settings.js";
 import { positionOf, type MergedIntent } from "./intent-stages.js";
 import { leaves, valueAtIntentPath } from "./intent-values.js";
 import { knownSettings, refusesSetting } from "./settings.js";
 import type { StepResult } from "./steps.js";
 
-/** The value an aliased setting takes from intent, the intent path it is attributed to, and its origin. */
-interface Match {
-  value: unknown;
-  path: string;
-  origin: Origin;
-}
-
 /**
  * Writes each aliased setting of the step from the completed intent, changing the step's
  * settings and origins in place. Only declared intent writes a setting, never a pack's
  * default alone; a setting written later in the precedence than that intent, or holding
- * an unset reference, is kept as written. A value the method's schema refuses is
- * `BAD_SETTING` where the intent was written, and the setting is kept.
+ * an unset reference, is kept as written. So is one a pack's rule wrote, or written with
+ * a value the alias does not list, with `NOT_APPLIED` at intent it does not follow. A
+ * value the method's schema refuses is `BAD_SETTING` where the intent was written, and
+ * the setting is kept. Returns the intent paths reported as not applied.
  */
 export function rewriteAliases(
   context: Context,
   step: StepResult,
   method: Method,
   completed: MergedIntent,
-): void {
+): string[] {
+  const unapplied: string[] = [];
   for (const [setting, alias] of Object.entries(method.aliases ?? {})) {
     const match = matchOf(alias, completed);
+    const kept = keptSetting(context, { step, setting, alias, match, completed });
+    if (kept) {
+      unapplied.push(...kept);
+      continue;
+    }
     if (!match || !overwritable(context, step, setting, match.origin)) continue;
     const { value, path, origin } = match;
     if (refusesSetting(method, { ...step.settings, [setting]: value }, setting)) {
@@ -41,6 +43,7 @@ export function rewriteAliases(
     // The setting's own origin is a place, not a setting it was read from.
     step.origins[setting] = { layer: origin.layer, file: origin.file, line: origin.line };
   }
+  return unapplied;
 }
 
 /**

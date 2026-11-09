@@ -10,7 +10,7 @@ import { flowTableNames } from "./flows.js";
 import type { ResolvedTable } from "../pack/index.js";
 import { transformFacts } from "./rule-facts.js";
 import { tableIntent } from "./complete.js";
-import { judgeIntent } from "./judge.js";
+import { checkTableIntent } from "./intent-checks.js";
 import { serveStep } from "./serve.js";
 import { resolveStep, stepOf } from "./steps.js";
 import { fullNameText, renderTableName, type TableNamer } from "../tables/index.js";
@@ -108,7 +108,7 @@ function transformTable(
   if (!layer) return undefined;
   const { facts, declared } = transformFacts(context, doc, layer);
   const steps = transformSteps(context, doc, facts);
-  const { intentSources, ...intent } = tableIntent(context, declared, steps);
+  const { places, ...intent } = tableIntent(context, declared, steps);
   const contract = contractFor(context, value.id, value.contract, {
     document: doc,
     pointer: "/contract",
@@ -133,7 +133,7 @@ function transformTable(
     store: stepOf(steps.store),
     ...(steps.serve && { serve: stepOf(steps.serve) }),
   };
-  judgeIntent(context, table, intentSources);
+  checkTableIntent(context, table, places);
   return table;
 }
 

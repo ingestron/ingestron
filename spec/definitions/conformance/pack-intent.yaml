@@ -34,6 +34,9 @@ methods:
       load: { mode: files }
       history: none
       audit: [{ value: source_file, as: _source_file }]
+    # It lands files; the store step applies deletes (section 11.5).
+    intent:
+      load.deletes: { use: not-applicable, reason: It copies files and applies no deletes. }
     settings: { type: object }
   intent-table:
     action: store
@@ -49,6 +52,8 @@ methods:
         values:
           replace: { load: { mode: full }, history: none }
           upsert: { history: latest }
+    intent:
+      load.deletes.when: { use: not-yet, reason: A delete condition is not applied yet. }
     settings:
       type: object
       additionalProperties: false

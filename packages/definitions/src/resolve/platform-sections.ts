@@ -7,7 +7,8 @@ import type { Context } from "../context/index.js";
 import { holdsUnsetEnvvar, type Source } from "../diagnostics/index.js";
 import { sameValue, writtenValue } from "../internal/index.js";
 import type { PackInfo } from "../pack/index.js";
-import { movedFields, movedTo, notificationAlert, sectionsOf } from "../platform/index.js";
+import { movedFields, movedTo, namesMovedHome, sectionsOf } from "../documents/index.js";
+import { notificationAlert } from "../platform/index.js";
 import { replaceMe } from "./replace-me.js";
 
 /** What a pack without a `platformSection` allows: an empty section. */
@@ -36,7 +37,9 @@ export function checkPlatform(context: Context): void {
     if (pack) checkSection(context, pack, section);
     else reportUnknown(context, key);
   }
-  if (!movedHome(context)) return;
+  // Only when the standard names the pack the fields moved to are they reported,
+  // `notifications` among them.
+  if (!namesMovedHome(context.packs)) return;
   checkMoved(context);
   checkNotifications(context);
 }
@@ -117,14 +120,6 @@ function knownFields(pack: PackInfo): string | undefined {
     ?.properties;
   const names = Object.keys(properties ?? {});
   return names.length > 0 ? `Fields: ${names.join(", ")}.` : undefined;
-}
-
-/**
- * True when the standard names the pack whose section the Databricks fields moved to: only
- * then are moved fields reported, `notifications` among them.
- */
-function movedHome(context: Context): boolean {
-  return context.packs.some((pack) => pack.id === movedTo && pack.platformSection);
 }
 
 /**

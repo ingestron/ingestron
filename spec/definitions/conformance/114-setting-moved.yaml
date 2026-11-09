@@ -1,4 +1,4 @@
-description: An aliased setting in the standard's settings is intent at the standard's place. SETTING_MOVED's fix writes it to every layer that does not set it, turning a layer written as a name into an object, and removes the setting.
+description: An aliased setting in the standard's settings is intent at the standard's place. SETTING_MOVED offers no fix there, as intent written for the whole standard would reach other methods and steps, so the hint says to write it by hand where it should apply.
 environment: dev
 files:
   project.yaml: |
@@ -59,17 +59,5 @@ expect:
       file: standard.yaml
       line: 11
       message: '"mode" is now written as intent: history: latest.'
-      fixes: [Write as intent]
-  fixed:
-    - diagnostic: 0
-      title: Write as intent
-      files:
-        standard.yaml: |
-          apiVersion: ingestron.io/v1
-          kind: Standard
-          id: acme
-          packs: [test@1]
-          layers:
-            - { name: bronze, history: latest }
-            - { name: silver, history: full }
-            - { name: gold, rescued: true, history: latest }
+      hint: Write the intent by hand where it should apply, and remove this setting.
+      fixes: []

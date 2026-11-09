@@ -78,6 +78,39 @@ describe("setting aliases", () => {
     ]);
   });
 
+  it("offer no fix for a transform's setting, whose intent would reach other steps", () => {
+    const view = testPack.methods["view"]!;
+    const aliases = { cluster: { values: { none: { storage: { clustering: "none" as const } } } } };
+    const pack = {
+      ...testPack,
+      methods: { ...testPack.methods, view: { ...view, aliases } as Method },
+    };
+    const daily = [
+      "apiVersion: ingestron.io/v1",
+      "kind: Transform",
+      "id: daily",
+      "inputs: [orders]",
+      'code: "SELECT * FROM {{ tables.orders }}"',
+      "contract: orders",
+      "layer: silver",
+      "store: { with: { cluster: none } }",
+      "",
+    ].join("\n");
+    const { model, diagnostics } = resolve({ "daily.yaml": daily }, pack);
+    expect(model?.tables.find((table) => table.name === "daily")?.intent).toEqual({
+      storage: { clustering: "none" },
+    });
+    expect(diagnostics).toEqual([
+      {
+        code: "SETTING_MOVED",
+        message: '"cluster" is now written as intent: storage.clustering: none.',
+        file: "daily.yaml",
+        line: 8,
+        fixes: [],
+      },
+    ]);
+  });
+
   it("say which table disagrees, at the table's setting", () => {
     const sales = flow([
       "tables:",

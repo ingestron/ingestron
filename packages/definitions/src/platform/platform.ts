@@ -1,8 +1,8 @@
 // The Platform document with smart defaults (specification section 7).
 import type { Context } from "../context/index.js";
-import type { PlatformDoc } from "../documents/index.js";
+import { sectionsOf, withMovedFields, type PlatformDoc } from "../documents/index.js";
 import type { ResolvedPlatform, Schedule } from "../pack/index.js";
-import { alertsOf, sectionsOf, withMovedFields } from "./sections.js";
+import { alertsOf } from "./sections.js";
 
 /** Environments that are personal copies, when every environment is generated together. */
 const developmentNames = new Set(["dev"]);

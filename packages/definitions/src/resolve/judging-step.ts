@@ -18,12 +18,13 @@ const auditJudges: Record<string, Judge> = {
   source_modified_at: "reader",
 };
 
-/** What is kept, which the step that writes the table applies. */
+/** What is kept, and how deletes reach it, which the step that writes the table applies. */
 const writerPaths = ["history", "sequence", "rescued", "retention.time_travel", "retention.log"];
 
 function judgeFor(path: string, value: string | undefined): Judge | undefined {
-  if (path.startsWith("load.") || path === "retention.landed_files") return "ingest";
   if (writerPaths.includes(path) || path.startsWith("storage.")) return "writer";
+  if (path.startsWith("load.deletes.")) return "writer";
+  if (path.startsWith("load.") || path === "retention.landed_files") return "ingest";
   return path === "audit" && value !== undefined ? auditJudges[value] : undefined;
 }
 
@@ -48,9 +49,9 @@ export interface JudgeOptions {
 
 /**
  * The step among `steps` that judges the path, or for `audit` the value: the ingest step
- * for `load.*`, landed files and the source's audit values; the store step, else the
- * ingest step when it produces the table or the table ends at its files, for what is kept
- * and the `loaded_at` and `row_hash` audit values; for `source_file` and
+ * for the load mode and cursor, landed files and the source's audit values; the store
+ * step, else the ingest step when it produces the table or the table ends at its files,
+ * for deletes, what is kept and the `loaded_at` and `row_hash` audit values; for `source_file` and
  * `source_modified_at`, the store step when ingest lands files, else ingest. Undefined for
  * any other path, for `audit` without a value, and for a value only a step that reads the
  * source can give (`readsSource`) when there is no ingest step.

@@ -15,4 +15,13 @@ export {
   type StandardDoc,
   type TransformDoc,
 } from "./documents.js";
+export {
+  movedFieldPointer,
+  movedFields,
+  movedTo,
+  namesMovedHome,
+  sectionsOf,
+  withMovedFields,
+  type MovedField,
+} from "./platform-fields.js";
 export type { RuleDoc, RulesDoc } from "./rules.js";

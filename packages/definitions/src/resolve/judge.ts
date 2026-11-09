@@ -5,20 +5,19 @@ import type { Fix } from "@ingestron/config";
 import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
 import type { PreviewFeature, ResolvedTable } from "../pack/index.js";
+import type { IntentPlaces } from "./complete.js";
 import { judgementsOf, type Judgement } from "./judgements.js";
 
 /**
  * Reports each value of the table's intent its judging pack does not apply (`NOT_APPLIED`)
  * and, with the standard's `features: ga`, each it applies through a preview feature
- * (`PREVIEW_FEATURE`), at the place each value was written.
+ * (`PREVIEW_FEATURE`), at the place each value was written. A path already reported as
+ * not applied, where a setting kept its value (section 11.4), is not judged again.
  */
-export function judgeIntent(
-  context: Context,
-  table: ResolvedTable,
-  sources: Record<string, Source>,
-): void {
+export function judgeIntent(context: Context, table: ResolvedTable, places: IntentPlaces): void {
   for (const judgement of judgementsOf(context, table))
-    reportJudgement(context, judgement, sources[judgement.path]);
+    if (!places.unapplied.includes(judgement.path))
+      reportJudgement(context, judgement, places.sources[judgement.path]);
 }
 
 /**

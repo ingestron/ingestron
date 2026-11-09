@@ -791,25 +791,13 @@ export interface ResolveResult {
 // @public
 export interface Rule {
     // (undocumented)
-    classification?: string;
-    // (undocumented)
     connectivity?: string;
     // (undocumented)
     connector?: string;
     // (undocumented)
-    domain?: string;
-    // (undocumented)
-    history?: History;
-    // (undocumented)
     input?: Handover;
     // (undocumented)
     layer?: string;
-    // (undocumented)
-    load?: LoadMode;
-    // (undocumented)
-    product?: string;
-    // (undocumented)
-    tag?: string;
     // (undocumented)
     use: string;
     // (undocumented)

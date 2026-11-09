@@ -1,0 +1,45 @@
+description: The step that writes the table applies deletes, so the store step judges load.deletes, not the ingest step that lands the files; the ingest method's not-applicable entry says nothing.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [intent@1]
+    load: { deletes: soft }
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: intent
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      orders: { object: orders, contract: orders, load: { deletes: { when: "op = 'D'" } } }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: sales.yaml
+      line: 6
+      message: "load.deletes.when: op = 'D' isn't applied on intent: A delete condition is not applied yet."

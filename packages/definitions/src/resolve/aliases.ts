@@ -42,8 +42,36 @@ export function aliasStages(
   });
 }
 
+/** A pack's own rule's aliased setting, the intent it stands for, and the rule's facts. */
+export interface PackRuleAlias {
+  setting: string;
+  value: unknown;
+  intent: Intent;
+  facts: string;
+}
+
+/**
+ * The aliased settings a pack's own rule writes, with the intent each stands for: not
+ * declared intent, but read with the origin `pack` before the methods' defaults.
+ */
+export function packRuleAliases(
+  context: Context,
+  method: Method,
+  layers: SettingsLayer[],
+): PackRuleAlias[] {
+  const aliases = Object.entries(method.aliases ?? {});
+  return layers.flatMap(({ value: written, packRule }) => {
+    if (packRule === undefined) return [];
+    return aliases.flatMap(([setting, alias]) => {
+      const value = written[setting];
+      const intent = decided(context, intentOf(alias, value) ?? {});
+      return leaves(intent).length === 0 ? [] : [{ setting, value, intent, facts: packRule }];
+    });
+  });
+}
+
 /** The intent a setting's value stands for; undefined when it stands for none. */
-function intentOf(alias: SettingAlias, value: unknown): Intent | undefined {
+export function intentOf(alias: SettingAlias, value: unknown): Intent | undefined {
   if (value === undefined) return undefined;
   if ("path" in alias) return intentAt(alias.path, value);
   return typeof value === "string" && Object.hasOwn(alias.values, value)

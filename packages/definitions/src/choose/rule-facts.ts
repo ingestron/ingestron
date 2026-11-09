@@ -19,6 +19,9 @@ export function fromRule(rule: Rule | RuleDoc, at?: Source): Omit<Choice, "metho
   const ruleWith = rule.with && {
     value: rule.with,
     at: at && { document: at.document, pointer: `${at.pointer}/with` },
+    facts: Object.entries(factsOf(rule))
+      .map(([fact, value]) => `${fact} ${String(value)}`)
+      .join(" and "),
   };
   return { id: rule.use, ...(origin && { origin }), ...(ruleWith && { ruleWith }) };
 }

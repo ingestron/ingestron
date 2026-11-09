@@ -30,7 +30,7 @@ export function resolveStep(
     definition: true,
     origin: "definition" as const,
   };
-  const rule = choice.ruleWith && { ...choice.ruleWith, origin: "rule" as const };
+  const rule = choice.ruleWith && ruleLayer(choice.ruleWith);
   const layers = [rule, own, ...tableLayers].filter(
     (layer): layer is SettingsLayer => layer !== undefined,
   );
@@ -47,6 +47,11 @@ export function resolveStep(
       renames: choice.method.renames === true,
     }
   );
+}
+
+/** A rule's settings: the standard's, where they are written, or the pack's own, by its facts. */
+function ruleLayer({ value, at, facts }: NonNullable<Choice["ruleWith"]>): SettingsLayer {
+  return at ? { value, at, origin: "rule" } : { value, origin: "rule", packRule: facts };
 }
 
 type Previous = { method: string; produces: Handover } | undefined;
