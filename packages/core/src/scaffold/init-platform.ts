@@ -157,23 +157,28 @@ export function composeSchedule(files: Record<string, Content>, route: Route): v
  * Each ingest method's first window, in the standard, starts at midnight UTC on the day
  * `init` runs, so a new trigger does not run every window since an example's date.
  */
-export function startToday(files: Record<string, Content>, today: string): void {
-  editYaml(files, "standard.yaml", (document) => {
-    const settings = document.getIn(["ingest", "settings"]);
-    if (!isMap(settings)) return;
-    for (const pair of settings.items) {
-      const method = String(isScalar(pair.key) ? pair.key.value : pair.key);
-      const keys = ["ingest", "settings", method, "start"];
-      if (!/^\d{4}-\d{2}-\d{2}T/.test(String(document.getIn(keys) ?? ""))) continue;
-      const described =
-        methodSettings(method).start?.description ?? "Start of the first window (UTC)";
-      const start = described.split(", such as")[0]!;
-      setWithComment(
-        document,
-        keys,
-        `${today}T00:00:00Z`,
-        commentText(`${start}: midnight on the day this project was created`),
-      );
-    }
-  });
+export function startToday(files: Record<string, Content>, today: string, asWritten = false): void {
+  editYaml(
+    files,
+    "standard.yaml",
+    (document) => {
+      const settings = document.getIn(["ingest", "settings"]);
+      if (!isMap(settings)) return;
+      for (const pair of settings.items) {
+        const method = String(isScalar(pair.key) ? pair.key.value : pair.key);
+        const keys = ["ingest", "settings", method, "start"];
+        if (!/^\d{4}-\d{2}-\d{2}T/.test(String(document.getIn(keys) ?? ""))) continue;
+        const described =
+          methodSettings(method).start?.description ?? "Start of the first window (UTC)";
+        const start = described.split(", such as")[0]!;
+        setWithComment(
+          document,
+          keys,
+          `${today}T00:00:00Z`,
+          commentText(`${start}: midnight on the day this project was created`),
+        );
+      }
+    },
+    asWritten,
+  );
 }

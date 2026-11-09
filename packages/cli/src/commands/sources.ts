@@ -1,21 +1,24 @@
-// Where templates and standards come from: a built-in name, a folder, or a
-// Git URL cloned with the user's own git. Nothing from a source is run.
+// Where templates, standards and kits come from: a built-in name, a folder, an installed kit,
+// or a Git URL cloned with the user's own git. Nothing from a source is run.
 import { execFileSync } from "node:child_process";
-import { existsSync, lstatSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { basename, join, relative, resolve } from "node:path";
-import { builtInTemplates, type Template } from "@ingestron/core";
-import { readTemplate } from "@ingestron/core/internal";
+import { existsSync } from "node:fs";
+import { basename, join, resolve } from "node:path";
+import {
+  builtInTemplates,
+  installedKits,
+  parseKitSpec,
+  readKit,
+  type Kit,
+  type Template,
+} from "@ingestron/core";
+import { compareVersions, readTemplate } from "@ingestron/core/internal";
+import { clonedEntry, gitReason, withoutCredentials } from "./clone.js";
 
-/** The URL without `user:password@`, for messages and the standard's "From" line. */
-export function withoutCredentials(text: string): string {
-  return text.replace(/(\/\/)[^/@\s]+@/g, "$1");
-}
+export { withoutCredentials } from "./clone.js";
 
 /** Sources come from the user's command line; one starting with "-" could pass for a git option. */
-function refuseOption(spec: string): void {
-  if (spec.startsWith("-"))
-    throw new Error(`A template or standard cannot start with "-": ${spec}.`);
+function refuseOption(spec: string, what = "A template or standard"): void {
+  if (spec.startsWith("-")) throw new Error(`${what} cannot start with "-": ${spec}.`);
 }
 
 /** A Git URL rather than a path or a name. */
@@ -74,39 +77,145 @@ export function standardSource(
  */
 function cloned(spec: string, kind: "file" | "folder"): { path: string; done(): void } {
   const [url = "", inside = ""] = spec.split("#");
-  if (inside.split("/").includes("..") || inside.startsWith("/"))
-    throw new Error(`The part after "#" must stay inside the repository: ${inside}.`);
-  const folder = mkdtempSync(join(tmpdir(), "ingestron-template-"));
-  const done = () => rmSync(folder, { recursive: true, force: true });
-  try {
-    clone(url, folder);
-    return { path: checkedEntry(folder, inside, kind), done };
-  } catch (error) {
-    done();
-    throw error;
-  }
+  return clonedEntry({ url, inside, kind });
 }
 
-function clone(url: string, folder: string): void {
-  // No hooks, no submodules; "--" so the URL can never be read as an option.
-  const args = ["-c", "core.hooksPath=/dev/null", "clone", "--depth", "1", "--quiet"];
-  try {
-    execFileSync("git", [...args, "--no-recurse-submodules", "--", url, folder], { stdio: "pipe" });
-  } catch (error) {
-    const reason = (error as { stderr?: Buffer }).stderr?.toString().trim() ?? String(error);
-    throw new Error(withoutCredentials(`Could not clone ${url}: ${reason}`));
-  }
+/** The catalogue's repository: INGESTRON_STANDARDS_REPOSITORY, else Ingestron's own. */
+function catalogueUrl(): string {
+  return process.env.INGESTRON_STANDARDS_REPOSITORY || "https://github.com/ingestron/standards.git";
 }
 
-function checkedEntry(folder: string, inside: string, kind: "file" | "folder"): string {
-  const path = join(folder, inside);
-  const stat = lstatSync(path, { throwIfNoEntry: false });
-  if (!stat) throw new Error(`The repository has no "${inside}".`);
-  const real = relative(realpathSync(folder), realpathSync(path));
-  const isKind = kind === "file" ? stat.isFile() : stat.isDirectory();
-  if (!isKind || real.startsWith(".."))
+const noCleanup = () => undefined;
+
+/**
+ * A kit by its spec (spec/cli/kits.md, "Where kits are found"): installed with
+ * `@ingestron/standards`; else the catalogue, cloned at the tag `<id>@<version>`; or, for
+ * `<git-url>#<path>@<tag>`, that repository at that tag. Call `done()` when finished: it removes
+ * any clone.
+ */
+export function kitSource(spec: string, cwd: string): { kit: Kit; done(): void } {
+  refuseOption(spec, "A kit");
+  const parsed = parseKitSpec(spec);
+  if ("url" in parsed) {
+    const { url, path, tag } = parsed;
+    const found = clonedEntry({ url, inside: path, kind: "folder", tag, cwd });
+    return readCloned(withoutCredentials(spec), found, () => readKit(found.path));
+  }
+  const { id, version } = parsed;
+  const kits = installed(version === undefined ? id : `${id}@${version}`);
+  const own = kits.filter((kit) => kit.id === id);
+  if (version === undefined) return newestKit(id, kits, own, cwd);
+  const found = own.find((kit) => kit.version === version);
+  if (found) return { kit: found, done: noCleanup };
+  const listed = catalogueVersions(id, cwd);
+  if (typeof listed === "string")
     throw new Error(
-      `"${inside || "."}" in the repository is not a ${kind === "file" ? "regular file" : "folder"}.`,
+      `The kit ${id}@${version} is not installed, and the catalogue could not be read: ${listed}`,
     );
-  return path;
+  if (!listed.includes(version)) throw new Error(noVersion(id, version, kits, listed));
+  return catalogueKit(id, version, cwd);
+}
+
+/** Installed kits; one that breaks a rule is reported after the spec asked for. */
+function installed(spec: string): Kit[] {
+  try {
+    return installedKits();
+  } catch (error) {
+    throw new Error(`${spec}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/** `<id>` alone: the newest version that is not a preview, installed, else in the catalogue. */
+function newestKit(id: string, kits: Kit[], own: Kit[], cwd: string): { kit: Kit; done(): void } {
+  let versions = own.map((kit) => kit.version);
+  if (versions.length === 0) {
+    const listed = catalogueVersions(id, cwd);
+    if (typeof listed === "string")
+      throw new Error(
+        `The kit ${id} is not installed, and the catalogue could not be read: ${listed}`,
+      );
+    versions = listed;
+  }
+  if (versions.length === 0) throw new Error(noKit(id, kits));
+  const general = versions.filter((version) => !version.endsWith("-preview"));
+  if (general.length === 0)
+    throw new Error(
+      `The kit ${id} has only preview versions: ${versions.join(", ")}. Name one, such as ${id}@${versions.at(-1)}.`,
+    );
+  const newest = general.at(-1)!;
+  const found = own.find((kit) => kit.version === newest);
+  return found ? { kit: found, done: noCleanup } : catalogueKit(id, newest, cwd);
+}
+
+function noKit(id: string, kits: Kit[]): string {
+  const ids = [...new Set(kits.map((kit) => kit.id))].join(", ") || "none";
+  return `There is no kit ${id}, installed or in the catalogue. Installed kits: ${ids}.`;
+}
+
+/** The message for a version that is neither installed nor tagged in the catalogue. */
+function noVersion(id: string, version: string, kits: Kit[], tagged: string[]): string {
+  const versions = sortedVersions([
+    ...kits.filter((kit) => kit.id === id).map((kit) => kit.version),
+    ...tagged,
+  ]);
+  if (versions.length === 0) return noKit(id, kits);
+  return `There is no version ${version} of the kit ${id}. It has: ${versions.join(", ")}.`;
+}
+
+function sortedVersions(versions: string[]): string[] {
+  return [...new Set(versions)].sort(compareVersions);
+}
+
+/**
+ * The versions of the kit tagged `<id>@<version>` in the catalogue, oldest first, or why the
+ * catalogue could not be read.
+ */
+function catalogueVersions(id: string, cwd: string): string[] | string {
+  let output: string;
+  try {
+    output = execFileSync("git", ["ls-remote", "--tags", "--", catalogueUrl()], {
+      stdio: "pipe",
+      cwd,
+      encoding: "utf8",
+    });
+  } catch (error) {
+    return withoutCredentials(gitReason(error));
+  }
+  const prefix = `refs/tags/${id}@`;
+  const versions = output
+    .split("\n")
+    .map((line) => line.split("\t")[1]?.replace(/\^\{\}$/, "") ?? "")
+    .filter((ref) => ref.startsWith(prefix))
+    .map((ref) => ref.slice(prefix.length))
+    .filter((version) => /^\d{4}-\d{2}-\d{2}(-preview)?$/.test(version));
+  return sortedVersions(versions);
+}
+
+/** The catalogue cloned at the tag `<id>@<version>`, and `kits/<id>/<version>` read. */
+function catalogueKit(id: string, version: string, cwd: string): { kit: Kit; done(): void } {
+  const inside = `kits/${id}/${version}`;
+  const found = clonedEntry({
+    url: catalogueUrl(),
+    inside,
+    kind: "folder",
+    tag: `${id}@${version}`,
+    cwd,
+  });
+  return readCloned(`${id}@${version}`, found, () =>
+    readKit(found.path, join(found.folder, "kits")),
+  );
+}
+
+/** Reads the kit in a clone; a broken rule is reported after `spec`, and the clone removed. */
+function readCloned(
+  spec: string,
+  cloned: { done(): void },
+  read: () => Kit,
+): { kit: Kit; done(): void } {
+  try {
+    return { kit: read(), done: cloned.done };
+  } catch (error) {
+    cloned.done();
+    throw new Error(`${spec}: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }

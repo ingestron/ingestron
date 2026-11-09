@@ -93,29 +93,74 @@ as from a git URL, is checked on its contents only.
   `kits` folder, laid out as above. They work offline. When that package is not
   installed, there are none.
 - **The catalogue.** The public `ingestron/standards` repository holds the same
-  folders under `kits/`; a version is the git tag `<id>@<version>`.
+  folders under `kits/`; a version is the git tag `<id>@<version>`. The
+  environment variable `INGESTRON_STANDARDS_REPOSITORY` names another
+  repository to use as the catalogue, such as a mirror or a `file://`
+  repository; the default is `https://github.com/ingestron/standards.git`.
 - **A git URL.** A team's private kit can be any repository: `<git-url>#<path>@<tag>`,
   where `<path>` is the kit's folder in the repository and `<tag>` the tag to
   read. It is never listed.
 
 A kit spec, as the commands accept it, is one of:
 
-- `<id>@<version>`: one version of a kit.
-- `<id>`: the kit's newest installed version. Versions are ordered by date; on
-  the same date the preview comes first, so the newest is the last.
-- `<git-url>#<path>@<tag>`: a kit from a repository. The path ends at the first
-  `@` after the `#`, so a tag may itself contain `@`.
+- `<id>@<version>`: one version of a kit. The installed one when there is
+  one; else the catalogue, cloned at the tag `<id>@<version>`, from which
+  `kits/<id>/<version>` is read.
+- `<id>`: the kit's newest version that is not a preview: the newest
+  installed one, or, when none of the kit is installed, the newest in the
+  catalogue's tags. Versions are ordered by date; on the same date the preview
+  comes first, so the newest is the last. A preview version is used only
+  when it is named.
+- `<git-url>#<path>@<tag>`: a kit from a repository, cloned at `<tag>`. The
+  path ends at the first `@` after the `#`, so a tag may itself contain `@`.
+  The path must stay inside the repository.
 
 A spec that is none of these is an error that shows the three forms.
 
+A clone uses the user's own `git`: it is shallow, at one tag
+(`git clone --depth 1 --branch <tag>`), runs no hooks and fetches no
+submodules, and is removed when the command ends, whether it succeeds or not.
+A URL is shown without the user name and password it may contain. Nothing
+from a kit is run.
+
+### Copying a kit
+
+A kit's files are copied as they are, except:
+
+- `kit.yaml`, which is not copied;
+- `README.md`, which is copied as `STANDARD.md`;
+- a file named `gitignore`, which is copied as `.gitignore`. npm does not ship
+  a file named `.gitignore`, so a kit cannot hold one.
+
+A kit holds only regular files and folders: a symbolic link is an error.
+
+### Messages
+
+A kit that breaks a rule above is reported with the spec in front of the
+message `readKit` gives: `<id>@<version>: <message>`, or, for a git URL,
+`<git-url>#<path>@<tag>: <message>`.
+
+| When                                                  | Message                                                                                                    |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| No such version, installed or in the catalogue's tags | `There is no version <version> of the kit <id>. It has: <versions>.`                                       |
+| No version of the kit at all                          | `There is no kit <id>, installed or in the catalogue. Installed kits: <ids>.` (`none` when there are none) |
+| `<id>` alone, and every version is a preview          | `The kit <id> has only preview versions: <versions>. Name one, such as <id>@<newest>.`                     |
+| The catalogue cannot be read                          | `The kit <spec> is not installed, and the catalogue could not be read: <git's reason>`, `<spec>` as given  |
+| The CLI's version is not in `requires.ingestron`      | `The kit <id>@<version> needs ingestron <range>; this is <version>.`                                       |
+
+`<versions>` lists every version found, installed and in the catalogue's tags,
+oldest first, joined by `, `.
+
 ## Commands
 
-These are specified here and built in later steps; the cases above do not
-cover them.
+The cases above do not cover these. `init --kit` has cases of its own in
+`conformance/init/` ([projects.md](projects.md), "Kits").
 
 - `ingestron init --kit <spec>` creates a project from a kit. `--kit` and
   `--template` or `--standard` are exclusive. It refuses a kit whose
-  `requires.ingestron` the CLI's version does not meet.
+  `requires.ingestron` the CLI's version does not meet. With connection
+  options, the kit gives the Standard and the route the source
+  ([projects.md](projects.md), "Kits").
 - `ingestron standard install <spec>` replaces the project's Standard
   document with the kit's, keeping its path and its `id`, and says what the kit's
   `notes` and Platform skeleton changed.

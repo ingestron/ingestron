@@ -91,7 +91,7 @@ function missingEnvLines(lines: string[]): string[] {
  * missing, then the .env lines. The new file's .env lines and their comment are left to
  * {@link withEnvIgnores}, which knows where they must go.
  */
-function mergedGitignore(existing: string, added: string): string {
+export function mergedGitignore(existing: string, added: string): string {
   const eol = existing.includes("\r\n") ? "\r\n" : "\n";
   const have = new Set(existing.split(/\r?\n/).map((line) => line.trim()));
   const missing = added

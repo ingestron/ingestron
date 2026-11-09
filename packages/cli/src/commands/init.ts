@@ -1,5 +1,5 @@
-// ingestron init: a new project from a connection or a template. It asks only what picks the
-// project; every value it cannot know is REPLACE_ME, and README.md says what to write
+// ingestron init: a new project from a connection, a template or a kit. It asks only what picks
+// the project; every value it cannot know is REPLACE_ME, and README.md says what to write
 // (spec/cli/projects.md). Without a terminal a missing choice is an error that names the flag.
 import { existsSync, readFileSync } from "node:fs";
 import { basename, join, relative, resolve } from "node:path";
@@ -15,8 +15,9 @@ import { packs } from "@ingestron/core";
 import { environmentReportsText } from "@ingestron/core/internal";
 import { nameProblem, projectId } from "@ingestron/core";
 import { ignoredText, writeScaffold, type Answers } from "@ingestron/core/internal";
-import { standardSource, templateSource } from "./sources.js";
-import type { Template } from "@ingestron/core";
+import { kitFiles, kitTemplate, satisfies } from "@ingestron/core/internal";
+import { kitSource, standardSource, templateSource } from "./sources.js";
+import { cliVersion } from "../version.js";
 
 /** Asks one question; `check` explains an answer that is not valid, and the question is asked again. */
 type Ask = (
@@ -32,11 +33,13 @@ export function init(options: Options, io: Io): number {
   try {
     checkFlags(options);
     const target = resolve(io.cwd, options.init.folder);
-    const source: Source = options.init.template
-      ? templateSource(options.init.template, io.cwd)
-      : chooseProject(options.init, asker(options, io));
+    const source: Source = options.init.kit
+      ? kitProject(options, io, cleanups)
+      : options.init.template
+        ? templateSource(options.init.template, io.cwd)
+        : chooseProject(options.init, asker(options, io));
     cleanups.push(source.done);
-    const answers = gather(options, io, source.template, target, cleanups);
+    const answers = gather(options, io, source, target, cleanups);
     return create(options, io, target, source, answers);
   } catch (error) {
     io.write(`${error instanceof Error ? error.message : String(error)}\n`);
@@ -46,22 +49,53 @@ export function init(options: Options, io: Io): number {
   }
 }
 
+/**
+ * The kit, and with connection options the route composed under it (spec/cli/projects.md,
+ * "Kits"). Refuses a kit that needs another version of the CLI, or a route whose packs the kit
+ * does not use.
+ */
+function kitProject(options: Options, io: Io, cleanups: (() => void)[]): Source {
+  const { kit, done } = kitSource(options.init.kit!, io.cwd);
+  cleanups.push(done);
+  const version = cliVersion();
+  if (!satisfies(version, kit.requires.ingestron))
+    throw new Error(
+      `The kit ${kit.id}@${kit.version} needs ingestron ${kit.requires.ingestron}; this is ${version}.`,
+    );
+  const { connector, via, connectivity } = options.init;
+  if (!connector && !via && !connectivity)
+    return { template: kitTemplate(kit), files: kitFiles(kit), kit, done: () => undefined };
+  const recipe = chooseProject(options.init, asker(options, io));
+  const needs = recipe.facts.route.packs;
+  if (needs.some((pack) => !kit.packs.includes(pack))) {
+    const route = recipe.template.name.split(" via ").at(-1);
+    throw new Error(
+      `The kit ${kit.id} uses ${kit.packs.join(", ")}; the route ${route} needs ${needs.join(", ")}.`,
+    );
+  }
+  const template = { ...recipe.template, summary: kit.summary };
+  return { ...recipe, template, kit };
+}
+
 /** The name, environments and standard: flags, else the defaults; nothing is asked. */
 function gather(
   options: Options,
   io: Io,
-  template: Template,
+  source: Source,
   target: string,
   cleanups: (() => void)[],
 ): Answers {
   const { init: flags } = options;
+  const { template } = source;
   const name = flags.name ?? projectId(basename(target));
   const environments =
     options.environments.length > 0
       ? options.environments
-      : flags.template
-        ? templateEnvironments(template)
-        : ["dev", "prod"];
+      : source.kit
+        ? folderEnvironments(source.kit.folder)
+        : flags.template
+          ? folderEnvironments(template.folder)
+          : ["dev", "prod"];
   // A template's own questions are never asked: --set answers them, else the default is written.
   const values = Object.fromEntries(
     template.questions.map((question) => [
@@ -108,7 +142,8 @@ function prepare(options: Options, io: Io, target: string, source: Source, answe
     );
   if (!kept) {
     const { title, summary } = source.template;
-    const facts = { project: answers.name, title, summary, today, files, generated };
+    const kit = source.kit && `${source.kit.id}@${source.kit.version}`;
+    const facts = { project: answers.name, title, summary, today, files, generated, kit };
     files["README.md"] = projectReadme(facts);
   }
   return { files, generated, kept };
@@ -130,7 +165,7 @@ function create(
     io.write(`Nothing written: these files already exist in ${shown}:\n${listed}`);
     return 1;
   }
-  const from = `${options.init.template ? "the template " : ""}${source.template.name}`;
+  const from = createdFrom(options, source);
   io.write(
     `Created ${shown} from ${from} (${result.written.length} files)${ignoredText(result.ignored)}.\n\n`,
   );
@@ -141,21 +176,35 @@ function create(
   return code;
 }
 
+/** What the project was created from, as `init` says it. */
+function createdFrom(options: Options, source: Source): string {
+  if (source.kit) {
+    const kit = `the kit ${source.kit.id}@${source.kit.version}`;
+    return source.facts ? `${kit} and ${source.template.name}` : kit;
+  }
+  return `${options.init.template ? "the template " : ""}${source.template.name}`;
+}
+
 /** Names given as flags are checked before anything else happens. */
 function checkFlags(options: Options): void {
-  if (
-    options.init.template &&
-    (options.init.connector || options.init.via || options.init.connectivity)
-  )
-    throw new Error("Choose connection options or --template, not both.");
+  checkSources(options.init);
   const problem =
     (options.init.name !== undefined ? nameProblem(options.init.name, "project") : undefined) ??
     options.environments.map((name) => nameProblem(name, "environment")).find(Boolean);
   if (problem) throw new Error(problem);
 }
 
-function templateEnvironments(template: Template): string[] {
-  const project = parse(readFileSync(join(template.folder, "project.yaml"), "utf8")) as {
+/** One of --kit, --template and --standard at most, and no connection options with --template. */
+function checkSources({ kit, template, standard, connector, via, connectivity }: Options["init"]) {
+  if (kit !== undefined && (template !== undefined || standard !== undefined))
+    throw new Error("Choose --kit, --template or --standard, not two.");
+  if (template && (connector || via || connectivity))
+    throw new Error("Choose connection options or --template, not both.");
+}
+
+/** The environments of the project.yaml in a template's or a kit's folder. */
+function folderEnvironments(folder: string): string[] {
+  const project = parse(readFileSync(join(folder, "project.yaml"), "utf8")) as {
     environments?: object;
   };
   return Object.keys(project.environments ?? { dev: {} });

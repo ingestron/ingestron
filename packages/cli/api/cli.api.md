@@ -60,6 +60,9 @@ export const flags: readonly [{
     readonly flag: "--template <name|path|url>";
     readonly summary: "init: a built-in template, a folder or a Git URL.";
 }, {
+    readonly flag: "--kit <id[@version]|url>";
+    readonly summary: "init: start from a published standard, such as duckdb/local-medallion@2026-11-10, or <git-url>#<path>@<tag>.";
+}, {
     readonly flag: "--name <id>";
     readonly summary: "init: the project's id; contract: the contract's. Default: the folder's or file's name.";
 }, {

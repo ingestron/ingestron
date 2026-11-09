@@ -20,6 +20,7 @@ export interface Options {
   init: {
     folder: string;
     template?: string;
+    kit?: string;
     connector?: string;
     via?: string;
     connectivity?: string;
@@ -89,6 +90,11 @@ export const flags = [
     summary: "init: a built-in template, a folder or a Git URL.",
   },
   {
+    flag: "--kit <id[@version]|url>",
+    summary:
+      "init: start from a published standard, such as duckdb/local-medallion@2026-11-10, or <git-url>#<path>@<tag>.",
+  },
+  {
     flag: "--name <id>",
     summary:
       "init: the project's id; contract: the contract's. Default: the folder's or file's name.",
@@ -133,6 +139,7 @@ const spec = {
   "allow-extra": { type: "boolean", default: false },
   help: { type: "boolean", default: false },
   template: { type: "string" },
+  kit: { type: "string" },
   connector: { type: "string" },
   via: { type: "string" },
   connectivity: { type: "string" },
@@ -187,20 +194,24 @@ function sampleOf(command: string, file: string | undefined): { sample?: string 
   return command === "contract" && file !== undefined ? { sample: file } : {};
 }
 
+/** The init options that are text, each kept only when it is given. */
+const initTexts = [
+  "template",
+  "kit",
+  "connector",
+  "via",
+  "connectivity",
+  "name",
+  "standard",
+] as const;
+
 function initOptions(values: Values, folder = "."): Options["init"] | { mistake: string } {
   const set = answersOf(values.set ?? []);
   if (typeof set === "string") return { mistake: set };
-  return {
-    folder,
-    ...(values.template !== undefined && { template: values.template }),
-    ...(values.connector !== undefined && { connector: values.connector }),
-    ...(values.via !== undefined && { via: values.via }),
-    ...(values.connectivity !== undefined && { connectivity: values.connectivity }),
-    ...(values.name !== undefined && { name: values.name }),
-    ...(values.standard !== undefined && { standard: values.standard }),
-    set,
-    yes: values.yes,
-  };
+  const given = initTexts.flatMap((key) =>
+    values[key] === undefined ? [] : [[key, values[key]] as const],
+  );
+  return { folder, ...Object.fromEntries(given), set, yes: values.yes };
 }
 
 /** `--set key=value` pairs, or a mistake naming the one without `=`. */

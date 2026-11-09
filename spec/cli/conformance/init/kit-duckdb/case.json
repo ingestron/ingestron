@@ -1,0 +1,8 @@
+{
+  "description": "The DuckDB kit, in the folder local: the kit's files, its README as STANDARD.md, the project id, and init's README with the kit's line",
+  "args": ["init", "local", "--kit", "duckdb/local-medallion@2026-11-10"],
+  "date": "2026-11-10",
+  "folder": "local",
+  "exit": 0,
+  "lastLine": "Nothing to replace: the project runs as written."
+}

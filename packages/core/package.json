@@ -53,6 +53,7 @@
     "@ingestron/pack-databricks": "^2.3.0",
     "@ingestron/pack-duckdb": "^2.2.0",
     "@ingestron/pack-synapse": "^2.2.0",
+    "@ingestron/standards": "^1.0.0",
     "yaml": "2.9.1"
   },
   "devDependencies": {

@@ -69,13 +69,15 @@ carry the same source recipes and work without a repository checkout.
 
 ## Questions and values
 
-`init` asks only what picks the project: the starter (`--template`), or the
-connector, connectivity and route. Everything else has a default:
+`init` asks only what picks the project: the starter (`--template`), the kit
+(`--kit`, section "Kits" below), or the connector, connectivity and route.
+Everything else has a default:
 
 - the project id is the folder's name, as a valid id (`--name` gives another);
-- the environments are `dev` and `prod`, or a starter's own (`--env` gives
-  others);
-- the standard is the route's or the starter's (`--standard` gives another).
+- the environments are `dev` and `prod`, or a starter's or a kit's own
+  (`--env` gives others);
+- the standard is the route's, the starter's or the kit's (`--standard` gives
+  another, except with a kit).
 
 `--yes` takes the default of each choice not given. A template's
 `template.yaml` MAY still list `questions`, for templates from elsewhere: they
@@ -180,9 +182,10 @@ in the order README.md lists them.
 again. When the folder already has one, that is not a clash: `init` keeps it
 and prints the values to replace instead. The README has, in order:
 
-1. the project id as its title, then what the route or starter does, the
-   date `init` wrote it, that the file is the user's, and which table and
-   contract are examples to rename;
+1. the project id as its title, then what the route, starter or kit does,
+   the date `init` wrote it, that the file is the user's, for a kit the line
+   `The standard comes from <id>@<version>; STANDARD.md explains its choices.`,
+   and which table and contract are examples to rename;
 2. **Run it**: `ingestron plan` and `ingestron apply`;
 3. **Values to replace before deploying**: a row for each name that is still
    `REPLACE_ME`, with each `file:line`, what it is (the comment above it),
@@ -230,4 +233,51 @@ Each folder in [conformance/init/](conformance/init/) is a case: `case.json`
 gives the `args`, the `date` init runs on, the `folder` it creates, the
 `exit` code and the `lastLine` of the output; `files/` holds files the
 project must have, each exactly, README.md included. The cases are not
-formatted by Prettier.
+formatted by Prettier. A case whose name starts `kit-` reads a kit of the
+installed `@ingestron/standards` package.
+
+## Kits
+
+`init --kit <spec>` starts the project from a kit ([kits.md](kits.md)): a
+published, dated Standard with a small project that builds. `--kit` is not
+combined with `--template` or `--standard`; `init` refuses, before anything
+else, with `Choose --kit, --template or --standard, not two.`
+
+Alone, `--kit` copies the kit's files into the folder and asks nothing:
+
+- every file of the kit's folder but `kit.yaml`, each at the same path;
+- the kit's `README.md` as `STANDARD.md`, which explains the Standard's
+  choices. README.md is `init`'s own, as above;
+- a file named `gitignore` as `.gitignore`, with the `.env` lines added as
+  for any project.
+
+`--name`, `--env` and `--set` apply as they do to a template: the project id
+is written to project.yaml, the environments default to the kit's own, and
+`--set` writes a value at its name's locations.
+
+`init` refuses, before writing anything, a kit whose `requires.ingestron` the
+CLI's own version does not meet:
+`The kit <id>@<version> needs ingestron <range>; this is <version>.`
+
+With `--connector`, `--connectivity` or `--via`, the kit gives the Standard
+and the composition above gives the source:
+
+- every pack the route needs must be in the kit's `packs`, else
+  `The kit <id> uses <packs>; the route <via> needs <packs>.`, the packs
+  joined by `, `;
+- the kit gives `standard.yaml`, as it is, `project.yaml`, `platform.yaml`,
+  `STANDARD.md` and `.gitignore`: its files at the top of its folder;
+- the composition gives the connection, flows, contracts and transforms,
+  written as the route writes them. The kit's own, and anything else in the
+  kit's sub-folders, are not written;
+- in `project.yaml` and `platform.yaml`, a key the kit does not write is
+  filled from the composition, at any depth, with its comment. Where both
+  write a key, the kit's value stays, with its comments. A list is one
+  value: the kit's is kept whole;
+- `.gitignore` has the kit's lines, then those of the composition it lacks.
+
+The project must resolve before anything is written, and a file already in
+the folder is a clash, as for every project. Then `init` prints
+`Created <folder> from the kit <id>@<version> (<n> files).`, or, with a
+route, `Created <folder> from the kit <id>@<version> and <connector> via <via> (<n> files).`,
+and the plan.

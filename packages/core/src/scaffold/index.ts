@@ -1,5 +1,6 @@
 // The scaffold module: what the rest of the package uses.
 export { resolvedFiles, type Source } from "./init-files.js";
+export { kitFiles, kitTemplate } from "./init-kit.js";
 export { methodSettings } from "./init-platform.js";
 export { projectReadme } from "./init-readme.js";
 export { applySet } from "./init-set.js";

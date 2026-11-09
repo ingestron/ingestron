@@ -21,17 +21,24 @@ const commentWidth = 100;
 /** A YAML file of the new project, parsed for editing. */
 export type YamlDocument = Document.Parsed;
 
-/** The files as documents, edited by `edit`, then written back as text. */
+/**
+ * The files as documents, edited by `edit`, then written back as text. With `asWritten`, a file
+ * the edit leaves as it was keeps its own text: a kit's files are copied as they are.
+ */
 export function editYaml(
   files: Record<string, Content>,
   path: string,
   edit: (document: YamlDocument) => void,
+  asWritten = false,
 ): void {
   const text = files[path];
   if (text === undefined) return;
   const document = parseDocument(String(text));
+  const options = { lineWidth: 0, flowCollectionPadding: false };
+  const before = asWritten ? document.toString(options) : undefined;
   edit(document);
-  files[path] = document.toString({ lineWidth: 0, flowCollectionPadding: false });
+  const after = document.toString(options);
+  if (after !== before) files[path] = after;
 }
 
 /**

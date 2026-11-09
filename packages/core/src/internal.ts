@@ -14,6 +14,8 @@ export {
   applySet,
   composableRecipe,
   ignoredText,
+  kitFiles,
+  kitTemplate,
   methodSettings,
   objectName,
   projectReadme,

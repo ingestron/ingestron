@@ -22,6 +22,8 @@ export interface ReadmeFacts {
   today: string;
   files: Record<string, Content>;
   generated: Generated;
+  /** The kit the project started from, `<id>@<version>`. */
+  kit?: string;
 }
 
 /**
@@ -59,6 +61,9 @@ function introduction(facts: ReadmeFacts): string {
   return [
     `${facts.title}. ${facts.summary}`.replace(/\.\. /, ". "),
     `\`ingestron init\` wrote this file on ${facts.today}; it is yours, and Ingestron never rewrites it.`,
+    ...(facts.kit
+      ? [`The standard comes from ${facts.kit}; STANDARD.md explains its choices.`]
+      : []),
     ...(examples ? [examples] : []),
   ].join("\n");
 }
