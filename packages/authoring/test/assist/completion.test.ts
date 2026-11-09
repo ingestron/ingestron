@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { completionsAt } from "../../src/assist/completion.js";
 import { openProject } from "../../src/project/project.js";
-import { filledTemplates } from "../starters.js";
+import { filledTemplates, ordersWithSettings } from "../starters.js";
 
 const retail = join(filledTemplates, "retail");
 const read = (path: string) => readFileSync(join(retail, path), "utf8");
@@ -83,9 +83,9 @@ describe("completion", () => {
 
   it("offers only the table's fields not written yet", () => {
     const items = at("flows/shop.yaml", (text) =>
-      text.replace("    object: orders\n", "    object: orders\n    |\n"),
+      ordersWithSettings(text).replace("    object: orders\n", "    object: orders\n    |\n"),
     );
-    expect(labels(items)).toEqual(["audit", "ingest", "serve"]);
+    expect(labels(items)).toEqual(["audit", "history", "ingest", "load", "sequence", "serve"]);
   });
 
   it("leaves out settings already written in the same mapping", () => {

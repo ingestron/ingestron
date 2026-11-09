@@ -4,14 +4,11 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { hoverAt } from "../../src/hover/hover.js";
 import { openProject } from "../../src/project/project.js";
-import { filledTemplates } from "../starters.js";
+import { filledTemplates, ordersWithSettings, replaced } from "../starters.js";
 
 const retail = join(filledTemplates, "retail");
 // The orders table written with its store method's settings, as before intent existed.
-const text = readFileSync(join(retail, "flows/shop.yaml"), "utf8").replace(
-  "    history: latest\n    sequence: updated_at\n    load: { deletes: { when: \"op = 'D'\" } }\n    store:\n      with: { except_columns: [op] }\n",
-  "    store:\n      with: { mode: upsert, sequence_by: updated_at, delete_when: \"op = 'D'\", except_columns: [op] }\n",
-);
+const text = ordersWithSettings(readFileSync(join(retail, "flows/shop.yaml"), "utf8"));
 const project = openProject(retail, new Map([[join(retail, "flows/shop.yaml"), text]]));
 const hover = (needle: string, plus = 1) =>
   hoverAt(project, "flows/shop.yaml", text, text.indexOf(needle) + plus, "dev");
@@ -45,7 +42,8 @@ describe("hover", () => {
 describe("hover on a described field", () => {
   const erp = join(filledTemplates, "private-sql-server");
   // adf-copy's mode, written in the standard's settings.
-  const standard = readFileSync(join(erp, "standard.yaml"), "utf8").replace(
+  const standard = replaced(
+    readFileSync(join(erp, "standard.yaml"), "utf8"),
     "    adf-copy: # the schedule; where it lands is the platform's\n",
     "$&      mode: incremental\n",
   );
