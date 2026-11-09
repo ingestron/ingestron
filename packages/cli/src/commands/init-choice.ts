@@ -1,5 +1,5 @@
 // Source choices are small prompts over the same catalogue the editor consumes.
-import type { Options } from "../terminal/args.js";
+import type { Options } from "../terminal/index.js";
 import { projectRoutes, projectSources } from "@ingestron/core";
 import { composableRecipe } from "@ingestron/core";
 /** The existing init question contract. */

@@ -4,8 +4,8 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { manifestSchema, toEditorSchema, type JsonSchema } from "@ingestron/config";
 import { kinds } from "@ingestron/definitions";
-import type { Options } from "../terminal/args.js";
-import type { Io } from "../terminal/io.js";
+import type { Options } from "../terminal/index.js";
+import type { Io } from "../terminal/index.js";
 import { templateSchema } from "@ingestron/core";
 
 /** Writes the schemas to `.ingestron/schemas` and prints the VS Code setting. */

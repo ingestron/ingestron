@@ -1,10 +1,10 @@
 // ingestron compare: prints what differs between two environments.
 import { resolve } from "node:path";
 import { nodeFiles } from "@ingestron/config";
-import type { Options } from "../terminal/args.js";
+import type { Options } from "../terminal/index.js";
 import { compareEnvironments } from "@ingestron/core";
 import { environmentsToGenerate } from "@ingestron/core";
-import type { Io } from "../terminal/io.js";
+import type { Io } from "../terminal/index.js";
 
 /** Prints the comparison of the two environments given, else the project's first two. */
 export function compare(options: Options, io: Io): number {

@@ -1,18 +1,13 @@
 // Public API of @ingestron/cli: run the command line in-process.
 import { formatDiagnostics } from "@ingestron/config";
-import { packLoadProblem } from "@ingestron/definitions";
-import { readArgs, usage } from "./terminal/args.js";
-export { commands, flags } from "./terminal/args.js";
-import { generate } from "./commands/generate.js";
-import { init } from "./commands/init.js";
-import type { Io } from "./terminal/io.js";
-import { compare } from "./commands/compare-command.js";
-import { request } from "./commands/request-command.js";
-import { draftContract } from "./commands/contract-command.js";
 import * as core from "@ingestron/core";
-import { writeSchemas } from "./commands/schemas.js";
+import { packLoadProblem } from "@ingestron/definitions";
+import { compare, draftContract, generate, init, request, writeSchemas } from "./commands/index.js";
+import { readArgs, usage, type Io } from "./terminal/index.js";
 
-export type { Io } from "./terminal/io.js";
+// The command's arguments and options, as help lists them.
+export { commands, flags } from "./terminal/index.js";
+export type { Io } from "./terminal/index.js";
 
 // Moved to @ingestron/core in 2.2. Each stays here, as the same value, until 3.0.
 
