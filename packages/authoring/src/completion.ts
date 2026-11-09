@@ -1,7 +1,7 @@
 // Completion that knows the project: values, tables and ids by reference,
 // methods for `uses`, allowed values, fields from the schema, and the
 // settings of the method a table resolves to.
-import { packs } from "@ingestron/cli";
+import { packs } from "@ingestron/core";
 import { kinds, referenceKinds, type FieldInfo, type Method } from "@ingestron/definitions";
 import { occurrences } from "./navigation.js";
 import type { Project } from "./project.js";

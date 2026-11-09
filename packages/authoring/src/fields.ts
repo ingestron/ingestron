@@ -2,7 +2,7 @@
 // method setting wherever settings are written (the standard's settings and
 // fixed, the platform's settings, a rule's `with`, a flow's or table's `with`).
 import { standardPacks } from "./smart.js";
-import { packs } from "@ingestron/cli";
+import { packs } from "@ingestron/core";
 import {
   documentReference,
   methodReference,

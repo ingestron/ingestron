@@ -1,5 +1,5 @@
 // The packs a standard can list, as values to complete.
-import { packs } from "@ingestron/cli";
+import { packs } from "@ingestron/core";
 import type { Suggestion } from "./completion.js";
 
 /** Every pack as `<id>@<version>`, the first pack of a standard first. */

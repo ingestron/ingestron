@@ -3,7 +3,7 @@
 // standard's naming, layers, types and quality, the project's connectors and
 // layers, a connection's settings, and for a mapping or list a block of its
 // fields or a new line that asks for them.
-import { packs } from "@ingestron/cli";
+import { packs } from "@ingestron/core";
 import type { FieldInfo } from "@ingestron/definitions";
 import { stringify } from "yaml";
 import type { Suggestion } from "./completion.js";

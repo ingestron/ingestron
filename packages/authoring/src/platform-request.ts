@@ -1,7 +1,7 @@
 // The platform request and the environment comparison for the editor's
 // commands: the CLI's `ingestron request` and `ingestron compare` text, from
 // the project's files with open editors read first.
-import { compareEnvironments as compare, platformRequest as request } from "@ingestron/cli";
+import { compareEnvironments as compare, platformRequest as request } from "@ingestron/core";
 import { formatDiagnostics, type AnyDiagnostic } from "@ingestron/config";
 import { refusedPacks } from "./pack-load.js";
 import type { Project } from "./project.js";

@@ -1,7 +1,7 @@
 // The JSON Schema of a document, and the part of it at a path, following
 // $ref, items, additionalProperties and the branches of allOf/anyOf/oneOf.
 import { manifestSchema } from "@ingestron/config";
-import { templateSchema } from "@ingestron/cli";
+import { templateSchema } from "@ingestron/core";
 import { kinds } from "@ingestron/definitions";
 
 /** A JSON Schema, loosely typed: only the parts the editor reads. */

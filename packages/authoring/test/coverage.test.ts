@@ -2,7 +2,7 @@
 // suggest unless it is free text, and has a Reference entry: for every
 // document kind, project.yaml included, and every setting of every method.
 import { join } from "node:path";
-import { packs } from "@ingestron/cli";
+import { packs } from "@ingestron/core";
 import type { referenceKinds } from "@ingestron/definitions";
 import { documentReference, methodReference, type FieldInfo } from "@ingestron/definitions";
 import { describe, expect, it } from "vitest";

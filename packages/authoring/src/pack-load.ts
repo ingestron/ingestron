@@ -2,7 +2,7 @@
 // `platformFields` path the Platform does not have (definitions specification,
 // section 7). The editor checks first, as the CLI does, and shows the PACK_LOAD
 // error in place of resolving; any other error is not caught here.
-import { packs } from "@ingestron/cli";
+import { packs } from "@ingestron/core";
 import type { AnyDiagnostic } from "@ingestron/config";
 import { packLoadProblem } from "@ingestron/definitions";
 

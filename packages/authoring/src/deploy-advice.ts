@@ -3,7 +3,7 @@
 // pipeline supplies it (spec/cli/outputs.md, section 6). So the editor does not ask
 // for it in a .env file. Where plan refuses the value (DEPLOY_VALUE), plan's error says
 // what to do, and the advice is left out; elsewhere it names what the files take it as.
-import type { GeneratedOutputs } from "@ingestron/cli";
+import type { GeneratedOutputs } from "@ingestron/core";
 import type { AnyDiagnostic } from "@ingestron/config";
 
 /** The environment, what generating found for it, and its environment file's name. */

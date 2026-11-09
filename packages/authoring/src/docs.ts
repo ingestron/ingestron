@@ -1,6 +1,6 @@
 // The documentation pages the editor links to: each field and setting, and
 // each problem code. The docs site checks that every one of them exists.
-import { packs } from "@ingestron/cli";
+import { packs } from "@ingestron/core";
 import {
   codeHelp,
   documentReference,

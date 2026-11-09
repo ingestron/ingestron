@@ -8,7 +8,7 @@ import {
   type DefinitionDocument,
   type FileSource,
 } from "@ingestron/config";
-import { packs } from "@ingestron/cli";
+import { packs } from "@ingestron/core";
 import { kinds, resolveDefinitions } from "@ingestron/definitions";
 import { parse } from "yaml";
 import { refusedPacks } from "./pack-load.js";

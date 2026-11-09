@@ -2,7 +2,7 @@
 // line: loading and resolving with the CLI's packs, what generating every
 // environment together finds (such as a pack's notices), template.yaml, and
 // generated files changed by hand.
-import { parseTemplate } from "@ingestron/cli";
+import { parseTemplate } from "@ingestron/core";
 import { kinds } from "@ingestron/definitions";
 import { digestOf } from "@ingestron/generate";
 import type { Fix } from "@ingestron/config";

@@ -17,12 +17,12 @@ importers:
 
   packages/authoring:
     dependencies:
-      '@ingestron/cli':
-        specifier: workspace:^
-        version: link:../cli
       '@ingestron/config':
         specifier: workspace:^
         version: link:../config
+      '@ingestron/core':
+        specifier: workspace:^
+        version: link:../core
       '@ingestron/definitions':
         specifier: workspace:^
         version: link:../definitions
@@ -33,6 +33,9 @@ importers:
         specifier: 2.9.1
         version: 2.9.1
     devDependencies:
+      '@ingestron/cli':
+        specifier: workspace:^
+        version: link:../cli
       '@ingestron/pack-adf':
         specifier: ^2.1.0
         version: 2.1.0(@ingestron/definitions@packages+definitions)

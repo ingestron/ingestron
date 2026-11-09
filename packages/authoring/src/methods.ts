@@ -1,7 +1,7 @@
 // A method at a place: its name under settings or fixed, or the value of a
 // `uses` or a rule's `use`. With what it does, its settings, and which tables
 // use it and what chose it, so a method that no file names is explained.
-import { packs } from "@ingestron/cli";
+import { packs } from "@ingestron/core";
 import { methodReference, type ChosenBy, type FieldInfo } from "@ingestron/definitions";
 import type { Place } from "./context.js";
 import { settingsAt } from "./fields.js";

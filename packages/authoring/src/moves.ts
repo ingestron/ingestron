@@ -1,7 +1,7 @@
 // Moves a method setting to the file its method says it belongs in: the
 // platform for shared infrastructure, the standard for organisation choices.
 import type { Fix } from "@ingestron/config";
-import { packs } from "@ingestron/cli";
+import { packs } from "@ingestron/core";
 import { parse } from "yaml";
 import { placeAt } from "./context.js";
 import { settingsAt } from "./fields.js";

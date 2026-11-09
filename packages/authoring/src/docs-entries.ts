@@ -1,7 +1,7 @@
 // A docs link as a Reference panel entry, for what the code describes: a
 // document kind, a field and the fields under it, a method and its settings,
 // a problem code and a connector. Other pages are left to the site.
-import { packs } from "@ingestron/cli";
+import { packs } from "@ingestron/core";
 import {
   codeHelp,
   documentReference,

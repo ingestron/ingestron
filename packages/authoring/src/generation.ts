@@ -2,7 +2,7 @@
 // the CLI's own generation of every environment together, and the problems it
 // finds that resolving one environment for the editor does not, such as a pack's
 // notices and a value that cannot be supplied when deploying.
-import { generatedOutputs, type GeneratedOutputs } from "@ingestron/cli";
+import { generatedOutputs, type GeneratedOutputs } from "@ingestron/core";
 import type { AnyDiagnostic } from "@ingestron/config";
 import { deployAdvice } from "./deploy-advice.js";
 import { resolved, type Project } from "./project.js";

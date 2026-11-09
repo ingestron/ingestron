@@ -2,7 +2,7 @@
 // choice first for `contract` and `uses`. Each comes from what the project
 // already holds; nothing is invented. Skeletons for new files are in
 // ./skeletons.ts.
-import { packs } from "@ingestron/cli";
+import { packs } from "@ingestron/core";
 import type { Method } from "@ingestron/definitions";
 import type { Suggestion } from "./completion.js";
 import { documentOf, flowFacts, idsOf, type Place } from "./context.js";

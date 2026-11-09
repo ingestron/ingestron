@@ -1,7 +1,7 @@
 // Skeletons for a new, empty file: one document of the kind its folder holds,
 // with the id from the file name and the project's ids to choose from.
 import { basename } from "node:path";
-import { projectId } from "@ingestron/cli";
+import { projectId } from "@ingestron/core";
 import type { Suggestion } from "./completion.js";
 import { occurrences } from "./navigation.js";
 import { packIds } from "./pack-lists.js";

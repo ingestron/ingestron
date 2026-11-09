@@ -40,13 +40,14 @@
     "prepack": "pnpm build && cp ../../NOTICE NOTICE"
   },
   "dependencies": {
-    "@ingestron/cli": "workspace:^",
+    "@ingestron/core": "workspace:^",
     "@ingestron/config": "workspace:^",
     "@ingestron/definitions": "workspace:^",
     "@ingestron/generate": "workspace:^",
     "yaml": "2.9.1"
   },
   "devDependencies": {
+    "@ingestron/cli": "workspace:^",
     "@ingestron/pack-adf": "^2.1.0",
     "@microsoft/api-extractor": "7.59.4",
     "@types/node": "22.20.5",
