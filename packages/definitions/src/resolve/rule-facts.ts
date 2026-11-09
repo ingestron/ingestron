@@ -25,7 +25,7 @@ export function flowFacts(
   const contract = flow.value.tables[name]!.contract;
   return {
     declared,
-    facts: { ...own, ...intentFacts(declared.intent), ...tableFacts(context, contract) },
+    facts: { ...own, ...intentFacts(declared.intent), ...tableFacts(context, contract, name) },
   };
 }
 
@@ -39,7 +39,7 @@ export function transformFacts(
   const facts = {
     layer,
     ...intentFacts(declared.intent),
-    ...tableFacts(context, doc.value.contract),
+    ...tableFacts(context, doc.value.contract, doc.value.id),
   };
   return { declared, facts };
 }

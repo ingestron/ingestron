@@ -647,13 +647,13 @@ $defs:
             classification:
               {
                 type: string,
-                description: "Matches the highest classification of the contract's columns, in the order of governance.classification.values. Needs that list.",
+                description: "Matches the highest classification among the columns of the contract object the table uses, in the order of governance.classification.values. Needs that list.",
                 examples: [restricted],
               }
             tag:
               {
                 type: string,
-                description: "Matches a tag of the table's contract.",
+                description: "Matches a tag of the contract object the table uses (not its columns' tags).",
                 examples: [finance],
               }
             product:

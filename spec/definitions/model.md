@@ -513,12 +513,13 @@ For each action of each table:
      meaning depends on the method being chosen). A table that declares none
      has no such fact, and a transform's table has no `load`.
    - `classification`: the highest classification among the columns of the
-     table's contract, by the order of the standard's
+     contract object the table uses (the schema entry named like the table,
+     else the only entry), by the order of the standard's
      `governance.classification.values`. A column whose classification is not
      in the list does not count. Without that list there is no order, so the
      table has no `classification` fact.
-   - `tag`: matches when the contract has that tag, whichever schema object it
-     is on.
+   - `tag`: matches when the contract object the table uses has that tag.
+     Tags on its columns, and on other objects of the contract, do not count.
    - `product` and `domain`: the id and the `domain` of the first data
      product, in path order, whose output port names the table's contract. A
      table no product publishes has neither.

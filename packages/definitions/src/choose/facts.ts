@@ -11,9 +11,9 @@ export interface Facts {
   /** The load mode and history the table declares as intent; the pack's defaults are not facts. */
   load?: LoadMode;
   history?: History;
-  /** The highest classification of the contract's columns, by the standard's order. */
+  /** The highest classification of the contract's columns, by the standard's order, among the columns of the contract object the table uses. */
   classification?: string;
-  /** The contract's tags. */
+  /** The tags of the contract object the table uses. */
   tags?: string[];
   /** The data product that publishes the contract, and its domain. */
   product?: string;

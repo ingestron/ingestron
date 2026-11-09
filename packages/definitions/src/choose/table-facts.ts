@@ -1,7 +1,7 @@
 // The facts of a table that come from its declared intent and its governance, which rules match
 // (specification section 4).
 import type { Context } from "../context/index.js";
-import { kinds } from "../documents/index.js";
+import { contractEntry } from "../contracts/index.js";
 import type { Intent } from "../intent/index.js";
 import { productDocuments } from "../platform/index.js";
 import type { Facts } from "./facts.js";
@@ -10,18 +10,18 @@ import type { Facts } from "./facts.js";
 export type GovernanceFacts = Pick<Facts, "classification" | "tags" | "product" | "domain">;
 
 /**
- * The governance facts of a table: the highest classification of its contract's
- * columns (by the order of the standard's `governance.classification.values`; none
- * without that list), the contract's tags, and the id and domain of the first
- * data product, in path order, that publishes the contract.
+ * The governance facts of a table: the highest classification of the columns of the
+ * contract object the table uses (by the order of the standard's
+ * `governance.classification.values`; none without that list), that object's tags, and
+ * the id and domain of the first data product, in path order, that publishes the contract.
  */
-export function tableFacts(context: Context, contractId: string): GovernanceFacts {
-  const entries = context.project.get(kinds.contract, contractId)?.value.schema ?? [];
+export function tableFacts(context: Context, contractId: string, table: string): GovernanceFacts {
+  const entry = contractEntry(context, contractId, table);
   const classification = highest(
     context.standard.value.governance?.classification?.values ?? [],
-    entries.flatMap((entry) => (entry.properties ?? []).map((column) => column.classification)),
+    (entry?.properties ?? []).map((column) => column.classification),
   );
-  const tags = [...new Set(entries.flatMap((entry) => (entry.tags ?? []).map(String)))];
+  const tags = (entry?.tags ?? []).map(String);
   return {
     ...(classification !== undefined && { classification }),
     tags,

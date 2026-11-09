@@ -1,0 +1,63 @@
+description: A rule matches the contract object the table uses, so the tag and the restricted column of another object of the same contract do not match.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    governance:
+      classification:
+        values: [public, internal, restricted]
+    store:
+      when:
+        - { classification: restricted, use: view }
+        - { tag: finance, use: view }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: shared }
+      invoices: { object: invoices, contract: shared }
+  shared.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: shared
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: note, logicalType: string, classification: internal }
+      - name: invoices
+        logicalType: object
+        tags: [finance]
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: card, logicalType: string, classification: restricted }
+expect:
+  tables:
+    - name: orders
+      store:
+        method: stream
+        chosenBy: { by: pack-default }
+    - name: invoices
+      store:
+        method: view
+        chosenBy:
+          { by: standard-rule, when: { classification: restricted }, file: standard.yaml, line: 10 }

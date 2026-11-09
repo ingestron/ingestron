@@ -63,6 +63,12 @@ function accessOf(value: ContractDoc): Pick<Contract, "roles" | "sla"> {
   };
 }
 
+/** The schema entry of the contract the table uses, if any (see `entryIndex`). */
+export function contractEntry(context: Context, id: string, table: string): Entry | undefined {
+  const entries = context.project.get(kinds.contract, id)?.value.schema ?? [];
+  return entries[entryIndex(entries, table)];
+}
+
 /** The entry named like the table, else the only entry; -1 when there is none. */
 function entryIndex(entries: Entry[], table: string): number {
   const named = entries.findIndex((candidate) => candidate.name === table);
