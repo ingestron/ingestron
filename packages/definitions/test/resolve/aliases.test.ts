@@ -71,7 +71,7 @@ describe("setting aliases", () => {
     ].join("\n");
     const { model, diagnostics } = resolve({ "platform.yaml": platform });
     expect(model?.tables[0]?.intentOrigins).toEqual({
-      history: { layer: "platform", file: "platform.yaml", line: 5 },
+      history: { layer: "platform", file: "platform.yaml", line: 5, alias: "mode" },
     });
     expect(diagnostics).toMatchObject([
       { code: "SETTING_MOVED", file: "platform.yaml", fixes: [] },

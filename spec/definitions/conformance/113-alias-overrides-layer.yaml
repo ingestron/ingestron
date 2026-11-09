@@ -44,12 +44,12 @@ expect:
     - name: orders
       intent: { history: none }
       intentOrigins:
-        history: { layer: definition, file: sales.yaml, line: 5 }
+        history: { layer: definition, file: sales.yaml, line: 5, alias: mode }
       store:
         method: stream
         settings: { mode: append }
         origins:
-          mode: { layer: definition, file: sales.yaml, line: 5 }
+          mode: { layer: definition, file: sales.yaml, line: 5, alias: null }
   diagnostics:
     - code: SETTING_MOVED
       severity: warning

@@ -1314,6 +1314,15 @@ and line of the setting. A method's own `defaults` are not intent. A value
 that holds an unset reference (section 1) stands for nothing, as in section
 11.2. Aliases are not rule facts (section 4).
 
+**Origins.** The origin of a value that came from an aliased setting also
+names the setting, as `alias` (`mode`), beside the layer, file and line of the
+setting. The origin of intent written as intent, and of a pack's default, has
+no `alias`, and neither has a value that a later place wrote as intent, whose
+origin is that place's. So a pack can tell intent written as intent from a
+setting that means the same. A pack MUST NOT change what it generates for a
+value whose origin has `alias`, compared with the same setting before intent
+existed.
+
 **`SETTING_MOVED`.** Each aliased setting outside the standard's `fixed` is
 `SETTING_MOVED`, a warning at the setting: `"<setting>" is now written as
 intent: <intent>.`, the intent written as `<path>: <value>`, joined with

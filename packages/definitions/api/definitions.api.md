@@ -478,6 +478,7 @@ export const NO_STORE = "none";
 
 // @public
 export interface Origin {
+    alias?: string;
     file?: string;
     // (undocumented)
     layer: "pack" | "standard" | "platform" | "layer" | "rule" | "definition" | "table" | "fixed";

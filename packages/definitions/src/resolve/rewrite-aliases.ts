@@ -38,7 +38,8 @@ export function rewriteAliases(
       continue;
     }
     step.settings[setting] = value;
-    step.origins[setting] = origin;
+    // The setting's own origin is a place, not a setting it was read from.
+    step.origins[setting] = { layer: origin.layer, file: origin.file, line: origin.line };
   }
 }
 

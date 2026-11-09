@@ -56,5 +56,5 @@ export function tableIntent(
 
 /** An aliased setting as a stage: every path it stands for was written at the setting. */
 function aliasStage(alias: AliasStage): IntentStage {
-  return { origin: alias.origin, intent: alias.intent, at: () => alias.at };
+  return { origin: alias.origin, intent: alias.intent, alias: alias.setting, at: () => alias.at };
 }

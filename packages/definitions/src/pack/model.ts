@@ -48,6 +48,12 @@ export interface Origin {
   /** Where it was written; absent for the pack's defaults. */
   file?: string;
   line?: number;
+  /**
+   * On an entry of a table's `intentOrigins`, the method setting the value was read from,
+   * when it came from an aliased setting; absent for intent written as intent and for a
+   * pack's defaults.
+   */
+  alias?: string;
 }
 
 /**

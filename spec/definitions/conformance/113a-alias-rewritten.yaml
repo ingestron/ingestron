@@ -1,4 +1,4 @@
-description: Each aliased setting is written from the completed intent, with the origin of the intent, so a table's history overrides the standard's mode and a table's sequence gives sequence_by. A standard that lists no layers gets the pack's layers, each with the history, from the fix.
+description: Each aliased setting is written from the completed intent, with the origin of the intent (intent from a setting names it as alias; intent written as intent, later, has none), so a table's history overrides the standard's mode and a table's sequence gives sequence_by. A standard that lists no layers gets the pack's layers, each with the history, from the fix.
 environment: dev
 files:
   project.yaml: |
@@ -56,7 +56,7 @@ expect:
     - name: orders
       intent: { history: latest }
       intentOrigins:
-        history: { layer: table, file: sales.yaml, line: 6 }
+        history: { layer: table, file: sales.yaml, line: 6, alias: null }
       store:
         method: stream
         settings: { mode: upsert, sequence_by: null }
@@ -65,8 +65,8 @@ expect:
     - name: refunds
       intent: { history: none, sequence: updated_at }
       intentOrigins:
-        history: { layer: standard, file: standard.yaml, line: 7 }
-        sequence: { layer: table, file: sales.yaml, line: 7 }
+        history: { layer: standard, file: standard.yaml, line: 7, alias: mode }
+        sequence: { layer: table, file: sales.yaml, line: 7, alias: null }
       store:
         method: stream
         settings: { mode: append, sequence_by: updated_at }

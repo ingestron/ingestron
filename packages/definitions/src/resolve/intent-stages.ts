@@ -10,6 +10,8 @@ import { leaves } from "./intent-values.js";
 export interface IntentStage {
   origin: Exclude<Origin["layer"], "pack">;
   intent: Intent;
+  /** The method setting the intent was read from, when it came from an aliased setting. */
+  alias?: string;
   /** Where the value at an intent path was written. */
   at: (path: string) => Source;
 }
@@ -44,7 +46,12 @@ export function mergeStages(stages: readonly IntentStage[]): MergedIntent {
     for (const path of leaves(stage.intent)) {
       const at = stage.at(path);
       const location = at.document.locate(at.pointer);
-      origins[path] = { layer: stage.origin, file: location.file, line: location.line };
+      origins[path] = {
+        layer: stage.origin,
+        file: location.file,
+        line: location.line,
+        ...(stage.alias !== undefined && { alias: stage.alias }),
+      };
       sources[path] = at;
     }
   return { intent, origins, sources };
