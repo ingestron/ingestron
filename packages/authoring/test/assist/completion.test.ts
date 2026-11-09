@@ -85,13 +85,13 @@ describe("completion", () => {
     const items = at("flows/shop.yaml", (text) =>
       text.replace("    object: orders\n", "    object: orders\n    |\n"),
     );
-    expect(labels(items)).toEqual(["audit", "history", "ingest", "load", "sequence", "serve"]);
+    expect(labels(items)).toEqual(["audit", "ingest", "serve"]);
   });
 
   it("leaves out settings already written in the same mapping", () => {
     const items = at("flows/shop.yaml", (text) =>
       text.replace(
-        "      with: { mode: upsert, sequence_by: updated_at, delete_when: \"op = 'D'\", except_columns: [op] }",
+        "      with: { except_columns: [op] }",
         "      with:\n        mode: upsert\n        |",
       ),
     );
@@ -110,7 +110,10 @@ describe("completion", () => {
 
   it("offers the settings of the method the table resolves to, with defaults", () => {
     const items = at("flows/shop.yaml", (text) =>
-      text.replace("      with: { mode: upsert", "      with:\n        |\n      x: { mode: upsert"),
+      text.replace(
+        "      with: { except_columns",
+        "      with:\n        |\n      x: { except_columns",
+      ),
     );
     expect(labels(items)).toEqual(expect.arrayContaining(["mode", "sequence_by", "cluster_by"]));
     expect(items.find((item) => item.label === "cluster_by")?.detail).toBe("default: auto");

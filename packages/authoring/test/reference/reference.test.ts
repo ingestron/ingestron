@@ -9,6 +9,8 @@ import { filledTemplates } from "../starters.js";
 
 const erp = join(filledTemplates, "private-sql-server");
 const retail = join(filledTemplates, "retail");
+/** The line of the standard's adf-copy settings, under which a test writes one. */
+const adfCopy = "    adf-copy: # the schedule; where it lands is the platform's\n";
 
 /** The entry where `|` is in the edited text of `path` in `folder`. */
 function at(folder: string, path: string, edit: (text: string) => string = (text) => text) {
@@ -21,7 +23,7 @@ function at(folder: string, path: string, edit: (text: string) => string = (text
 describe("referenceAt", () => {
   it("describes a setting, marking the value written", () => {
     const entry = at(erp, "standard.yaml", (text) =>
-      text.replace("mode: incremental", "mode: incr|emental"),
+      text.replace(adfCopy, `${adfCopy}      mode: incr|emental\n`),
     );
     expect(entry).toMatchObject({
       title: "mode",

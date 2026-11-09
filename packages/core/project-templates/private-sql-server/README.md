@@ -18,7 +18,7 @@ because it cannot reach a private source, and the ADF pack's rule chooses
     started in production and stopped elsewhere.
 - **Databricks** ([build/databricks](build/databricks/)): one bundle with a
   target per environment, whose streaming tables over the same landing
-  folders keep the current row per key (`mode: upsert`), and the refresh job.
+  folders keep the current row per key (`history: latest`), and the refresh job.
 
 Each side runs on its own schedule; Auto Loader picks up new files whenever
 the pipeline runs. The integration runtime and Key Vault are shared

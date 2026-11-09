@@ -6,7 +6,7 @@ import { manifestSchema, toEditorSchema, type JsonSchema } from "@ingestron/conf
 import { kinds } from "@ingestron/definitions";
 import type { Options } from "../terminal/index.js";
 import type { Io } from "../terminal/index.js";
-import { templateSchema } from "@ingestron/core";
+import { packs, templateSchema } from "@ingestron/core";
 
 /** Writes the schemas to `.ingestron/schemas` and prints the VS Code setting. */
 export function writeSchemas(options: Options, io: Io): number {
@@ -17,7 +17,7 @@ export function writeSchemas(options: Options, io: Io): number {
   write("project.json", manifestSchema);
   const branches = Object.values(kinds).map((kind) => {
     const file = `${kind.kind.toLowerCase()}.json`;
-    write(file, toEditorSchema(kind.schema));
+    write(file, toEditorSchema(kind.kind === "Platform" ? withSections(kind.schema) : kind.schema));
     return {
       if: { required: ["kind"], properties: { kind: { const: kind.kind } } },
       then: { $ref: file },
@@ -47,4 +47,13 @@ export function writeSchemas(options: Options, io: Io): number {
     `Wrote editor schemas to ${relative(io.cwd, folder)}.\nAdd this to .vscode/settings.json:\n${JSON.stringify(setting, null, 2)}\n`,
   );
   return 0;
+}
+
+/** The Platform's schema with each pack's section, which the loader checks (definitions spec 7.2). */
+function withSections(schema: JsonSchema): JsonSchema {
+  if (typeof schema === "boolean") return schema;
+  const sections = Object.fromEntries(
+    packs.flatMap((pack) => (pack.platformSection ? [[pack.id, pack.platformSection]] : [])),
+  );
+  return { ...schema, properties: { ...(schema.properties as object), ...sections } };
 }

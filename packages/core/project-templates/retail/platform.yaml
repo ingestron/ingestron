@@ -2,20 +2,21 @@
 apiVersion: ingestron.io/v1
 kind: Platform
 id: lakehouse
-workspace:
-  host: ${values.host}
-run_as:
-  service_principal_name: ${values.run_as}
 tags:
   team: sales
   environment: ${environment.name}
-permissions:
-  - group_name: ${values.engineers}
-    level: CAN_MANAGE
-  - group_name: ${values.analysts}
-    level: CAN_VIEW
 schedule:
   cron: 0 0 5 * * ? # Quartz cron: the refresh job runs once a day
   timezone: UTC # the time zone the cron is read in
-notifications:
-  on_failure: ["${values.on_failure}"]
+alerts:
+  - { kind: email, to: ["${values.on_failure}"], on: [failure] }
+databricks:
+  workspace:
+    host: ${values.host}
+  run_as:
+    service_principal_name: ${values.run_as}
+  permissions:
+    - group_name: ${values.engineers}
+      level: CAN_MANAGE
+    - group_name: ${values.analysts}
+      level: CAN_VIEW

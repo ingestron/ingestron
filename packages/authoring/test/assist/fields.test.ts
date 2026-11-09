@@ -8,6 +8,8 @@ import { openProject } from "../../src/project/project.js";
 import { filledTemplates } from "../starters.js";
 
 const erp = join(filledTemplates, "private-sql-server");
+/** The line of the standard's adf-copy settings, under which a test writes one. */
+const adfCopy = "    adf-copy: # the schedule; where it lands is the platform's\n";
 
 /** Completions where `|` is in the edited text of `path`. */
 function at(path: string, edit: (text: string) => string) {
@@ -19,7 +21,7 @@ function at(path: string, edit: (text: string) => string) {
 
 describe("values of method settings", () => {
   it("offers each allowed value with its meaning in the standard's settings", () => {
-    const items = at("standard.yaml", (text) => text.replace("mode: incremental", "mode: |"));
+    const items = at("standard.yaml", (text) => text.replace(adfCopy, `${adfCopy}      mode: |\n`));
     expect(items.map((item) => item.label)).toEqual(["full", "incremental"]);
     expect(items[1]?.documentation).toBe("Only rows changed in the window, by watermark_column.");
     expect(items[1]?.docs).toBe("/docs/reference/packs/adf#adf-copy-mode");

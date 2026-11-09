@@ -5,14 +5,15 @@ packs: [databricks@2, adf@2] # Databricks first: the first pack names and types 
 naming:
   # One catalog per environment, such as erp_dev
   catalog: erp_{{ environment }}
+layers:
+  # Each window's file holds the rows changed in it; keep the current version.
+  - { name: bronze, history: latest }
+  - silver
+  - gold
+load:
+  default: incremental # copy the rows changed since the last copy, by each flow's cursor
 ingest:
   settings:
     adf-copy: # the schedule; where it lands is the platform's
-      mode: incremental
-      watermark_column: modified_at
       every: { frequency: Hour, interval: 1 }
       start: 2026-10-01T00:00:00Z
-store:
-  settings:
-    # Each window's file holds the rows changed in it; keep the current version.
-    streaming-table: { mode: upsert, sequence_by: modified_at }
