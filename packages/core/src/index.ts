@@ -1,5 +1,8 @@
 // Public API of @ingestron/core.
 
+// A project held open: plan, compare and request from one generation.
+export { Project } from "./project/index.js";
+
 // The built-in packs.
 export { packs } from "./packs/index.js";
 
@@ -16,6 +19,7 @@ export {
   type GeneratedOutputs,
   type GeneratedOutputsOptions,
   type Output,
+  type ProjectOptions,
   type Report,
 } from "./generation/index.js";
 

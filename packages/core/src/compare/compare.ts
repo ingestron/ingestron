@@ -3,6 +3,7 @@
 // and settings. Secrets are never shown. The editor's command shows the same.
 import { formatDiagnostics, type FileSource } from "@ingestron/config";
 import { resolveDefinitions, type ResolvedModel, type ResolvedTable } from "@ingestron/definitions";
+import type { ProjectOptions } from "../generation/index.js";
 import { packs } from "../packs/index.js";
 
 type Facts = Record<string, unknown>;
@@ -10,14 +11,24 @@ type Facts = Record<string, unknown>;
 /**
  * The differences between two environments as Markdown, grouped by platform,
  * names and table; a note with the problems when either does not resolve.
+ * `options` gives other packs or host values than the built-in packs and `process.env`.
  * @example
  * console.log(compareEnvironments(nodeFiles("definitions"), "dev", "prod"));
  */
-export function compareEnvironments(files: FileSource, a: string, b: string): string {
+export function compareEnvironments(
+  files: FileSource,
+  a: string,
+  b: string,
+  options: ProjectOptions = {},
+): string {
   // As plan resolves them, so the platform's mode is the generated files' (spec/cli/outputs.md).
-  const options = { packs, envvars: process.env, environmentsTogether: true };
-  const left = resolveDefinitions(files, { ...options, environment: a });
-  const right = resolveDefinitions(files, { ...options, environment: b });
+  const resolving = {
+    packs: [...(options.packs ?? packs)],
+    envvars: options.envvars ?? process.env,
+    environmentsTogether: true,
+  };
+  const left = resolveDefinitions(files, { ...resolving, environment: a });
+  const right = resolveDefinitions(files, { ...resolving, environment: b });
   for (const [name, result] of [
     [a, left],
     [b, right],

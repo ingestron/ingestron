@@ -14,10 +14,16 @@ import {
   kinds,
   resolveDefinitions,
   type Capability,
+  type Pack,
   type RequestSection,
   type ResolvedModel,
 } from "@ingestron/definitions";
-import { environmentOutputs, generateAll, type Generated } from "../generation/index.js";
+import {
+  environmentOutputs,
+  generateAll,
+  type Generated,
+  type ProjectOptions,
+} from "../generation/index.js";
 import { packs } from "../packs/index.js";
 import { suppliedFor } from "./request-supplied.js";
 import { notKnown as whatIsNotKnown } from "./request-unknown.js";
@@ -28,11 +34,17 @@ import { valuesToReplace } from "./request-replace.js";
  * The request as Markdown, ready to send; a short note instead when the
  * definitions have errors. A variable set nowhere is not an error here: the
  * request lists it under "Values to provide" and shows it as written.
+ * `options` gives other packs or host values than the built-in packs and `process.env`.
  * @example
  * console.log(platformRequest(nodeFiles("definitions"), "prod"));
  */
-export function platformRequest(files: FileSource, environment: string | undefined): string {
-  return requestFor(files, environment, generateAll(files, packs, process.env)).text;
+export function platformRequest(
+  files: FileSource,
+  environment: string | undefined,
+  options: ProjectOptions = {},
+): string {
+  const generated = generateAll(files, options.packs ?? packs, options.envvars ?? process.env);
+  return requestFor(files, environment, generated, options).text;
 }
 
 /**
@@ -40,11 +52,8 @@ export function platformRequest(files: FileSource, environment: string | undefin
  * resolved together, so the request shows the generated files' mode (spec/cli/request.md).
  */
 const resolving = {
-  packs,
   missingEnvvars: "information",
   environmentsTogether: true,
-  // The live host environment, read when each request is made.
-  envvars: process.env,
 } as const;
 
 /** The request's text, and whether the definitions resolved; false gives the short note. */
@@ -52,21 +61,25 @@ export function requestFor(
   files: FileSource,
   environment: string | undefined,
   generated: Generated,
+  options: ProjectOptions = {},
 ): { text: string; resolved: boolean } {
-  const { model, diagnostics } = resolveDefinitions(files, { ...resolving, environment });
+  const available = options.packs ?? packs;
+  // The live host environment unless given, read when each request is made.
+  const envvars = options.envvars ?? process.env;
+  const { model, diagnostics } = resolveDefinitions(files, {
+    ...resolving,
+    packs: [...available],
+    envvars,
+    environment,
+  });
   const name = environment ?? "default";
   if (!model)
     return {
       text: `# Platform request (${name})\n\nThe definitions have problems; fix them first.\n`,
       resolved: false,
     };
-  const project = resolveProject(files, {
-    kinds: Object.values(kinds),
-    ...(environment && { environment }),
-    envvars: process.env,
-    missingEnvvars: "information",
-  }).project;
-  const capabilities = packs.flatMap((pack) => pack.capabilities ?? []);
+  const project = hostProject(files, environment, envvars);
+  const capabilities = available.flatMap((pack) => pack.capabilities ?? []);
   const notKnown = whatIsNotKnown(project, model);
   const references = project?.envvarReferences ?? [];
   const text = [
@@ -77,7 +90,7 @@ export function requestFor(
     switchedOn(model, capabilities),
     switchedOff(diagnostics, capabilities),
     infrastructure(project, usedMethods(model)),
-    ...packSections(model),
+    ...packSections(model, available),
     // Files are never generated from a table whose source is not known.
     notKnown.sources.size > 0 ? undefined : sql(model, name),
   ]
@@ -85,6 +98,20 @@ export function requestFor(
     .join("\n\n")
     .concat("\n");
   return { text, resolved: true };
+}
+
+/** The project as the host's values resolve it, a variable set nowhere not yet known. */
+function hostProject(
+  files: FileSource,
+  environment: string | undefined,
+  envvars: Readonly<Record<string, string | undefined>>,
+): Project | undefined {
+  return resolveProject(files, {
+    kinds: Object.values(kinds),
+    ...(environment && { environment }),
+    envvars,
+    missingEnvvars: "information",
+  }).project;
 }
 
 /** Who the generated pipelines and jobs run as; nothing when no data platform pack runs them. */
@@ -160,9 +187,9 @@ function shown(value: unknown): string {
 }
 
 /** Each used pack's sections, those with the same title joined, in the order first seen. */
-function packSections(model: ResolvedModel): string[] {
+function packSections(model: ResolvedModel, available: readonly Pack[]): string[] {
   const sections = new Map<string, RequestSection>();
-  for (const pack of packs.filter((item) =>
+  for (const pack of available.filter((item) =>
     model.standard.packs.includes(`${item.id}@${item.version}`),
   ))
     for (const section of pack.request?.(model) ?? []) {

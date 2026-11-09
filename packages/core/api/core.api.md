@@ -7,7 +7,9 @@
 import { AnyDiagnostic } from '@ingestron/config';
 import type { Connector } from '@ingestron/definitions';
 import { FileSource } from '@ingestron/config';
+import { OutputFolder } from '@ingestron/generate';
 import { Pack } from '@ingestron/definitions';
+import { Plan } from '@ingestron/generate';
 import { ResolvedModel } from '@ingestron/definitions';
 import { ResolvedProduct } from '@ingestron/definitions';
 import { ResolvedTable } from '@ingestron/definitions';
@@ -36,7 +38,7 @@ export function applySet(files: Record<string, Content>, set: Readonly<Record<st
 export function builtInTemplates(): Template[];
 
 // @public
-export function compareEnvironments(files: FileSource, a: string, b: string): string;
+export function compareEnvironments(files: FileSource, a: string, b: string, options?: ProjectOptions): string;
 
 // @public
 export function composableRecipe(connector: string, given: string, connectivity: string): ProjectRecipe & {
@@ -150,10 +152,31 @@ export function parseTemplate(text: string, name: string, folder: string): Templ
 export function passports(model: ResolvedModel): Record<string, string>;
 
 // @public
-export function platformRequest(files: FileSource, environment: string | undefined): string;
+export function platformRequest(files: FileSource, environment: string | undefined, options?: ProjectOptions): string;
+
+// @public
+export class Project {
+    compare(a: string, b: string): string;
+    readonly envvars: Readonly<Record<string, string | undefined>>;
+    readonly files: FileSource;
+    generation(options?: {
+        replaceMe?: "warning" | "error";
+    }): Generated;
+    static open(files: FileSource, options?: ProjectOptions): Project;
+    readonly packs: readonly Pack[];
+    plan(folder: OutputFolder, outputName: string): Plan;
+    refresh(): void;
+    request(environment?: string): string;
+}
 
 // @public
 export function projectId(text: string): string;
+
+// @public
+export interface ProjectOptions {
+    envvars?: Readonly<Record<string, string | undefined>>;
+    packs?: readonly Pack[];
+}
 
 // Warning: (ae-forgotten-export) The symbol "ReadmeFacts" needs to be exported by the entry point index.d.ts
 //
@@ -220,7 +243,7 @@ export interface Report {
 }
 
 // @public
-export function requestFor(files: FileSource, environment: string | undefined, generated: Generated): {
+export function requestFor(files: FileSource, environment: string | undefined, generated: Generated, options?: ProjectOptions): {
     text: string;
     resolved: boolean;
 };
