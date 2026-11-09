@@ -1,6 +1,6 @@
 // What a pack declares: its methods, its smart defaults and how it builds files.
 import type { JsonSchema } from "@ingestron/config";
-import type { History, LoadMode } from "../intent/index.js";
+import type { History, Intent, LoadMode, SettingAlias } from "../intent/index.js";
 import type { EnvironmentsBuild } from "./environments.js";
 import type { Column, ResolvedModel, ResolvedTable } from "./model.js";
 
@@ -55,6 +55,17 @@ export interface Method {
   defaults?: Record<string, unknown>;
   /** JSON Schema for the merged settings. */
   settings: JsonSchema;
+  /**
+   * The intent this method applies when nothing declares it, filled in after methods are
+   * chosen (specification section 11.3).
+   * @example intentDefaults: { history: "none" }
+   */
+  intentDefaults?: Intent;
+  /**
+   * Settings that are other names for intent, by setting (specification section 11.4).
+   * @example aliases: { mode: { values: { append: { history: "none" } } }, sequence_by: { path: "sequence" } }
+   */
+  aliases?: Record<string, SettingAlias>;
   /**
    * Where settings usually belong: `platform` (such as shared infrastructure)
    * or `standard` (such as a schedule). The others belong in the definitions.

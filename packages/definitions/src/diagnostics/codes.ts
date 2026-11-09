@@ -1,6 +1,7 @@
 // What each code means and how to fix it, shown on the documentation site.
 import type { DefinitionCode } from "./diagnostics.js";
 import { environmentCodeHelp } from "./environment-codes.js";
+import { intentCodeHelp } from "./intent-codes.js";
 import { layerCodeHelp } from "./layer-codes.js";
 
 /**
@@ -10,6 +11,7 @@ import { layerCodeHelp } from "./layer-codes.js";
 export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> = {
   ...environmentCodeHelp,
   ...layerCodeHelp,
+  ...intentCodeHelp,
   NO_STANDARD: {
     meaning: "The project has no Standard document.",
     fix: "Add a Standard, or import your organisation's standard in project.yaml.",

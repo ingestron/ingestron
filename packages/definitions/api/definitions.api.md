@@ -171,7 +171,7 @@ export type ContractUse = {
 export function contractUseOf(pack: PackInfo, path: string): ContractUse | undefined;
 
 // @public
-export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "PACK_VERSION" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "DUPLICATE_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "REPLACE_ME" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS" | "DEPLOY_VALUE" | "ENVIRONMENTS_DIFFER" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS" | "PACK_NOTICE" | "PACK_LOAD";
+export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "PACK_VERSION" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "SETTING_MOVED" | "INTENT_CONFLICT" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "DUPLICATE_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "REPLACE_ME" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS" | "DEPLOY_VALUE" | "ENVIRONMENTS_DIFFER" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS" | "PACK_NOTICE" | "PACK_LOAD";
 
 // @public
 export type DeleteMode = "soft" | "hard" | "keep";
@@ -341,6 +341,9 @@ export interface Intent {
 }
 
 // @public
+export type IntentFragment = Intent;
+
+// @public
 export const intentPaths: Record<string, readonly string[]>;
 
 export { JsonSchema }
@@ -385,12 +388,14 @@ export interface Method {
     accepts?: Handover[];
     // (undocumented)
     action: Action;
+    aliases?: Record<string, SettingAlias>;
     check?(table: ResolvedTable): string[];
     connectivity?: string[];
     connectors?: string[];
     defaults?: Record<string, unknown>;
     // (undocumented)
     description: string;
+    intentDefaults?: Intent;
     needsOutput?: true;
     output?(table: ResolvedTable): StepOutput | undefined;
     placement?: {
@@ -736,6 +741,13 @@ export interface Schedule {
     // (undocumented)
     timezone: string;
 }
+
+// @public
+export type SettingAlias = {
+    path: string;
+} | {
+    values: Record<string, IntentFragment>;
+};
 
 // @public
 export function splitDeployText(text: string, deployValues: readonly DeployValue[]): (string | DeployValue)[];

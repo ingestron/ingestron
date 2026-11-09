@@ -85,6 +85,12 @@ methods:
     accepts: [files]
     produces: table
     defaults: { cluster: auto, properties: { quality: raw } }
+    # The intent it applies when nothing declares it, and its settings that are
+    # other names for intent (sections 11.3 and 11.4).
+    intentDefaults: { history: none }
+    aliases:
+      mode: { values: { append: { history: none }, upsert: { history: latest } } }
+      sequence_by: { path: sequence }
     settings:
       type: object
       additionalProperties: false
@@ -93,6 +99,7 @@ methods:
         cluster_by: { anyOf: [{ enum: [auto, none] }, { type: array, items: { type: string } }] }
         retries: { type: integer }
         mode: { enum: [append, upsert] }
+        sequence_by: { type: string }
         properties: { type: object }
   view:
     action: store

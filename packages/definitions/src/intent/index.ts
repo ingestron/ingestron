@@ -1,4 +1,5 @@
 // The intent module: what the rest of the package uses.
+export type { IntentFragment, SettingAlias } from "./aliases.js";
 export {
   type AuditDoc,
   type FlowIntentDoc,

@@ -142,13 +142,14 @@ export interface ResolvedTable {
   expectations: Expectation[];
   /**
    * What the standard, the table's layer, its flow or transform and the table itself say
-   * about how it is loaded, kept and audited, before any pack's defaults (specification
-   * section 11.2). `{}` when nothing is declared.
+   * about how it is loaded, kept and audited, with the method settings that are other names
+   * for intent, completed by the chosen methods' intent defaults (specification sections
+   * 11.2 to 11.4). `{}` when nothing is declared and no method gives a default.
    */
   intent: Intent;
   /**
    * For each intent path in `intent`, such as `load.mode` or `audit`, the layer that last
-   * set it and where it was written.
+   * set it and where it was written; `pack`, with no file, for a method's intent default.
    */
   intentOrigins: Record<string, Origin>;
   /** Flow tables: how data leaves the source. Missing when `sourceNotKnown` is set and no `uses` names the method. */

@@ -241,7 +241,10 @@ Each method has an `action`, the `connectors` it reads and the
 and `produces` (`files`, `table` or `query`), `defaults`, a JSON Schema
 for its `settings`, and optionally `placement`: which settings belong in the
 platform (`platform`, such as shared infrastructure) or the standard
-(`standard`, such as a schedule); the others belong in the definitions.
+(`standard`, such as a schedule); the others belong in the definitions. A
+method MAY also give `intentDefaults`, the intent it applies when nothing
+declares it (section 11.3), and `aliases`, the settings that are other names
+for intent (section 11.4).
 
 A method MAY describe its **output** for a table: where the step's data
 lands (`location`, one file or a pattern with `*` for one level and `**` for
@@ -492,7 +495,9 @@ Each step records, for every top-level setting, the layer that last set it
 `rule` (the matching rule's `with`), `definition` (the flow's or transform's
 `with`), `table` (the table's `with`) or `fixed`, with the file and line where
 it was written for every layer except `pack`. Tools use it to explain a
-value.
+value. A setting that is another name for intent is written from the table's
+intent once methods are chosen, and records the intent's origin (section
+11.4).
 
 ## 4. Choosing a method
 
@@ -1007,9 +1012,10 @@ first of these that applies to the merged schema:
 Intent is what a standard, a flow or a transform says about how data is
 loaded, kept and run, in words that belong to no engine. Every section is
 optional; a document that leaves them all out behaves as it did before they
-existed. Section 11.1 defines the words and section 11.2 how a value is
-resolved for each table. Which pack uses which is in each pack's own
-specification.
+existed. Section 11.1 defines the words, section 11.2 how a value is
+declared for each table, section 11.3 how the chosen methods fill what is left
+and section 11.4 the method settings that are other names for intent. Which
+pack uses which is in each pack's own specification.
 
 ### 11.1 Vocabulary
 
@@ -1125,7 +1131,8 @@ a list (`audit`, `storage.features`) is replaced whole.
 6. `fixed`: the standard's `fixed` intent.
 
 The pack's own intent defaults come after methods are chosen and fill only
-what these layers left unset; they are not part of declared intent. A
+what these layers left unset (section 11.3); they are not part of declared
+intent. A
 transform's table has no `load`: the standard's `load` sections and `fixed.load`
 do not apply to it.
 
@@ -1148,15 +1155,114 @@ standard may differ from `fixed`: it wins. The table is still resolved, with
 the fixed value.
 
 **Resolved intent.** Each table has `intent`, the values above in the shape of
-section 11.1 (`{}` when nothing is declared), and `intentOrigins`, for each
+section 11.1, completed as sections 11.3 and 11.4 say (`{}` when nothing is
+declared and no method gives a default), and `intentOrigins`, for each
 intent path that has a value, the layer that last set it (`standard`, `layer`,
-`rule`, `definition`, `table` or `fixed`) with the `file` and `line` where it
-was written. The paths are those of `intentPaths`: `load.mode`, `load.cursor`,
+`rule`, `definition`, `table` or `fixed`; `platform` for an aliased setting in
+the platform; `pack` for a method's default) with the `file` and `line` where
+it was written (none for `pack`). The paths are those of `intentPaths`: `load.mode`, `load.cursor`,
 `load.deletes.mode`, `load.deletes.when`, `history`, `sequence`, `audit`,
 `rescued`, `retention.time_travel`, `retention.log`, `retention.landed_files`,
 `storage.clustering` and `storage.features`; a list has one origin, under its
 path. The origin's layer name `layer` is used only for intent. Comparing
 targets (section 2.1) leaves `intentOrigins` out, as it leaves out `origins`.
+
+### 11.3 Pack defaults
+
+A method MAY give `intentDefaults`: intent, in the shape of section 11.1,
+that it applies when nothing declares it (the conformance pack's `stream`:
+`history: none`). Once every step of a table has its method and settings, the
+declared intent (section 11.2) is completed in this order:
+
+1. each chosen method's aliased settings become intent at their places
+   (section 11.4);
+2. each chosen method's `intentDefaults`, in step order (ingest or transform,
+   then store, then serve), fill every intent path still unset, an earlier
+   step's default winning. A path filled this way has the origin `pack`, with
+   no file or line;
+3. each chosen method's aliased settings are written from the result
+   (section 11.4).
+
+Pack defaults are not rule facts (section 4): they come after the methods are
+chosen. A table whose steps are not known (section 1) has no chosen methods,
+so nothing is filled. A table whose steps cannot be resolved is not in the
+model, and none of this applies to it.
+
+### 11.4 Aliases
+
+A method MAY declare `aliases`: settings that are other names for intent, by
+setting. An alias is one of:
+
+- `{ path }`: the setting's value is the value at that intent path
+  (`sequence_by: { path: sequence }`);
+- `{ values }`: each listed value of the setting stands for a piece of intent
+  (`mode: { values: { append: { history: none }, upsert: { history: latest } } }`).
+  A value not listed stands for nothing.
+
+**Reading.** An aliased setting is intent written at the place the setting is
+written, and takes that place's position in the precedence of section 11.2:
+the standard's and the platform's `settings.<method>` are `standard`, the
+matching `when` rule's `with` is `rule`, the flow's or transform's
+`<action>.with` is `definition`, the flow table's `<action>.with` is `table`,
+and the standard's `fixed.<method>` is `fixed`. At one position the setting
+comes before intent written as intent, so a flow's `store.with.mode: append`
+overrides a layer's `history: latest`, as the flow's own `history` would. The
+origin is the place (`platform` for the platform's settings), with the file
+and line of the setting. A method's own `defaults` are not intent. A value
+that holds an unset reference (section 1) stands for nothing, as in section
+11.2. Aliases are not rule facts (section 4).
+
+**`SETTING_MOVED`.** Each aliased setting outside the standard's `fixed` is
+`SETTING_MOVED`, a warning at the setting: `"<setting>" is now written as
+intent: <intent>.`, the intent written as `<path>: <value>`, joined with
+`, `. Its fix, `Write as intent`, writes the intent at the same place and
+removes the setting:
+
+- in a flow's or transform's `<action>.with`, as the flow's or transform's
+  own intent; in a flow table's, as the table's;
+- in the standard's `settings.<method>`, in its top-level sections
+  (`load.mode` as `load.default`, `load.deletes.mode` as `load.deletes`,
+  `audit`, `rescued`, `retention`, `storage`). `history` has no top-level
+  field, so it is written to every layer that does not set it: a layer written
+  as a name becomes `{ name, history }`, and a standard with no `layers` gets
+  the pack's default layers written that way;
+- in a rule's `with` or the platform, or for a path the standard has no field
+  for, there is no fix.
+
+The standard's `fixed.<method>` is not `SETTING_MOVED`: it is read as fixed
+intent for that method's tables and keeps its force as it is written.
+
+**`INTENT_CONFLICT`.** An aliased setting whose intent differs from intent
+written as intent at the same place (the same flow, flow table or transform,
+or the standard's top-level sections or `fixed`) is `INTENT_CONFLICT`, an
+error at the setting: `"<setting>: <value>" means <intent>, but this <place>
+also says <intent>.`, the place being `flow`, `transform`, `table` or
+`standard`, and the second intent the differing paths as written. Its fix is
+`Remove this setting`. The setting then counts as no intent and is not
+`SETTING_MOVED`.
+
+**Fixed.** The standard's `fixed.<method>.<setting>` for an aliased setting is
+fixed intent for that method's tables: a flow, flow table or transform that
+writes the intent differently is `FIXED_SETTING` at its value, with the
+message of section 11.2 (`The standard fixes "history" to "none".`). An
+aliased setting in a flow's, transform's or flow table's `with` whose intent
+differs from the standard's `fixed` intent is `FIXED_SETTING` at the setting,
+and counts as no intent. A definition's setting that differs from
+`fixed.<method>` is `FIXED_SETTING` as a setting (section 3), and the step
+does not resolve.
+
+**Writing settings from intent.** Last, each aliased setting of each chosen
+method is written from the completed intent, when the intent at its path has
+an origin other than `pack`: a `path` alias takes the value at the path, a
+`values` alias the first listed value whose intent the completed intent
+holds. The setting's origin becomes that intent path's origin. When the path
+has no value, or no listed value matches (`history: full` for `mode` above),
+the setting keeps its merged value. So a setting is never added from pack
+defaults alone, and a project that declares no intent keeps the settings it
+had. A written value the method's settings schema refuses is `BAD_SETTING`
+where the intent was written: `Settings for "<method>": the intent written
+here makes "<setting>" <value>, which the method does not accept.`, and the
+setting keeps its merged value.
 
 ## Connector authoring metadata
 

@@ -80,3 +80,30 @@ function featuresDecided(
   if (known && known.length > 0) storage.features = known;
   else delete storage.features;
 }
+
+/** The value at a dotted intent path, such as `load.mode`; undefined when there is none. */
+export function valueAtIntentPath(intent: Intent, path: string): unknown {
+  return path
+    .split(".")
+    .reduce<unknown>((value, key) => (isRecord(value) ? value[key] : undefined), intent);
+}
+
+/** Intent that holds only `value`, at the dotted path. */
+export function intentAt(path: string, value: unknown): Intent {
+  return path.split(".").reduceRight<unknown>((inner, key) => ({ [key]: inner }), value) as Intent;
+}
+
+/** The JSON Pointer of an intent path in a document that writes it the same way. */
+export function intentPointer(path: string): string {
+  return `/${path.replaceAll(".", "/")}`;
+}
+
+/** Intent as messages write it: `path: value` for each of the paths, joined with commas. */
+export function describeIntent(intent: Intent, paths: string[] = leaves(intent)): string {
+  return paths
+    .map((path) => {
+      const value = valueAtIntentPath(intent, path);
+      return `${path}: ${typeof value === "string" ? value : JSON.stringify(value)}`;
+    })
+    .join(", ");
+}

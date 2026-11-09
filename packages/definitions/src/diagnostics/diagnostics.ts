@@ -21,6 +21,8 @@ export type DefinitionCode =
   | "CONNECTIVITY_NOT_SUPPORTED"
   | "HANDOVER"
   | "FIXED_SETTING"
+  | "SETTING_MOVED"
+  | "INTENT_CONFLICT"
   | "BAD_SETTING"
   | "METHOD_CHECK"
   | "PACK_CHECK"

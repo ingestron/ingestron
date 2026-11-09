@@ -12,6 +12,7 @@ import { unusedStoreSettings } from "../context/index.js";
 import { resolveStep, type StepResult } from "./steps.js";
 import { renderTableName, type TableNamer } from "../tables/index.js";
 import { flowFacts } from "./rule-facts.js";
+import { tableIntent } from "./complete.js";
 import {
   connectionOf,
   sourceNotKnown,
@@ -69,6 +70,7 @@ function flowTable(
   });
   const steps = stepsOf(context, flow, name, facts);
   if (steps === false) return undefined;
+  const intent = tableIntent(context, declared, steps);
   const contract = flowContract(context, flow, name, steps?.endsAtFiles !== undefined);
   const fullName = renderTableName(context, namer, {
     layer,
@@ -84,7 +86,7 @@ function flowTable(
     origin: { kind: "Flow", id: flow.value.id, file: flow.file },
     contract,
     expectations: expectationsFor(context, contract, doc.expectations),
-    ...declared,
+    ...intent,
     ...tableSteps(steps, connection, doc.object),
     ...sourceNotKnown(context, flow),
   };

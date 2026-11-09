@@ -9,6 +9,7 @@ import { kinds, type TransformDoc } from "../documents/index.js";
 import { flowTableNames } from "./flows.js";
 import type { ResolvedTable } from "../pack/index.js";
 import { transformFacts } from "./rule-facts.js";
+import { tableIntent } from "./complete.js";
 import { serveStep } from "./serve.js";
 import { resolveStep, stepOf } from "./steps.js";
 import { fullNameText, renderTableName, type TableNamer } from "../tables/index.js";
@@ -106,6 +107,7 @@ function transformTable(
   if (!layer) return undefined;
   const { facts, declared } = transformFacts(context, doc, layer);
   const steps = transformSteps(context, doc, facts);
+  const intent = tableIntent(context, declared, steps);
   const contract = contractFor(context, value.id, value.contract, {
     document: doc,
     pointer: "/contract",
@@ -125,12 +127,8 @@ function transformTable(
     origin: { kind: "Transform", id: value.id, file: doc.file },
     contract,
     expectations: expectationsFor(context, contract, value.expectations),
-    ...declared,
-    transform: {
-      ...stepOf(steps.transform),
-      code,
-      inputs,
-    },
+    ...intent,
+    transform: { ...stepOf(steps.transform), code, inputs },
     store: stepOf(steps.store),
     ...(steps.serve && { serve: stepOf(steps.serve) }),
   };

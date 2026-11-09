@@ -66,7 +66,9 @@ export {
   type DeleteMode,
   type History,
   type Intent,
+  type IntentFragment,
   type LoadMode,
+  type SettingAlias,
   type StorageFeature,
 } from "./intent/index.js";
 

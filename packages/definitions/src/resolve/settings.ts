@@ -25,6 +25,13 @@ export interface SettingsLayer {
 const ajv = new Ajv2020({ allErrors: true, strict: false, verbose: true });
 const validators = new WeakMap<Method, ValidateFunction>();
 
+/** Merged settings, where each came from, and every layer they were merged from. */
+export interface MergedSettings {
+  settings: Record<string, unknown>;
+  origins: Record<string, Origin>;
+  layers: SettingsLayer[];
+}
+
 /** The merged settings and where each came from, or undefined after reporting why they are not valid. */
 export function mergeSettings(
   context: Context,
@@ -33,7 +40,7 @@ export function mergeSettings(
   method: Method,
   layers: SettingsLayer[],
   user: SettingsUser,
-): { settings: Record<string, unknown>; origins: Record<string, Origin> } | undefined {
+): MergedSettings | undefined {
   const { standard, platform, fixed } = organisationLayers(context, action, id);
   const all: SettingsLayer[] = [
     { value: method.defaults ?? {}, origin: "pack" },
@@ -48,7 +55,7 @@ export function mergeSettings(
     {},
   );
   if (!checkSchema(context, { action, id, method, user }, settings, all)) return undefined;
-  return { settings, origins: originsOf(all) };
+  return { settings, origins: originsOf(all), layers: all };
 }
 
 /** The standard's settings and fixed values, and the platform's settings, for one method. */
@@ -111,6 +118,20 @@ function fixedRespected(
   return respected;
 }
 
+/** True when the settings meet the method's schema; nothing is reported. */
+export function meetsSchema(method: Method, settings: Record<string, unknown>): boolean {
+  return validatorOf(method)(settings);
+}
+
+function validatorOf(method: Method): ValidateFunction {
+  let validate = validators.get(method);
+  if (!validate) {
+    validate = ajv.compile(method.settings);
+    validators.set(method, validate);
+  }
+  return validate;
+}
+
 /**
  * True when the merged settings meet the method's schema. Otherwise every failure an
  * unset reference does not cause is reported, so a table is never left out silently.
@@ -122,11 +143,7 @@ function checkSchema(
   layers: SettingsLayer[],
 ): boolean {
   const { id, method } = use;
-  let validate = validators.get(method);
-  if (!validate) {
-    validate = ajv.compile(method.settings);
-    validators.set(method, validate);
-  }
+  const validate = validatorOf(method);
   if (validate(settings)) return true;
   // Text that holds an unset reference is not known yet, so it fails nothing but `type`;
   // nor does text that holds REPLACE_ME, which its own diagnostic reports (specification section 1).

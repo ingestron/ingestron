@@ -45,7 +45,7 @@ describe("declared intent", () => {
     expect(Object.keys(table?.intentOrigins ?? {})).toEqual(["audit"]);
   });
 
-  it("is empty for a table that nothing declares", () => {
+  it("holds only the chosen methods' intent defaults for a table that nothing declares", () => {
     const files: Record<string, string> = { ...precedence, "standard.yaml": standard("") };
     const [orders] = resolve(files).model?.tables ?? [];
     expect(orders).toMatchObject({ intent: { history: "latest" } });
@@ -54,8 +54,8 @@ describe("declared intent", () => {
       "sales.yaml": files["sales.yaml"]!.replace("history: latest\n", ""),
     });
     const table = bare.model?.tables.find((item) => item.name === "orders");
-    expect(table?.intent).toEqual({});
-    expect(table?.intentOrigins).toEqual({});
+    expect(table?.intent).toEqual({ history: "none" });
+    expect(table?.intentOrigins).toEqual({ history: { layer: "pack" } });
   });
 
   it("merges mappings key by key and records each key's own origin", () => {

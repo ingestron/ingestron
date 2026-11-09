@@ -3,12 +3,12 @@ import type { DefinitionDocument } from "@ingestron/config";
 import { intentFacts, tableFacts, type Facts } from "../choose/index.js";
 import type { Context } from "../context/index.js";
 import type { FlowDoc, TransformDoc } from "../documents/index.js";
-import { flowIntent, transformIntent, type TableIntent } from "./declared-intent.js";
+import { flowIntent, transformIntent, type DeclaredIntent } from "./declared-intent.js";
 
 /** A table's facts for rules, and its declared intent, which they come from. */
 export interface RuleFacts {
   facts: Facts;
-  declared: TableIntent;
+  declared: DeclaredIntent;
 }
 
 /**
