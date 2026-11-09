@@ -49,10 +49,10 @@
     "@ingestron/config": "workspace:^",
     "@ingestron/definitions": "workspace:^",
     "@ingestron/generate": "workspace:^",
-    "@ingestron/pack-adf": "^2.1.0",
-    "@ingestron/pack-databricks": "^2.1.0",
-    "@ingestron/pack-duckdb": "^2.0.0",
-    "@ingestron/pack-synapse": "^2.0.0",
+    "@ingestron/pack-adf": "^2.2.0",
+    "@ingestron/pack-databricks": "^2.2.0",
+    "@ingestron/pack-duckdb": "^2.1.0",
+    "@ingestron/pack-synapse": "^2.1.0",
     "yaml": "2.9.1"
   },
   "devDependencies": {
