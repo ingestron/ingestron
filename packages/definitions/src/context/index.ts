@@ -1,5 +1,5 @@
 // The context module: what the rest of the package uses.
-export { checkGrants, isOn, warnOff } from "./capabilities.js";
+export { checkGrants, isOn, turnOn, warnOff } from "./capabilities.js";
 export { codeWithValues } from "./code-values.js";
 export { createContext, type Context } from "./context.js";
 export { checkDeployValues, deployValuesOf, resolutionReporter } from "./deploy-values.js";

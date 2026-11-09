@@ -857,8 +857,11 @@ hint names `databricks.manage.<capability>`; when the Platform writes `manage`
 only at the top, the fix instead sets `/databricks/manage` to that mapping,
 as written, with the capability turned on, and removes the old key, so the
 section and the top never disagree (when that mapping cannot be read as
-written, the fix sets `/manage/<capability>`). Without that pack, the fix sets
-`/manage/<capability>`.
+written, the fix sets `/manage/<capability>`). When the Platform writes
+`manage` both in the section and at the top, the fix sets
+`/databricks/manage/<capability>` and removes `/manage`. Without that pack, the
+fix sets `/manage/<capability>`. The fix and hint of a table check that is not
+checked (section 6) are these for `checks`.
 
 ### 7.2 Pack sections
 

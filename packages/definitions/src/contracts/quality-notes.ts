@@ -1,6 +1,6 @@
 // A contract's quality rules that nothing checks, and why (specification
 // section 6): warned where they are written, and kept for the passport.
-import type { Context } from "../context/index.js";
+import { turnOn, type Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
 import { isRecord } from "../internal/index.js";
 
@@ -88,20 +88,13 @@ export function notChecked(
 
 /** Warns that a count over all rows is checked only with checks on, with the fix. */
 function warnCount(context: Context, what: string, at: Source): void {
-  const platform = context.platform;
+  const { field, fixes } = turnOn(context, "checks");
   context.reporter.warning(
     "QUALITY_RULE_NOT_CHECKED",
     `${what} rule compares a count over all rows, which is checked after each refresh only when manage.checks is on.`,
     at,
-    "Turn on manage.checks in platform.yaml to run it after each refresh.",
-    platform
-      ? [
-          {
-            title: "Turn on manage.checks",
-            edits: [{ file: platform.file, pointer: "/manage/checks", set: true }],
-          },
-        ]
-      : [],
+    `Turn on ${field} in platform.yaml to run it after each refresh.`,
+    fixes,
   );
 }
 
