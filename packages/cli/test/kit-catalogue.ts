@@ -1,7 +1,14 @@
 // What the init --kit tests share: the installed kits, the CLI run in a folder, and a catalogue
 // as a bare file:// repository made in the test, so no test goes online.
 import { execFileSync } from "node:child_process";
-import { cpSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach } from "vitest";
@@ -55,6 +62,8 @@ interface Published {
   change?: (text: string) => string;
   /** Changes to the kit's other files, by path in the kit's folder. */
   files?: Record<string, (text: string) => string>;
+  /** Symbolic links to add to the kit, by path in the kit's folder, to what they point at. */
+  links?: Record<string, string>;
 }
 
 /** A bare repository laid out as the catalogue: `kits/<id>/<version>/`, each tagged `<id>@<version>`. */
@@ -63,11 +72,12 @@ export function catalogue(published: Published[]): string {
   const git = (...args: string[]) => execFileSync("git", args, { cwd: work, stdio: "ignore" });
   git("init", "--quiet", "--initial-branch", "main");
   writeFileSync(join(work, "README.md"), "Kits\n");
-  for (const { id, version, change, files = {} } of published) {
+  for (const { id, version, change, files = {}, links = {} } of published) {
     const folder = join(work, "kits", id, version);
     kitCopy(folder, id, version, change);
     for (const [path, edit] of Object.entries(files))
       writeFileSync(join(folder, path), edit(readFileSync(join(folder, path), "utf8")));
+    for (const [path, target] of Object.entries(links)) symlinkSync(target, join(folder, path));
     git("add", ".");
     git("-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "--quiet", "-m", version);
     git("tag", `${id}@${version}`);

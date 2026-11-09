@@ -3,9 +3,7 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { parse } from "yaml";
-import { formatDiagnostics, loadProject, nodeFiles } from "@ingestron/config";
-import { kinds } from "@ingestron/definitions";
+import { nodeFiles } from "@ingestron/config";
 import { generateAll, installedKits, packs, type Kit } from "@ingestron/core";
 import {
   compareVersions,
@@ -14,14 +12,8 @@ import {
   packReportsText,
 } from "@ingestron/core/internal";
 import type { Io, Options } from "../terminal/index.js";
+import { projectStandard, type ProjectStandard } from "./project-standard.js";
 import { catalogueKits, kitSource, refuseNewer } from "./sources.js";
-
-/** The project's Standard document: its file, its id and where it came from. */
-interface ProjectStandard {
-  file: string;
-  id: string;
-  origin?: { standard: string; version: string };
-}
 
 /** Runs `standard install` or `standard list`. Returns the exit code. */
 export function standard(options: Options, io: Io): number {
@@ -67,55 +59,6 @@ function install(options: Options, io: Io, spec: string): number {
   }
 }
 
-/** The one Standard document among the project's files; refuses none, or more than one. */
-function projectStandard(folder: string): ProjectStandard {
-  const loaded = loadProject(folder, {
-    kinds: Object.values(kinds),
-    ...firstEnvironment(folder),
-    envvars: {},
-    deployEnvvars: true,
-  });
-  if (!loaded.ok)
-    throw new Error(
-      `The project could not be read, so its standard was not replaced:\n${formatDiagnostics(loaded.diagnostics)}`,
-    );
-  const found = loaded.project.documents.filter((document) => document.kind === "Standard");
-  if (found.length === 0)
-    throw new Error(
-      "The project has no Standard document to replace. Add one to project.yaml's imports, or start a project with ingestron init --kit <kit>.",
-    );
-  if (found.length > 1) {
-    const files = found.map((document) => document.file).join(", ");
-    throw new Error(
-      `The project has ${found.length} Standard documents (${files}); keep one, then run this again.`,
-    );
-  }
-  const [document] = found;
-  return { file: document!.file, id: document!.id, ...originOf(document!.value) };
-}
-
-/** The first environment project.yaml declares, read as plan reads it; none when it has none. */
-function firstEnvironment(folder: string): { environment?: string } {
-  try {
-    const project = parse(readFileSync(join(folder, "project.yaml"), "utf8")) as {
-      environments?: Record<string, unknown>;
-    };
-    const [environment] = Object.keys(project?.environments ?? {});
-    return environment === undefined ? {} : { environment };
-  } catch {
-    return {};
-  }
-}
-
-/** The Standard's `origin`, when it names a kit and a version as text. */
-function originOf(value: unknown): Pick<ProjectStandard, "origin"> {
-  const origin = (value as { origin?: { standard?: unknown; version?: unknown } }).origin;
-  const { standard, version } = origin ?? {};
-  return typeof standard === "string" && typeof version === "string"
-    ? { origin: { standard, version } }
-    : {};
-}
-
 /** What git says of the file: changes not committed, none, or no answer (as outside a repository). */
 function gitStatus(folder: string, file: string): "changed" | "clean" | "unknown" {
   try {
@@ -130,28 +73,40 @@ function gitStatus(folder: string, file: string): "changed" | "clean" | "unknown
   }
 }
 
-/** The kit's standard text with only the value of its top-level `id:` changed. */
-function withId(text: string, id: string): string {
-  return text.replace(/^id:[ \t]*[^\s#]*/m, `id: ${id}`);
+/** The kit's standard text with only the value of its top-level `id:` changed, when there is an id. */
+function withId(text: string, id: string | undefined): string {
+  return id === undefined ? text : text.replace(/^id:[ \t]*[^\s#]*/m, `id: ${id}`);
 }
 
-/** The kit's other files that changed since the project's version of the kit. */
+/**
+ * The kit's other files that changed since the project's version of the kit. The file is
+ * already written, so any failure to find or compare the earlier version says it is not
+ * available rather than stopping the command.
+ */
 function notApplied(kit: Kit, origin: ProjectStandard["origin"], cwd: string): string {
   const unavailable =
     "Not applied: the earlier version is not available, so the kit's other files cannot be compared.\n";
   if (!origin) return unavailable;
-  let old: ReturnType<typeof kitSource>;
   try {
-    old = kitSource(`${origin.standard}@${origin.version}`, cwd);
-  } catch {
-    return unavailable;
-  }
-  try {
-    const changed = changedFiles(kitFiles(old.kit), kitFiles(kit));
+    const changed = changedSince(kit, origin, cwd);
     if (changed.length === 0)
       return `Not applied: no other kit file changed since ${origin.version}.\n`;
     const listed = changed.map((path) => `  ${path}\n`).join("");
     return `Not applied: the kit's other files that changed since ${origin.version}; compare them with yours:\n${listed}`;
+  } catch {
+    return unavailable;
+  }
+}
+
+/** The kit files that differ between the version named by `origin` and `kit`. */
+function changedSince(
+  kit: Kit,
+  origin: NonNullable<ProjectStandard["origin"]>,
+  cwd: string,
+): string[] {
+  const old = kitSource(`${origin.standard}@${origin.version}`, cwd);
+  try {
+    return changedFiles(kitFiles(old.kit), kitFiles(kit));
   } finally {
     old.done();
   }

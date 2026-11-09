@@ -181,11 +181,19 @@ as for any command.
 `standard install` works on the project in `--definitions` (default `.`):
 
 1. **The project's Standard.** It is the one document of `kind: Standard`
-   among the files project.yaml imports. The project is read as `plan` reads
-   it, with its first environment. When it cannot be read, its problems are
-   printed and nothing is written. With no Standard document:
+   among the files project.yaml imports. The project is not loaded: only
+   project.yaml's `imports` (matched as the loader matches them) and each
+   imported file's top-level `kind`, `id` and `origin` are read, and nothing
+   is checked against a schema. So a project whose Standard this CLI rejects,
+   or whose other files have problems, can still have its Standard replaced.
+   When project.yaml or an imported file cannot be read:
+   `Could not read <file>, so the project's standard was not found.`; when one
+   is not valid YAML:
+   `<file> is not valid YAML, so the project's standard was not found: <reason>`.
+   With no Standard document:
    `The project has no Standard document to replace. Add one to project.yaml's imports, or start a project with ingestron init --kit <kit>.`
    With more than one: `The project has <n> Standard documents (<files>); keep one, then run this again.`
+   In each case nothing is written.
 2. **Git.** It runs `git status --porcelain -- <file>` in the project's folder.
    When that lists the file:
    `<file> has changes that are not committed; commit them first so git diff shows only the new standard.`
@@ -196,7 +204,8 @@ as for any command.
    the CLI's version does not meet is refused with the message `init --kit`
    gives.
 4. **The new file.** The kit's `standard.yaml` text, with only the value of
-   its top-level `id:` changed to the project Standard's `id`, is written at
+   its top-level `id:` changed to the project Standard's `id` (the kit's own
+   is kept when the old Standard has none), is written at
    the Standard's path. Its comments are kept. Nothing else in the project is
    written.
 5. **What it prints**, each part after a blank line:
@@ -211,7 +220,8 @@ as for any command.
      `Not applied: the kit's other files that changed since <old version>; compare them with yours:`
      and each such path on a line of its own, indented two spaces, in
      code-point order. With none, `Not applied: no other kit file changed since <old version>.`
-     When the old Standard has no `origin`, or its version cannot be found,
+     When the old Standard has no `origin`, or its version cannot be found or
+     its files read,
      `Not applied: the earlier version is not available, so the kit's other files cannot be compared.`
    - the project's problems, when it no longer builds with the new
      Standard, as `plan` prints them. The new file stays written.
