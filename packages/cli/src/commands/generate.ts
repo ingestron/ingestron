@@ -12,12 +12,12 @@ import {
   type OutputFolder,
   type Plan,
 } from "@ingestron/generate";
-import type { Options } from "./args.js";
+import type { Options } from "../terminal/args.js";
 import { generateAll, type Generated } from "@ingestron/core";
-import type { Io } from "./io.js";
+import type { Io } from "../terminal/io.js";
 import { extraFiles, generatedFolders } from "./outputs.js";
 import { packs } from "@ingestron/core";
-import { printEnvironmentReports, printPackReports } from "./reports.js";
+import { printEnvironmentReports, printPackReports } from "../terminal/reports.js";
 
 interface Planned {
   name: string;

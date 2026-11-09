@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
 import { packs } from "@ingestron/core";
-import { edit, workspace } from "./workspace.js";
+import { edit, workspace } from "../workspace.js";
 
 describe("--env", () => {
   for (const command of ["plan", "apply", "check"])

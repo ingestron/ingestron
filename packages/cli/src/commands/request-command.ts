@@ -1,10 +1,10 @@
 // ingestron request: prints the request for each environment (spec/cli/request.md).
 import { resolve } from "node:path";
 import { nodeFiles } from "@ingestron/config";
-import type { Options } from "./args.js";
+import type { Options } from "../terminal/args.js";
 import { generateAll } from "@ingestron/core";
 import { environmentsToGenerate } from "@ingestron/core";
-import type { Io } from "./io.js";
+import type { Io } from "../terminal/io.js";
 import { packs } from "@ingestron/core";
 import { requestFor } from "@ingestron/core";
 

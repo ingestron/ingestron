@@ -4,7 +4,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, writeFileSync 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { isGitUrl, standardSource, templateSource } from "../src/sources.js";
+import { isGitUrl, standardSource, templateSource } from "../../src/commands/sources.js";
 import { builtInTemplates } from "@ingestron/core";
 
 const temp = (prefix = "ingestron-sources-test-") => mkdtempSync(join(tmpdir(), prefix));

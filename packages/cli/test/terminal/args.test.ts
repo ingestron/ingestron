@@ -1,7 +1,7 @@
 // The commands and flags the documentation lists are the ones --help shows.
 import { describe, expect, it } from "vitest";
-import { usage } from "../src/args.js";
-import { commands, flags } from "../src/index.js";
+import { usage } from "../../src/terminal/args.js";
+import { commands, flags } from "../../src/index.js";
 
 describe("command metadata", () => {
   it("lists every command and flag in the usage text", () => {

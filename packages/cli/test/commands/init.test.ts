@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
-import { run } from "../src/index.js";
+import { run } from "../../src/index.js";
 
 function session(answers?: string[]) {
   const cwd = mkdtempSync(join(tmpdir(), "ingestron-init-"));

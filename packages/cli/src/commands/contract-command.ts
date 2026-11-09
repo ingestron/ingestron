@@ -1,8 +1,8 @@
 // ingestron contract <sample>: writes a draft contract from a sample file.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
-import type { Options } from "./args.js";
-import type { Io } from "./io.js";
+import type { Options } from "../terminal/args.js";
+import type { Io } from "../terminal/io.js";
 import { contractFromSample, objectName } from "@ingestron/core";
 
 /** Writes contracts/<name>.yaml from the sample. Returns the exit code. */

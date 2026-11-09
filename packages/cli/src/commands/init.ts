@@ -4,13 +4,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import { basename, join, relative, resolve } from "node:path";
 import { parse } from "yaml";
-import type { Options } from "./args.js";
+import type { Options } from "../terminal/args.js";
 import { generate } from "./generate.js";
 import { chooseProject } from "./init-choice.js";
 import { resolvedFiles, type Source } from "@ingestron/core";
 import { projectReadme } from "@ingestron/core";
 import { stillToReplace } from "@ingestron/core";
-import type { Io } from "./io.js";
+import type { Io } from "../terminal/io.js";
 import { packs } from "@ingestron/core";
 import { environmentReportsText } from "@ingestron/core";
 import { ignoredText, nameProblem, projectId, writeScaffold, type Answers } from "@ingestron/core";
