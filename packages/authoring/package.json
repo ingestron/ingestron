@@ -1,6 +1,6 @@
 {
   "name": "@ingestron/authoring",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Editor features for Ingestron projects as plain functions: problems, quick fixes, completion, hover, navigation and previews.",
   "license": "Apache-2.0",
   "author": "Ingestron <hello@ingestron.io>",

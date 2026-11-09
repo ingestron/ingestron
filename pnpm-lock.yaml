@@ -75,6 +75,13 @@ importers:
       '@ingestron/generate':
         specifier: workspace:^
         version: link:../generate
+      yaml:
+        specifier: 2.9.1
+        version: 2.9.1
+    devDependencies:
+      '@duckdb/node-api':
+        specifier: 1.5.6-r.2
+        version: 1.5.6-r.2
       '@ingestron/pack-adf':
         specifier: ^2.1.0
         version: 2.1.0(@ingestron/definitions@packages+definitions)
@@ -87,13 +94,6 @@ importers:
       '@ingestron/pack-synapse':
         specifier: ^2.0.0
         version: 2.0.0(@ingestron/definitions@packages+definitions)
-      yaml:
-        specifier: 2.9.1
-        version: 2.9.1
-    devDependencies:
-      '@duckdb/node-api':
-        specifier: 1.5.6-r.2
-        version: 1.5.6-r.2
       '@microsoft/api-extractor':
         specifier: 7.59.4
         version: 7.59.4(@types/node@22.20.5)
