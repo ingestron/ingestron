@@ -30,9 +30,11 @@ File paths are relative to the project folder, with forward slashes. Offsets
 are into the file's text as the editor holds it. The environment is one the
 project declares, or `undefined` for a project that declares none.
 
-`ProjectSnapshot` is `@beta`: it may change in a minor release. The functions
-that take a project as their first argument, `openProject` and the `Project`
-type are deprecated in its favour and removed in 3.0.
+Before 2.2 each of these was a function that took the project as its first
+argument, such as `problems(project, environment)`, and `openProject` opened
+the project. Call the snapshot's method of the same name instead:
+`projectSymbols` is now `symbols`, `compareEnvironments` is `compare`, and
+`platformRequest` is `request`.
 
 ## Documentation
 

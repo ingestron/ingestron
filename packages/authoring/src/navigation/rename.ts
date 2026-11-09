@@ -7,8 +7,6 @@ import type { Project } from "../project/index.js";
 
 /**
  * The edits that rename the id at the offset everywhere, by file.
- * @deprecated Use `ProjectSnapshot`'s `renameAt` method. Removed in 3.0.
- * @public
  */
 export function renameAt(
   project: Project,
@@ -27,8 +25,6 @@ export function renameAt(
  * Why the id at the offset cannot be renamed to `name`, or undefined when it
  * can: a blank name, or one that another table or document of the same kind
  * already has, which would leave two definitions with one name.
- * @deprecated Use `ProjectSnapshot`'s `renameProblem` method. Removed in 3.0.
- * @public
  */
 export function renameProblem(
   project: Project,
@@ -61,8 +57,6 @@ function describe(kind: string): string {
  * The edits that keep every `${file:…}` pointing at the same file when the
  * file or folder `from` moves to `to` (project paths with "/"), by file as
  * it is now. A file that moves keeps its own references right too.
- * @deprecated Use `ProjectSnapshot`'s `fileMoveEdits` method. Removed in 3.0.
- * @public
  */
 export function fileMoveEdits(
   project: Project,

@@ -17,8 +17,6 @@ export interface ProjectSymbol {
 
 /**
  * Every definition in the project, a transform named once (as a transform, not also as its table).
- * @deprecated Use `ProjectSnapshot`'s `symbols` method. Removed in 3.0.
- * @public
  */
 export function projectSymbols(project: Project): ProjectSymbol[] {
   const definitions = occurrences(project).filter((item) => item.definition);

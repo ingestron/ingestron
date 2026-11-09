@@ -1,31 +1,29 @@
 // ProjectSnapshot: a project as the editor sees it at one moment, with everything an
-// editor asks of it as methods. Each method gives what its function gives.
+// editor asks of it as methods. Each method gives what the function it calls gives.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+// The functions each method calls, compared on a project opened separately.
+import { annotationsIn, generatedLenses } from "../../src/annotations/index.js";
+import { completionsAt, fixAll, moveSetting, quickFixes } from "../../src/assist/index.js";
+import { problems } from "../../src/diagnostics/index.js";
 import {
-  annotationsIn,
   compareEnvironments,
-  completionsAt,
+  generatedFiles,
+  platformRequest,
+} from "../../src/generation/index.js";
+import { hoverAt } from "../../src/hover/index.js";
+import {
   definitionAt,
   fileMoveEdits,
-  fixAll,
-  generatedFiles,
-  generatedLenses,
-  hoverAt,
-  moveSetting,
-  openProject,
-  platformRequest,
-  problems,
   projectSymbols,
-  ProjectSnapshot,
-  quickFixes,
-  referenceAt,
-  referenceForDocs,
   referencesAt,
   renameAt,
   renameProblem,
-} from "../../src/index.js";
+} from "../../src/navigation/index.js";
+import { openProject } from "../../src/project/index.js";
+import { referenceAt, referenceForDocs } from "../../src/reference/index.js";
+import { ProjectSnapshot } from "../../src/index.js";
 import { filledTemplates } from "../starters.js";
 
 const retail = join(filledTemplates, "retail");
@@ -150,9 +148,5 @@ describe("ProjectSnapshot", () => {
     expect(snapshot.referencesAt(file, at("shop.orders")).length).toBeGreaterThan(0);
     expect(snapshot.generatedFiles("dev")).not.toHaveProperty("problems");
     expect(snapshot.compare("dev", "prod")).toContain("dev");
-  });
-
-  it("can be given where a project is, to the functions it replaces", () => {
-    expect(problems(snapshot, "prod")).toEqual(snapshot.problems("prod"));
   });
 });

@@ -31,8 +31,6 @@ const snapshots = new WeakMap<Project, Map<string | undefined, Problem[]>>();
 
 /**
  * Every problem for the environment, checked once per project snapshot.
- * @deprecated Use `ProjectSnapshot`'s `problems` method. Removed in 3.0.
- * @public
  */
 export function problems(project: Project, environment: string | undefined): Problem[] {
   let byEnvironment = snapshots.get(project);

@@ -6,8 +6,6 @@ import type { Project } from "../project/index.js";
 
 /**
  * One fix for every problem with `code` that has a fix, when there are two or more.
- * @deprecated Use `ProjectSnapshot`'s `fixAll` method. Removed in 3.0.
- * @public
  */
 export function fixAll(
   project: Project,

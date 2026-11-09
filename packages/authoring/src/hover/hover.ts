@@ -17,8 +17,6 @@ const actions = ["ingest", "transform", "store", "serve"] as const;
 
 /**
  * Markdown for the hover at `offset` in `text`, the open text of `file`, or undefined.
- * @deprecated Use `ProjectSnapshot`'s `hoverAt` method. Removed in 3.0.
- * @public
  */
 export function hoverAt(
   project: Project,

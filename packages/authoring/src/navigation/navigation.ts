@@ -27,8 +27,6 @@ const links = Object.values(kinds).flatMap((kind) =>
 
 /**
  * Where the id or reference at the offset is defined.
- * @deprecated Use `ProjectSnapshot`'s `definitionAt` method. Removed in 3.0.
- * @public
  */
 export function definitionAt(project: Project, file: string, offset: number): Place | undefined {
   const here = occurrencesAt(project, file, offset);
@@ -43,8 +41,6 @@ export function definitionAt(project: Project, file: string, offset: number): Pl
 /**
  * Every place that defines or uses what is at the offset. A transform's id
  * names both the transform and its table, so both are followed.
- * @deprecated Use `ProjectSnapshot`'s `referencesAt` method. Removed in 3.0.
- * @public
  */
 export function referencesAt(project: Project, file: string, offset: number): Place[] {
   const symbols = new Set(

@@ -6,67 +6,18 @@
 export { ProjectSnapshot } from "./snapshot/index.js";
 
 // The project an open file belongs to, and positions in YAML.
-export {
-  inProject,
-  openProject,
-  positionAt,
-  projectFolderOf,
-  type Position,
-  type Project,
-} from "./project/index.js";
+export { inProject, positionAt, projectFolderOf, type Position } from "./project/index.js";
 
-// Problems in the definitions.
-export { problems, type Problem } from "./diagnostics/index.js";
+// What the snapshot's methods give.
+export { type Problem } from "./diagnostics/index.js";
+export { type QuickFix, type Suggestion } from "./assist/index.js";
+export { type HoverOptions } from "./hover/index.js";
+export { type ProjectSymbol } from "./navigation/index.js";
+export { type Annotation, type GeneratedLens } from "./annotations/index.js";
+export { type ProblemEntry, type ReferenceEntry } from "./reference/index.js";
 
-// Completion, quick fixes, fixing everything at once, and moving a setting.
-export {
-  completionsAt,
-  fixAll,
-  moveSetting,
-  quickFixes,
-  type QuickFix,
-  type Suggestion,
-} from "./assist/index.js";
-
-// Hover: what a key or value means, and where it is documented.
-export { hoverAt, type HoverOptions } from "./hover/index.js";
-
-// Navigation: definitions, references, renaming and symbols.
-export {
-  definitionAt,
-  fileMoveEdits,
-  projectSymbols,
-  referencesAt,
-  renameAt,
-  renameProblem,
-  type ProjectSymbol,
-} from "./navigation/index.js";
-
-// The generated files: previews, comparing environments and the platform request.
-export {
-  compareEnvironments,
-  generatedFiles,
-  generatedForTable,
-  platformRequest,
-  tableAtCursor,
-  type Generated,
-} from "./generation/index.js";
-
-// Code lenses and inline annotations.
-export {
-  annotationsIn,
-  generatedLenses,
-  type Annotation,
-  type GeneratedLens,
-} from "./annotations/index.js";
-
-// The settings reference, as the editor and the documentation show it.
-export {
-  referenceAt,
-  referenceForDocs,
-  type ProblemEntry,
-  type ReferenceEntry,
-} from "./reference/index.js";
+// The generated files: the ones a table under the cursor is generated into.
+export { generatedForTable, tableAtCursor, type Generated } from "./generation/index.js";
 
 // Links into the documentation.
 export { codeDocs, docsLinks, docsUrl } from "./links/index.js";

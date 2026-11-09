@@ -4,7 +4,7 @@
 
 ```ts
 
-import { FileSource } from '@ingestron/config';
+import type { FileSource } from '@ingestron/config';
 import type { Fix } from '@ingestron/config';
 
 // @public
@@ -18,37 +18,14 @@ export interface Annotation {
     tooltip?: string;
 }
 
-// @public @deprecated
-export function annotationsIn(project: Project, file: string, text: string, environment: string | undefined): Annotation[];
-
 // @public
 export function codeDocs(code: string): string | undefined;
-
-// @public @deprecated
-export function compareEnvironments(project: Project, a: string, b: string): string;
-
-// @public @deprecated
-export function completionsAt(project: Project, file: string, text: string, offset: number, environment: string | undefined): Suggestion[];
-
-// Warning: (ae-forgotten-export) The symbol "Place" needs to be exported by the entry point index.d.ts
-//
-// @public @deprecated
-export function definitionAt(project: Project, file: string, offset: number): Place | undefined;
 
 // @public
 export function docsLinks(): string[];
 
 // @public
 export function docsUrl(base: string, link: string): string;
-
-// @public @deprecated
-export function fileMoveEdits(project: Project, from: string, to: string): Record<string, {
-    range: [number, number];
-    text: string;
-}[]>;
-
-// @public @deprecated
-export function fixAll(project: Project, environment: string | undefined, code: string): QuickFix[];
 
 // @public
 export interface Generated {
@@ -57,11 +34,6 @@ export interface Generated {
     // (undocumented)
     text: string;
 }
-
-// Warning: (ae-forgotten-export) The symbol "Files" needs to be exported by the entry point index.d.ts
-//
-// @public @deprecated
-export function generatedFiles(project: Project, environment: string | undefined): Files;
 
 // @public
 export function generatedForTable(files: Generated[], table: string, physical?: string, schema?: string): Generated[];
@@ -76,12 +48,6 @@ export interface GeneratedLens {
     methods: string;
 }
 
-// @public @deprecated
-export function generatedLenses(project: Project, file: string, text: string, environment: string | undefined): GeneratedLens[];
-
-// @public @deprecated
-export function hoverAt(project: Project, file: string, text: string, offset: number, environment: string | undefined, options?: HoverOptions): string | undefined;
-
 // @public
 export interface HoverOptions {
     docs?: (link: string) => string;
@@ -89,15 +55,6 @@ export interface HoverOptions {
 
 // @public
 export function inProject(folder: string, path: string): string | undefined;
-
-// @public @deprecated
-export function moveSetting(project: Project, file: string, text: string, offset: number, environment: string | undefined): QuickFix[];
-
-// @public @deprecated
-export function openProject(folder: string, open: ReadonlyMap<string, string>): Project;
-
-// @public @deprecated
-export function platformRequest(project: Project, environment: string | undefined): string;
 
 // @public
 export interface Position {
@@ -145,26 +102,15 @@ export interface ProblemEntry {
     severity: "error" | "warning" | "information";
 }
 
-// @public @deprecated
-export function problems(project: Project, environment: string | undefined): Problem[];
-
-// @public @deprecated
-export interface Project {
-    environments: string[];
-    // (undocumented)
-    files: FileSource;
-    // (undocumented)
-    folder: string;
-}
-
 // @public
 export function projectFolderOf(path: string): string | undefined;
 
-// @beta
-export class ProjectSnapshot implements Project {
+// @public
+export class ProjectSnapshot {
     annotationsIn(file: string, text: string, environment: string | undefined): Annotation[];
     compare(a: string, b: string): string;
     completionsAt(file: string, text: string, offset: number, environment: string | undefined): Suggestion[];
+    // Warning: (ae-forgotten-export) The symbol "Place" needs to be exported by the entry point index.d.ts
     definitionAt(file: string, offset: number): Place | undefined;
     readonly environments: string[];
     fileMoveEdits(from: string, to: string): Record<string, {
@@ -174,6 +120,7 @@ export class ProjectSnapshot implements Project {
     readonly files: FileSource;
     fixAll(environment: string | undefined, code: string): QuickFix[];
     readonly folder: string;
+    // Warning: (ae-forgotten-export) The symbol "Files" needs to be exported by the entry point index.d.ts
     generatedFiles(environment: string | undefined): Files;
     generatedLenses(file: string, text: string, environment: string | undefined): GeneratedLens[];
     hoverAt(file: string, text: string, offset: number, environment: string | undefined, options?: HoverOptions): string | undefined;
@@ -207,9 +154,6 @@ export interface ProjectSymbol {
     range: [number, number];
 }
 
-// @public @deprecated
-export function projectSymbols(project: Project): ProjectSymbol[];
-
 // @public
 export interface QuickFix {
     create?: {
@@ -232,15 +176,6 @@ export interface QuickFix {
     // (undocumented)
     title: string;
 }
-
-// @public @deprecated
-export function quickFixes(project: Project, environment: string | undefined, file: string, at: {
-    start: Position;
-    end: Position;
-}): QuickFix[];
-
-// @public @deprecated
-export function referenceAt(project: Project, file: string, text: string, offset: number, environment: string | undefined): ReferenceEntry | undefined;
 
 // @public
 export interface ReferenceEntry {
@@ -278,21 +213,6 @@ export interface ReferenceEntry {
         current?: boolean;
     }[];
 }
-
-// @public @deprecated
-export function referenceForDocs(project: Project, path: string, environment: string | undefined): ReferenceEntry | undefined;
-
-// @public @deprecated
-export function referencesAt(project: Project, file: string, offset: number): Place[];
-
-// @public @deprecated
-export function renameAt(project: Project, file: string, offset: number, name: string): Record<string, {
-    range: [number, number];
-    text: string;
-}[]> | undefined;
-
-// @public @deprecated
-export function renameProblem(project: Project, file: string, offset: number, name: string): string | undefined;
 
 // @public
 export interface Suggestion {

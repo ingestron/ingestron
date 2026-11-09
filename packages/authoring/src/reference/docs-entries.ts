@@ -24,8 +24,6 @@ const noSpot = {
 
 /**
  * The entry for a docs path such as `/docs/reference/packs/adf#adf-copy`, else undefined.
- * @deprecated Use `ProjectSnapshot`'s `referenceForDocs` method. Removed in 3.0.
- * @public
  */
 export function referenceForDocs(
   project: Project,

@@ -21,8 +21,6 @@ export type { Suggestion } from "./suggestion.js";
 
 /**
  * Suggestions for the cursor at `offset` in `text`, the open text of `file`.
- * @deprecated Use `ProjectSnapshot`'s `completionsAt` method. Removed in 3.0.
- * @public
  */
 export function completionsAt(
   project: Project,

@@ -8,8 +8,6 @@ import type { Project } from "../project/index.js";
 
 /**
  * The request as Markdown for the environment, as `ingestron request` prints it.
- * @deprecated Use `ProjectSnapshot`'s `request` method. Removed in 3.0.
- * @public
  */
 export function platformRequest(project: Project, environment: string | undefined): string {
   const refused = refusedPacks();
@@ -18,8 +16,6 @@ export function platformRequest(project: Project, environment: string | undefine
 
 /**
  * What differs between two environments, as `ingestron compare` prints it.
- * @deprecated Use `ProjectSnapshot`'s `compare` method. Removed in 3.0.
- * @public
  */
 export function compareEnvironments(project: Project, a: string, b: string): string {
   const refused = refusedPacks();

@@ -38,8 +38,6 @@ export interface ReferenceEntry {
 
 /**
  * The entry for `offset` in `text`, the open text of `file`; undefined outside definitions.
- * @deprecated Use `ProjectSnapshot`'s `referenceAt` method. Removed in 3.0.
- * @public
  */
 export function referenceAt(
   project: Project,

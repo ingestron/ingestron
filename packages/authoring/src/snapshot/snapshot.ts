@@ -49,9 +49,9 @@ import { referenceAt, referenceForDocs, type ReferenceEntry } from "../reference
  * @example
  * const snapshot = ProjectSnapshot.open(folder, openTexts);
  * for (const problem of snapshot.problems("dev")) console.log(problem.file, problem.message);
- * @beta
+ * @public
  */
-export class ProjectSnapshot implements Project {
+export class ProjectSnapshot {
   /** The project's folder, which holds project.yaml. */
   readonly folder: string;
   /** The project's files, open editors first. */

@@ -35,8 +35,6 @@ export interface GeneratedLens {
 
 /**
  * Values of `${…}` references and each table's name and methods, for the environment.
- * @deprecated Use `ProjectSnapshot`'s `annotationsIn` method. Removed in 3.0.
- * @public
  */
 export function annotationsIn(
   project: Project,
@@ -56,8 +54,6 @@ export function annotationsIn(
 
 /**
  * For each table in a flow, transform or contract, the files generated for it.
- * @deprecated Use `ProjectSnapshot`'s `generatedLenses` method. Removed in 3.0.
- * @public
  */
 export function generatedLenses(
   project: Project,

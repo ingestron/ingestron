@@ -23,8 +23,6 @@ export interface QuickFix {
 
 /**
  * The fixes for the problems in `file` whose lines meet `at`.
- * @deprecated Use `ProjectSnapshot`'s `quickFixes` method. Removed in 3.0.
- * @public
  */
 export function quickFixes(
   project: Project,
