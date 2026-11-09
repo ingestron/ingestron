@@ -2,8 +2,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { annotationsIn } from "../src/annotations.js";
-import { openProject } from "../src/project.js";
+import { annotationsIn } from "../src/annotations/annotations.js";
+import { openProject } from "../src/project/project.js";
 import { cleanEnvironment, fromFile, fromHost, made, unset } from "./env-workspace.js";
 
 cleanEnvironment();

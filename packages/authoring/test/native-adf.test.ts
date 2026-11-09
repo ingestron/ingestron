@@ -2,10 +2,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { recipesFolder } from "@ingestron/pack-adf";
 import { expect, it } from "vitest";
-import { openProject } from "../src/project.js";
-import { skeletons, plainText } from "../src/skeletons.js";
-import { placeAt } from "../src/context.js";
-import { connectorOf, fieldAt } from "../src/fields.js";
+import { openProject } from "../src/project/project.js";
+import { skeletons, plainText } from "../src/assist/skeletons.js";
+import { placeAt } from "../src/navigation/context.js";
+import { connectorOf, fieldAt } from "../src/assist/fields.js";
 const folder = recipesFolder;
 it("offers a SQL connection skeleton with only the default authentication fields", () => {
   const project = openProject(folder, new Map());

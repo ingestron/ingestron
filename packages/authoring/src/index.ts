@@ -6,21 +6,26 @@ export {
   generatedLenses,
   type Annotation,
   type GeneratedLens,
-} from "./annotations.js";
-export { completionsAt, type Suggestion } from "./completion.js";
-export { problems, type Problem } from "./diagnostics.js";
-export { codeDocs, docsLinks, docsUrl } from "./docs.js";
-export { quickFixes, type QuickFix } from "./fixes.js";
-export { moveSetting } from "./moves.js";
-export { fixAll } from "./fix-all.js";
-export { compareEnvironments, platformRequest } from "./platform-request.js";
-export { type HoverOptions } from "./explain.js";
-export { hoverAt } from "./hover.js";
-export { definitionAt, referencesAt } from "./navigation.js";
-export { fileMoveEdits, renameAt, renameProblem } from "./rename.js";
-export { generatedFiles, generatedForTable, tableAtCursor, type Generated } from "./preview.js";
-export { referenceAt, type ProblemEntry, type ReferenceEntry } from "./reference.js";
-export { projectSymbols, type ProjectSymbol } from "./symbols.js";
-export { referenceForDocs } from "./docs-entries.js";
-export { inProject, openProject, projectFolderOf, type Project } from "./project.js";
-export { positionAt, type Position } from "./yaml.js";
+} from "./annotations/annotations.js";
+export { completionsAt, type Suggestion } from "./assist/completion.js";
+export { problems, type Problem } from "./diagnostics/diagnostics.js";
+export { codeDocs, docsLinks, docsUrl } from "./docs/docs.js";
+export { quickFixes, type QuickFix } from "./assist/fixes.js";
+export { moveSetting } from "./assist/moves.js";
+export { fixAll } from "./assist/fix-all.js";
+export { compareEnvironments, platformRequest } from "./generation/platform-request.js";
+export { type HoverOptions } from "./hover/explain.js";
+export { hoverAt } from "./hover/hover.js";
+export { definitionAt, referencesAt } from "./navigation/navigation.js";
+export { fileMoveEdits, renameAt, renameProblem } from "./navigation/rename.js";
+export {
+  generatedFiles,
+  generatedForTable,
+  tableAtCursor,
+  type Generated,
+} from "./generation/preview.js";
+export { referenceAt, type ProblemEntry, type ReferenceEntry } from "./reference/reference.js";
+export { projectSymbols, type ProjectSymbol } from "./navigation/symbols.js";
+export { referenceForDocs } from "./reference/docs-entries.js";
+export { inProject, openProject, projectFolderOf, type Project } from "./project/project.js";
+export { positionAt, type Position } from "./project/yaml.js";

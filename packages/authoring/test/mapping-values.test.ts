@@ -4,9 +4,9 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type * as Core from "@ingestron/core";
 import { describe, expect, it, vi } from "vitest";
-import { completionsAt } from "../src/completion.js";
-import { hoverAt } from "../src/hover.js";
-import { openProject } from "../src/project.js";
+import { completionsAt } from "../src/assist/completion.js";
+import { hoverAt } from "../src/hover/hover.js";
+import { openProject } from "../src/project/project.js";
 import { filledTemplates } from "./starters.js";
 
 // The ADF pack's adf-copy, with a mapping of audit columns whose values are described.

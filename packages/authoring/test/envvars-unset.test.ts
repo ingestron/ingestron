@@ -5,10 +5,10 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { annotationsIn } from "../src/annotations.js";
-import { problems } from "../src/diagnostics.js";
-import { hoverAt } from "../src/hover.js";
-import { openProject } from "../src/project.js";
+import { annotationsIn } from "../src/annotations/annotations.js";
+import { problems } from "../src/diagnostics/diagnostics.js";
+import { hoverAt } from "../src/hover/hover.js";
+import { openProject } from "../src/project/project.js";
 import { filledTemplates } from "./starters.js";
 
 const template = join(filledTemplates, "private-files");

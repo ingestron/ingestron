@@ -3,10 +3,10 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { annotationsIn } from "../src/annotations.js";
-import { problems } from "../src/diagnostics.js";
-import { hoverAt } from "../src/hover.js";
-import { openProject } from "../src/project.js";
+import { annotationsIn } from "../src/annotations/annotations.js";
+import { problems } from "../src/diagnostics/diagnostics.js";
+import { hoverAt } from "../src/hover/hover.js";
+import { openProject } from "../src/project/project.js";
 import { cleanEnvironment, fromFile, fromHost, made } from "./env-workspace.js";
 
 cleanEnvironment();

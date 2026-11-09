@@ -3,11 +3,11 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { annotationsIn } from "../src/annotations.js";
-import { problems } from "../src/diagnostics.js";
-import { hoverAt } from "../src/hover.js";
-import { compareEnvironments, platformRequest } from "../src/platform-request.js";
-import { openProject, resolved, resolvedForDisplay } from "../src/project.js";
+import { annotationsIn } from "../src/annotations/annotations.js";
+import { problems } from "../src/diagnostics/diagnostics.js";
+import { hoverAt } from "../src/hover/hover.js";
+import { compareEnvironments, platformRequest } from "../src/generation/platform-request.js";
+import { openProject, resolved, resolvedForDisplay } from "../src/project/project.js";
 import { brokenPackMessage, breakPacks, mendPacks } from "./broken-pack.js";
 import { filledTemplates } from "./starters.js";
 

@@ -6,15 +6,15 @@ import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import { recipesFolder } from "@ingestron/pack-adf";
 import { parse } from "yaml";
-import { annotationsIn, generatedLenses } from "../src/annotations.js";
-import { completionsAt } from "../src/completion.js";
-import { problems } from "../src/diagnostics.js";
-import { quickFixes } from "../src/fixes.js";
-import { hoverAt } from "../src/hover.js";
-import { moveSetting } from "../src/moves.js";
-import { definitionAt } from "../src/navigation.js";
-import { openProject } from "../src/project.js";
-import { referenceAt } from "../src/reference.js";
+import { annotationsIn, generatedLenses } from "../src/annotations/annotations.js";
+import { completionsAt } from "../src/assist/completion.js";
+import { problems } from "../src/diagnostics/diagnostics.js";
+import { quickFixes } from "../src/assist/fixes.js";
+import { hoverAt } from "../src/hover/hover.js";
+import { moveSetting } from "../src/assist/moves.js";
+import { definitionAt } from "../src/navigation/navigation.js";
+import { openProject } from "../src/project/project.js";
+import { referenceAt } from "../src/reference/reference.js";
 
 const cli = join(import.meta.dirname, "../../cli");
 /** The package an example kind lives in: starters are in core. */

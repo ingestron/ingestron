@@ -3,8 +3,8 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { problems } from "../src/diagnostics.js";
-import { loadedDocuments, openProject, resolved } from "../src/project.js";
+import { problems } from "../src/diagnostics/diagnostics.js";
+import { loadedDocuments, openProject, resolved } from "../src/project/project.js";
 import { cleanEnvironment, fromFile, fromHost, landing, made, unset } from "./env-workspace.js";
 
 cleanEnvironment();

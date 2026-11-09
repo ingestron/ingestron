@@ -3,9 +3,9 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { problems } from "../src/diagnostics.js";
-import { problemsAt } from "../src/problems-at.js";
-import { openProject } from "../src/project.js";
+import { problems } from "../src/diagnostics/diagnostics.js";
+import { problemsAt } from "../src/assist/problems-at.js";
+import { openProject } from "../src/project/project.js";
 import { appliedSample } from "./applied.js";
 
 const retail = appliedSample("retail");
