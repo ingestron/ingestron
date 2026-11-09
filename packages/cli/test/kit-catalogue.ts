@@ -53,6 +53,8 @@ interface Published {
   id: string;
   version: string;
   change?: (text: string) => string;
+  /** Changes to the kit's other files, by path in the kit's folder. */
+  files?: Record<string, (text: string) => string>;
 }
 
 /** A bare repository laid out as the catalogue: `kits/<id>/<version>/`, each tagged `<id>@<version>`. */
@@ -61,8 +63,11 @@ export function catalogue(published: Published[]): string {
   const git = (...args: string[]) => execFileSync("git", args, { cwd: work, stdio: "ignore" });
   git("init", "--quiet", "--initial-branch", "main");
   writeFileSync(join(work, "README.md"), "Kits\n");
-  for (const { id, version, change } of published) {
-    kitCopy(join(work, "kits", id, version), id, version, change);
+  for (const { id, version, change, files = {} } of published) {
+    const folder = join(work, "kits", id, version);
+    kitCopy(folder, id, version, change);
+    for (const [path, edit] of Object.entries(files))
+      writeFileSync(join(folder, path), edit(readFileSync(join(folder, path), "utf8")));
     git("add", ".");
     git("-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "--quiet", "-m", version);
     git("tag", `${id}@${version}`);
@@ -98,4 +103,17 @@ export function offlineCatalogue(): void {
     if (savedRepository === undefined) delete process.env.INGESTRON_STANDARDS_REPOSITORY;
     else process.env.INGESTRON_STANDARDS_REPOSITORY = savedRepository;
   });
+}
+
+/** Runs git in `folder` as a test user, quietly. */
+export function git(folder: string, ...args: string[]): void {
+  const user = ["-c", "user.name=t", "-c", "user.email=t@example.com"];
+  execFileSync("git", [...user, ...args], { cwd: folder, stdio: "ignore" });
+}
+
+/** Makes `folder` a git repository with everything in it committed. */
+export function committed(folder: string): void {
+  git(folder, "init", "--quiet", "--initial-branch", "main");
+  git(folder, "add", ".");
+  git(folder, "commit", "--quiet", "-m", "project");
 }

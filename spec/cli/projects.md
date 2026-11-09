@@ -273,7 +273,10 @@ and the composition above gives the source:
 - in `project.yaml` and `platform.yaml`, a key the kit does not write is
   filled from the composition, at any depth, with its comment. Where both
   write a key, the kit's value stays, with its comments. A list is one
-  value: the kit's is kept whole;
+  value: the kit's is kept whole. A top-level `values.<name>` is not filled
+  when the kit writes `<name>` under the `values` of every environment it
+  has, as the Databricks kit does for `landing`: the kit's per-environment
+  values are the ones read;
 - `.gitignore` has the kit's lines, then those of the composition it lacks.
 
 The project must resolve before anything is written, and a file already in

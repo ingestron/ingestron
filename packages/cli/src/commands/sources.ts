@@ -11,8 +11,9 @@ import {
   type Kit,
   type Template,
 } from "@ingestron/core";
-import { compareVersions, readTemplate } from "@ingestron/core/internal";
-import { clonedEntry, gitReason, withoutCredentials } from "./clone.js";
+import { compareVersions, readTemplate, satisfies } from "@ingestron/core/internal";
+import { cliVersion } from "../version.js";
+import { clonedEntry, gitReason, kitGit, withoutCredentials } from "./clone.js";
 
 export { withoutCredentials } from "./clone.js";
 
@@ -98,7 +99,7 @@ export function kitSource(spec: string, cwd: string): { kit: Kit; done(): void }
   const parsed = parseKitSpec(spec);
   if ("url" in parsed) {
     const { url, path, tag } = parsed;
-    const found = clonedEntry({ url, inside: path, kind: "folder", tag, cwd });
+    const found = clonedEntry({ url, inside: path, kind: "folder", tag, git: kitGit(url, cwd) });
     return readCloned(withoutCredentials(spec), found, () => readKit(found.path));
   }
   const { id, version } = parsed;
@@ -166,40 +167,61 @@ function sortedVersions(versions: string[]): string[] {
   return [...new Set(versions)].sort(compareVersions);
 }
 
-/**
- * The versions of the kit tagged `<id>@<version>` in the catalogue, oldest first, or why the
- * catalogue could not be read.
- */
+/** The versions of the kit tagged `<id>@<version>` in the catalogue, oldest first, or why it could not be read. */
 function catalogueVersions(id: string, cwd: string): string[] | string {
+  const tagged = catalogueKits(cwd);
+  if (typeof tagged === "string") return tagged;
+  return sortedVersions(tagged.filter((item) => item.id === id).map((item) => item.version));
+}
+
+/**
+ * Every kit version the catalogue tags `<id>@<version>` (`git ls-remote --tags`), each once, or
+ * why the catalogue could not be read.
+ */
+export function catalogueKits(cwd: string): { id: string; version: string }[] | string {
+  const url = catalogueUrl();
   let output: string;
   try {
-    output = execFileSync("git", ["ls-remote", "--tags", "--", catalogueUrl()], {
+    output = execFileSync("git", ["ls-remote", "--tags", "--", url], {
       stdio: "pipe",
-      cwd,
       encoding: "utf8",
+      ...kitGit(url, cwd),
     });
   } catch (error) {
     return withoutCredentials(gitReason(error));
   }
-  const prefix = `refs/tags/${id}@`;
-  const versions = output
+  const tags = output
     .split("\n")
     .map((line) => line.split("\t")[1]?.replace(/\^\{\}$/, "") ?? "")
-    .filter((ref) => ref.startsWith(prefix))
-    .map((ref) => ref.slice(prefix.length))
-    .filter((version) => /^\d{4}-\d{2}-\d{2}(-preview)?$/.test(version));
-  return sortedVersions(versions);
+    .map((ref) =>
+      /^refs\/tags\/([a-z0-9-]+\/[a-z0-9-]+)@(\d{4}-\d{2}-\d{2}(?:-preview)?)$/.exec(ref),
+    )
+    .filter((match) => match !== null);
+  return [...new Set(tags.map(([, id, version]) => `${id}@${version}`))].map((tag) => {
+    const [id = "", version = ""] = tag.split("@");
+    return { id, version };
+  });
+}
+
+/** Refuses a kit whose `requires.ingestron` this CLI's version does not meet. */
+export function refuseNewer(kit: Kit): void {
+  const version = cliVersion();
+  if (!satisfies(version, kit.requires.ingestron))
+    throw new Error(
+      `The kit ${kit.id}@${kit.version} needs ingestron ${kit.requires.ingestron}; this is ${version}.`,
+    );
 }
 
 /** The catalogue cloned at the tag `<id>@<version>`, and `kits/<id>/<version>` read. */
 function catalogueKit(id: string, version: string, cwd: string): { kit: Kit; done(): void } {
   const inside = `kits/${id}/${version}`;
+  const url = catalogueUrl();
   const found = clonedEntry({
-    url: catalogueUrl(),
+    url,
     inside,
     kind: "folder",
     tag: `${id}@${version}`,
-    cwd,
+    git: kitGit(url, cwd),
   });
   return readCloned(`${id}@${version}`, found, () =>
     readKit(found.path, join(found.folder, "kits")),

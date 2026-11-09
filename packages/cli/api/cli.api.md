@@ -29,6 +29,9 @@ export const commands: readonly [{
 }, {
     readonly name: "init";
     readonly summary: "Create a project from a connection and supported ingestion route.";
+}, {
+    readonly name: "standard";
+    readonly summary: "install <kit> replaces the project's standard with a published one; list shows them.";
 }];
 
 // @public
@@ -74,6 +77,9 @@ export const flags: readonly [{
 }, {
     readonly flag: "--yes";
     readonly summary: "init: take the default of each choice not given as a flag.";
+}, {
+    readonly flag: "--platform <id>";
+    readonly summary: "standard list: only the standards for this platform, such as duckdb.";
 }, {
     readonly flag: "--help";
     readonly summary: "Show this text.";

@@ -15,9 +15,8 @@ import { packs } from "@ingestron/core";
 import { environmentReportsText } from "@ingestron/core/internal";
 import { nameProblem, projectId } from "@ingestron/core";
 import { ignoredText, writeScaffold, type Answers } from "@ingestron/core/internal";
-import { kitFiles, kitTemplate, satisfies } from "@ingestron/core/internal";
-import { kitSource, standardSource, templateSource } from "./sources.js";
-import { cliVersion } from "../version.js";
+import { kitFiles, kitTemplate } from "@ingestron/core/internal";
+import { kitSource, refuseNewer, standardSource, templateSource } from "./sources.js";
 
 /** Asks one question; `check` explains an answer that is not valid, and the question is asked again. */
 type Ask = (
@@ -57,22 +56,16 @@ export function init(options: Options, io: Io): number {
 function kitProject(options: Options, io: Io, cleanups: (() => void)[]): Source {
   const { kit, done } = kitSource(options.init.kit!, io.cwd);
   cleanups.push(done);
-  const version = cliVersion();
-  if (!satisfies(version, kit.requires.ingestron))
-    throw new Error(
-      `The kit ${kit.id}@${kit.version} needs ingestron ${kit.requires.ingestron}; this is ${version}.`,
-    );
+  refuseNewer(kit);
   const { connector, via, connectivity } = options.init;
   if (!connector && !via && !connectivity)
     return { template: kitTemplate(kit), files: kitFiles(kit), kit, done: () => undefined };
   const recipe = chooseProject(options.init, asker(options, io));
   const needs = recipe.facts.route.packs;
-  if (needs.some((pack) => !kit.packs.includes(pack))) {
-    const route = recipe.template.name.split(" via ").at(-1);
+  if (needs.some((pack) => !kit.packs.includes(pack)))
     throw new Error(
-      `The kit ${kit.id} uses ${kit.packs.join(", ")}; the route ${route} needs ${needs.join(", ")}.`,
+      `The kit ${kit.id} uses ${kit.packs.join(", ")}; the route ${recipe.facts.route.via} needs ${needs.join(", ")}.`,
     );
-  }
   const template = { ...recipe.template, summary: kit.summary };
   return { ...recipe, template, kit };
 }

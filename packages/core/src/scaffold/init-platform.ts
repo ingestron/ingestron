@@ -17,6 +17,8 @@ import type { Content } from "./scaffold.js";
 
 /** A route's facts for composing: its ingest method and its settings schema, and its packs. */
 export interface Route {
+  /** The route's name, such as `databricks` or `adf-databricks`. */
+  via: string;
   method: string;
   packs: string[];
   /** Why the standard names these packs, beside them. */

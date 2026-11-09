@@ -1,6 +1,6 @@
 // The commands and flags the documentation lists are the ones --help shows.
 import { describe, expect, it } from "vitest";
-import { usage } from "../../src/terminal/args.js";
+import { usage } from "../../src/terminal/index.js";
 import { commands, flags } from "../../src/index.js";
 
 describe("command metadata", () => {
@@ -14,6 +14,7 @@ describe("command metadata", () => {
       "request",
       "schemas",
       "init",
+      "standard",
     ]);
     for (const { name, summary } of commands)
       expect(usage).toContain(`${name.padEnd(10)}${summary}`);

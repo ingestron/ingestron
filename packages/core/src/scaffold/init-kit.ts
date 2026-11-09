@@ -78,19 +78,39 @@ export function withKit(
     const route = files[path];
     files[path] = content;
     if (route === undefined) continue;
-    if (merged.has(path)) files[path] = filled(String(content), String(route));
+    if (merged.has(path)) files[path] = filled(String(content), String(route), path);
     else if (path === ".gitignore") files[path] = mergedGitignore(String(content), String(route));
   }
   return files;
 }
 
 /** The kit's YAML with the composition's keys it lacks; written as the kit writes YAML. */
-function filled(kit: string, route: string): string {
+function filled(kit: string, route: string, path: string): string {
   const document = parseDocument(kit);
   const added = parseDocument(route).contents;
   if (!isMap(document.contents) || !isMap(added)) return kit;
+  if (path === "project.yaml") withoutEnvironmentValues(added, document.contents);
   fill(document.contents, added);
   return document.toString({ lineWidth: 0 });
+}
+
+/**
+ * Leaves out of the composition's top-level `values` each name the kit writes under the
+ * `values` of every environment it has, and `values` itself when nothing is left: the kit's
+ * per-environment values are the ones read (spec/cli/projects.md, "Kits").
+ */
+function withoutEnvironmentValues(route: YAMLMap, kit: YAMLMap): void {
+  const values = route.get("values");
+  const environments = kit.get("environments");
+  if (!isMap(values) || !isMap(environments) || environments.items.length === 0) return;
+  const written = environments.items.map((pair) => {
+    const own = isMap(pair.value) ? pair.value.get("values") : undefined;
+    return new Set(isMap(own) ? own.items.map((item) => keyText(item.key)) : []);
+  });
+  values.items = values.items.filter(
+    (pair) => !written.every((names) => names.has(keyText(pair.key))),
+  );
+  if (values.items.length === 0) route.delete("values");
 }
 
 /** Adds each key of `added` that `base` lacks, at any depth, with its comment. */

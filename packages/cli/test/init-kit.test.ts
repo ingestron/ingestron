@@ -154,7 +154,11 @@ describe("init --kit with connection options", () => {
     const project = written("project.yaml");
     expect(project).toMatch(/^id: lake$/m);
     expect(project).toContain("      # The dev workspace's URL");
-    expect(project).toMatch(/^values:\n {2}# Where the source files land/m);
+    // The kit writes landing for every environment, so the route's top-level landing is not
+    // added: it would be a REPLACE_ME that nothing reads.
+    expect(project).not.toMatch(/^values:/m);
+    expect(project).not.toMatch(/^ {2}landing: REPLACE_ME/m);
+    expect(project.match(/landing: REPLACE_ME/g)).toHaveLength(2);
     expect(ingestron(folder, "plan").code).toBe(0);
   });
 

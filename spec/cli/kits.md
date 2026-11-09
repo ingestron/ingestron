@@ -162,8 +162,80 @@ The cases above do not cover these. `init --kit` has cases of its own in
   options, the kit gives the Standard and the route the source
   ([projects.md](projects.md), "Kits").
 - `ingestron standard install <spec>` replaces the project's Standard
-  document with the kit's, keeping its path and its `id`, and says what the kit's
-  `notes` and Platform skeleton changed.
+  document with the kit's, keeping its path and its `id`, and says what the
+  kit's `notes` and other files changed (below).
 - `ingestron standard list [--platform <id>]` shows the installed kits and,
-  online, the catalogue.
+  online, the catalogue (below).
 - `ingestron check` makes no network call and never says a newer kit exists.
+
+The cases in `conformance/standard/cases.json` run each command in a project
+made with `ingestron init p --kit duckdb/local-medallion@2026-11-10` and
+committed to git, with the catalogue unreachable, and give the exact output.
+
+### `standard install <spec>`
+
+`standard` takes a sub-command: `install <spec>` or `list`. A missing or
+unknown sub-command, or `install` without a spec, is a usage mistake (exit 2),
+as for any command.
+
+`standard install` works on the project in `--definitions` (default `.`):
+
+1. **The project's Standard.** It is the one document of `kind: Standard`
+   among the files project.yaml imports. The project is read as `plan` reads
+   it, with its first environment. When it cannot be read, its problems are
+   printed and nothing is written. With no Standard document:
+   `The project has no Standard document to replace. Add one to project.yaml's imports, or start a project with ingestron init --kit <kit>.`
+   With more than one: `The project has <n> Standard documents (<files>); keep one, then run this again.`
+2. **Git.** It runs `git status --porcelain -- <file>` in the project's folder.
+   When that lists the file:
+   `<file> has changes that are not committed; commit them first so git diff shows only the new standard.`
+   and nothing is written. When git cannot answer, as outside a git
+   repository, it goes on and says:
+   `Could not ask git whether <file> has changes, so it is replaced without that check.`
+3. **The kit**, found by its spec as above. A kit whose `requires.ingestron`
+   the CLI's version does not meet is refused with the message `init --kit`
+   gives.
+4. **The new file.** The kit's `standard.yaml` text, with only the value of
+   its top-level `id:` changed to the project Standard's `id`, is written at
+   the Standard's path. Its comments are kept. Nothing else in the project is
+   written.
+5. **What it prints**, each part after a blank line:
+   - `Replaced <file> with <id>@<version>.`, or, when the old Standard has an
+     `origin`, `Replaced <file> with <id>@<version> (was <origin version>).`;
+   - the kit's `notes`, when it has any;
+   - what was not applied. The old version is the kit named by the old
+     Standard's `origin` (`<standard>@<version>`), found as any spec is. Its
+     files and the new version's, as `init --kit` would copy them, are
+     compared, except the standard: a file in one and not the other, or with
+     other content, has changed. Then
+     `Not applied: the kit's other files that changed since <old version>; compare them with yours:`
+     and each such path on a line of its own, indented two spaces, in
+     code-point order. With none, `Not applied: no other kit file changed since <old version>.`
+     When the old Standard has no `origin`, or its version cannot be found,
+     `Not applied: the earlier version is not available, so the kit's other files cannot be compared.`
+   - the project's problems, when it no longer builds with the new
+     Standard, as `plan` prints them. The new file stays written.
+   - `Next: run ingestron plan, then review git diff.`
+
+It exits 0 once the file is written; 1 when it writes nothing.
+
+### `standard list [--platform <id>]`
+
+One line per version: `<id>@<version>  <title>  (<features>)`. The installed
+kits come first, in order of id (code-point order) and then version (oldest
+first, as above). Then the versions that only the catalogue has, from its tags
+(`git ls-remote --tags`), each `<id>@<version>  (online)`, in the same order:
+their titles are not read, as that would need a clone. `--platform <id>`
+keeps the kits whose id starts `<id>/`.
+
+When the catalogue cannot be read, the first line is
+`Could not reach the catalogue; showing the kits installed with ingestron.`,
+then the installed kits. With no kits to show, `No kits found.` (or
+`No kits found for <id>.`). It exits 0 in each case.
+
+### Git
+
+Each git command on the catalogue (`ls-remote` and `clone`), and each clone of
+a kit's git URL, runs with `GIT_TERMINAL_PROMPT=0`, so git never waits for a
+password, and in a temporary folder rather than the user's, unless the URL is
+a relative path, which is read from the user's folder.
