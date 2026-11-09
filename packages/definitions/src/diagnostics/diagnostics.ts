@@ -25,6 +25,7 @@ export type DefinitionCode =
   | "METHOD_CHECK"
   | "PACK_CHECK"
   | "UNKNOWN_LAYER"
+  | "DUPLICATE_LAYER"
   | "BAD_PATTERN"
   | "BAD_NAME"
   | "DUPLICATE_NAME"

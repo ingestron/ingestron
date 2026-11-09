@@ -612,7 +612,8 @@ the flow's `ingest.uses`.
   `layer`, else the second layer (the first if there is only one). A layer
   that is not in the list is `UNKNOWN_LAYER`. A layer in the list is its name
   or an object with a `name` (section 11.1); the layers are the names, in
-  order.
+  order. Layer names MUST be unique: a name listed again is
+  `DUPLICATE_LAYER`, an error at the second item.
 - Each name is rendered from its Liquid pattern with the variables
   `project`, `environment`, `layer`, `table`, `flow` (flow tables) and
   `source` (the connection id, flow tables). A pattern that does not render
@@ -985,7 +986,10 @@ value is resolved for each table, come later in this section.
 
 **Layers.** An item of the standard's `layers` is either a name (text matching
 `^[a-z][a-z0-9_]*$`) or an object whose `name` is required and of the same
-form. The standard's layers, in order, are the names: everything in this
+form. Layer names MUST be unique, whichever way each is written: a name that
+an earlier item has is `DUPLICATE_LAYER`, an error at the later item
+(`The layer "<name>" is listed twice.`, hint `Each layer is listed once; give a
+layer's duties on its one entry.`). The standard's layers, in order, are the names: everything in this
 specification that reads `layers` (a table's default layer, `UNKNOWN_LAYER`,
 the `layer` naming variable) reads the names. An object may also give, as the
 defaults for the tables in the layer, `history`, `audit`, `rescued`,

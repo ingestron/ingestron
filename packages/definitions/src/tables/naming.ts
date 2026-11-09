@@ -38,6 +38,19 @@ const known = new Set(Object.keys(nameVariables));
 const validName = /^[a-z_][a-z0-9_]*$/;
 const engine = new Liquid({ strictFilters: true });
 
+/** `DUPLICATE_LAYER` at each layer the standard lists again. */
+export function checkDuplicateLayers(context: Context, names: string[]): void {
+  names.forEach((name, index) => {
+    if (names.indexOf(name) === index) return;
+    context.reporter.error(
+      "DUPLICATE_LAYER",
+      `The layer "${name}" is listed twice.`,
+      { document: context.standard, pointer: `/layers/${index}` },
+      "Each layer is listed once; give a layer's duties on its one entry.",
+    );
+  });
+}
+
 /** The pattern for each name: the pack's, then the standard's, then the platform's. */
 export function namePatterns(context: Context): Record<keyof Naming, Pattern> {
   const keys = Object.keys(context.pack.defaults.naming) as (keyof Naming)[];

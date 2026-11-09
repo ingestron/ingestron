@@ -1,6 +1,7 @@
 // What each code means and how to fix it, shown on the documentation site.
 import type { DefinitionCode } from "./diagnostics.js";
 import { environmentCodeHelp } from "./environment-codes.js";
+import { layerCodeHelp } from "./layer-codes.js";
 
 /**
  * Help for every code this package reports.
@@ -8,6 +9,7 @@ import { environmentCodeHelp } from "./environment-codes.js";
  */
 export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> = {
   ...environmentCodeHelp,
+  ...layerCodeHelp,
   NO_STANDARD: {
     meaning: "The project has no Standard document.",
     fix: "Add a Standard, or import your organisation's standard in project.yaml.",
@@ -139,10 +141,6 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
     meaning:
       "The pack cannot build this project, such as tables that need different shared resources.",
     fix: "Follow the message; it names the setting or tables to align.",
-  },
-  UNKNOWN_LAYER: {
-    meaning: "The layer is not in the standard's list of layers.",
-    fix: "Use a listed layer, or add it to the standard's layers.",
   },
   BAD_PATTERN: {
     meaning: "A name pattern uses a variable or filter that does not exist.",
