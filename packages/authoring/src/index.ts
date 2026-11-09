@@ -1,6 +1,9 @@
 // Public API of @ingestron/authoring: what an editor needs to help write an
-// Ingestron project, as plain functions over the project's files. The VS Code
+// Ingestron project, starting from a ProjectSnapshot. The VS Code
 // extension adapts these to its API; another editor can do the same.
+
+// A project as the editor sees it at one moment, with everything an editor asks of it.
+export { ProjectSnapshot } from "./snapshot/index.js";
 
 // The project an open file belongs to, and positions in YAML.
 export {

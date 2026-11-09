@@ -14,7 +14,8 @@ export interface Generated {
   text: string;
 }
 
-type Files = Generated[] | { problems: string };
+/** The generated files for an environment, or what stops plan. */
+export type Files = Generated[] | { problems: string };
 const built = new WeakMap<Project, Map<string, Files>>();
 
 /**
@@ -23,6 +24,7 @@ const built = new WeakMap<Project, Map<string, Files>>();
  * together: a pack that builds them together has one folder for all its environments, such
  * as `build/adf/factory/…`, and the passports and any other pack have a folder for each,
  * such as `build/duckdb/dev/…`, of which only the environment's own is given.
+ * @deprecated Use `ProjectSnapshot`'s `generatedFiles` method. Removed in 3.0.
  * @public
  */
 export function generatedFiles(project: Project, environment: string | undefined): Files {

@@ -16,6 +16,7 @@ import { withoutEnvFiles } from "./without-env-files.js";
 
 /**
  * A project folder, its files and the environments it declares.
+ * @deprecated Use `ProjectSnapshot`. Removed in 3.0.
  * @public
  */
 export interface Project {
@@ -42,6 +43,7 @@ export function projectFolderOf(path: string): string | undefined {
 /**
  * The project in `folder`, with `open` (absolute path → text) read before the disk.
  * Open a fresh project after any edit or disk change to refresh cached editor features.
+ * @deprecated Use `ProjectSnapshot.open`. Removed in 3.0.
  * @public
  */
 export function openProject(folder: string, open: ReadonlyMap<string, string>): Project {

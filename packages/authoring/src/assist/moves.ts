@@ -14,6 +14,7 @@ const pointerOf = (segments: string[]) =>
 
 /**
  * The move for the setting whose key is at `offset`, when it is written outside where it belongs.
+ * @deprecated Use `ProjectSnapshot`'s `moveSetting` method. Removed in 3.0.
  * @public
  */
 export function moveSetting(

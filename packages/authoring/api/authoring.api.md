@@ -18,21 +18,21 @@ export interface Annotation {
     tooltip?: string;
 }
 
-// @public
+// @public @deprecated
 export function annotationsIn(project: Project, file: string, text: string, environment: string | undefined): Annotation[];
 
 // @public
 export function codeDocs(code: string): string | undefined;
 
-// @public
+// @public @deprecated
 export function compareEnvironments(project: Project, a: string, b: string): string;
 
-// @public
+// @public @deprecated
 export function completionsAt(project: Project, file: string, text: string, offset: number, environment: string | undefined): Suggestion[];
 
 // Warning: (ae-forgotten-export) The symbol "Place" needs to be exported by the entry point index.d.ts
 //
-// @public
+// @public @deprecated
 export function definitionAt(project: Project, file: string, offset: number): Place | undefined;
 
 // @public
@@ -41,13 +41,13 @@ export function docsLinks(): string[];
 // @public
 export function docsUrl(base: string, link: string): string;
 
-// @public
+// @public @deprecated
 export function fileMoveEdits(project: Project, from: string, to: string): Record<string, {
     range: [number, number];
     text: string;
 }[]>;
 
-// @public
+// @public @deprecated
 export function fixAll(project: Project, environment: string | undefined, code: string): QuickFix[];
 
 // @public
@@ -60,7 +60,7 @@ export interface Generated {
 
 // Warning: (ae-forgotten-export) The symbol "Files" needs to be exported by the entry point index.d.ts
 //
-// @public
+// @public @deprecated
 export function generatedFiles(project: Project, environment: string | undefined): Files;
 
 // @public
@@ -76,10 +76,10 @@ export interface GeneratedLens {
     methods: string;
 }
 
-// @public
+// @public @deprecated
 export function generatedLenses(project: Project, file: string, text: string, environment: string | undefined): GeneratedLens[];
 
-// @public
+// @public @deprecated
 export function hoverAt(project: Project, file: string, text: string, offset: number, environment: string | undefined, options?: HoverOptions): string | undefined;
 
 // @public
@@ -90,13 +90,13 @@ export interface HoverOptions {
 // @public
 export function inProject(folder: string, path: string): string | undefined;
 
-// @public
+// @public @deprecated
 export function moveSetting(project: Project, file: string, text: string, offset: number, environment: string | undefined): QuickFix[];
 
-// @public
+// @public @deprecated
 export function openProject(folder: string, open: ReadonlyMap<string, string>): Project;
 
-// @public
+// @public @deprecated
 export function platformRequest(project: Project, environment: string | undefined): string;
 
 // @public
@@ -145,10 +145,10 @@ export interface ProblemEntry {
     severity: "error" | "warning" | "information";
 }
 
-// @public
+// @public @deprecated
 export function problems(project: Project, environment: string | undefined): Problem[];
 
-// @public
+// @public @deprecated
 export interface Project {
     environments: string[];
     // (undocumented)
@@ -159,6 +159,42 @@ export interface Project {
 
 // @public
 export function projectFolderOf(path: string): string | undefined;
+
+// @beta
+export class ProjectSnapshot implements Project {
+    annotationsIn(file: string, text: string, environment: string | undefined): Annotation[];
+    compare(a: string, b: string): string;
+    completionsAt(file: string, text: string, offset: number, environment: string | undefined): Suggestion[];
+    definitionAt(file: string, offset: number): Place | undefined;
+    readonly environments: string[];
+    fileMoveEdits(from: string, to: string): Record<string, {
+        range: [number, number];
+        text: string;
+    }[]>;
+    readonly files: FileSource;
+    fixAll(environment: string | undefined, code: string): QuickFix[];
+    readonly folder: string;
+    generatedFiles(environment: string | undefined): Files;
+    generatedLenses(file: string, text: string, environment: string | undefined): GeneratedLens[];
+    hoverAt(file: string, text: string, offset: number, environment: string | undefined, options?: HoverOptions): string | undefined;
+    moveSetting(file: string, text: string, offset: number, environment: string | undefined): QuickFix[];
+    static open(folder: string, open?: ReadonlyMap<string, string>): ProjectSnapshot;
+    problems(environment: string | undefined): Problem[];
+    quickFixes(environment: string | undefined, file: string, at: {
+        start: Position;
+        end: Position;
+    }): QuickFix[];
+    referenceAt(file: string, text: string, offset: number, environment: string | undefined): ReferenceEntry | undefined;
+    referenceForDocs(path: string, environment: string | undefined): ReferenceEntry | undefined;
+    referencesAt(file: string, offset: number): Place[];
+    renameAt(file: string, offset: number, name: string): Record<string, {
+        range: [number, number];
+        text: string;
+    }[]> | undefined;
+    renameProblem(file: string, offset: number, name: string): string | undefined;
+    request(environment: string | undefined): string;
+    symbols(): ProjectSymbol[];
+}
 
 // @public
 export interface ProjectSymbol {
@@ -171,7 +207,7 @@ export interface ProjectSymbol {
     range: [number, number];
 }
 
-// @public
+// @public @deprecated
 export function projectSymbols(project: Project): ProjectSymbol[];
 
 // @public
@@ -197,13 +233,13 @@ export interface QuickFix {
     title: string;
 }
 
-// @public
+// @public @deprecated
 export function quickFixes(project: Project, environment: string | undefined, file: string, at: {
     start: Position;
     end: Position;
 }): QuickFix[];
 
-// @public
+// @public @deprecated
 export function referenceAt(project: Project, file: string, text: string, offset: number, environment: string | undefined): ReferenceEntry | undefined;
 
 // @public
@@ -243,19 +279,19 @@ export interface ReferenceEntry {
     }[];
 }
 
-// @public
+// @public @deprecated
 export function referenceForDocs(project: Project, path: string, environment: string | undefined): ReferenceEntry | undefined;
 
-// @public
+// @public @deprecated
 export function referencesAt(project: Project, file: string, offset: number): Place[];
 
-// @public
+// @public @deprecated
 export function renameAt(project: Project, file: string, offset: number, name: string): Record<string, {
     range: [number, number];
     text: string;
 }[]> | undefined;
 
-// @public
+// @public @deprecated
 export function renameProblem(project: Project, file: string, offset: number, name: string): string | undefined;
 
 // @public
