@@ -153,8 +153,9 @@ function switchedOff(diagnostics: AnyDiagnostic[], capabilities: Capability[]): 
   const lines = diagnostics
     .filter((diagnostic) => diagnostic.code === "CAPABILITY_OFF")
     .flatMap((diagnostic) => {
-      const pointer = diagnostic.fixes?.[0]?.edits[0]?.pointer ?? "";
-      const capability = capabilities.find((item) => pointer === `/manage/${item.id}`);
+      // The fix turns the capability on, at the top of the Platform or in its databricks section.
+      const title = diagnostic.fixes?.[0]?.title ?? "";
+      const capability = capabilities.find((item) => title === `Turn on manage.${item.id}`);
       const what = diagnostic.message.split(":")[0];
       return capability ? [`- ${capability.title} (\`manage.${capability.id}\`): ${what}`] : [];
     });
