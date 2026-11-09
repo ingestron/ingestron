@@ -4,6 +4,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { openProject } from "../../src/project/project.js";
+import { fieldAt } from "../../src/assist/index.js";
+import { placeAt } from "../../src/navigation/index.js";
 import { referenceAt } from "../../src/reference/reference.js";
 import { filledTemplates } from "../starters.js";
 
@@ -155,5 +157,16 @@ describe("connection settings", () => {
     });
     expect(entry?.text).toContain("Where the files land");
     expect(entry?.text).toContain("a folder under the connection's path");
+  });
+
+  it("carries where the owner finds the setting from its connector", () => {
+    const folder = retail;
+    const path = "connections/shop.yaml";
+    const marked = readFileSync(join(folder, path), "utf8").replace("  path:", "  pa|th:");
+    const text = marked.replace("|", "");
+    const project = openProject(folder, new Map([[join(folder, path), text]]));
+    const place = placeAt(path, text, marked.indexOf("|"));
+    const field = fieldAt(project, place, ["settings", "path"], "dev");
+    expect(field?.find).toMatch(/Catalog Explorer/);
   });
 });

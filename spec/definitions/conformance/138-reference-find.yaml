@@ -1,0 +1,26 @@
+description: "A field's find annotation is carried to its entry from its schema, or from the first branch that gives one; a field without one has no find."
+reference:
+  method: copy
+  settings:
+    type: object
+    properties:
+      catalog:
+        type: string
+        description: The catalog.
+        find: "Catalog Explorer: the catalog name."
+      folder:
+        anyOf:
+          - { type: string, find: "Catalog Explorer: Volumes, then the path of the volume." }
+          - { type: string }
+        description: A folder, in a volume.
+      path:
+        type: string
+        description: A path with no find.
+expect:
+  fields:
+    - path: catalog
+      find: "Catalog Explorer: the catalog name."
+    - path: folder
+      find: "Catalog Explorer: Volumes, then the path of the volume."
+    - path: path
+      find: null

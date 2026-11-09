@@ -33,6 +33,11 @@ export interface FieldInfo {
    * from the schema's `suggest`; unlike `example`, it is not meant to be taken as it stands.
    */
   suggest?: string;
+  /**
+   * One sentence on where the owner finds the value, from the schema's `find`; for a
+   * connection setting, the `find` of the connector's setting.
+   */
+  find?: string;
   /** For a method setting: the file it belongs in. */
   placement?: "platform" | "standard" | "definition";
   /** The documentation page and anchor, such as `/docs/reference/documents#flow-source`. */
@@ -227,7 +232,7 @@ function describe(
   const fallback = pick<unknown>("default");
   const minimum = pick<number>("minimum");
   const maximum = pick<number>("maximum");
-  const suggest = pick<unknown>("suggest");
+  const notes = textNotes({ suggest: pick<unknown>("suggest"), find: pick<unknown>("find") });
   return {
     path,
     name: path.at(-1) ?? "",
@@ -240,8 +245,15 @@ function describe(
     ...(typeof minimum === "number" && { minimum }),
     ...(typeof maximum === "number" && { maximum }),
     ...(examples?.length && { example: examples[0] }),
-    ...(typeof suggest === "string" && { suggest }),
+    ...notes,
   };
+}
+
+/** The annotations that are text, such as `suggest` and `find`. */
+function textNotes(notes: Record<string, unknown>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(notes).filter(([, note]) => typeof note === "string"),
+  ) as Record<string, string>;
 }
 
 function valuesOf(node: Schema): FieldInfo["values"] {

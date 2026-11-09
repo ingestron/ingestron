@@ -254,6 +254,7 @@ export interface FieldInfo {
     docs: string;
     // (undocumented)
     example?: unknown;
+    find?: string;
     maximum?: number;
     minimum?: number;
     // (undocumented)

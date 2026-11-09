@@ -1071,6 +1071,11 @@ described once.
   value could look like, with `<placeholders>` for the parts the author fills
   in, such as `/Volumes/<catalog>/landing/<source>`; an entry has it only when
   a schema gives one.
+- `find`: one sentence on where the owner finds the value, from the `find`
+  annotation of the field's schema, else of the first of its branches that
+  gives one (see Connector authoring metadata). An entry has it only when
+  a schema gives one. The entry of a Connection's setting carries the `find`
+  of the connector's setting of that name, when the connector has one.
 - `values`: the schema's `const` as the only value, else each of its `enum`,
   with the meaning at the same position in `enumDescriptions`; each taken
   from the field's schema, else the first branch that gives one.
