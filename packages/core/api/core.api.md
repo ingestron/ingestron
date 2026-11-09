@@ -102,6 +102,7 @@ export class Project {
         replaceMe?: "warning" | "error";
     }): Generated;
     static open(files: FileSource, options?: ProjectOptions): Project;
+    outputs(): GeneratedOutputs;
     readonly packs: readonly Pack[];
     plan(folder: OutputFolder, outputName: string): Plan;
     refresh(): void;

@@ -17,7 +17,8 @@ Requires Node 22.13 or later.
 `Project.open(files, options?)` holds a project's files, the packs its standard
 may name and the values `${envvar:…}` reads. Its generation, every environment
 resolved and each pack's output, is worked out on first use and kept until
-`refresh()`. `plan` and `request` use it; `compare` resolves the two
+`refresh()`. `outputs()` gives it as `generatedOutputs` does (below), with
+what `check` reports. `plan` and `request` use it; `compare` resolves the two
 environments it is asked about. Nothing is written: apply a plan with
 [`@ingestron/generate`](../generate/README.md). The values `${envvar:…}` reads
 are never shown, so logging a project is safe.

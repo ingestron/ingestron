@@ -2,7 +2,7 @@
 // and building found: for an editor to preview the files and show the problems.
 import { formatDiagnostics, type AnyDiagnostic, type FileSource } from "@ingestron/config";
 import { packLoadProblem, type Pack, type SuppliedValue } from "@ingestron/definitions";
-import { generateAll } from "./build-outputs.js";
+import { generateAll, type Generated } from "./build-outputs.js";
 import { packs } from "../packs/index.js";
 import { environmentReportsText, packReportsText } from "./report-text.js";
 import type { Report } from "./resolve-environments.js";
@@ -88,13 +88,21 @@ export function generatedOutputs(
   options: GeneratedOutputsOptions = {},
 ): GeneratedOutputs {
   const available = options.packs ?? packs;
+  return outputsOf(available, () => generateAll(files, available, options.envvars ?? process.env));
+}
+
+/**
+ * The refusal when one of `available` cannot be loaded, else what `generate` gives, as
+ * {@link generatedOutputs} returns it. `generate` is not called for a refusal.
+ */
+export function outputsOf(available: readonly Pack[], generate: () => Generated): GeneratedOutputs {
   const refused = packLoadProblem(available);
   if (refused) {
     const text = `${formatDiagnostics([refused])}\n`;
     const nothing = { outputs: [], environmentReports: [], packReports: [], deployed: [] };
     return { ok: false, ...nothing, refused, text };
   }
-  const generated = generateAll(files, available, options.envvars ?? process.env);
+  const generated = generate();
   const outputs = generated.outputs.map((output) => ({
     name: output.name,
     folder: output.folder,

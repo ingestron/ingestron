@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import {
   compareEnvironments,
   generateAll,
+  generatedOutputs,
   packs,
   platformRequest,
   Project,
@@ -44,6 +45,31 @@ describe("Project", () => {
     const again = project.generation();
     expect(again).not.toBe(first);
     expect(again).toEqual(first);
+  });
+
+  it("gives the outputs generatedOutputs gives for the same files, packs and values", () => {
+    const files = duckdbStarter();
+    const project = Project.open(files, { envvars: {} });
+    expect(project.outputs()).toEqual(generatedOutputs(files, { packs, envvars: {} }));
+  });
+
+  it("keeps its outputs until refresh()", () => {
+    const project = Project.open(duckdbStarter(), { envvars: {} });
+    const first = project.outputs();
+    expect(project.outputs()).toBe(first);
+    project.refresh();
+    const again = project.outputs();
+    expect(again).not.toBe(first);
+    expect(again).toEqual(first);
+  });
+
+  it("gives the refusal for a pack that cannot be loaded, as generatedOutputs does", () => {
+    const files = duckdbStarter();
+    const broken = [...packs, { ...packs[0]!, id: "broken", platformFields: ["schedule.nowhere"] }];
+    const outputs = Project.open(files, { packs: broken, envvars: {} }).outputs();
+    expect(outputs.ok).toBe(false);
+    expect(outputs.refused?.code).toBe("PACK_LOAD");
+    expect(outputs).toEqual(generatedOutputs(files, { packs: broken, envvars: {} }));
   });
 
   it("generates with REPLACE_ME as an error when asked, as check does", () => {

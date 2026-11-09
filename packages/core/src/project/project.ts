@@ -7,8 +7,10 @@ import { compareEnvironments } from "../compare/index.js";
 import {
   environmentReportsText,
   generateAll,
+  outputsOf,
   packReportsText,
   type Generated,
+  type GeneratedOutputs,
   type ProjectOptions,
 } from "../generation/index.js";
 import { packs as builtInPacks } from "../packs/index.js";
@@ -33,6 +35,7 @@ export class Project {
   // The values `${envvar:…}` reads: private, so logging the project never shows them.
   readonly #envvars: Readonly<Record<string, string | undefined>>;
   readonly #generations = new Map<"warning" | "error", Generated>();
+  #outputs: GeneratedOutputs | undefined;
 
   private constructor(files: FileSource, options: ProjectOptions) {
     this.files = files;
@@ -53,6 +56,15 @@ export class Project {
     const generated = generateAll(this.files, this.packs, this.#envvars, replaceMe);
     this.#generations.set(replaceMe, generated);
     return generated;
+  }
+
+  /**
+   * Each output folder, the reports and the text plan prints before planning, as
+   * `generatedOutputs` gives them, from the kept generation; the `PACK_LOAD` refusal when a
+   * pack cannot be loaded.
+   */
+  outputs(): GeneratedOutputs {
+    return (this.#outputs ??= outputsOf(this.packs, () => this.generation()));
   }
 
   /**
@@ -84,6 +96,7 @@ export class Project {
   /** Forgets the generation, so the next use reads the files again. */
   refresh(): void {
     this.#generations.clear();
+    this.#outputs = undefined;
   }
 
   #options(): ProjectOptions {

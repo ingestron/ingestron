@@ -4,6 +4,7 @@ export { environmentOutputs, generateAll, type Generated, type Output } from "./
 export { environmentsToGenerate } from "./environments.js";
 export {
   generatedOutputs,
+  outputsOf,
   type GeneratedOutput,
   type GeneratedOutputs,
   type GeneratedOutputsOptions,
