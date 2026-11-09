@@ -12,7 +12,7 @@ import {
   generatedFiles,
   platformRequest,
 } from "../../src/generation/index.js";
-import { hoverAt } from "../../src/hover/index.js";
+import { hoverAt, replaceMeHelp } from "../../src/hover/index.js";
 import {
   definitionAt,
   fileMoveEdits,
@@ -85,6 +85,11 @@ describe("ProjectSnapshot", () => {
         hoverAt(project, file, text, at("upsert"), "dev", {
           docs: (link) => `https://docs${link}`,
         }),
+    ],
+    [
+      "replaceMeHelp",
+      () => snapshot.replaceMeHelp(file, "/source", "dev"),
+      () => replaceMeHelp(project, file, "/source", "dev"),
     ],
     [
       "definitionAt",

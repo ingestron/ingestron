@@ -4,7 +4,7 @@
 
 ```ts
 
-import { FileSource } from '@ingestron/config';
+import type { FileSource } from '@ingestron/config';
 import type { Fix } from '@ingestron/config';
 
 // @public
@@ -139,6 +139,7 @@ export class ProjectSnapshot {
         text: string;
     }[]> | undefined;
     renameProblem(file: string, offset: number, name: string): string | undefined;
+    replaceMeHelp(file: string, pointer: string, environment: string | undefined): ReplaceMeHelp | undefined;
     request(environment: string | undefined): string;
     symbols(): ProjectSymbol[];
 }
@@ -223,11 +224,6 @@ export interface ReplaceMeHelp {
     find?: string;
     suggest?: string;
 }
-
-// Warning: (ae-forgotten-export) The symbol "Project" needs to be exported by the entry point index.d.ts
-//
-// @public
-export function replaceMeHelp(project: Project, file: string, pointer: string, environment: string | undefined): ReplaceMeHelp | undefined;
 
 // @public
 export interface Suggestion {

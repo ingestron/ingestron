@@ -14,7 +14,6 @@ describe("@ingestron/authoring's exports", () => {
         "inProject",
         "positionAt",
         "projectFolderOf",
-        "replaceMeHelp",
         "tableAtCursor",
       ].sort(),
     );

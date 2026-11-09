@@ -30,8 +30,6 @@ export interface ReplaceMeHelp {
  * field it fills, where to find the value and a suggestion. For a `values.<name>` in
  * project.yaml, the field is the one that reads `${values.<name>}` as its whole value, else the
  * first that contains it. Undefined when no field describes the spot.
- * @public
- * @example replaceMeHelp(project, "platform.yaml", "/databricks/warehouse_id", "dev")?.find
  */
 export function replaceMeHelp(
   project: Project,
