@@ -262,6 +262,7 @@ export interface FieldInfo {
     placement?: "platform" | "standard" | "definition";
     // (undocumented)
     required: boolean;
+    suggest?: string;
     type: string;
     values?: {
         value: unknown;

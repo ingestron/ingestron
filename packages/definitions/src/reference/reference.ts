@@ -28,6 +28,11 @@ export interface FieldInfo {
   /** The greatest number allowed, from the schema's `maximum`. */
   maximum?: number;
   example?: unknown;
+  /**
+   * What a new value could look like, with `<placeholders>` for the parts the author fills in,
+   * from the schema's `suggest`; unlike `example`, it is not meant to be taken as it stands.
+   */
+  suggest?: string;
   /** For a method setting: the file it belongs in. */
   placement?: "platform" | "standard" | "definition";
   /** The documentation page and anchor, such as `/docs/reference/documents#flow-source`. */
@@ -222,6 +227,7 @@ function describe(
   const fallback = pick<unknown>("default");
   const minimum = pick<number>("minimum");
   const maximum = pick<number>("maximum");
+  const suggest = pick<unknown>("suggest");
   return {
     path,
     name: path.at(-1) ?? "",
@@ -234,6 +240,7 @@ function describe(
     ...(typeof minimum === "number" && { minimum }),
     ...(typeof maximum === "number" && { maximum }),
     ...(examples?.length && { example: examples[0] }),
+    ...(typeof suggest === "string" && { suggest }),
   };
 }
 

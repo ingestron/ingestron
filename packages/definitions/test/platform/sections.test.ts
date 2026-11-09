@@ -163,6 +163,15 @@ describe("platformSectionReference", () => {
     expect(fields[0]?.docs).toBe("/docs/reference/packs/bridge#platform-warehouse-id");
   });
 
+  it("carries a field's suggest annotation", () => {
+    const section = {
+      type: "object",
+      properties: { root: { type: "string", suggest: "/Volumes/<catalog>/landing/<source>" } },
+    };
+    const fields = platformSectionReference({ ...bridge, platformSection: section } as PackInfo);
+    expect(fields[0]?.suggest).toBe("/Volumes/<catalog>/landing/<source>");
+  });
+
   it("has none for a pack without a section", () => {
     expect(platformSectionReference(test)).toEqual([]);
   });

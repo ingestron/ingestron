@@ -1048,10 +1048,13 @@ described once.
   list item; `name` is the last key.
 - `required`: the name is in the `required` of the parent schema or of the
   items of its `allOf`, at any depth of `allOf`. A `*` entry is not required.
-- `description`, `default`, `minimum`, `maximum` and the example (the first of
-  `examples`): from the field's schema, else from the first of its branches
-  that gives it. Only the inclusive `minimum` and `maximum` are carried, not
-  `exclusiveMinimum` or `exclusiveMaximum`.
+- `description`, `default`, `minimum`, `maximum`, the example (the first of
+  `examples`) and `suggest`: from the field's schema, else from the first of
+  its branches that gives it. Only the inclusive `minimum` and `maximum` are
+  carried, not `exclusiveMinimum` or `exclusiveMaximum`. `suggest` is text for what a new
+  value could look like, with `<placeholders>` for the parts the author fills
+  in, such as `/Volumes/<catalog>/landing/<source>`; an entry has it only when
+  a schema gives one.
 - `values`: the schema's `const` as the only value, else each of its `enum`,
   with the meaning at the same position in `enumDescriptions`; each taken
   from the field's schema, else the first branch that gives one.
