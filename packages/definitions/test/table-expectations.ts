@@ -34,3 +34,12 @@ function valueAtPath(value: unknown, path: string[]): unknown {
     value,
   );
 }
+
+/** The model's operations policy, exactly, and whether quality results are kept, when a case says. */
+export function checkOperations(
+  model: { operations: unknown; qualityResults: boolean },
+  wanted: { operations?: unknown; qualityResults?: boolean },
+): void {
+  if (wanted.operations) expect(model.operations).toEqual(wanted.operations);
+  if (wanted.qualityResults !== undefined) expect(model.qualityResults).toBe(wanted.qualityResults);
+}

@@ -891,12 +891,13 @@ optional `environmentsTogether: true` (section 7), an optional
 with `fullName` written as `catalog.schema.table`, and `null` at any key for
 a value the table does not have, such as `serve: null` for a step or
 `settings: { mode: null }` for a setting), `products` (partial objects,
-in order), `platform`, `names`, `deployValues` and `previewFeatures` (the
-model's, exactly) or
+in order), `platform`, `names`, `deployValues`, `previewFeatures` and
+`operations` (the model's, exactly) and `qualityResults`, or
 `diagnostics` (matched in order on the fields given; `fixes` lists the fix
 titles, and `fixes: []` means the diagnostic has none), and optionally
 `fixed`, as in the config conformance cases. A case that expects
-`diagnostics` also checks `tables` and `previewFeatures` when it gives them.
+`diagnostics` also checks `tables`, `previewFeatures`, `operations` and
+`qualityResults` when it gives them.
 All cases use the
 data-only packs [conformance/pack.yaml](conformance/pack.yaml),
 [conformance/pack-bridge.yaml](conformance/pack-bridge.yaml),
@@ -904,8 +905,9 @@ data-only packs [conformance/pack.yaml](conformance/pack.yaml),
 [conformance/pack-fold.yaml](conformance/pack-fold.yaml),
 [conformance/pack-checked.yaml](conformance/pack-checked.yaml),
 [conformance/pack-plain.yaml](conformance/pack-plain.yaml),
-[conformance/pack-three.yaml](conformance/pack-three.yaml) and
-[conformance/pack-intent.yaml](conformance/pack-intent.yaml), all available. A
+[conformance/pack-three.yaml](conformance/pack-three.yaml),
+[conformance/pack-intent.yaml](conformance/pack-intent.yaml) and
+[conformance/pack-ops.yaml](conformance/pack-ops.yaml), all available. A
 pack file with `buildEnvironments: true` stands for a pack that builds
 environments together: the runner gives it a `buildEnvironments` member. A
 pack or a method with `checks`, a list of messages, stands for one with a
@@ -1021,8 +1023,9 @@ loaded, kept and run, in words that belong to no engine. Every section is
 optional; a document that leaves them all out behaves as it did before they
 existed. Section 11.1 defines the words, section 11.2 how a value is
 declared for each table, section 11.3 how the chosen methods fill what is left,
-section 11.4 the method settings that are other names for intent and section
-11.5 how each pack says what it does with each value. Which pack uses which is
+section 11.4 the method settings that are other names for intent, section
+11.5 how each pack says what it does with each value and section 11.6 the
+operations policy and quality results of the whole project. Which pack uses which is
 in each pack's own specification.
 
 ### 11.1 Vocabulary
@@ -1366,6 +1369,47 @@ whatever `features` says: its
 `table`, `path`, `value` (left out for a path with `*`), the judging step's
 `pack` and the `status`, in the order of the tables, then of `intentPaths`.
 It is `[]` when there are none.
+
+### 11.6 Operations
+
+The model's `operations` is the standard's `operations` (section 11.1) with
+its defaults filled, and `fixed.operations` over it, key by key inside a
+mapping (section 3). Its fields are `schedule`, `trigger`, `retries`,
+`timeout`, `alerts`, `concurrency` and `require_tags`. When the standard says
+nothing, `schedule` is `{ per: project }`, `trigger` is `schedule`, `alerts`
+is `{ on: [failure] }` and `require_tags` is `[]`; `retries`, `timeout` and
+`concurrency` are absent. The model's `qualityResults` is `true` when the
+standard's `quality.results` is `true`, and `false` otherwise.
+
+**Required tags.** Each tag in `require_tags` that the Platform's `tags` does
+not give is `BAD_SETTING`, an error at the Platform's `/tags` (at the document
+root when it has none, and at no place when the project has no Platform
+document): `The standard requires the tag "<tag>" on every platform.`
+
+**Judging `operations`.** The judging pack is the first pack in the standard's
+list whose `intent` (section 11.5) declares `operations`, or a path below it,
+`used`. Each value of the policy other than a default is judged by the entry
+found for its path and value, as section 11.5 finds it in the pack, and
+reported as it says (`NOT_APPLIED`, `PREVIEW_FEATURE`) at the value, where the
+standard wrote it (`/operations/...`, or `/fixed/operations/...` when it fixes
+the value). A pack with no entry reports nothing. The values judged are the
+`schedule` when it is `flow`; a `trigger` other than `schedule`; `retries`,
+`timeout` and `concurrency`, as set; and each alert in `alerts.on` other than
+`failure`. The paths are `operations.schedule` (value `flow`),
+`operations.trigger`, `operations.retries`, `operations.timeout`,
+`operations.alerts` (value the alert) and `operations.concurrency`.
+
+When no pack of the standard declares any `operations` path `used`, each such
+value is `NOT_APPLIED` at the standard, naming the first pack in its list:
+`<path>: <value> isn't applied on <pack>: <reason>`, where the reason is that
+pack's own `not-yet` or `not-applicable` entry for it, else `No pack of this
+standard runs jobs.` An `elsewhere` entry of the first pack reports nothing.
+
+**Judging `quality.results`.** With `quality.results: true`, each table's store
+step is judged by its method's entry, else its pack's, for `quality.results`
+(section 11.5), reported at `/quality/results`: `quality.results: true isn't
+applied on <pack>: <reason>`. It is reported once for each pack and reason. A
+pack with no entry reports nothing.
 
 ## Connector authoring metadata
 

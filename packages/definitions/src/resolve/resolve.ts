@@ -25,6 +25,7 @@ import type { PackInfo } from "../pack/index.js";
 import { checkDuplicateNames, createNamer } from "../tables/index.js";
 import { transformTables } from "./transforms.js";
 import { buildModel } from "./build-model.js";
+import { checkOperations } from "./operations.js";
 import { holdsUnsetEnvvar } from "../diagnostics/index.js";
 import { recordOutputs, runPackCheck } from "../context/index.js";
 import { checkPlatformFields } from "../reference/index.js";
@@ -168,6 +169,7 @@ function resolveLoaded(
   checkContractFields(context, new Set(tables.map((table) => table.contract.id)));
   const products = resolveProducts(context, tables);
   checkGovernance(context, products);
+  checkOperations(context, tables);
   // Project-wide checks only make sense once every table resolved.
   const together = options.environmentsTogether === true;
   const built = !reporter.failed() && buildModel(context, namer, together, tables, products);

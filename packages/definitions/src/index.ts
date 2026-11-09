@@ -74,6 +74,7 @@ export {
   type IntentFragment,
   type IntentUse,
   type LoadMode,
+  type ResolvedOperations,
   type SettingAlias,
   type StorageFeature,
 } from "./intent/index.js";

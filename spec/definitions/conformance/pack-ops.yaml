@@ -1,0 +1,34 @@
+# A data-only pack that runs the project's jobs, for the operations cases
+# (section 11.6). Its connector is its own, so it offers no fixes in the cases
+# that use the other packs.
+id: ops
+version: 1
+defaults:
+  naming:
+    catalog: "{{ environment }}"
+    schema: "{{ layer }}"
+    table: "{{ table }}"
+    pipeline: "{{ project }}"
+    job: "{{ project }}_refresh"
+  layers: [bronze, silver, gold]
+  types:
+    {
+      string: STRING,
+      integer: BIGINT,
+      number: DOUBLE,
+      boolean: BOOLEAN,
+      date: DATE,
+      timestamp: TIMESTAMP,
+    }
+  quality: { required: warn, default: warn }
+rules:
+  ingest: { default: ops-copy }
+methods:
+  ops-copy:
+    action: ingest
+    description: Copies a source's files to a landing folder.
+    connectors: [ops]
+    produces: files
+    settings: { type: object }
+intent:
+  operations: { use: used, does: Runs the project's jobs. }

@@ -7,6 +7,7 @@ export {
   type IntentCoverage,
   type IntentUse,
 } from "./coverage.js";
+export { resolveOperations, type ResolvedOperations } from "./operations.js";
 export {
   type AuditDoc,
   type FlowIntentDoc,

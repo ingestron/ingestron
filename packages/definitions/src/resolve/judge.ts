@@ -17,14 +17,24 @@ export function judgeIntent(
   table: ResolvedTable,
   sources: Record<string, Source>,
 ): void {
-  for (const judgement of judgementsOf(context, table)) {
-    const at = sources[judgement.path];
-    const { outcome } = judgement;
-    if (outcome.kind === "not-applied") {
-      const message = `${described(judgement)} isn't applied on ${judgement.pack}: ${outcome.reason}`;
-      context.reporter.warning("NOT_APPLIED", message, at);
-    } else if (context.standard.value.features === "ga") reportPreview(context, judgement, at);
-  }
+  for (const judgement of judgementsOf(context, table))
+    reportJudgement(context, judgement, sources[judgement.path]);
+}
+
+/**
+ * Reports one judgement at the place its value was written: `NOT_APPLIED`, or with the
+ * standard's `features: ga` `PREVIEW_FEATURE`. Project-level values report through it too.
+ */
+export function reportJudgement(
+  context: Context,
+  judgement: Judgement,
+  at: Source | undefined,
+): void {
+  const { outcome } = judgement;
+  if (outcome.kind === "not-applied") {
+    const message = `${described(judgement)} isn't applied on ${judgement.pack}: ${outcome.reason}`;
+    context.reporter.warning("NOT_APPLIED", message, at);
+  } else if (context.standard.value.features === "ga") reportPreview(context, judgement, at);
 }
 
 function reportPreview(context: Context, judgement: Judgement, at: Source | undefined): void {

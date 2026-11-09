@@ -580,6 +580,7 @@ export interface ResolvedModel {
         pipeline: string;
         job: string;
     };
+    operations: ResolvedOperations;
     // (undocumented)
     platform: ResolvedPlatform;
     previewFeatures: PreviewFeature[];
@@ -590,6 +591,7 @@ export interface ResolvedModel {
         name?: string;
         environment: string;
     };
+    qualityResults: boolean;
     standard: {
         id: string;
         packs: string[];
@@ -597,6 +599,28 @@ export interface ResolvedModel {
     };
     // (undocumented)
     tables: ResolvedTable[];
+}
+
+// @public
+export interface ResolvedOperations {
+    alerts: {
+        on: ("failure" | "slow")[];
+        slow_after?: string;
+    };
+    concurrency?: {
+        max_runs: number;
+        queue: boolean;
+    };
+    require_tags: string[];
+    retries?: {
+        count: number;
+        interval: string;
+    };
+    schedule: {
+        per: "project" | "flow";
+    };
+    timeout?: string;
+    trigger: "schedule" | "files" | "upstream" | "continuous";
 }
 
 // @public

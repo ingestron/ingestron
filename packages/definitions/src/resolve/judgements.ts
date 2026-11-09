@@ -112,7 +112,8 @@ function outcomeOf(
   return use && outcomeOfUse(use);
 }
 
-function outcomeOfUse(use: IntentUse): Outcome | undefined {
+/** What a coverage entry says that a project hears: not applied, preview, or nothing. */
+export function outcomeOfUse(use: IntentUse): Outcome | undefined {
   if (use.use === "used")
     return use.status?.level === "preview" ? { kind: "preview", status: use.status } : undefined;
   return use.use === "elsewhere" ? undefined : { kind: "not-applied", reason: use.reason };

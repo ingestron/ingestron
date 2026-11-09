@@ -16,7 +16,7 @@ import {
   type ResolvedModel,
 } from "../src/index.js";
 import { checkReference, type ReferenceCase } from "./reference-cases.js";
-import { matchTable } from "./table-expectations.js";
+import { checkOperations, matchTable } from "./table-expectations.js";
 
 interface Case {
   description: string;
@@ -45,6 +45,8 @@ interface Case {
     platform?: Record<string, unknown>;
     deployValues?: Record<string, unknown>[];
     previewFeatures?: Record<string, unknown>[];
+    operations?: Record<string, unknown>;
+    qualityResults?: boolean;
     diagnostics?: Record<string, unknown>[];
     fixed?: { diagnostic: number; title: string; files: Record<string, string> }[];
   };
@@ -63,6 +65,7 @@ const packs = [
   "pack-plain.yaml",
   "pack-three.yaml",
   "pack-intent.yaml",
+  "pack-ops.yaml",
 ].map((file) =>
   packOf(
     parse(readFileSync(join(folder, file), "utf8")) as PackInfo & { buildEnvironments?: true },
@@ -114,6 +117,22 @@ function checkModel(model: ResolvedModel, wanted: Case["expect"]): void {
   if (wanted.platform) expect(model.platform).toMatchObject(wanted.platform);
   if (wanted.deployValues) expect(model.deployValues).toEqual(wanted.deployValues);
   if (wanted.previewFeatures) expect(model.previewFeatures).toEqual(wanted.previewFeatures);
+  checkOperations(model, wanted);
+}
+
+/** What a case that expects diagnostics also expects of the model: tables, preview features, operations. */
+function checkBesideDiagnostics(model: ResolvedModel | undefined, wanted: Case["expect"]): void {
+  if (
+    !wanted.tables &&
+    !wanted.previewFeatures &&
+    !wanted.operations &&
+    wanted.qualityResults === undefined
+  )
+    return;
+  expect(model, "the project resolves").toBeDefined();
+  if (wanted.tables) checkTables(model!, wanted.tables);
+  if (wanted.previewFeatures) expect(model!.previewFeatures).toEqual(wanted.previewFeatures);
+  checkOperations(model!, wanted);
 }
 
 /** Each named fix, applied to the case's files, gives the files expected. */
@@ -185,15 +204,8 @@ describe("conformance", () => {
       }
       const result = resolveCase(testCase);
       const { diagnostics } = testCase.expect;
-      // A case that expects only information still resolves, so its tables can be checked too.
-      if (diagnostics && testCase.expect.tables) {
-        expect(result.model, "the project resolves").toBeDefined();
-        checkTables(result.model!, testCase.expect.tables);
-      }
-      if (diagnostics && testCase.expect.previewFeatures) {
-        expect(result.model, "the project resolves").toBeDefined();
-        expect(result.model!.previewFeatures).toEqual(testCase.expect.previewFeatures);
-      }
+      // A case that expects only information still resolves, so its model can be checked too.
+      if (diagnostics) checkBesideDiagnostics(result.model, testCase.expect);
       if (diagnostics) {
         const actual = result.diagnostics.map(
           ({ code, severity, message, hint, location, fixes }) => ({

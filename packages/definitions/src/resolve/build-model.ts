@@ -5,6 +5,7 @@ import type { ResolvedModel, ResolvedProduct, ResolvedTable } from "../pack/inde
 import { resolvePlatform } from "../platform/index.js";
 import { renderName, type TableNamer } from "../tables/index.js";
 import { previewFeaturesOf } from "./judge.js";
+import { operationsOf } from "./operations.js";
 
 /** The model, once the project-wide names render; undefined after reporting. */
 export function buildModel(
@@ -36,5 +37,7 @@ export function buildModel(
     tables,
     products,
     previewFeatures: previewFeaturesOf(context, tables),
+    operations: operationsOf(context),
+    qualityResults: context.standard.value.quality?.results === true,
   };
 }

@@ -2,7 +2,7 @@
 // every name built and every setting merged. Packs only read it.
 
 import type { GovernanceDoc } from "../documents/index.js";
-import type { FeatureStatus, Intent } from "../intent/index.js";
+import type { FeatureStatus, Intent, ResolvedOperations } from "../intent/index.js";
 import type { StepOutput } from "./pack.js";
 import type { TableCheck } from "./table-checks.js";
 
@@ -250,6 +250,13 @@ export interface ResolvedModel {
    * standard's `features` says (specification section 11.5); empty when there are none.
    */
   previewFeatures: PreviewFeature[];
+  /**
+   * The standard's operations policy, with defaults filled and `fixed.operations` over it
+   * (specification section 11.6).
+   */
+  operations: ResolvedOperations;
+  /** True when the standard keeps quality results (`quality.results`). */
+  qualityResults: boolean;
 }
 
 /**
