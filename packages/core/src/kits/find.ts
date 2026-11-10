@@ -2,23 +2,32 @@
 import { existsSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
+import { bundledKitsFolder } from "../folders.js";
 import { isId } from "./fields.js";
 import type { Kit } from "./kit.js";
 import { readKit } from "./read.js";
 import { compareVersions, versionProblem } from "./version.js";
 
-/**
- * The `kits` folder of the `@ingestron/standards` package, or undefined when the package is not
- * installed.
- * @internal
- */
-export function standardsKitsFolder(): string | undefined {
+/** The `kits` folder of the `@ingestron/standards` package, or undefined when it does not resolve. */
+function packageKitsFolder(): string | undefined {
   try {
     const manifest = createRequire(import.meta.url).resolve("@ingestron/standards/package.json");
     return join(dirname(manifest), "kits");
   } catch {
     return undefined;
   }
+}
+
+/**
+ * The installed kits' folder: the first of `candidates` that exists, by default the
+ * `@ingestron/standards` package's `kits` folder, then the `kits` folder a bundled release copies
+ * beside its code. Undefined when none exists.
+ * @internal
+ */
+export function standardsKitsFolder(
+  candidates: (string | undefined)[] = [packageKitsFolder(), bundledKitsFolder],
+): string | undefined {
+  return candidates.find((folder) => folder !== undefined && existsSync(folder));
 }
 
 function folders(parent: string): string[] {
@@ -31,7 +40,8 @@ function folders(parent: string): string[] {
 /**
  * Every kit below `root`, which holds `<platform>/<name>/<version>/` folders, sorted by id and
  * then version (a preview before its general version). `root` defaults to the `kits` folder of
- * `@ingestron/standards`. There are none when the root, or that package, is not there. A kit
+ * `@ingestron/standards`, or, in a bundled release that cannot resolve that package, the `kits`
+ * folder copied beside its code. There are none when no such folder is there. A kit
  * that breaks a rule of kit.yaml throws the error `readKit` gives.
  * @public
  */

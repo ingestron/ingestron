@@ -90,8 +90,17 @@ as from a git URL, is checked on its contents only.
 ## Where kits are found
 
 - **Installed.** `@ingestron/standards` holds Ingestron's own kits in its
-  `kits` folder, laid out as above. They work offline. When that package is not
-  installed, there are none.
+  `kits` folder, laid out as above. They work offline. The installed kits are
+  the first of these folders that exists:
+  1. the `kits` folder of `@ingestron/standards`, as `@ingestron/core`
+     resolves the package;
+  2. a `kits` folder beside the folder that holds the running code. A
+     release bundled into one file, such as the `ingestron` npm package or
+     the VS Code extension, cannot resolve the package, so its build copies
+     the package's `kits` folder there, as it copies the other data folders.
+
+  When neither exists, there are none.
+
 - **The catalogue.** The public `ingestron/standards` repository holds the same
   folders under `kits/`; a version is the git tag `<id>@<version>`. The
   environment variable `INGESTRON_STANDARDS_REPOSITORY` names another

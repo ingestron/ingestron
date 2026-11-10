@@ -13,3 +13,10 @@ export const templatesFolder: string = join(
   dirname(fileURLToPath(import.meta.url)),
   "../project-templates",
 );
+
+/**
+ * The `kits/` folder beside `dist/`, where a release bundled into one file copies the
+ * `@ingestron/standards` package's kits, since the bundle cannot resolve that package.
+ * @internal
+ */
+export const bundledKitsFolder: string = join(dirname(fileURLToPath(import.meta.url)), "../kits");

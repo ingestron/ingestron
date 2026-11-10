@@ -1,7 +1,8 @@
 // Packs the `ingestron` npm package: the CLI bundled into one ESM file, with the
 // data folders the packages read beside it, so it installs with no dependencies.
 // In the bundle, import.meta.url is dist/main.js, so "../schemas" and
-// "../templates" resolve to the copies at the package root.
+// "../templates" resolve to the copies at the package root. The bundle cannot
+// resolve @ingestron/standards, so its kits are copied to "../kits" too.
 import { execFileSync } from "node:child_process";
 import { cpSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -17,6 +18,7 @@ const folders = [
   ["packages/core/node_modules/@ingestron/pack-databricks/templates", "templates"],
   ["packages/core/project-templates", "project-templates"],
   ["packages/core/node_modules/@ingestron/pack-adf/recipes", "recipes"],
+  ["packages/core/node_modules/@ingestron/standards/kits", "kits"],
 ];
 
 /**
