@@ -1,4 +1,4 @@
-description: "A role's access other than read or write is ROLE_ACCESS, an error at the value, once although two tables use the contract."
+description: "A role's access other than read or write is ROLE_ACCESS, an error at the value, where the role would be granted: on tables kept by a pack that applies grants, with grants on (section 8.2). It is reported once although two tables use the contract."
 environment: dev
 files:
   project.yaml: |
@@ -16,12 +16,19 @@ files:
     apiVersion: ingestron.io/v1
     kind: Standard
     id: acme
-    packs: [test@1]
+    packs: [test@1, databricks@1]
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    databricks:
+      manage: { grants: true }
   sales.yaml: |
     apiVersion: ingestron.io/v1
     kind: Flow
     id: sales
     source: shop
+    store: { uses: uc-table }
     tables:
       orders: { object: orders, contract: orders }
       returns: { object: returns, contract: orders }

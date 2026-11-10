@@ -72,7 +72,9 @@ export interface PlatformDoc {
   schedule?: { cron: string; timezone?: string; paused?: boolean };
   notifications?: { on_failure?: string[] };
   alerts?: AlertDoc[];
-  manage?: { schemas?: boolean; tags?: boolean; comments?: boolean; checks?: boolean };
+  manage?: Partial<
+    Record<"schemas" | "tags" | "comments" | "checks" | "grants" | "masks" | "filters", boolean>
+  >;
   grants?: Record<string, { principal: string; privileges: string[] }[]>;
   /** Warnings the platform team accepts, each with a reason (specification, Accepted warnings). */
   accept?: AcceptDoc[];

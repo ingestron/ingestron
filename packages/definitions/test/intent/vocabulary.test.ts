@@ -59,6 +59,10 @@ describe("intentPaths", () => {
       "cleanse.default",
       "cleanse.timezone",
       "deduplicate",
+      "access.grants",
+      "access.exact",
+      "access.masks",
+      "access.filters",
     ]);
   });
 
@@ -86,6 +90,13 @@ describe("intentPaths", () => {
     expect(intentPaths["quality.actions"]).toEqual(["warn", "drop", "fail"]);
     expect(intentPaths["cleanse.timezone"]).toEqual(["true"]);
     expect(intentPaths.deduplicate).toEqual(["true"]);
+  });
+
+  it("gives the access values: privileges, exact, the masks and filters", () => {
+    expect(intentPaths["access.grants"]).toEqual(["read", "write"]);
+    expect(intentPaths["access.exact"]).toEqual(["true"]);
+    expect(intentPaths["access.masks"]).toEqual(["null", "hash", "redact", "function"]);
+    expect(intentPaths["access.filters"]).toEqual(["true"]);
   });
 });
 

@@ -82,7 +82,7 @@ export interface Capability {
     // (undocumented)
     does: string;
     // (undocumented)
-    id: "schemas" | "tags" | "comments" | "checks";
+    id: "schemas" | "tags" | "comments" | "checks" | "grants" | "masks" | "filters";
     // (undocumented)
     needs: string[];
     // (undocumented)
@@ -104,6 +104,9 @@ export interface ChosenBy {
     replaced?: string;
     when?: Record<string, unknown>;
 }
+
+// @public
+export function classificationTag(model: Pick<ResolvedModel, "standard">): string;
 
 // @public
 export interface CodeHelp {
@@ -257,7 +260,10 @@ export type ContractUse = {
 export function contractUseOf(pack: PackInfo, path: string): ContractUse | undefined;
 
 // @public
-export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "PACK_VERSION" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "SETTING_MOVED" | "PLATFORM_FIELD_MOVED" | "INTENT_CONFLICT" | "NOT_APPLIED" | "PREVIEW_FEATURE" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "DUPLICATE_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "REPLACE_ME" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "TRANSFORM_CODE" | "LAYER_RESPONSIBILITY" | "QUARANTINE_UNUSED" | "CLEANSE_COLUMN" | "CLEANSE_TYPE" | "DEDUPLICATE_KEY" | "DEDUPLICATE_MODE" | "TIMEZONE_NAME" | "TIMEZONE_SOURCE" | "ACCEPT_CODE" | "ACCEPT_UNUSED" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS" | "ROLE_ACCESS" | "MASK_TYPE" | "FILTER_MATCH" | "DEPLOY_VALUE" | "ENVIRONMENTS_DIFFER" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS" | "PACK_NOTICE" | "PACK_LOAD";
+export const defaultClassificationTag = "classification";
+
+// @public
+export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "PACK_VERSION" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "SETTING_MOVED" | "PLATFORM_FIELD_MOVED" | "INTENT_CONFLICT" | "NOT_APPLIED" | "PREVIEW_FEATURE" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "DUPLICATE_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "REPLACE_ME" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "TRANSFORM_CODE" | "LAYER_RESPONSIBILITY" | "QUARANTINE_UNUSED" | "CLEANSE_COLUMN" | "CLEANSE_TYPE" | "DEDUPLICATE_KEY" | "DEDUPLICATE_MODE" | "TIMEZONE_NAME" | "TIMEZONE_SOURCE" | "ACCEPT_CODE" | "ACCEPT_UNUSED" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS" | "ROLE_ACCESS" | "MASK_TYPE" | "FILTER_MATCH" | "MASK_NEEDS_RUN_AS" | "MASK_FUNCTIONS" | "POLICY_LIMIT" | "POLICY_PRINCIPALS" | "DEPLOY_VALUE" | "ENVIRONMENTS_DIFFER" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS" | "PACK_NOTICE" | "PACK_LOAD";
 
 // @public
 export type DeleteMode = "soft" | "hard" | "keep";
@@ -406,7 +412,7 @@ export interface GovernanceDoc {
         function: string;
         match: FilterMatch;
     }>;
-    masks?: Record<string, string>;
+    masks?: Record<string, string | null>;
     // (undocumented)
     products?: {
         require?: ("owner" | "purpose" | "support" | "domain")[];
@@ -766,12 +772,14 @@ export interface ResolvedPlatform {
     };
     // (undocumented)
     grants: Record<string, Grant[]>;
-    // (undocumented)
     manage: {
         schemas: boolean;
         tags: boolean;
         comments: boolean;
         checks: boolean;
+        grants?: boolean;
+        masks?: boolean;
+        filters?: boolean;
     };
     // (undocumented)
     mode: "development" | "production";
@@ -1073,13 +1081,13 @@ export interface TargetDifference {
 
 // Warnings were encountered during analysis:
 //
-// dist/documents/documents.d.ts:243:5 - (ae-forgotten-export) The symbol "StandardDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:244:5 - (ae-forgotten-export) The symbol "PlatformDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:245:5 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:246:5 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:247:5 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:248:5 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:250:5 - (ae-forgotten-export) The symbol "ProductDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:238:5 - (ae-forgotten-export) The symbol "StandardDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:239:5 - (ae-forgotten-export) The symbol "PlatformDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:240:5 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:241:5 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:242:5 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:243:5 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:245:5 - (ae-forgotten-export) The symbol "ProductDoc" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

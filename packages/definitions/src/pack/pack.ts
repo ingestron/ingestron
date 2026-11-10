@@ -194,11 +194,12 @@ export type ContractUse =
 
 /**
  * A feature that changes shared objects on the platform, turned on with
- * `manage.<id>` in the platform, with what it needs there, in words.
+ * `manage.<id>` in the platform, with what it needs there, in words. `grants`, `masks`
+ * and `filters` are turned on in the pack's own section, `<pack>.manage.<id>`.
  * @public
  */
 export interface Capability {
-  id: "schemas" | "tags" | "comments" | "checks";
+  id: "schemas" | "tags" | "comments" | "checks" | "grants" | "masks" | "filters";
   title: string;
   does: string;
   needs: string[];

@@ -359,9 +359,9 @@ properties:
         type: object
         description: "How columns are masked, by classification: null, hash, redact, or the name of a function your team owns."
         additionalProperties:
-          type: string
+          type: [string, "null"]
           pattern: "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*\\.[A-Za-z_][A-Za-z0-9_]*)?$"
-          description: "null, hash (text only), redact (text only), or a function's name in one part or three (catalog.schema.function)."
+          description: "null, hash (text only), redact (text only), or a function's name in one part or three (catalog.schema.function). A YAML null written unquoted is the null mask."
           examples: [hash]
         examples:
           - { confidential: hash, restricted: "null" }

@@ -1,5 +1,23 @@
 // A table's access in the resolved model (specification section 8.2): who may use the
 // table, and which of its columns and rows are hidden, before any pack judges it.
+import type { ResolvedModel } from "./model.js";
+
+/**
+ * The tag key a column's classification is set as on the platform when the standard's
+ * `governance.classification.tag` gives none (specification section 8.1).
+ * @public
+ */
+export const defaultClassificationTag = "classification";
+
+/**
+ * The tag key a column's classification is set as on the platform: the standard's
+ * `governance.classification.tag`, else {@link defaultClassificationTag}.
+ * @example const key = classificationTag(model); // "classification" unless the standard says
+ * @public
+ */
+export function classificationTag(model: Pick<ResolvedModel, "standard">): string {
+  return model.standard.governance?.classification?.tag ?? defaultClassificationTag;
+}
 
 /**
  * A table's access, as the contracts, the standard and the Platform declare it

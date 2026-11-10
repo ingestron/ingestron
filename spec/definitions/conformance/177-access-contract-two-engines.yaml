@@ -1,0 +1,96 @@
+description: "One contract used by a table that one pack keeps and a view that another keeps, in the same environment: both are granted, and the mask the view's pack cannot apply is NOT_APPLIED once, at the classified column, naming only the view (section 8.2)."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, databricks@1, views@1]
+    governance:
+      masks: { confidential: hash }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    databricks:
+      run_as: { service_principal_name: etl-runner }
+      manage: { tags: true, grants: true, masks: true }
+      governance: { functions: main.governance }
+    views:
+      manage: { grants: true }
+  lake.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: lake
+    source: shop
+    store: { uses: uc-table }
+    tables:
+      customers: { object: customers, contract: customers }
+  served.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: served
+    source: shop
+    store: { uses: file-view }
+    tables:
+      customers_view: { object: customers_view, contract: customers }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: email, logicalType: string, classification: confidential }
+    roles:
+      - { role: marketing-analysts, access: read }
+expect:
+  tables:
+    - name: customers
+      access:
+        grants:
+          [
+            {
+              role: marketing-analysts,
+              principal: marketing-analysts,
+              privileges: [read],
+              from: contract,
+            },
+          ]
+        masks: [{ column: email, classification: confidential, mask: hash }]
+      notApplied: null
+    - name: customers_view
+      access:
+        grants:
+          [
+            {
+              role: marketing-analysts,
+              principal: marketing-analysts,
+              privileges: [read],
+              from: contract,
+            },
+          ]
+        masks: [{ column: email, classification: confidential, mask: hash }]
+      notApplied: [{ feature: masks, reason: It has no data masking., column: email }]
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: customers.odcs.yaml
+      line: 11
+      message: 'The "hash" mask on "email" in table "customers_view" isn''t applied on views: It has no data masking.'
+      subject: { table: customers_view, feature: masks }

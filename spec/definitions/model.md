@@ -239,7 +239,7 @@ from another with the same code.
   several tables).
 - `feature` is set on `NOT_APPLIED` and `CAPABILITY_OFF` only. For
   `CAPABILITY_OFF` it is the capability's id (`tags`, `schemas`, `comments`,
-  `checks`). For `NOT_APPLIED` it is one of:
+  `checks`, `grants`, `masks`, `filters`). For `NOT_APPLIED` it is one of:
   - an intent value, as coverage keys it (section 11.5): `<path>=<value>`,
     such as `history=full` or `audit=run_id`, or the path alone for a path
     whose value is any text, such as `load.cursor`, or for a setting that
@@ -255,6 +255,9 @@ from another with the same code.
     conversion, `cleanse.timezone` (section 6.3), or `deduplicate`
     (section 6.2);
   - `quarantine`, for a table's `quality.quarantine` (section 11.7);
+  - for access (section 8.2), `grants` for a role's grant, `write` for a
+    role's write access, `exact` for exact grants, `masks` for a column's mask
+    and `filters` for a row filter;
   - a contract field path, such as `schema.*.properties.*.encryptedName`
     (section 6).
 
@@ -1315,6 +1318,29 @@ written, the fix sets `/manage/<capability>`). When the Platform writes
 fix sets `/manage/<capability>`. The fix and hint of a table check that is not
 checked (section 6) are these for `checks`.
 
+**Capabilities per pack.** The access capabilities `grants`, `masks` and
+`filters` (section 8.2) are judged for the pack that keeps a table, and so are
+`tags` and `schemas` where access needs them (below, and `POLICY_LIMIT` in
+section 8.2). Each is read in that pack's own section,
+`<pack>.manage.<capability>: true`, and is off unless it is turned on there.
+For the pack `databricks`, `manage` is read as the model's `platform` has it, so
+`manage` written at the top counts exactly as in its section, as above. For
+any other pack only its section counts: `manage` at the top does not turn
+anything on for it. Everything else above (contract fields, table checks and
+the Platform's `grants`) reads `manage` as before. When a capability is off for
+a pack other than `databricks`, the fix `Turn on manage.<capability>` sets
+`/<pack>/manage/<capability>` and the hint names
+`<pack>.manage.<capability>`; for `databricks` the fix and hint are those
+above. The Platform schema's `manage` accepts `grants`, `masks` and `filters`
+(each a boolean), since `manage` written at the top is the `databricks`
+section's moved field.
+
+Masks match columns by their classification tags, so a pack that declares a
+`masks` capability and has `masks` on with `tags` off is `CAPABILITY_OFF` at
+that pack's `manage.masks`, about the capability `tags`:
+`Masks are not applied: the platform has <title> off.`, with the hint and fix
+that turn `tags` on for that pack, as above.
+
 ### 7.2 Pack sections
 
 A pack MAY declare, as data, `platformSection`: a JSON Schema for its section
@@ -1427,7 +1453,9 @@ generated (section 8.2); they check nothing here. The model's
 `standard.governance` is the section as written, with `classification.tag`
 filled in: `classification` when the standard does not give it. A standard
 without `governance` has none in the model, and its tag key is
-`classification`.
+`classification`. The package gives the key a model sets classifications as,
+`classificationTag(model)`, and the default, `defaultClassificationTag`, so a
+pack never repeats the default.
 
 Every problem here is an error at the value that causes it, and all are
 reported in one run:
@@ -1491,7 +1519,10 @@ each pack says what they are in its own words. A role is listed each time it
 is written, so one principal may appear more than once.
 
 `ROLE_ACCESS`: a contract role whose `access` is neither `read` nor `write` is
-an error at the `access`, once for each contract a table uses:
+an error at the `access`, once for each contract, where the role would be
+granted: on a table whose layer grants the contract's roles and whose keeping
+pack applies grants (below). Anywhere else the value is not used, and it is not
+reported, so a project that does not grant gains no error:
 `The role "<role>" of contract "<id>" has access "<access>"; it must be read or write.`
 with the hint `Write read, or write for read and write. Leave it out to read.`
 A layer role's `access` is checked by the Standard schema.
@@ -1502,8 +1533,9 @@ otherwise is taken away.
 
 **Masks.** `governance.masks` maps a classification to its mask: `null`,
 `hash` or `redact`, or the name of a function the team owns, in one part or
-three. For each column of the table's contract whose `classification` is a
-key of `masks`, in the contract's column order, the table has
+three. A YAML null written unquoted (`restricted: null`) is the mask `null`.
+For each column of the table's contract whose `classification` is a key of
+`masks`, in the contract's column order, the table has
 `{ column, classification, mask }`: `mask` is `null`, `hash` or `redact` as
 written, and `{ function: <name> }` for any other name, exactly as written (a
 pack says where a one-part name lives).
@@ -1539,6 +1571,79 @@ with the columns in the contract's order, joined with `, `, and the hint
 **In the model.** `ResolvedTable.access` is `{ grants, exact, masks, filters }`
 when any of `grants`, `masks` and `filters` is not empty; otherwise the table
 has no `access`, as before access was resolved.
+
+**Judging access.** A table's access is judged by the step that keeps the
+table, as checks are (section 11.7): its store step, else its ingest step when
+that step produces the table. A table whose steps are not known is not judged.
+Each declared item is judged on the intent paths of section 11.1, the entry
+found as section 11.5 finds it (the keeping step's method, then its pack), and
+against the pack's capability (section 7.1):
+
+| Item                                              | Path and value                                  | Capability | Feature   | Declaring line                                            |
+| ------------------------------------------------- | ----------------------------------------------- | ---------- | --------- | --------------------------------------------------------- |
+| a contract role, unless the layer turns them off  | `access.grants=read`                            | `grants`   | `grants`  | the role in the contract (`/roles/<n>`)                   |
+| a layer role                                      | `access.grants=read`                            | `grants`   | `grants`  | the role in the standard (`/layers/<n>/access/roles/<m>`) |
+| a role's `write`, once its grant is applied       | `access.grants=write`                           | `grants`   | `write`   | the role's `access`                                       |
+| exact grants, once the table's grants are applied | `access.exact=true`                             | `grants`   | `exact`   | the standard's `/governance/access/grants`                |
+| a column's mask                                   | `access.masks=<null, hash, redact or function>` | `masks`    | `masks`   | the column's `classification` in the contract             |
+| a row filter                                      | `access.filters=true`                           | `filters`  | `filters` | the filter in the standard (`/governance/filters/<name>`) |
+
+Every role is judged, whatever its `access`: a role whose `access` is neither
+`read` nor `write` is judged as `read`, and where its grant is applied it is
+`ROLE_ACCESS` (above). For each item:
+
+- an entry that is `not-yet` or `not-applicable` is `NOT_APPLIED`, a warning at
+  the declaring line: `<what> in <tables> isn't applied on <pack>: <reason>`;
+- an entry that is `used`, with the capability off for the keeping pack
+  (section 7.1), is `CAPABILITY_OFF` at the declaring line:
+  `<what> in <tables> is not applied: the platform has <title> off.`, with the
+  hint and fix of section 7.1;
+- an entry that is `used`, with the capability on, applies the item;
+- an `elsewhere` entry, and no entry at all, report nothing, as in section
+  11.5, and the item is not applied.
+
+`<what>` is `Access for the role "<role>"`, `Write access for the role
+"<role>"`, `The exact grant mode`, `The "<mask>" mask on "<column>"` (the function's
+name for a function) or `The filter "<name>"`. `<tables>` is `table "<name>"`,
+or `tables "<name>", "<name>"…` in the order of the tables. A declaring line
+gives one warning for each code, feature, pack and reason in an environment,
+naming every table it is about; its subject (section 1.2) has the feature, and
+the `table` only when it names one table. Each table it names has the feature in
+its `notApplied` (section 11.7), with the `column` for a mask.
+
+The errors below are judged only for a pack that keeps a table in the
+environment and has `masks` or `filters` on. Each is reported once, at the
+pack's `manage.masks` (at `manage.filters` when masks are off), where the
+Platform writes it:
+
+- `MASK_NEEDS_RUN_AS`: the pack's section gives no `run_as` (for `databricks`,
+  read as the model's `platform` has it). Every mask and filter lets `run_as`
+  see real values, so the pipeline never reads masked data and writes it on:
+  `Masks and filters on <pack> need run_as, the principal the pipeline runs as, so it reads real values.`,
+  with the hint `Give <pack>.run_as.`
+- `MASK_FUNCTIONS`: an applied mask that is built in, or whose function's name
+  has one part, or an applied filter whose function's name has one part, on a
+  table the pack keeps, and the pack's section gives no
+  `governance.functions`, the schema that holds them:
+  `Masks and filters on <pack> need governance.functions, the schema that holds <items>.`,
+  where `<items>` names each once, in the order of the tables, then of their
+  masks and filters: `the "<mask>" mask` or `the function "<name>"`, joined
+  with `, `, with the hint
+  `Give <pack>.governance.functions, such as ${values.governance_schema}.`
+- `POLICY_LIMIT`: the policies Ingestron would create exceed what the
+  platform allows: one for each masked classification and one for each filter
+  that is applied, on each schema of the pack's tables when `manage.schemas` is
+  on for the pack (over 100 is the error), else on each table (over 50):
+  `<n> policies would be on the schema "<catalog>.<schema>", over the 100 a schema may have.`
+  or `<n> policies would be on the table "<catalog>.<schema>.<table>", over the 50 a table may have.`,
+  with the hint `Mask fewer classifications, or use fewer filters.` It is an
+  error at the standard's `/governance`.
+- `POLICY_PRINCIPALS`: where any mask or filter is applied, `run_as` and the
+  pack's `governance.unmasked`, each principal counted once, are more than the
+  20 principals one policy can exempt:
+  `<n> principals would see real values: run_as and governance.unmasked may name 20.`,
+  with the hint `Put the principals in fewer groups.` It is an error at the
+  pack's `governance.unmasked`.
 
 ## 9. Conformance
 
@@ -1825,8 +1930,10 @@ quality and cleansing paths of section 11.7: `quality.rules` (values
 `items`, the rule kinds of section 6), `quality.actions` (`warn`, `drop`,
 `fail`), `quality.table-checks`, `quality.quarantine`, `cleanse.trim`,
 `cleanse.empty`, `cleanse.map`, `cleanse.case`, `cleanse.default`,
-`cleanse.timezone` and `deduplicate` (each with the one value `true`). A
-value of `*` stands for any text.
+`cleanse.timezone` and `deduplicate` (each with the one value `true`), and the
+access paths of section 8.2: `access.grants` (`read`, `write`),
+`access.exact` (`true`), `access.masks` (`null`, `hash`, `redact`,
+`function`) and `access.filters` (`true`). A value of `*` stands for any text.
 
 ### 11.2 Precedence
 
@@ -2296,8 +2403,9 @@ to apply it here.``
 `notApplied`: one item for each feature that a `NOT_APPLIED` warning about the
 table reports (this section, sections 6, 6.1 to 6.3, 11.4 and 11.5), with the
 warning's `feature` (section 1.2), its `reason` as the pack or the
-specification gives it, and, for a time zone conversion (section 6.3), the
-`column` it is not applied to, one item for each such column. It is recorded
+specification gives it, and, for a time zone conversion (section 6.3) and a
+mask (section 8.2), the `column` it is not applied to, one item for each such
+column. It is recorded
 as each warning is reported for the table, before warnings about several
 tables lose their `table` (section 1.2), so it says exactly which tables a
 feature is not applied on. The same feature, reason and column is listed once.
@@ -2380,6 +2488,9 @@ accept:
   - code: NOT_APPLIED
     about: { file: "flows/legacy/**" }
     reason: Legacy flows are retired in March; no new rules are added.
+  - code: NOT_APPLIED
+    about: { feature: grants }
+    reason: Local DuckDB with synthetic data; access is enforced in test and prod.
 ```
 
 **Matching.** Matching runs once, at the end of loading and resolving, over the

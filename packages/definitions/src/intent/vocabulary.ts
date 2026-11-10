@@ -63,7 +63,8 @@ export interface Intent {
 /**
  * Every intent path and its values, for coverage maps; `*` where any text is a value. The
  * quality and cleansing paths, from `quality.rules` on, are judged per table check and
- * column operation (specification section 11.7).
+ * column operation (specification section 11.7), and the access paths, from `access.grants`
+ * on, per role, mask and filter (section 8.2).
  * @public
  */
 export const intentPaths: Record<string, readonly string[]> = {
@@ -114,6 +115,10 @@ export const intentPaths: Record<string, readonly string[]> = {
   "cleanse.default": ["true"],
   "cleanse.timezone": ["true"],
   deduplicate: ["true"],
+  "access.grants": ["read", "write"],
+  "access.exact": ["true"],
+  "access.masks": ["null", "hash", "redact", "function"],
+  "access.filters": ["true"],
 };
 
 /**

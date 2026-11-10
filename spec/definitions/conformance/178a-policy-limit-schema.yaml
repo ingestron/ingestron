@@ -1,0 +1,270 @@
+description: "With managed schemas, policies are on each schema, one for each masked classification of its tables: a schema that would have more than 100 is POLICY_LIMIT, and no table is counted on its own, though one has 51 (section 8.2)."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, databricks@1]
+    governance:
+      masks:
+        c001: "null"
+        c002: "null"
+        c003: "null"
+        c004: "null"
+        c005: "null"
+        c006: "null"
+        c007: "null"
+        c008: "null"
+        c009: "null"
+        c010: "null"
+        c011: "null"
+        c012: "null"
+        c013: "null"
+        c014: "null"
+        c015: "null"
+        c016: "null"
+        c017: "null"
+        c018: "null"
+        c019: "null"
+        c020: "null"
+        c021: "null"
+        c022: "null"
+        c023: "null"
+        c024: "null"
+        c025: "null"
+        c026: "null"
+        c027: "null"
+        c028: "null"
+        c029: "null"
+        c030: "null"
+        c031: "null"
+        c032: "null"
+        c033: "null"
+        c034: "null"
+        c035: "null"
+        c036: "null"
+        c037: "null"
+        c038: "null"
+        c039: "null"
+        c040: "null"
+        c041: "null"
+        c042: "null"
+        c043: "null"
+        c044: "null"
+        c045: "null"
+        c046: "null"
+        c047: "null"
+        c048: "null"
+        c049: "null"
+        c050: "null"
+        c051: "null"
+        c052: "null"
+        c053: "null"
+        c054: "null"
+        c055: "null"
+        c056: "null"
+        c057: "null"
+        c058: "null"
+        c059: "null"
+        c060: "null"
+        c061: "null"
+        c062: "null"
+        c063: "null"
+        c064: "null"
+        c065: "null"
+        c066: "null"
+        c067: "null"
+        c068: "null"
+        c069: "null"
+        c070: "null"
+        c071: "null"
+        c072: "null"
+        c073: "null"
+        c074: "null"
+        c075: "null"
+        c076: "null"
+        c077: "null"
+        c078: "null"
+        c079: "null"
+        c080: "null"
+        c081: "null"
+        c082: "null"
+        c083: "null"
+        c084: "null"
+        c085: "null"
+        c086: "null"
+        c087: "null"
+        c088: "null"
+        c089: "null"
+        c090: "null"
+        c091: "null"
+        c092: "null"
+        c093: "null"
+        c094: "null"
+        c095: "null"
+        c096: "null"
+        c097: "null"
+        c098: "null"
+        c099: "null"
+        c100: "null"
+        c101: "null"
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    databricks:
+      run_as: { service_principal_name: etl-runner }
+      manage: { tags: true, masks: true, schemas: true }
+      governance: { functions: main.governance }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    store: { uses: uc-table }
+    tables:
+      orders: { object: orders, contract: orders }
+      returns: { object: returns, contract: returns }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: col001, logicalType: string, classification: c001 }
+          - { name: col002, logicalType: string, classification: c002 }
+          - { name: col003, logicalType: string, classification: c003 }
+          - { name: col004, logicalType: string, classification: c004 }
+          - { name: col005, logicalType: string, classification: c005 }
+          - { name: col006, logicalType: string, classification: c006 }
+          - { name: col007, logicalType: string, classification: c007 }
+          - { name: col008, logicalType: string, classification: c008 }
+          - { name: col009, logicalType: string, classification: c009 }
+          - { name: col010, logicalType: string, classification: c010 }
+          - { name: col011, logicalType: string, classification: c011 }
+          - { name: col012, logicalType: string, classification: c012 }
+          - { name: col013, logicalType: string, classification: c013 }
+          - { name: col014, logicalType: string, classification: c014 }
+          - { name: col015, logicalType: string, classification: c015 }
+          - { name: col016, logicalType: string, classification: c016 }
+          - { name: col017, logicalType: string, classification: c017 }
+          - { name: col018, logicalType: string, classification: c018 }
+          - { name: col019, logicalType: string, classification: c019 }
+          - { name: col020, logicalType: string, classification: c020 }
+          - { name: col021, logicalType: string, classification: c021 }
+          - { name: col022, logicalType: string, classification: c022 }
+          - { name: col023, logicalType: string, classification: c023 }
+          - { name: col024, logicalType: string, classification: c024 }
+          - { name: col025, logicalType: string, classification: c025 }
+          - { name: col026, logicalType: string, classification: c026 }
+          - { name: col027, logicalType: string, classification: c027 }
+          - { name: col028, logicalType: string, classification: c028 }
+          - { name: col029, logicalType: string, classification: c029 }
+          - { name: col030, logicalType: string, classification: c030 }
+          - { name: col031, logicalType: string, classification: c031 }
+          - { name: col032, logicalType: string, classification: c032 }
+          - { name: col033, logicalType: string, classification: c033 }
+          - { name: col034, logicalType: string, classification: c034 }
+          - { name: col035, logicalType: string, classification: c035 }
+          - { name: col036, logicalType: string, classification: c036 }
+          - { name: col037, logicalType: string, classification: c037 }
+          - { name: col038, logicalType: string, classification: c038 }
+          - { name: col039, logicalType: string, classification: c039 }
+          - { name: col040, logicalType: string, classification: c040 }
+          - { name: col041, logicalType: string, classification: c041 }
+          - { name: col042, logicalType: string, classification: c042 }
+          - { name: col043, logicalType: string, classification: c043 }
+          - { name: col044, logicalType: string, classification: c044 }
+          - { name: col045, logicalType: string, classification: c045 }
+          - { name: col046, logicalType: string, classification: c046 }
+          - { name: col047, logicalType: string, classification: c047 }
+          - { name: col048, logicalType: string, classification: c048 }
+          - { name: col049, logicalType: string, classification: c049 }
+          - { name: col050, logicalType: string, classification: c050 }
+  returns.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: returns
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: returns
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: col051, logicalType: string, classification: c051 }
+          - { name: col052, logicalType: string, classification: c052 }
+          - { name: col053, logicalType: string, classification: c053 }
+          - { name: col054, logicalType: string, classification: c054 }
+          - { name: col055, logicalType: string, classification: c055 }
+          - { name: col056, logicalType: string, classification: c056 }
+          - { name: col057, logicalType: string, classification: c057 }
+          - { name: col058, logicalType: string, classification: c058 }
+          - { name: col059, logicalType: string, classification: c059 }
+          - { name: col060, logicalType: string, classification: c060 }
+          - { name: col061, logicalType: string, classification: c061 }
+          - { name: col062, logicalType: string, classification: c062 }
+          - { name: col063, logicalType: string, classification: c063 }
+          - { name: col064, logicalType: string, classification: c064 }
+          - { name: col065, logicalType: string, classification: c065 }
+          - { name: col066, logicalType: string, classification: c066 }
+          - { name: col067, logicalType: string, classification: c067 }
+          - { name: col068, logicalType: string, classification: c068 }
+          - { name: col069, logicalType: string, classification: c069 }
+          - { name: col070, logicalType: string, classification: c070 }
+          - { name: col071, logicalType: string, classification: c071 }
+          - { name: col072, logicalType: string, classification: c072 }
+          - { name: col073, logicalType: string, classification: c073 }
+          - { name: col074, logicalType: string, classification: c074 }
+          - { name: col075, logicalType: string, classification: c075 }
+          - { name: col076, logicalType: string, classification: c076 }
+          - { name: col077, logicalType: string, classification: c077 }
+          - { name: col078, logicalType: string, classification: c078 }
+          - { name: col079, logicalType: string, classification: c079 }
+          - { name: col080, logicalType: string, classification: c080 }
+          - { name: col081, logicalType: string, classification: c081 }
+          - { name: col082, logicalType: string, classification: c082 }
+          - { name: col083, logicalType: string, classification: c083 }
+          - { name: col084, logicalType: string, classification: c084 }
+          - { name: col085, logicalType: string, classification: c085 }
+          - { name: col086, logicalType: string, classification: c086 }
+          - { name: col087, logicalType: string, classification: c087 }
+          - { name: col088, logicalType: string, classification: c088 }
+          - { name: col089, logicalType: string, classification: c089 }
+          - { name: col090, logicalType: string, classification: c090 }
+          - { name: col091, logicalType: string, classification: c091 }
+          - { name: col092, logicalType: string, classification: c092 }
+          - { name: col093, logicalType: string, classification: c093 }
+          - { name: col094, logicalType: string, classification: c094 }
+          - { name: col095, logicalType: string, classification: c095 }
+          - { name: col096, logicalType: string, classification: c096 }
+          - { name: col097, logicalType: string, classification: c097 }
+          - { name: col098, logicalType: string, classification: c098 }
+          - { name: col099, logicalType: string, classification: c099 }
+          - { name: col100, logicalType: string, classification: c100 }
+          - { name: col101, logicalType: string, classification: c101 }
+expect:
+  diagnostics:
+    - code: POLICY_LIMIT
+      severity: error
+      file: standard.yaml
+      line: 6
+      message: '101 policies would be on the schema "dev.bronze", over the 100 a schema may have.'
+      hint: Mask fewer classifications, or use fewer filters.

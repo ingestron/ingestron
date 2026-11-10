@@ -75,6 +75,7 @@ const packs = [
   "pack-quality.yaml",
   "pack-zones.yaml",
   "pack-dedupe.yaml",
+  "pack-views.yaml",
 ].map((file) =>
   packOf(
     parse(readFileSync(join(folder, file), "utf8")) as PackInfo & { buildEnvironments?: true },

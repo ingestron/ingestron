@@ -1,0 +1,108 @@
+description: "On a pack whose coverage says access is not applicable, each role (the contract's and the layer's), each mask and each filter is NOT_APPLIED at the line that declares it, naming the table, and the project still resolves; write access is not judged on a grant that is not applied. The same in dev (section 8.2)."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, prod: {} }
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, local@1]
+    layers:
+      - name: bronze
+        access: { roles: [{ role: auditors }] }
+      - silver
+      - gold
+    governance:
+      masks: { confidential: hash }
+      filters:
+        region_rows: { function: region_filter, match: { tag: region } }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    manage: { tags: true }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    store: { uses: local-table }
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: email, logicalType: string, classification: confidential }
+          - { name: country, logicalType: string, tags: [region] }
+    roles:
+      - { role: finance-analysts, access: read }
+      - { role: etl-writers, access: write }
+expect:
+  tables:
+    - name: orders
+      access:
+        grants:
+          - {
+              role: finance-analysts,
+              principal: finance-analysts,
+              privileges: [read],
+              from: contract,
+            }
+          - { role: etl-writers, principal: etl-writers, privileges: [read, write], from: contract }
+          - { role: auditors, principal: auditors, privileges: [read], from: layer }
+        exact: false
+        masks: [{ column: email, classification: confidential, mask: hash }]
+        filters: [{ name: region_rows, column: country, function: region_filter }]
+      notApplied:
+        - { feature: grants, reason: It has no access control. }
+        - { feature: masks, reason: It has no access control., column: email }
+        - { feature: filters, reason: It has no access control. }
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: orders.odcs.yaml
+      line: 14
+      message: 'Access for the role "finance-analysts" in table "orders" isn''t applied on local: It has no access control.'
+      subject: { table: orders, feature: grants }
+    - code: NOT_APPLIED
+      severity: warning
+      file: orders.odcs.yaml
+      line: 15
+      message: 'Access for the role "etl-writers" in table "orders" isn''t applied on local: It has no access control.'
+      subject: { table: orders, feature: grants }
+    - code: NOT_APPLIED
+      severity: warning
+      file: standard.yaml
+      line: 7
+      message: 'Access for the role "auditors" in table "orders" isn''t applied on local: It has no access control.'
+      subject: { table: orders, feature: grants }
+    - code: NOT_APPLIED
+      severity: warning
+      file: orders.odcs.yaml
+      line: 11
+      message: 'The "hash" mask on "email" in table "orders" isn''t applied on local: It has no access control.'
+      subject: { table: orders, feature: masks }
+    - code: NOT_APPLIED
+      severity: warning
+      file: standard.yaml
+      line: 13
+      message: 'The filter "region_rows" in table "orders" isn''t applied on local: It has no access control.'
+      subject: { table: orders, feature: filters }

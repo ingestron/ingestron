@@ -337,7 +337,19 @@ export interface ResolvedPlatform {
   alerts: Alert[];
   /** Each pack's section of the Platform as written, by pack id, after it was checked (section 7.2). */
   sections: Record<string, Record<string, unknown>>;
-  manage: { schemas: boolean; tags: boolean; comments: boolean; checks: boolean };
+  /**
+   * The capabilities turned on. `grants`, `masks` and `filters` are here only as Databricks
+   * writes them, in its section or at the top, and only when written (specification section 7.1).
+   */
+  manage: {
+    schemas: boolean;
+    tags: boolean;
+    comments: boolean;
+    checks: boolean;
+    grants?: boolean;
+    masks?: boolean;
+    filters?: boolean;
+  };
   grants: Record<string, Grant[]>;
   /** The principal each contract role is on this platform, by role; `{}` when not given (section 8.2). */
   principals: Record<string, string>;

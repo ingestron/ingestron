@@ -1,0 +1,158 @@
+description: "Without managed schemas, policies are on each table: a table that would have more than 50 is POLICY_LIMIT, an error at the standard's governance (section 8.2)."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, databricks@1]
+    governance:
+      masks:
+        c01: "null"
+        c02: "null"
+        c03: "null"
+        c04: "null"
+        c05: "null"
+        c06: "null"
+        c07: "null"
+        c08: "null"
+        c09: "null"
+        c10: "null"
+        c11: "null"
+        c12: "null"
+        c13: "null"
+        c14: "null"
+        c15: "null"
+        c16: "null"
+        c17: "null"
+        c18: "null"
+        c19: "null"
+        c20: "null"
+        c21: "null"
+        c22: "null"
+        c23: "null"
+        c24: "null"
+        c25: "null"
+        c26: "null"
+        c27: "null"
+        c28: "null"
+        c29: "null"
+        c30: "null"
+        c31: "null"
+        c32: "null"
+        c33: "null"
+        c34: "null"
+        c35: "null"
+        c36: "null"
+        c37: "null"
+        c38: "null"
+        c39: "null"
+        c40: "null"
+        c41: "null"
+        c42: "null"
+        c43: "null"
+        c44: "null"
+        c45: "null"
+        c46: "null"
+        c47: "null"
+        c48: "null"
+        c49: "null"
+        c50: "null"
+        c51: "null"
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    databricks:
+      run_as: { service_principal_name: etl-runner }
+      manage: { tags: true, masks: true }
+      governance: { functions: main.governance }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    store: { uses: uc-table }
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: col01, logicalType: string, classification: c01 }
+          - { name: col02, logicalType: string, classification: c02 }
+          - { name: col03, logicalType: string, classification: c03 }
+          - { name: col04, logicalType: string, classification: c04 }
+          - { name: col05, logicalType: string, classification: c05 }
+          - { name: col06, logicalType: string, classification: c06 }
+          - { name: col07, logicalType: string, classification: c07 }
+          - { name: col08, logicalType: string, classification: c08 }
+          - { name: col09, logicalType: string, classification: c09 }
+          - { name: col10, logicalType: string, classification: c10 }
+          - { name: col11, logicalType: string, classification: c11 }
+          - { name: col12, logicalType: string, classification: c12 }
+          - { name: col13, logicalType: string, classification: c13 }
+          - { name: col14, logicalType: string, classification: c14 }
+          - { name: col15, logicalType: string, classification: c15 }
+          - { name: col16, logicalType: string, classification: c16 }
+          - { name: col17, logicalType: string, classification: c17 }
+          - { name: col18, logicalType: string, classification: c18 }
+          - { name: col19, logicalType: string, classification: c19 }
+          - { name: col20, logicalType: string, classification: c20 }
+          - { name: col21, logicalType: string, classification: c21 }
+          - { name: col22, logicalType: string, classification: c22 }
+          - { name: col23, logicalType: string, classification: c23 }
+          - { name: col24, logicalType: string, classification: c24 }
+          - { name: col25, logicalType: string, classification: c25 }
+          - { name: col26, logicalType: string, classification: c26 }
+          - { name: col27, logicalType: string, classification: c27 }
+          - { name: col28, logicalType: string, classification: c28 }
+          - { name: col29, logicalType: string, classification: c29 }
+          - { name: col30, logicalType: string, classification: c30 }
+          - { name: col31, logicalType: string, classification: c31 }
+          - { name: col32, logicalType: string, classification: c32 }
+          - { name: col33, logicalType: string, classification: c33 }
+          - { name: col34, logicalType: string, classification: c34 }
+          - { name: col35, logicalType: string, classification: c35 }
+          - { name: col36, logicalType: string, classification: c36 }
+          - { name: col37, logicalType: string, classification: c37 }
+          - { name: col38, logicalType: string, classification: c38 }
+          - { name: col39, logicalType: string, classification: c39 }
+          - { name: col40, logicalType: string, classification: c40 }
+          - { name: col41, logicalType: string, classification: c41 }
+          - { name: col42, logicalType: string, classification: c42 }
+          - { name: col43, logicalType: string, classification: c43 }
+          - { name: col44, logicalType: string, classification: c44 }
+          - { name: col45, logicalType: string, classification: c45 }
+          - { name: col46, logicalType: string, classification: c46 }
+          - { name: col47, logicalType: string, classification: c47 }
+          - { name: col48, logicalType: string, classification: c48 }
+          - { name: col49, logicalType: string, classification: c49 }
+          - { name: col50, logicalType: string, classification: c50 }
+          - { name: col51, logicalType: string, classification: c51 }
+expect:
+  diagnostics:
+    - code: POLICY_LIMIT
+      severity: error
+      file: standard.yaml
+      line: 6
+      message: '51 policies would be on the table "dev.bronze.orders", over the 50 a table may have.'
+      hint: Mask fewer classifications, or use fewer filters.

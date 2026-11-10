@@ -1,0 +1,81 @@
+description: "A Databricks table whose contract has roles, with manage.grants off, gives one CAPABILITY_OFF for each role line, naming the tables, with the fix that turns grants on. A role whose access is neither read nor write is not granted, so it is not ROLE_ACCESS: it is off like the others (section 8.2)."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, databricks@1]
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    databricks:
+      manage: { tags: true }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    store: { uses: uc-table }
+    tables:
+      orders: { object: orders, contract: orders }
+      returns: { object: returns, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+    roles:
+      - { role: finance-analysts, access: read }
+      - { role: etl-writers, access: write }
+      - { role: auditors, access: readwrite }
+expect:
+  diagnostics:
+    - code: CAPABILITY_OFF
+      severity: warning
+      file: orders.odcs.yaml
+      line: 12
+      message: 'Access for the role "finance-analysts" in tables "orders", "returns" is not applied: the platform has Grants off.'
+      hint: Turn it on with databricks.manage.grants in platform.yaml.
+      fixes: [Turn on manage.grants]
+      subject: { feature: grants }
+    - code: CAPABILITY_OFF
+      severity: warning
+      file: orders.odcs.yaml
+      line: 13
+      message: 'Access for the role "etl-writers" in tables "orders", "returns" is not applied: the platform has Grants off.'
+      subject: { feature: grants }
+    - code: CAPABILITY_OFF
+      severity: warning
+      file: orders.odcs.yaml
+      line: 14
+      message: 'Access for the role "auditors" in tables "orders", "returns" is not applied: the platform has Grants off.'
+      subject: { feature: grants }
+  fixed:
+    - diagnostic: 0
+      title: Turn on manage.grants
+      files:
+        platform.yaml: |
+          apiVersion: ingestron.io/v1
+          kind: Platform
+          id: lake
+          databricks:
+            manage: { tags: true, grants: true }

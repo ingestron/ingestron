@@ -45,3 +45,6 @@ methods:
     accepts: [table]
     produces: query
     settings: { type: object }
+# It has no access control (section 8.2).
+intent:
+  access: { use: not-applicable, reason: It has no access control. }

@@ -4,19 +4,18 @@
 // answer; whether a pack applies it is judged elsewhere.
 import type { Context } from "../context/index.js";
 import { contractEntryAt, layerObject } from "../contracts/index.js";
-import { kinds, type FilterMatch, type GovernanceDoc } from "../documents/index.js";
-import type {
-  AccessGrant,
-  Column,
-  ColumnMask,
-  ContractRole,
-  ResolvedTable,
-  RowFilter,
+import type { FilterMatch, GovernanceDoc } from "../documents/index.js";
+import {
+  defaultClassificationTag,
+  type AccessGrant,
+  type Column,
+  type ColumnMask,
+  type ContractRole,
+  type ResolvedTable,
+  type RowFilter,
 } from "../pack/index.js";
 import { isNotText } from "./cleanse-fit.js";
 
-/** The tag key a classification is set as when the standard names none. */
-const defaultTag = "classification";
 /** The masks a pack writes itself; any other name is a function the team owns. */
 const builtInMasks = new Set(["null", "hash", "redact"]);
 /** The built-in masks that work only on text. */
@@ -35,15 +34,20 @@ export function governanceOf(context: Context): GovernanceDoc | undefined {
 }
 
 function tagOf(context: Context): string {
-  return context.standard.value.governance?.classification?.tag ?? defaultTag;
+  return context.standard.value.governance?.classification?.tag ?? defaultClassificationTag;
+}
+
+/** True for a role's access that can be granted: `read`, `write`, or none (read). */
+export function isGrantable(access: string | undefined): boolean {
+  return access === undefined || Object.hasOwn(privilegesOf, access);
 }
 
 /**
  * Gives each table that does not end at the landed files its access, when it has any
- * grant, mask or filter, and reports each role, mask and filter that cannot be resolved.
+ * grant, mask or filter, and reports each mask and filter that cannot be resolved. A role
+ * whose access cannot be granted is judged where it would be granted (`judgeAccess`).
  */
 export function resolveAccess(context: Context, tables: ResolvedTable[]): void {
-  checkRoleAccess(context, tables);
   const exact = context.standard.value.governance?.access?.grants === "exact";
   for (const table of tables) {
     if (table.endsAtFiles) continue;
@@ -55,30 +59,13 @@ export function resolveAccess(context: Context, tables: ResolvedTable[]): void {
   }
 }
 
-/** `ROLE_ACCESS` at each role whose access is neither read nor write, once per contract. */
-function checkRoleAccess(context: Context, tables: ResolvedTable[]): void {
-  for (const id of new Set(tables.map((table) => table.contract.id))) {
-    const document = context.project.get(kinds.contract, id);
-    if (!document) continue;
-    (document.value.roles ?? []).forEach((role, index) => {
-      if (role.access === undefined || Object.hasOwn(privilegesOf, role.access)) return;
-      context.reporter.error(
-        "ROLE_ACCESS",
-        `The role "${role.role}" of contract "${id}" has access "${role.access}"; it must be read or write.`,
-        { document, pointer: `/roles/${index}/access` },
-        "Write read, or write for read and write. Leave it out to read.",
-      );
-    });
-  }
-}
-
 /** The contract's roles, unless the layer turns them off, then the layer's own. */
 function grantsOf(context: Context, table: ResolvedTable): AccessGrant[] {
   const principals = context.platform?.value.principals ?? {};
   const layer = layerObject(context, table.layer)?.layer.access;
   const grant = (role: ContractRole, from: AccessGrant["from"]): AccessGrant[] => {
     const access = role.access ?? "read";
-    if (!Object.hasOwn(privilegesOf, access)) return [];
+    if (!isGrantable(access)) return [];
     const principal = Object.hasOwn(principals, role.role) ? principals[role.role]! : role.role;
     return [{ role: role.role, principal, privileges: [...privilegesOf[access]!], from }];
   };
@@ -95,14 +82,19 @@ function masksOf(context: Context, table: ResolvedTable): ColumnMask[] {
   return table.contract.columns.flatMap((column, index) => {
     const classification = column.classification;
     if (classification === undefined || !Object.hasOwn(masks, classification)) return [];
-    const mask = masks[classification]!;
+    // An unquoted YAML null is the null mask.
+    const mask = masks[classification] ?? "null";
     if (textMasks.has(mask) && isNotText(column)) {
       reportMaskType(context, table, { column, index, mask });
       return [];
     }
-    const kind = builtInMasks.has(mask) ? (mask as "null" | "hash" | "redact") : { function: mask };
+    const kind = isBuiltIn(mask) ? mask : { function: mask };
     return [{ column: column.name, classification, mask: kind }];
   });
+}
+
+function isBuiltIn(mask: string): mask is "null" | "hash" | "redact" {
+  return builtInMasks.has(mask);
 }
 
 function reportMaskType(

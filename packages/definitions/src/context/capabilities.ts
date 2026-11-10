@@ -1,7 +1,8 @@
 // Features that change shared objects on the platform are turned on in the
 // platform; a definition that uses one while it is off is a warning with a fix
 // that turns it on (specification section 7.1). `manage` and `grants` are read as the
-// model has them: from the databricks section, else from the top of the Platform.
+// model has them: from the databricks section, else from the top of the Platform. The
+// access capabilities are turned on per pack, in the pack's own section.
 import type { DefinitionDocument, Fix, FixEdit } from "@ingestron/config";
 import type { Context } from "./context.js";
 import {
@@ -11,15 +12,23 @@ import {
   sectionsOf,
   withMovedFields,
 } from "../documents/index.js";
-import { writtenValue } from "../internal/index.js";
+import { isRecord, writtenValue } from "../internal/index.js";
 import type { Capability } from "../pack/index.js";
 
 type Id = Capability["id"];
 
-/** True when the platform turns the capability on. */
-export function isOn(context: Context, id: Id): boolean {
+/**
+ * True when the platform turns the capability on: for `pack`, other than `databricks`, in
+ * its own section (`<pack>.manage.<id>`); otherwise as the model has `manage`, from the
+ * databricks section, else from the top of the Platform.
+ */
+export function isOn(context: Context, id: Id, pack?: string): boolean {
   const platform = context.platform;
-  return platform !== undefined && withMovedFields(platform.value).manage?.[id] === true;
+  if (platform === undefined) return false;
+  if (pack === undefined || pack === movedTo)
+    return withMovedFields(platform.value).manage?.[id] === true;
+  const manage = sectionsOf(platform.value)[pack]?.manage;
+  return isRecord(manage) && manage[id] === true;
 }
 
 /**
@@ -36,7 +45,8 @@ export function checksRun(context: Context, pack: string | undefined): boolean {
 
 /**
  * Warns where something uses a capability that is off, at `pointer` in `document`; `table` is
- * the one table the warning is about, when it is about one.
+ * the one table the warning is about, when it is about one, and `pack` the pack whose
+ * section turns it on, when it is turned on per pack.
  */
 export function warnOff(
   context: Context,
@@ -45,12 +55,11 @@ export function warnOff(
   document: DefinitionDocument,
   pointer: string,
   table?: string,
+  pack?: string,
 ): void {
-  const capability = context.packs
-    .flatMap((pack) => pack.capabilities ?? [])
-    .find((item) => item.id === id);
+  const capability = capabilityOf(context, id, pack);
   const needs = capability?.needs.length ? ` It needs: ${capability.needs.join("; ")}.` : "";
-  const { field, fixes } = turnOn(context, id);
+  const { field, fixes } = turnOn(context, id, pack);
   context.reporter.warning(
     "CAPABILITY_OFF",
     `${message}: the platform has ${capability?.title ?? id} off.`,
@@ -61,14 +70,31 @@ export function warnOff(
   );
 }
 
+/** The pack's own declaration of the capability, else the first pack's that declares it. */
+function capabilityOf(context: Context, id: Id, pack: string | undefined): Capability | undefined {
+  const declared = (packs: typeof context.packs) =>
+    packs.flatMap((item) => item.capabilities ?? []).find((item) => item.id === id);
+  return declared(context.packs.filter((item) => item.id === pack)) ?? declared(context.packs);
+}
+
 /**
  * How to turn the capability on: the field a hint names and the fix `Turn on manage.<id>`
- * (none without a Platform).
+ * (none without a Platform). For `pack`, other than `databricks`, both are in its section.
  */
-export function turnOn(context: Context, id: Id): { field: string; fixes: Fix[] } {
+export function turnOn(context: Context, id: Id, pack?: string): { field: string; fixes: Fix[] } {
+  if (pack !== undefined && pack !== movedTo) return turnOnInSection(context, id, pack);
   const field = namesMovedHome(context.packs) ? `${movedTo}.manage.${id}` : `manage.${id}`;
   const edits = turnOnEdits(context, id);
   return { field, fixes: edits ? [{ title: `Turn on manage.${id}`, edits }] : [] };
+}
+
+/** The field and fix that set `<pack>.manage.<id>` in the Platform. */
+function turnOnInSection(context: Context, id: Id, pack: string): { field: string; fixes: Fix[] } {
+  const field = `${pack}.manage.${id}`;
+  const platform = context.platform;
+  if (!platform) return { field, fixes: [] };
+  const edit: FixEdit = { file: platform.file, pointer: `/${pack}/manage/${id}`, set: true };
+  return { field, fixes: [{ title: `Turn on manage.${id}`, edits: [edit] }] };
 }
 
 /**

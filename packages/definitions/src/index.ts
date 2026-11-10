@@ -16,7 +16,9 @@ export { acceptsWarning, type AcceptAtBuild, type AcceptedWarning } from "./acce
 // and the helpers packs use to compare and fold environments.
 export {
   checkFold,
+  classificationTag,
   compareTargets,
+  defaultClassificationTag,
   environmentsDiagnostics,
   splitDeployText,
   type AccessGrant,

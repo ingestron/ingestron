@@ -18,8 +18,11 @@ export interface GovernanceDoc {
     /** Whether grants also take away what the contracts do not name (section 8.2). */
     grants?: "additive" | "exact";
   };
-  /** The mask of each classification: `null`, `hash`, `redact` or a function's name (section 8.2). */
-  masks?: Record<string, string>;
+  /**
+   * The mask of each classification: `null`, `hash`, `redact` or a function's name (section
+   * 8.2). A YAML null written unquoted is the `null` mask.
+   */
+  masks?: Record<string, string | null>;
   /** Row filters by name, each a function and the column it is given (section 8.2). */
   filters?: Record<string, { function: string; match: FilterMatch }>;
 }
