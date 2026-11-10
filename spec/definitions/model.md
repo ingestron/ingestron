@@ -880,6 +880,142 @@ reports nothing, whatever the standard's other packs say. The fields under a
 field reported this way, or under one reported `CAPABILITY_OFF` (section
 7.1), are not judged. `CONTRACT_FIELD_UNUSED` is no longer reported.
 
+### 6.1 Cleansing
+
+A standard gives defaults for every table; a flow table or a transform gives
+its own, for named columns. Nothing is declared in the contract.
+
+```yaml
+# standard.yaml
+cleanse:
+  text: { trim: true, empty: null } # every text column
+
+# a transform, or a flow table: cleanse.columns names the contract's columns
+cleanse:
+  columns:
+    email: { case: lower }
+    country: { map: { GBR: GB, "United Kingdom": GB }, case: upper }
+    status: { default: unknown }
+    notes: { trim: false } # overrides the standard
+  deduplicate: { order_by: [updated_at] } # section 6.2
+```
+
+The operations on one column are, in this order and after the cast to the
+contract's types: `trim` (`true`: removes leading and trailing whitespace),
+`empty` (`null`: turns an empty string into null), `map` (replaces the listed
+values exactly), `case` (`upper` or `lower`) and `default` (replaces null with
+a value). `trim: false` and `empty: false` take the operation away. Row checks
+see the cleansed values.
+
+**What a table gets.** The standard's `cleanse.text` gives `trim` and `empty`
+to each text column of the table's contract, not overriding what the table
+writes for that column, when the table does not end at the landed files and:
+
+- the table's `does` (section 5) lists `cleanse`; or
+- the table has no `does` and is a flow table. A transform in a layer without
+  `does` gets none, and so does a table whose `does` leaves out `cleanse`.
+
+A column is text when its contract `logicalType` is `string`. Then
+`ResolvedTable.cleanse.columns` has, for each column with at least one
+operation, in the contract's column order, an object with the keys of
+`ColumnCleanse` in the order above: `trim: true`, `empty: true`, `map`, `case`
+and `default`. A table with no operation and no `deduplicate` has no
+`cleanse`.
+
+**Judged against the contract.** Each column's type is the type of the contract
+the table uses, so a column cast from text in one table to an integer in the
+next is an integer in the second. For each operation the table writes:
+
+- `CLEANSE_COLUMN`, an error at the column's key: a column that the contract
+  does not list. The message is `"<column>" is not a column of contract "<id>".`
+  and the hint `Use a column the contract lists: <names>.`, the first ten
+  names in the contract's order and, for a longer list, `, and <n> more`.
+- `CLEANSE_TYPE`, an error at the operation: `trim`, `empty` or `case` on a
+  column whose `logicalType` is given and is not `string`:
+  `"<operation>" works on text, and "<column>" is <type> in contract "<id>".`
+  with the hint `Remove "<operation>" from "<column>", or cleanse it where it is still text.`;
+  a `default` value, or a `map` key or value, that does not fit the column's
+  type: `The "default" value <value> doesn't fit "<column>", which is <type> in
+contract "<id>".`, with `The "map" key <key>` and `The "map" value <value>`
+  in place of `The "default" value <value>`, and the hint `Give a value of the
+column's type.` A value fits `string` when it is text; `integer` when it is a
+  whole number; `number` when it is a number; `boolean` when it is true or
+  false; `date` when it is text in the form `YYYY-MM-DD`; `timestamp` when it is
+  text in the form `YYYY-MM-DD` followed by `T` or a space and a time. A `map`
+  key is text, and fits when it reads as such a value. A `map` value of null
+  fits a column that is not required. A column of any other type, or with
+  no `logicalType`, takes any `map` and `default` value. The standard's
+  defaults are never judged: they skip a column that is not text.
+- `LAYER_RESPONSIBILITY` (section 5) at `cleanse.columns`, with `cleansing`
+  as the thing written, when the table has `does` and it does not list
+  `cleanse`. A table that writes only `trim: false` or `empty: false` is not
+  affected.
+
+When any of these is reported, the table has no `cleanse` and its
+operations are not judged below.
+
+**Not applied.** The step that keeps the table (section 11.7) judges each
+operation for the intent path `cleanse.trim`, `cleanse.empty`, `cleanse.map`,
+`cleanse.case` and `cleanse.default`, with the value `true`, as it judges
+a quality rule, and for `deduplicate` (section 6.2). The table is judged for
+the operations it writes, each at the key that wrote it in the flow table
+or transform; and for those that came from the standard's `cleanse.text`,
+once for each operation that reached at least one column, at the default's
+key in the standard. A warning with `NOT_APPLIED`:
+
+```text
+Cleansing "<operation>" of "<column>" isn't applied on <pack>: <reason>
+Cleansing "<operation>" of text columns isn't applied on <pack>: <reason>
+```
+
+where `<pack>` is the keeping step's pack's id, with the subject (section
+1.2) `{ table, feature: cleanse.<operation> }`. An entry that is `used` with
+`onlyWhere: cleanse` is `NOT_APPLIED` the same way in a table whose `does`
+does not list `cleanse` (section 11.7). On a table that ends at the landed
+files, each operation it writes, and its `deduplicate`, is `NOT_APPLIED` on the
+ingest step's pack, whatever any pack says, with the reason `the table ends at
+the landed files, and nothing cleanses them.` and the hint `Add a store step to
+have it cleansed.`
+
+### 6.2 Deduplicate
+
+`cleanse.deduplicate` on a flow table or a transform keeps one row for each
+primary key of the table's contract: the last by `order_by`, a list of one or
+more contract columns (otherwise `CLEANSE_COLUMN` at the item of the list).
+`ResolvedTable.cleanse.deduplicate` is `{ orderBy }`, the list as written.
+It happens after cleansing and before the row checks. It needs the layer's
+`does` to list `deduplicate`, or no `does` (`LAYER_RESPONSIBILITY`, with
+`deduplicating` as the thing written), and:
+
+- `DEDUPLICATE_KEY`, an error at `cleanse.deduplicate`, when the contract has
+  no primary key: `"<table>" has no primary key, so deduplicate cannot tell
+which rows belong together.`, with the hint `Mark the key columns
+`primaryKey: true` in contract "<id>".`
+- `DEDUPLICATE_MODE`, when the table is stored by a step (a table that ends at
+  the landed files, or that an ingest step writes, has none). It is judged by the
+  table's resolved `history` (section 11.1) and how its store step keeps rows.
+  A store step **appends** when its method has an alias for the setting
+  `mode` (section 11.4) and the step's `mode` setting is `append`; the pack
+  declares that alias, and the model knows no other way to tell an append from
+  a replace.
+  - With `history: latest` or `full`, a warning at `cleanse.deduplicate`: `Deduplicate
+is redundant for "<table>": its history is <history>, which already decides
+what is kept for each key.`, with the hint `Remove deduplicate.` and the fix
+    `Remove deduplicate`, which removes the key. The subject's feature is
+    `deduplicate`.
+  - In a store that appends (history `none`), an error at `cleanse.deduplicate`:
+    `Deduplicate cannot work for "<table>": its store appends rows, and rows
+already kept cannot be deduplicated.`, with the hint `Set history: latest to
+keep one row per key, or deduplicate in a transform that reads this table.`
+
+  A `DEDUPLICATE_MODE` or `DEDUPLICATE_KEY` leaves the operation unjudged for
+  `NOT_APPLIED`; a `DEDUPLICATE_MODE` warning leaves `deduplicate` in the
+  model.
+
+`deduplicate` is `NOT_APPLIED` as an operation of section 6.1 is, with the
+path `deduplicate`, the value `true`, the feature `deduplicate` and the
+message `Deduplicate isn't applied on <pack>: <reason>`.
+
 ## 7. Platform defaults
 
 | Setting              | Default                                                                                                                                                                      |
@@ -1308,12 +1444,14 @@ object without a `name` is a load error at the item.
 | `load`                                     | `default` (a load mode), `deletes` (a delete mode) and `when`, a list of rules, each with some of the facts `connectivity`, `connector`, `input` and `layer`, and `use`, a load mode. Rules are checked in order: the first whose facts all match chooses `load.mode`. |
 | `audit`, `rescued`, `retention`, `storage` | The same as a layer's or a table's, for every table.                                                                                                                                                                                                                   |
 | `quality.results`                          | `true`: keep the results of checks as a table.                                                                                                                                                                                                                         |
+| `cleanse`                                  | Defaults for the tables' columns (section 6.1): `text`, with `trim: true` and `empty: null`, for every text column.                                                                                                                                                    |
 | `operations`                               | Policy for runs, below.                                                                                                                                                                                                                                                |
 | `fixed`                                    | Intent that no layer, flow or transform may change: any of `load`, `history`, `sequence`, `audit`, `rescued`, `retention`, `storage` and `operations`, in the forms below. It is separate from each action's `fixed` settings.                                         |
 
 **Flows and transforms.** A flow and a flow table may give `load`, `history`,
 `sequence` and `audit`; a transform may give `history`, `sequence` and
-`audit`.
+`audit`. A flow table and a transform may also give `cleanse`, with `columns`
+and `deduplicate` (sections 6.1 and 6.2).
 
 **Load.** How a flow table's data leaves the source. A table's `load` is
 `{ mode, cursor, deletes: { mode, when } }`.
@@ -1791,6 +1929,14 @@ Each value is reported as follows, with the subject (section 1.2)
 - an `elsewhere` entry, and a value with no entry, report nothing.
 
 The same warning at the same place is reported once (section 1.2).
+
+Cleansing and deduplicate (sections 6.1 and 6.2) are judged by the same step, for
+the paths `cleanse.trim`, `cleanse.empty`, `cleanse.map`, `cleanse.case`,
+`cleanse.default` and `deduplicate`, each with the value `true`. An entry that is
+`used` with `onlyWhere: cleanse` or `onlyWhere: deduplicate` is `NOT_APPLIED` in a
+table whose `does` does not list that duty, with the reason `it is applied only in
+a layer whose does lists <duty>.` and the hint ``Add `<duty>` to the layer's `does`
+to apply it here.``
 
 ## Connector authoring metadata
 

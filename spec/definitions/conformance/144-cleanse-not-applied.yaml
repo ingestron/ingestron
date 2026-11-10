@@ -1,0 +1,69 @@
+description: "An operation or deduplicate that the pack keeping the table does not apply is NOT_APPLIED where it is written: a column's operation at its key in the flow table, and a default of the standard at its key in the standard, once for the table. An operation the pack says nothing of is not reported."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+    cleanse:
+      text: { trim: true, empty: null }
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      customers:
+        object: customers
+        contract: customers
+        cleanse:
+          columns:
+            name: { map: { a: b }, case: lower }
+            email: { trim: false }
+          deduplicate: { order_by: [updated_at] }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: name, logicalType: string }
+          - { name: email, logicalType: string }
+          - { name: updated_at, logicalType: timestamp }
+expect:
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: standard.yaml
+      line: 6
+      message: 'Cleansing "trim" of text columns isn''t applied on quality: Trimming is not done yet.'
+      subject: { table: customers, feature: cleanse.trim }
+    - code: NOT_APPLIED
+      severity: warning
+      file: sales.yaml
+      line: 11
+      message: 'Cleansing "map" of "name" isn''t applied on quality: Its engine cannot replace listed values.'
+      subject: { table: customers, feature: cleanse.map }
+    - code: NOT_APPLIED
+      severity: warning
+      file: sales.yaml
+      line: 13
+      message: "Deduplicate isn't applied on quality: Keeping one row per key is not done yet."
+      subject: { table: customers, feature: deduplicate }

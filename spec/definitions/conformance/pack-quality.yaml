@@ -1,7 +1,9 @@
-# A data-only pack that applies some checks and not others (section 11.7): no
-# pattern rule, no fail action and no table checks, and on one store method
-# not-null checks only in a layer that checks. Its connector is its own, so it
-# offers no fixes in the other cases.
+# A data-only pack that applies some checks and some cleansing and not others
+# (section 11.7): no pattern rule, no fail action and no table checks, and on one
+# store method not-null checks only in a layer that checks, and empty-to-null and
+# deduplicate only in a layer that cleanses or deduplicates. No trimming, no
+# replacing of values and no deduplicate otherwise. Its connector is its own, so
+# it offers no fixes in the other cases.
 id: quality
 version: 1
 defaults:
@@ -46,6 +48,8 @@ methods:
     intent:
       quality.rules=notNull:
         { use: used, does: The view leaves out rows with a null., onlyWhere: check }
+      cleanse.empty: { use: used, does: The view turns empty text into null., onlyWhere: cleanse }
+      deduplicate: { use: used, does: The view keeps the last row per key., onlyWhere: deduplicate }
     settings: { type: object }
 # What it does with the quality paths (section 11.7). A value it does not list
 # reports nothing.
@@ -53,3 +57,6 @@ intent:
   quality.rules=pattern: { use: not-applicable, reason: Its engine has no regular expressions. }
   quality.actions=fail: { use: not-yet, reason: A failing row does not stop a load yet. }
   quality.table-checks: { use: not-yet, reason: Checks over all rows are not run yet. }
+  cleanse.trim: { use: not-yet, reason: Trimming is not done yet. }
+  cleanse.map: { use: not-applicable, reason: Its engine cannot replace listed values. }
+  deduplicate: { use: not-yet, reason: Keeping one row per key is not done yet. }

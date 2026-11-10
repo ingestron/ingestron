@@ -9,7 +9,7 @@ import { flowTableNames } from "./flows.js";
 import type { ResolvedTable } from "../pack/index.js";
 import { transformFacts } from "./rule-facts.js";
 import { tableIntent } from "./complete.js";
-import { checkTableIntent } from "./intent-checks.js";
+import { checkTableIntent, transformChecks } from "./intent-checks.js";
 import { checksIn } from "./layer-duties.js";
 import { codeOf } from "./transform-code.js";
 import { serveStep } from "./serve.js";
@@ -134,8 +134,7 @@ function transformTable(
     store: stepOf(steps.store),
     ...(steps.serve && { serve: stepOf(steps.serve) }),
   };
-  const at = { document: doc, pointer: "/expectations" };
-  checkTableIntent(context, table, places, { docs: value.expectations, at });
+  checkTableIntent(context, table, places, transformChecks(doc));
   return table;
 }
 

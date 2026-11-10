@@ -70,6 +70,11 @@ properties:
           }
         expectations:
           { $ref: "#/$defs/expectations", description: Your own checks on this table's rows. }
+        cleanse:
+          {
+            $ref: "#/$defs/cleanse",
+            description: "Cleansing for this table's columns, and deduplicate.",
+          }
         load:
           { $ref: "#/$defs/load", description: "How data leaves the source, for this table only." }
         history:
@@ -97,6 +102,59 @@ properties:
   serve:
     { $ref: "#/$defs/serve", description: Where the data is made available after its last step. }
 $defs:
+  cleanse:
+    type: object
+    additionalProperties: false
+    properties:
+      columns:
+        type: object
+        description: "Cleansing for named columns of the contract, applied in this order after the cast: trim, empty, map, case, default."
+        additionalProperties:
+          type: object
+          additionalProperties: false
+          properties:
+            trim:
+              type: boolean
+              description: "`true` removes leading and trailing whitespace; `false` takes away the standard's trim for this column."
+            empty:
+              enum: [null, false]
+              description: "`null` turns an empty string into null; `false` takes away the standard's rule for this column."
+              enumDescriptions:
+                - Turn an empty string into null.
+                - Leave empty strings as they are.
+            map:
+              type: object
+              description: "Replaces each key with its value where the column holds exactly the key. Keys and values must fit the column's type."
+              additionalProperties: { type: [string, number, boolean, "null"] }
+              examples:
+                - { GBR: GB, United Kingdom: GB }
+            case:
+              enum: [upper, lower]
+              description: Change text to upper or lower case.
+              enumDescriptions:
+                - Upper case.
+                - Lower case.
+            default:
+              type: [string, number, boolean]
+              description: "Replaces null with this value, which must fit the column's type."
+              examples: [unknown]
+        examples:
+          - email: { case: lower }
+            status: { default: unknown }
+      deduplicate:
+        type: object
+        additionalProperties: false
+        required: [order_by]
+        description: "Keeps one row for each primary key of the contract: the last by `order_by`. The table's layer must do `deduplicate`, and its store must not append."
+        properties:
+          order_by:
+            type: array
+            minItems: 1
+            uniqueItems: true
+            items: { type: string }
+            description: Contract columns that order the rows of a key; the row that comes last is kept.
+            examples:
+              - [updated_at]
   loadMode:
     enum: [files, incremental, changes, full]
     enumDescriptions:

@@ -14,6 +14,7 @@ export type {
   Alert,
   ChosenBy,
   Column,
+  ColumnCleanse,
   Contract,
   ContractRole,
   DeployValue,
@@ -30,6 +31,7 @@ export type {
   ResolvedTable,
   Schedule,
   Step,
+  TableCleanse,
 } from "./model.js";
 export type {
   Action,

@@ -1,0 +1,121 @@
+description: "trim, empty and case on a column that is not text, and a default or a map key or value that does not fit the column's type, are CLEANSE_TYPE, an error at the operation. A column whose contract gives no type is not judged, and the standard's text defaults skip a column that is not text without an error."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    cleanse:
+      text: { trim: true, empty: null }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      readings:
+        object: readings
+        contract: readings
+        cleanse:
+          columns:
+            qty:
+              trim: true
+              empty: null
+              case: upper
+              default: none
+            seen: { default: yesterday }
+            ok: { map: { "true": "yes", "false": false } }
+            note: { default: 5, map: { a: 1 } }
+            mystery: { trim: true, default: 1 }
+            level: { map: { "1": 10, "x": 11, "3": "three" } }
+  readings.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: readings
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: readings
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: qty, logicalType: integer }
+          - { name: seen, logicalType: date }
+          - { name: ok, logicalType: boolean }
+          - { name: note, logicalType: string }
+          - { name: mystery, physicalType: WIDGET }
+          - { name: level, logicalType: integer, required: true }
+expect:
+  diagnostics:
+    - code: CLEANSE_TYPE
+      severity: error
+      file: sales.yaml
+      line: 12
+      message: '"trim" works on text, and "qty" is integer in contract "readings".'
+      hint: 'Remove "trim" from "qty", or cleanse it where it is still text.'
+    - code: CLEANSE_TYPE
+      severity: error
+      file: sales.yaml
+      line: 13
+      message: '"empty" works on text, and "qty" is integer in contract "readings".'
+      hint: 'Remove "empty" from "qty", or cleanse it where it is still text.'
+    - code: CLEANSE_TYPE
+      severity: error
+      file: sales.yaml
+      line: 14
+      message: '"case" works on text, and "qty" is integer in contract "readings".'
+      hint: 'Remove "case" from "qty", or cleanse it where it is still text.'
+    - code: CLEANSE_TYPE
+      severity: error
+      file: sales.yaml
+      line: 15
+      message: 'The "default" value "none" doesn''t fit "qty", which is integer in contract "readings".'
+      hint: "Give a value of the column's type."
+    - code: CLEANSE_TYPE
+      severity: error
+      file: sales.yaml
+      line: 16
+      message: 'The "default" value "yesterday" doesn''t fit "seen", which is date in contract "readings".'
+      hint: "Give a value of the column's type."
+    - code: CLEANSE_TYPE
+      severity: error
+      file: sales.yaml
+      line: 17
+      message: 'The "map" value "yes" doesn''t fit "ok", which is boolean in contract "readings".'
+      hint: "Give a value of the column's type."
+    - code: CLEANSE_TYPE
+      severity: error
+      file: sales.yaml
+      line: 18
+      message: 'The "map" value 1 doesn''t fit "note", which is string in contract "readings".'
+      hint: "Give a value of the column's type."
+    - code: CLEANSE_TYPE
+      severity: error
+      file: sales.yaml
+      line: 18
+      message: 'The "default" value 5 doesn''t fit "note", which is string in contract "readings".'
+      hint: "Give a value of the column's type."
+    - code: CLEANSE_TYPE
+      severity: error
+      file: sales.yaml
+      line: 20
+      message: 'The "map" value "three" doesn''t fit "level", which is integer in contract "readings".'
+      hint: "Give a value of the column's type."
+    - code: CLEANSE_TYPE
+      severity: error
+      file: sales.yaml
+      line: 20
+      message: 'The "map" key "x" doesn''t fit "level", which is integer in contract "readings".'
+      hint: "Give a value of the column's type."

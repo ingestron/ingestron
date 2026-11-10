@@ -1,0 +1,103 @@
+description: "The standard's cleanse text rules reach each text column of a flow table in a layer with no does and of a transform in a layer that cleanses; a table's own columns add to them, and trim false or empty false takes a default away. The operations are trim, empty, map, case and default; a column of another type gets none of the defaults."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    layers:
+      - bronze
+      - { name: silver, does: [cleanse] }
+    cleanse:
+      text: { trim: true, empty: null }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      customers:
+        object: customers
+        contract: customers
+        cleanse:
+          columns:
+            email: { case: lower }
+            notes: { trim: false }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: email, logicalType: string }
+          - { name: notes, logicalType: string }
+          - { name: country, logicalType: string }
+          - { name: status, logicalType: string }
+          - { name: age, logicalType: integer }
+  clean.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: customers_clean
+    inputs: [customers]
+    contract: customers_clean
+    cleanse:
+      columns:
+        status: { default: unknown }
+        country: { map: { GBR: GB }, case: upper }
+        age: { default: 0 }
+  customers_clean.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers_clean
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers_clean
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: email, logicalType: string }
+          - { name: notes, logicalType: string }
+          - { name: country, logicalType: string }
+          - { name: status, logicalType: string }
+          - { name: age, logicalType: integer }
+expect:
+  tables:
+    - name: customers
+      layer: bronze
+      cleanse:
+        columns:
+          id: null
+          email: { trim: true, empty: true, case: lower }
+          notes: { trim: null, empty: true }
+          country: { trim: true, empty: true, map: null, case: null, default: null }
+          status: { trim: true, empty: true, default: null }
+          age: null
+        deduplicate: null
+    - name: customers_clean
+      layer: silver
+      cleanse:
+        columns:
+          id: null
+          email: { trim: true, empty: true, case: null }
+          notes: { trim: true, empty: true }
+          country: { trim: true, empty: true, map: { GBR: GB }, case: upper }
+          status: { trim: true, empty: true, default: unknown }
+          age: { trim: null, empty: null, default: 0 }

@@ -4,6 +4,7 @@ import { environmentCodeHelp } from "./environment-codes.js";
 import { intentCodeHelp } from "./intent-codes.js";
 import { layerCodeHelp } from "./layer-codes.js";
 import { platformCodeHelp } from "./platform-codes.js";
+import { cleanseCodeHelp } from "./cleanse-codes.js";
 import { transformCodeHelp } from "./transform-codes.js";
 
 /**
@@ -16,6 +17,7 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
   ...intentCodeHelp,
   ...platformCodeHelp,
   ...transformCodeHelp,
+  ...cleanseCodeHelp,
   NO_STANDARD: {
     meaning: "The project has no Standard document.",
     fix: "Add a Standard, or import your organisation's standard in project.yaml.",

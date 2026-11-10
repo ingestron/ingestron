@@ -2,7 +2,7 @@
 import type { DefinitionDocument } from "@ingestron/config";
 import { allowsWritten, endsAtFiles, NO_STORE, type Facts, type Named } from "../choose/index.js";
 import { aboutOne, type Context } from "../context/index.js";
-import { flowContract, ownExpectations } from "./flow-contract.js";
+import { flowContract } from "./flow-contract.js";
 import { kinds, type FlowDoc } from "../documents/index.js";
 import type { ResolvedTable } from "../pack/index.js";
 import type { SettingsLayer } from "./settings.js";
@@ -13,7 +13,7 @@ import { resolveStep, type StepResult } from "./steps.js";
 import { renderTableName, type TableNamer } from "../tables/index.js";
 import { flowFacts } from "./rule-facts.js";
 import { tableIntent } from "./complete.js";
-import { checkTableIntent } from "./intent-checks.js";
+import { checkTableIntent, flowChecks } from "./intent-checks.js";
 import { checksIn } from "./layer-duties.js";
 import {
   connectionOf,
@@ -92,7 +92,7 @@ function flowTable(
     ...tableSteps(steps, connection, doc.object),
     ...sourceNotKnown(context, flow),
   };
-  checkTableIntent(context, table, places, ownExpectations(flow, name));
+  checkTableIntent(context, table, places, flowChecks(flow, name));
   return table;
 }
 

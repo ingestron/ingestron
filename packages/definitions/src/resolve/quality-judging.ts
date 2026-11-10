@@ -28,12 +28,16 @@ export interface OwnExpectations {
   at: Source;
 }
 
-/** One value judged: its path and value, what messages call it, and where it was written. */
-interface Judged {
+/**
+ * One value judged: its path and value, what messages call it, and where it was written.
+ * `feature` is what the warning's subject names, when that is not the value.
+ */
+export interface Judged {
   path: string;
   value: string;
   what: string;
   at: Source | undefined;
+  feature?: string;
 }
 
 /**
@@ -54,7 +58,7 @@ export function judgeQuality(context: Context, table: ResolvedTable, own: OwnExp
 }
 
 /** What the keeping step's method, else its pack, says of the value, when a project hears it. */
-function judgementOf(
+export function judgementOf(
   context: Context,
   keeper: JudgingStep,
   item: Judged,
@@ -73,7 +77,7 @@ function judgementOf(
     pack: keeper.pack,
     outcome,
     what: item.what,
-    feature: item.path === "quality.table-checks" ? "table-checks" : item.value,
+    feature: item.feature ?? (item.path === "quality.table-checks" ? "table-checks" : item.value),
     ...(where && { hint: where.hint }),
   };
 }

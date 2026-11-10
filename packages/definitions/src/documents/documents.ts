@@ -26,6 +26,24 @@ export interface ExpectationDoc {
   action?: "warn" | "drop" | "fail";
 }
 
+/**
+ * One column's cleansing as written (specification section 6.1). `trim: false` and
+ * `empty: false` take away what the standard gives; `empty: null` turns empty text into null.
+ */
+export interface ColumnCleanseDoc {
+  trim?: boolean;
+  empty?: null | false;
+  map?: Record<string, string | number | boolean | null>;
+  case?: "upper" | "lower";
+  default?: string | number | boolean;
+}
+
+/** A table's own cleansing as written (specification sections 6.1 and 6.2). */
+export interface CleanseDoc {
+  columns?: Record<string, ColumnCleanseDoc>;
+  deduplicate?: { order_by: string[] };
+}
+
 /** A `Standard` document. */
 export interface StandardDoc extends StandardIntentDoc {
   id: string;
@@ -35,6 +53,8 @@ export interface StandardDoc extends StandardIntentDoc {
   naming?: Record<string, string>;
   layers?: (string | LayerDoc)[];
   types?: Record<string, string>;
+  /** Defaults for the tables' columns (specification section 6.1). */
+  cleanse?: { text?: Pick<ColumnCleanseDoc, "trim" | "empty"> };
   quality?: {
     required?: "warn" | "drop" | "fail";
     default?: "warn" | "drop" | "fail";
@@ -97,6 +117,7 @@ export interface FlowTableDoc extends FlowIntentDoc {
   object: string;
   contract: string;
   expectations?: ExpectationDoc[];
+  cleanse?: CleanseDoc;
   ingest?: { with?: Record<string, unknown> };
   store?: { with?: Record<string, unknown> };
   serve?: { with?: Record<string, unknown> };
@@ -122,6 +143,7 @@ export interface TransformDoc extends TableIntentDoc {
   code?: string;
   contract: string;
   expectations?: ExpectationDoc[];
+  cleanse?: CleanseDoc;
   transform?: ActionDoc;
   store?: ActionDoc;
   serve?: ActionDoc;

@@ -106,6 +106,26 @@ properties:
         type: boolean
         description: "Whether the results of the checks are kept as a table that can be queried. Default: false."
     description: "What happens to rows that fail a check: required columns and your own expectations."
+  cleanse:
+    type: object
+    additionalProperties: false
+    description: "Cleansing for the columns of tables in layers that cleanse, or in flows when a layer says nothing: what to do with every text column. A table's own `cleanse` adds to it or takes it away."
+    properties:
+      text:
+        type: object
+        additionalProperties: false
+        description: What to do with every text column of the contract.
+        properties:
+          trim:
+            type: boolean
+            description: Remove leading and trailing whitespace.
+            examples: [true]
+          empty:
+            enum: [null, false]
+            description: "`null` turns an empty string into null."
+            enumDescriptions:
+              - Turn an empty string into null.
+              - Leave empty strings as they are.
   load:
     type: object
     additionalProperties: false

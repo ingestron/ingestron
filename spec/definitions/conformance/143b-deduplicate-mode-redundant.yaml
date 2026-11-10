@@ -1,0 +1,71 @@
+description: "Deduplicate on a table whose history is latest is DEDUPLICATE_MODE, a warning at deduplicate with a fix that removes it; the table keeps deduplicate in the model."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders:
+        object: orders
+        contract: orders
+        history: latest
+        cleanse:
+          deduplicate: { order_by: [updated_at] }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: updated_at, logicalType: timestamp }
+expect:
+  tables:
+    - name: orders
+      intent: { history: latest }
+      cleanse: { deduplicate: { orderBy: [updated_at] } }
+  diagnostics:
+    - code: DEDUPLICATE_MODE
+      severity: warning
+      file: sales.yaml
+      line: 11
+      message: 'Deduplicate is redundant for "orders": its history is latest, which already decides what is kept for each key.'
+      hint: Remove deduplicate.
+      fixes: [Remove deduplicate]
+      subject: { table: orders, feature: deduplicate }
+  fixed:
+    - diagnostic: 0
+      title: Remove deduplicate
+      files:
+        sales.yaml: |
+          apiVersion: ingestron.io/v1
+          kind: Flow
+          id: sales
+          source: shop
+          tables:
+            orders:
+              object: orders
+              contract: orders
+              history: latest

@@ -5,6 +5,8 @@ export {
   packageSchema,
   type ActionDoc,
   type AlertDoc,
+  type CleanseDoc,
+  type ColumnCleanseDoc,
   type ConnectionDoc,
   type ContractDoc,
   type ExpectationDoc,

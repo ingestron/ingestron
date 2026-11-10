@@ -1,0 +1,64 @@
+description: "A flow table or transform that gives deduplicate with order_by columns of its contract and a primary key has cleanse.deduplicate with orderBy as written, after any column cleansing."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders:
+        object: orders
+        contract: orders
+        cleanse:
+          columns:
+            status: { case: lower }
+          deduplicate: { order_by: [updated_at, version] }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: status, logicalType: string }
+          - { name: updated_at, logicalType: timestamp }
+          - { name: version, logicalType: integer }
+  latest.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: latest_orders
+    inputs: [orders]
+    contract: orders
+    cleanse:
+      deduplicate: { order_by: [updated_at] }
+expect:
+  tables:
+    - name: orders
+      cleanse:
+        columns: { status: { case: lower } }
+        deduplicate: { orderBy: [updated_at, version] }
+    - name: latest_orders
+      cleanse:
+        columns: {}
+        deduplicate: { orderBy: [updated_at] }

@@ -102,6 +102,14 @@ describe("checksIn", () => {
     expect(held.tableChecks.map((item) => item.action)).toEqual(["fail"]);
   });
 
+  it("gives the table its own copy of the list, so the standard cannot be changed through it", () => {
+    const { does } = checksIn(context, "gold", contract(), own);
+    expect(does).toEqual(["check"]);
+    expect(does).not.toBe(doesOf(context, "gold"));
+    (does as string[]).push("cleanse");
+    expect(doesOf(context, "gold")).toEqual(["check"]);
+  });
+
   it("leaves them, and gives no does, where the layer gives none", () => {
     const held = contract();
     expect(checksIn(context, "archive", held, own)).not.toHaveProperty("does");

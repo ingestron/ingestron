@@ -21,6 +21,7 @@ export {
   type Capability,
   type ChosenBy,
   type Column,
+  type ColumnCleanse,
   type Connector,
   type Contract,
   type ContractRole,
@@ -54,6 +55,7 @@ export {
   type StepOutput,
   type SuppliedValue,
   type TableCheck,
+  type TableCleanse,
   type TargetComparison,
   type TargetDifference,
 } from "./pack/index.js";

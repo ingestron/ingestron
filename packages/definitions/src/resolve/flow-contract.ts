@@ -6,7 +6,6 @@ import { contractFor, expectationsNotChecked } from "../contracts/index.js";
 import type { FlowDoc } from "../documents/index.js";
 import type { Contract } from "../pack/index.js";
 import type { FlowSteps } from "./flow-sources.js";
-import type { OwnExpectations } from "./quality-judging.js";
 
 type Flow = DefinitionDocument<FlowDoc>;
 
@@ -26,10 +25,4 @@ export function flowContract(
   if (atFiles !== undefined)
     expectationsNotChecked(context, doc.expectations ?? [], at("expectations"), atFiles);
   return contractFor(context, name, doc.contract, at("contract"), atFiles);
-}
-
-/** The flow table's own expectations, and where their list is written. */
-export function ownExpectations(flow: Flow, name: string): OwnExpectations {
-  const at = { document: flow, pointer: `/tables/${name}/expectations` };
-  return { docs: flow.value.tables[name]?.expectations, at };
 }
