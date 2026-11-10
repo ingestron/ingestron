@@ -224,6 +224,7 @@ function notYet(
       undefined,
       undefined,
       { table: reader.table, feature: path },
+      { reason: use.reason },
     );
   }
   return warned;

@@ -8,7 +8,7 @@ import { stepsOf } from "./judgements.js";
 import { judgeOf } from "./judging-step.js";
 import { checkSettingsKeys } from "../context/index.js";
 import { createContext, type Context } from "../context/index.js";
-import type { Diagnostic, Source } from "../diagnostics/index.js";
+import type { Diagnostic, Reporter, Source } from "../diagnostics/index.js";
 import { checkDeployValues, deployValuesOf, resolutionReporter } from "../context/index.js";
 import { kinds } from "../documents/index.js";
 import { flowTables } from "./flows.js";
@@ -195,6 +195,7 @@ function resolveLoaded(
   checkGovernance(context, products);
   checkOperations(context, tables);
   // Project-wide checks only make sense once every table resolved.
+  withNotApplied(reporter, tables);
   const together = options.environmentsTogether === true;
   const built = !reporter.failed() && buildModel(context, namer, together, tables, products);
   // The pack checks see the model the packs get, before the deploy-time values are listed.
@@ -214,6 +215,14 @@ function contractUsers(context: Context, tables: ResolvedTable[]): ContractUser[
       endsAtFiles: table.endsAtFiles !== undefined,
     })?.pack,
   }));
+}
+
+/** Gives each table what was reported not applied about it, if anything (section 11.7). */
+function withNotApplied(reporter: Reporter, tables: ResolvedTable[]): void {
+  for (const table of tables) {
+    const unapplied = reporter.notAppliedOf(table.name);
+    if (unapplied.length > 0) table.notApplied = unapplied;
+  }
 }
 
 /** A serve method that reads where the data lands needs a last step that says where (`HANDOVER`). */

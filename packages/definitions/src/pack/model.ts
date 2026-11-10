@@ -1,6 +1,7 @@
 // The resolved model: everything a pack needs, with every choice made,
 // every name built and every setting merged. Packs only read it.
 
+import type { NotApplied } from "../diagnostics/index.js";
 import type { GovernanceDoc } from "../documents/index.js";
 import type { FeatureStatus, Intent, LayerDuty, ResolvedOperations } from "../intent/index.js";
 import type { StepOutput } from "./pack.js";
@@ -293,6 +294,13 @@ export interface ResolvedTable {
    * the table drops rows (specification section 11.7).
    */
   quarantine?: { fullName: FullName; column: string };
+  /**
+   * Each feature of the table that the step that keeps it does not apply, as `NOT_APPLIED`
+   * reports it about this table (specification section 11.7): the feature, the reason and, for
+   * a time zone conversion, the column. Absent when there are none. Accepting the warning
+   * does not change it.
+   */
+  notApplied?: NotApplied[];
   /**
    * A flow table's `source` when it holds an unset `${envvar:…}`, which only an editor's
    * resolution allows (specification section 1). The connection is then a stand-in with no

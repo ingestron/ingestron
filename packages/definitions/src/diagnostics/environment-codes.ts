@@ -25,7 +25,7 @@ export const environmentCodeHelp: Record<Extract<DefinitionCode, EnvironmentCode
       "The pack builds every environment into one artefact, and the environments differ in more than values, such as a table built in some environments only or a method that differs.",
     fix: "Make the definitions the same in every environment, varying only values such as names, paths and hosts.",
     severities: ["error"],
-    origin: "resolve",
+    origin: "build",
   },
   DEPLOY_VALUE: {
     meaning:
@@ -39,7 +39,7 @@ export const environmentCodeHelp: Record<Extract<DefinitionCode, EnvironmentCode
       "The factory's ARM template would have more than 256 parameters; the message counts them.",
     fix: "Make fewer values differ between environments, or split the definitions into more than one factory.",
     severities: ["error"],
-    origin: "resolve",
+    origin: "build",
   },
   SECRET_NAME_DIFFERS: {
     meaning: "A Key Vault secret's name differs between environments. A warning.",

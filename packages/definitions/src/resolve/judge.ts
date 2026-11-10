@@ -34,7 +34,16 @@ export function reportJudgement(
   if (outcome.kind === "not-applied") {
     const message = `${described(judgement)} isn't applied on ${judgement.pack}: ${outcome.reason}`;
     const feature = judgement.feature ?? coverageKey(judgement.path, judgement.value);
-    context.reporter.warning("NOT_APPLIED", message, at, judgement.hint, undefined, { feature });
+    const detail = { reason: outcome.reason };
+    context.reporter.warning(
+      "NOT_APPLIED",
+      message,
+      at,
+      judgement.hint,
+      undefined,
+      { feature },
+      detail,
+    );
   } else if (context.standard.value.features === "ga") reportPreview(context, judgement, at);
 }
 

@@ -553,6 +553,13 @@ export interface Naming {
 export const NO_STORE = "none";
 
 // @public
+export interface NotApplied {
+    column?: string;
+    feature: string;
+    reason: string;
+}
+
+// @public
 export interface Origin {
     alias?: string;
     file?: string;
@@ -830,6 +837,7 @@ export interface ResolvedTable {
     layer: string;
     // (undocumented)
     name: string;
+    notApplied?: NotApplied[];
     // (undocumented)
     origin: {
         kind: "Flow" | "Transform";

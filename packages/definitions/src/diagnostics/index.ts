@@ -1,6 +1,7 @@
 // The diagnostics module: what the rest of the package uses.
 export { codeHelp } from "./codes.js";
 export type { CodeHelp } from "./code-help.js";
+export type { NotApplied } from "./not-applied.js";
 export {
   aboutTable,
   createReporter,

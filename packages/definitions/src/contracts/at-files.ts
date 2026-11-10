@@ -74,5 +74,6 @@ export function notAppliedAtFiles(
     "Add a store step to have it checked.",
     undefined,
     { feature },
+    { reason: AT_FILES },
   );
 }

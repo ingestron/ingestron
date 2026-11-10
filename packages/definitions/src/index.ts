@@ -119,6 +119,7 @@ export {
   type Diagnostic,
   type DiagnosticSubject,
   type LoadingStage,
+  type NotApplied,
 } from "./diagnostics/index.js";
 
 // Types from @ingestron/config that appear in this package's API, so a pack

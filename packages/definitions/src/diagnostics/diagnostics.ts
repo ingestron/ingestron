@@ -1,6 +1,8 @@
 // Diagnostics in the same shape as @ingestron/config's, so one formatter
 // prints problems from loading and from resolving alike.
 import type { AnyDiagnostic, DefinitionDocument, Fix } from "@ingestron/config";
+import { keepOnce, subjectOf } from "./keep-once.js";
+import { notAppliedBook, type NotApplied, type NotAppliedDetail } from "./not-applied.js";
 
 /**
  * Every code this package reports. Each is explained in codes.ts.
@@ -117,7 +119,18 @@ export interface Reporter {
     hint?: string,
     fixes?: Fix[],
     subject?: DiagnosticSubject,
+    detail?: NotAppliedDetail,
   ): void;
+  /**
+   * Each `NOT_APPLIED` feature reported about the table, before warnings about several tables
+   * are merged (specification section 11.7): what the model's `notApplied` holds.
+   */
+  notAppliedOf(table: string): NotApplied[];
+  /**
+   * Records a feature not applied on the table whose warning is reported once for several
+   * tables without a table, such as one at the standard.
+   */
+  noteNotApplied(table: string, feature: string, detail: NotAppliedDetail): void;
   /** True once any error, not a warning, was reported. */
   failed(): boolean;
   /** True once a problem was left out because it sits at a value not known yet. */
@@ -140,20 +153,17 @@ export function createReporter(
 ): Reporter {
   const diagnostics: Diagnostic[] = [...start];
   const seen = new Map<string, Diagnostic>();
+  const unapplied = notAppliedBook();
   let leftOut = false;
   const report = (
     severity: "error" | "warning",
-    code: DefinitionCode,
-    message: string,
-    at?: Source,
-    hint?: string,
-    fixes?: Fix[],
-    subject?: DiagnosticSubject,
+    ...[code, message, at, hint, fixes, subject, detail]: Parameters<Reporter["warning"]>
   ) => {
     if (at && unknown(at, code, severity)) {
       leftOut = true;
       return;
     }
+    if (code === "NOT_APPLIED") unapplied.record(subject, detail);
     const diagnostic = diagnosticOf(severity, code, message, at, hint, fixes);
     keepOnce(
       seen,
@@ -166,43 +176,14 @@ export function createReporter(
     diagnostics,
     error: (code, message, at, hint, fixes) => report("error", code, message, at, hint, fixes),
     warning: (...args) => report("warning", ...args),
+    notAppliedOf: unapplied.of,
+    noteNotApplied: (table, feature, detail) => unapplied.record({ table, feature }, detail),
     failed: () => diagnostics.some((diagnostic) => diagnostic.severity === "error"),
     leftOut: () => leftOut,
     leaveOut: () => {
       leftOut = true;
     },
   };
-}
-
-/** Adds the diagnostic with its subject, unless one that differs only in its table is kept. */
-function keepOnce(
-  seen: Map<string, Diagnostic>,
-  diagnostics: Diagnostic[],
-  diagnostic: AnyDiagnostic,
-  about: DiagnosticSubject | undefined,
-): void {
-  const key = JSON.stringify({ ...diagnostic, feature: about?.feature });
-  const kept = seen.get(key);
-  if (kept) return aboutSeveral(kept, about);
-  const reported = about ? { ...diagnostic, subject: about } : diagnostic;
-  seen.set(key, reported);
-  diagnostics.push(reported);
-}
-
-/** The subject with only the keys it gives; undefined when it gives none. */
-function subjectOf(subject: DiagnosticSubject | undefined): DiagnosticSubject | undefined {
-  const table = subject?.table;
-  const feature = subject?.feature;
-  if (table === undefined && feature === undefined) return undefined;
-  return { ...(table !== undefined && { table }), ...(feature !== undefined && { feature }) };
-}
-
-/** A diagnostic found again for another table, or for none, is no longer about one table. */
-function aboutSeveral(kept: Diagnostic, about: DiagnosticSubject | undefined): void {
-  if (kept.subject?.table === undefined || kept.subject.table === about?.table) return;
-  const feature = kept.subject.feature;
-  if (feature === undefined) delete kept.subject;
-  else kept.subject = { feature };
 }
 
 /**
@@ -215,8 +196,10 @@ export function aboutTable(reporter: Reporter, table: string): Reporter {
       return reporter.diagnostics;
     },
     error: (...args) => reporter.error(...args),
-    warning: (code, message, at, hint, fixes, subject) =>
-      reporter.warning(code, message, at, hint, fixes, { table, ...subject }),
+    warning: (code, message, at, hint, fixes, subject, detail) =>
+      reporter.warning(code, message, at, hint, fixes, { table, ...subject }, detail),
+    notAppliedOf: (name) => reporter.notAppliedOf(name),
+    noteNotApplied: (...args) => reporter.noteNotApplied(...args),
     failed: () => reporter.failed(),
     leftOut: () => reporter.leftOut(),
     leaveOut: () => reporter.leaveOut(),

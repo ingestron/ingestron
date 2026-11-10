@@ -2143,6 +2143,19 @@ table whose `does` does not list that duty, with the reason `it is applied only 
 a layer whose does lists <duty>.` and the hint ``Add `<duty>` to the layer's `does`
 to apply it here.``
 
+**What is not applied, in the model.** Each table in the model has
+`notApplied`: one item for each feature that a `NOT_APPLIED` warning about the
+table reports (this section, sections 6, 6.1 to 6.3, 11.4 and 11.5), with the
+warning's `feature` (section 1.2), its `reason` as the pack or the
+specification gives it, and, for a time zone conversion (section 6.3), the
+`column` it is not applied to, one item for each such column. It is recorded
+as each warning is reported for the table, before warnings about several
+tables lose their `table` (section 1.2), so it says exactly which tables a
+feature is not applied on. The same feature, reason and column is listed once.
+`notApplied` is absent when the table has none. It does not depend on the
+Platform's `accept` list: an accepted warning is still listed. The passport
+reads it to say what is not enforced.
+
 **Quarantine.** `quality.quarantine: true` (section 11.2) keeps the rows that
 fail a check whose action is `drop` in a table of their own, with the names of
 the checks they failed, instead of losing them. It reaches a table as follows:
@@ -2248,7 +2261,8 @@ accepted by the first of them in the list.
 its meaning in the code help (`severities`: `error`, `warning`,
 `information`), and where it is reported (`origin`): `resolve` for a code that
 loading and resolving report, `build` for one that only a pack's building of
-the files reports (`PACK_NOTICE`, `SECRET_NAME_DIFFERS`; section 2.1). A
+the files reports (`ENVIRONMENTS_DIFFER`, `ARM_PARAMETERS`, `SECRET_NAME_DIFFERS`
+and `PACK_NOTICE`; section 2.1). A
 loading code is reported by loading, which is part of resolving. An entry
 accepts only the warnings of its code. Its `code` is `ACCEPT_CODE`, an error
 at the entry's `code`, when:

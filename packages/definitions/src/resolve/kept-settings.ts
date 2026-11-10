@@ -106,6 +106,7 @@ function report(
     undefined,
     undefined,
     { feature: coverageKey(path, value) },
+    { reason },
   );
 }
 

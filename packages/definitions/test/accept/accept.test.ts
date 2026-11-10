@@ -31,11 +31,16 @@ describe("severities", () => {
     expect(severitiesOf("ENVVAR_MISSING")).toEqual(["error", "information"]);
   });
 
-  it("records where each code is reported: only a pack's build reports two of them", () => {
+  it("records where each code is reported: only a pack's build reports four of them", () => {
     const fromBuild = Object.entries(codeHelp)
       .filter(([, help]) => help.origin === "build")
       .map(([code]) => code);
-    expect(fromBuild).toEqual(["SECRET_NAME_DIFFERS", "PACK_NOTICE"]);
+    expect(fromBuild).toEqual([
+      "ENVIRONMENTS_DIFFER",
+      "ARM_PARAMETERS",
+      "SECRET_NAME_DIFFERS",
+      "PACK_NOTICE",
+    ]);
     expect(
       Object.values(codeHelp).every((help) => ["resolve", "build"].includes(help.origin)),
     ).toBe(true);

@@ -6,6 +6,7 @@ import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
 import { holdsUnsetEnvvar } from "../diagnostics/index.js";
 import {
+  coverageKey,
   intentUseOf,
   resolveOperations,
   type IntentUse,
@@ -128,6 +129,10 @@ function judgeQualityResults(context: Context, tables: ResolvedTable[]): void {
     const step = table.store!;
     const judgement = qualityJudgement(context, step.pack, context.pack.methods[step.method]);
     if (!judgement) continue;
+    if (judgement.outcome.kind === "not-applied")
+      context.reporter.noteNotApplied(table.name, coverageKey("quality.results", "true"), {
+        reason: judgement.outcome.reason,
+      });
     const where = at.document.locate(at.pointer);
     once.set(JSON.stringify([where.file, at.pointer, judgement.pack, judgement.outcome]), {
       judgement,

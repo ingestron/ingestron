@@ -71,18 +71,29 @@ function judgeZones(context: Context, table: ResolvedTable, what: ToJudge): void
   const written = new Set(
     what.used.written.filter((item) => item.operation === "timezone").map((item) => item.column),
   );
-  const fromStandard = new Set<string>();
+  const fromStandard = new Map<string, string[]>();
   for (const [column, operations] of Object.entries(table.cleanse?.columns ?? {})) {
     const zone = operations.timezone && unconvertedZone(operations.timezone, listed);
     if (zone === undefined) continue;
-    if (!written.has(column)) fromStandard.add(zone);
-    else reportZone(context, pack, listed[zone]!, placeOf(what.own, "columns", column, "timezone"));
+    if (!written.has(column)) fromStandard.set(zone, [...(fromStandard.get(zone) ?? []), column]);
+    else
+      reportZone(context, pack, listed[zone]!, placeOf(what.own, "columns", column, "timezone"), [
+        column,
+      ]);
   }
   const standard = { document: context.standard, pointer: standardKey("timezone") };
-  for (const zone of fromStandard) reportZone(context, pack, listed[zone]!, standard);
+  for (const [zone, columns] of fromStandard)
+    reportZone(context, pack, listed[zone]!, standard, columns);
 }
 
-function reportZone(context: Context, pack: string, reason: string, at: Source): void {
+/** One warning for a zone not converted, at the place given; `columns` are the columns it is about. */
+function reportZone(
+  context: Context,
+  pack: string,
+  reason: string,
+  at: Source,
+  columns: string[],
+): void {
   context.reporter.warning(
     "NOT_APPLIED",
     `Time zone conversion isn't applied on ${pack}: ${reason}`,
@@ -90,6 +101,7 @@ function reportZone(context: Context, pack: string, reason: string, at: Source):
     undefined,
     undefined,
     { feature: "cleanse.timezone" },
+    { reason, columns },
   );
 }
 
@@ -169,5 +181,6 @@ function atFiles(context: Context, table: ResolvedTable, item: Judged): void {
     "Add a store step to have it cleansed.",
     undefined,
     { feature: item.feature ?? item.path },
+    { reason: "the table ends at the landed files, and nothing cleanses them." },
   );
 }
