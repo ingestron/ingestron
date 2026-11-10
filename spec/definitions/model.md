@@ -2298,7 +2298,7 @@ warnings it was written for. An entry whose code's origin is `build` is not
 judged here. An entry that another entry already accepts the
 same warning for still matches it and is used. `ACCEPT_UNUSED` is judged for
 the selected environment only, and only when the project resolved without
-errors, since errors can leave warnings unreported. When the project is
+errors (an `ACCEPT_CODE` error counts), since errors can leave warnings unreported. When the project is
 resolved for each environment, an entry for one environment's warning is
 therefore unused in another. To accept different warnings per environment,
 write the list as a value: `accept: ${values.accept}`, with the environments

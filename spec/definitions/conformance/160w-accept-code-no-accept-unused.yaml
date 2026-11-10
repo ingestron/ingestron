@@ -1,0 +1,67 @@
+description: "While an ACCEPT_CODE error exists the project has errors, so an entry that matches nothing is not ACCEPT_UNUSED: unused entries are judged only on an error-free resolve."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    accept:
+      - code: HANDOVER
+        reason: The on-call team checks this rule from CI.
+      - code: NOT_APPLIED
+        about: { table: customers }
+        reason: There is no such table.
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - name: code
+            logicalType: string
+            logicalTypeOptions: { maxLength: 8 }
+            quality:
+              - { metric: invalidValues, arguments: { pattern: "^[A-Z]+$" }, mustBe: 0 }
+expect:
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: orders.odcs.yaml
+      line: 15
+      subject: { table: orders, feature: pattern }
+    - code: ACCEPT_CODE
+      severity: error
+      file: platform.yaml
+      line: 5
+      message: '"HANDOVER" is only ever an error, and only warnings can be accepted.'
+      hint: "Fix the problem instead; an error stops a run until it is fixed."
+      fixes: [Remove the entry]
+  accepted: []

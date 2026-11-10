@@ -128,12 +128,8 @@ export function acceptWarnings<Result extends Resolved>(
   const atBuild = valid
     .filter((item) => fromBuild(item.entry.code))
     .map((item) => buildEntry(accepting, item));
-  // Judged on the result as it was: an entry with an invalid code is not an error elsewhere.
-  const unused = result.ok
-    ? valid
-        .filter((item) => !item.used && !fromBuild(item.entry.code))
-        .map((item) => unusedEntry(accepting, item))
-    : [];
+  // Judged on the result as it was, and only when no entry is `ACCEPT_CODE` either.
+  const unused = unusedEntries(accepting, valid, result.ok && wrong.length === 0);
   const { model, ...rest } = result;
   return {
     ...rest,
@@ -142,6 +138,17 @@ export function acceptWarnings<Result extends Resolved>(
     accepted,
     ...(atBuild.length > 0 && { acceptAtBuild: atBuild }),
   } as Result & { accepted: AcceptedWarning[]; acceptAtBuild?: AcceptAtBuild[] };
+}
+
+/**
+ * `ACCEPT_UNUSED` for each entry that matched nothing, but only for a project without errors
+ * (an `ACCEPT_CODE` error counts), since an error can leave warnings unreported.
+ */
+function unusedEntries(accepting: Accepting, valid: Valid[], errorFree: boolean): Diagnostic[] {
+  if (!errorFree) return [];
+  return valid
+    .filter((item) => !item.used && !fromBuild(item.entry.code))
+    .map((item) => unusedEntry(accepting, item));
 }
 
 /** An entry for a warning of a build, as the building tool is given it. */
