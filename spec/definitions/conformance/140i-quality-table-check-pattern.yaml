@@ -1,0 +1,81 @@
+description: "A table check that counts values against a pattern is also judged as the pattern rule kind (section 11.7): a pack that runs table checks but has no regular expressions keeps it in the model, reports NOT_APPLIED at the rule with the feature pattern, lists it in the table's notApplied, and does not judge its action. A table check with validValues is not judged as a pattern."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+    quality: { default: fail }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    store: { uses: quality-counts }
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - name: code
+            logicalType: string
+            quality:
+              - { metric: invalidValues, arguments: { pattern: "^[A-Z]{3}$" }, mustBeLessThan: 5 }
+              - { metric: invalidValues, arguments: { validValues: [AAA, BBB] }, mustBeLessThan: 5 }
+expect:
+  tables:
+    - name: orders
+      contract:
+        tableChecks:
+          - {
+              name: code_invalidvalues,
+              metric: invalidValues,
+              columns: [code],
+              arguments: { pattern: "^[A-Z]{3}$" },
+              operator: mustBeLessThan,
+              value: 5,
+              unit: rows,
+              action: fail,
+            }
+          - {
+              name: code_invalidvalues_2,
+              metric: invalidValues,
+              columns: [code],
+              arguments: { validValues: [AAA, BBB] },
+              operator: mustBeLessThan,
+              value: 5,
+              unit: rows,
+              action: fail,
+            }
+      notApplied:
+        - { feature: pattern, reason: Its engine has no regular expressions. }
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: orders.odcs.yaml
+      line: 13
+      message: "The pattern rule isn't applied on quality: Its engine has no regular expressions."
+      subject: { table: orders, feature: pattern }

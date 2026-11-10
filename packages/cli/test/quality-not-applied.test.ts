@@ -75,4 +75,31 @@ describe("what the passport says is not applied", () => {
     expect(check("returns")).toContain("Not enforced: A failing row is not counted yet.");
     expect(check("refunds")).not.toContain("Not enforced");
   });
+
+  it("says a table check that counts against a pattern is not enforced where pattern is not", () => {
+    // The quality pack runs table checks but has no regular expressions (case 140i).
+    const files = {
+      "project.yaml": 'id: retail\nenvironments: { dev: {} }\nimports: ["*.yaml"]\n',
+      "standard.yaml":
+        "apiVersion: ingestron.io/v1\nkind: Standard\nid: acme\npacks: [quality@1]\n",
+      "source.yaml":
+        "apiVersion: ingestron.io/v1\nkind: Connection\nid: source\nconnector: quality\nconnectivity: public\nsettings: {}\n",
+      "sales.yaml":
+        "apiVersion: ingestron.io/v1\nkind: Flow\nid: sales\nsource: source\nstore: { uses: quality-counts }\ntables:\n  orders: { object: orders, contract: orders }\n",
+      "orders.odcs.yaml":
+        "apiVersion: v3.1.0\nkind: DataContract\nid: orders\nversion: 1.0.0\nstatus: draft\nschema:\n  - name: orders\n    logicalType: object\n    properties:\n      - name: code\n        logicalType: string\n        quality:\n          - { metric: invalidValues, arguments: { pattern: '^[A-Z]{3}$' }, mustBeLessThan: 5 }\n          - { metric: invalidValues, arguments: { validValues: [AAA] }, mustBeLessThan: 5 }\n",
+      "sales.product.yaml":
+        "apiVersion: v1.1.0\nkind: DataProduct\nid: sales\nstatus: active\noutputPorts:\n  - { name: orders, contractId: orders }\n",
+    };
+    const result = resolveDefinitions(memoryFiles(files), {
+      packs: standInPacks,
+      environment: "dev",
+    });
+    const page = lines(passports(result.model!)["sales.md"]!, "dev.bronze.orders");
+    const check = (name: string) => page.find((line) => line.startsWith(`- \`${name}\`:`));
+    expect(check("code_invalidvalues")).toContain(
+      "Not enforced: Its engine has no regular expressions.",
+    );
+    expect(check("code_invalidvalues_2")).not.toContain("Not enforced");
+  });
 });

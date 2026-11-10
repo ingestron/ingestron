@@ -114,7 +114,8 @@ it fails, <what happens>. ``, such as: the number of rows is more than 0,
   row does.
 - A check whose rule kind, action or table checks the engine does not apply
   (an item of the table's `notApplied` with that kind, action or
-  `table-checks` as its feature), and a rule an engine or the platform could check but does not
+  `table-checks` as its feature; for a table check that counts values against
+  a `pattern`, also `pattern`), and a rule an engine or the platform could check but does not
   here (the model's `notEnforced`, such as `CAPABILITY_OFF` for a count over
   all rows with checks off): `` `<name>`: <words>. Not enforced: <reason>. ``,
   the reason being the item's `reason`, without its closing full stop.

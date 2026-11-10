@@ -12,7 +12,7 @@ import {
 import { holdsUnsetEnvvar, type Source } from "../diagnostics/index.js";
 import type { ExpectationDoc } from "../documents/index.js";
 import { intentUseOf, type IntentUse } from "../intent/index.js";
-import type { ResolvedTable } from "../pack/index.js";
+import type { ResolvedTable, TableCheck } from "../pack/index.js";
 import { reportJudgement } from "./judge.js";
 import {
   outcomeOfUse,
@@ -132,15 +132,18 @@ function judgedValues(
 
 /**
  * Each table check and its action, which is judged against `quality.table-checks` too: a
- * pack that runs table checks runs each with its action. The action is left out when the
- * table check is not applied, and when it has no place: at the quality default that wrote
- * it, else at the table check.
+ * pack that runs table checks runs each with its action. A check that counts values against
+ * a pattern is also judged as the `pattern` rule kind, since it needs the same regular
+ * expressions. The action is left out when the table check or its pattern is not applied,
+ * and when it has no place: at the quality default that wrote it, else at the table check.
  */
 function tableCheckValues(context: Context, table: ResolvedTable, keeper: JudgingStep): Judged[] {
   const tableAt = tableCheckPlaces(table.contract);
   const written =
     layerObject(context, table.layer)?.layer.quality?.default ??
     context.standard.value.quality?.default;
+  const unapplied = (item: Judged) =>
+    judgementOf(context, keeper, item, table.does)?.outcome.kind === "not-applied";
   return table.contract.tableChecks.flatMap((check, index) => {
     const item = {
       path: "quality.table-checks",
@@ -148,14 +151,22 @@ function tableCheckValues(context: Context, table: ResolvedTable, keeper: Judgin
       what: "The table check",
       at: tableAt[index],
     };
-    const unapplied =
-      judgementOf(context, keeper, item, table.does)?.outcome.kind === "not-applied";
+    if (unapplied(item)) return [item];
+    const pattern = countsPattern(check)
+      ? [{ path: "quality.rules", value: "pattern", what: "The pattern rule", at: tableAt[index] }]
+      : [];
     const at =
       (check.action === written ? actionPlace(context, table.layer, "default") : undefined) ??
       tableAt[index];
-    if (unapplied || !at) return [item];
-    return [item, { ...item, what: `The ${check.action} action`, at, feature: check.action }];
+    if (pattern.some(unapplied) || !at) return [item, ...pattern];
+    const action = { ...item, what: `The ${check.action} action`, at, feature: check.action };
+    return [item, ...pattern, action];
   });
+}
+
+/** True when the table check counts values against a pattern: `invalidValues` with a `pattern`. */
+function countsPattern(check: TableCheck): boolean {
+  return check.metric === "invalidValues" && typeof check.arguments.pattern === "string";
 }
 
 function actionOf(action: string, at: Source | undefined): Judged {

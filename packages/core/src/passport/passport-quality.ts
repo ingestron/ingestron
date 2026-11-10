@@ -111,7 +111,7 @@ function checkLines(table: ResolvedTable, unapplied: Map<string, string>, keeps:
     };
   });
   const counts = table.contract.tableChecks.map((item) =>
-    tableCheckLine(table, item, engine, unapplied.get("table-checks")),
+    tableCheckLine(table, item, engine, tableCheckNotApplied(item, unapplied)),
   );
   const kept = [...unapplied]
     .filter(([feature]) => feature === "quarantine" || isResults(feature))
@@ -146,6 +146,18 @@ function tableCheckLine(
     text: `- \`${item.name}\`: ${words}, counted ${engine.counted}; ${effect}.`,
     runs: true,
   };
+}
+
+/**
+ * Why a table check is not enforced: table checks are not applied, else, for one that counts
+ * values against a pattern, the pattern rule kind is not.
+ */
+function tableCheckNotApplied(
+  item: TableCheck,
+  unapplied: Map<string, string>,
+): string | undefined {
+  const pattern = item.metric === "invalidValues" && typeof item.arguments.pattern === "string";
+  return unapplied.get("table-checks") ?? (pattern ? unapplied.get("pattern") : undefined);
 }
 
 /** Why a row check is not enforced: its rule kind, else its action, is not applied. */

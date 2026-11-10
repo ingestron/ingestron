@@ -158,6 +158,12 @@ function usesOf(context: Context, path: string): { pack: string; use: ContractUs
   });
 }
 
+/**
+ * A column's `unique`, which is a table check: judged for each table as it is resolved
+ * (`ruleChecks`), so never here (specification section 7.1).
+ */
+const uniquePath = `${column}.unique`;
+
 /** Warns when every pack that uses the field needs a capability the platform has not turned on. */
 function offCapability(
   context: Context,
@@ -167,6 +173,7 @@ function offCapability(
   uses: { pack: string; use: ContractUse }[],
   readers: Reader[],
 ): boolean {
+  if (path === uniquePath) return false;
   const used = uses.flatMap(({ use }) => (use.use === "used" ? [use] : []));
   const needed = used.map((use) => use.needs).find((id) => id && !isOn(context, id as never));
   if (

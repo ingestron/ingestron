@@ -8,6 +8,7 @@ import {
   nameOf,
   notChecked,
   rulesOf,
+  uniqueOff,
   type Entry,
   type Rule,
   type UncheckedRule,
@@ -73,14 +74,32 @@ export function ruleChecks(context: Context, entry: Entry, { at, checksRun }: Wh
           where,
         );
     });
-    if (property.unique === true && found.checksRun) {
-      found.table.push(
-        uniqueCheck(unique(names, `${property.name}_unique`), property.name, action),
-      );
-      found.tableAt.push({ ...at, pointer: `${own}/unique` });
-    }
+    if (property.unique === true)
+      uniqueOf(context, found, unique(names, `${property.name}_unique`), property.name, {
+        ...at,
+        pointer: `${own}/unique`,
+      });
   });
   return found;
+}
+
+/**
+ * A column's `unique`: its table check when checks run, else `CAPABILITY_OFF` about this
+ * table, never from the field's declarations (section 7.1).
+ */
+function uniqueOf(
+  context: Context,
+  found: ObjectChecks,
+  name: string,
+  column: string,
+  at: Source,
+): void {
+  if (!found.checksRun) {
+    found.unchecked.push(uniqueOff(context, name, at));
+    return;
+  }
+  found.table.push(uniqueCheck(name, column, tableAction(context)));
+  found.tableAt.push(at);
 }
 
 /** A table check runs when checks run; otherwise, or when it cannot be one, the rule warns. */

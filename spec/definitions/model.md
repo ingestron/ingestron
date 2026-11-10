@@ -243,11 +243,18 @@ from another with the same code.
   - an intent value, as coverage keys it (section 11.5): `<path>=<value>`,
     such as `history=full` or `audit=run_id`, or the path alone for a path
     whose value is any text, such as `load.cursor`, or for a setting that
-    decides a whole path (section 11.4);
+    decides a whole path (section 11.4); a table's `quality.results: true` is
+    `quality.results=true` (section 11.6);
   - a rule kind (`notNull`, `in`, `notIn`, `pattern`, `length`, `range`,
     `multipleOf`, `items`), an action (`warn`, `drop`, `fail`),
     `table-checks`, or `expectations` for a check a flow table writes itself
-    (section 11.7);
+    (sections 6 and 11.7); a table check that counts values against a
+    `pattern` is also judged as the rule kind `pattern` (section 11.7);
+  - a cleansing operation, `cleanse.trim`, `cleanse.empty`, `cleanse.map`,
+    `cleanse.case` or `cleanse.default` (section 6.1), a time zone
+    conversion, `cleanse.timezone` (section 6.3), or `deduplicate`
+    (section 6.2);
+  - `quarantine`, for a table's `quality.quarantine` (section 11.7);
   - a contract field path, such as `schema.*.properties.*.encryptedName`
     (section 6).
 
@@ -794,7 +801,11 @@ which those of the table's layer apply (section 11.2).
   warning at the rule (feature `checks`) with a fix that turns checks on:
   `<rule> rule compares a count over all rows, which is checked after each
 refresh only when manage.checks is on.`, where `<rule>` is `"<metric>"` or
-  `A <type>`. A `custom` rule is `QUALITY_RULE_NOT_CHECKED` always: Ingestron
+  `A <type>`. A column's `unique: true` that does not run this way is
+  `CAPABILITY_OFF` at its `unique`, about that table, with the message and
+  hint of a contract field that needs `checks` (section 7.1), and is listed
+  as a rule not checked, named `<column>_unique`. A `custom` rule is
+  `QUALITY_RULE_NOT_CHECKED` always: Ingestron
   does not run other engines. So is any other rule that is neither a check
   of each row nor a table check, such as one with no comparison: it cannot
   be checked as written. A table check fails with the quality `default`
@@ -1258,7 +1269,15 @@ A contract field a pack declares `used` may name the capability it `needs`.
 When a contract that a table uses writes such a field and the capability is
 off, that is `CAPABILITY_OFF`, a warning at the field naming the capability,
 what it needs, and a fix that sets `manage.<capability>: true` in the
-platform. Grants in the platform with `manage.schemas` off are
+platform: `<field> in contract "<id>" is not applied: the platform has
+<title> off.`, with the hint `Turn it on with manage.<capability> in
+platform.yaml. It needs: <needs>.` (the last sentence left out when the
+capability names no needs). A column's `unique` is the exception: it is a
+table check (section 6), so it is judged for each table that uses the
+contract, as table checks are below, whatever the standard's packs declare
+for the field. When table checks do not run for a table, `unique: true` is
+this warning at `unique`, about that table, with `checks` as the capability;
+the field's declarations never report it a second time (case 137d). Grants in the platform with `manage.schemas` off are
 `CAPABILITY_OFF` at `grants`, with the same fix. A contract rule that counts
 over all rows with `manage.checks` off is `CAPABILITY_OFF` at the rule
 (section 6), for a table kept by a pack that declares a `checks` capability.
@@ -2113,8 +2132,13 @@ resolving for deploy (section 1.1). The values judged, in this order, are:
   feature the action, not against the row checks' `quality.actions`. It is
   judged at the layer's or the standard's `quality.default` when the action is
   the one written there, else at the table check's own place. A table check
-  whose `quality.table-checks` is `NOT_APPLIED` is not judged on its action,
-  and an action with no place at all is not judged.
+  whose metric is `invalidValues` with a `pattern` (text) counts the values
+  that do not match it, which needs the same regular expressions as a row
+  check's `pattern`, so after `quality.table-checks` it is also judged as the
+  rule kind `pattern` (`quality.rules`, value `pattern`), at its rule, as
+  `The pattern rule`, with the feature `pattern` (case 140i). A table check
+  whose `quality.table-checks` or `pattern` is `NOT_APPLIED` is not judged on
+  its action, and an action with no place at all is not judged.
 
 Each value is reported as follows, with the subject (section 1.2)
 `{ table, feature }`, `feature` being the rule kind, the action or

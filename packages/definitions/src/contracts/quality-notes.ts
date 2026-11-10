@@ -1,6 +1,6 @@
 // A contract's quality rules that nothing checks, and why (specification
 // section 6): warned where they are written, and kept for the passport.
-import { turnOn, type Context } from "../context/index.js";
+import { turnOn, warnOff, type Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
 import { isRecord } from "../internal/index.js";
 
@@ -92,12 +92,21 @@ export function notChecked(
     return unchecked(name, rule, why);
   }
   warnCount(context, what, at);
-  return unchecked(
-    name,
-    rule,
-    "it counts all rows, which is checked only when the platform turns on checks",
-    "CAPABILITY_OFF",
-  );
+  return unchecked(name, rule, CHECKS_OFF, "CAPABILITY_OFF");
+}
+
+/** Why a count over all rows is not checked: checks are off for the pack that keeps the table. */
+const CHECKS_OFF = "it counts all rows, which is checked only when the platform turns on checks";
+
+/**
+ * A column's `unique: true` that does not run because checks are off: `CAPABILITY_OFF` at
+ * `unique`, about the table being resolved, in the words of a contract field that needs
+ * checks (specification sections 6 and 7.1).
+ */
+export function uniqueOff(context: Context, name: string, at: Source): UncheckedRule {
+  const message = `unique in contract "${at.document.id}" is not applied`;
+  warnOff(context, "checks", message, at.document, at.pointer);
+  return unchecked(name, {}, CHECKS_OFF, "CAPABILITY_OFF");
 }
 
 /**

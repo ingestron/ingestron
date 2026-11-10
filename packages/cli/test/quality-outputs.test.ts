@@ -96,33 +96,30 @@ describe("accepted warnings", () => {
     expect(accepted).toBe(line(qualityProject("synapse")));
   });
 
-  /** An entry for Synapse's notices, which are at a file; Data Factory's has none. */
+  /** An entry for Synapse's notices about transforms, which this project has none of. */
   const atFiles = (files: Record<string, string>) => {
     files["platform.yaml"] +=
-      'accept:\n  - code: PACK_NOTICE\n    about: { file: "transforms/**" }\n    reason: The pattern is checked in Databricks.\n';
+      'accept:\n  - code: PACK_NOTICE\n    about: { file: "transforms/**" }\n    reason: The transforms are reviewed by hand.\n';
   };
 
   it("accepts a pack's notice, which only building the files reports", () => {
-    const pattern = (files: Record<string, string>) => {
-      // A count over all rows with a pattern, which serverless T-SQL cannot count.
-      const rule =
-        "{ name: status, logicalType: string, quality: [{ type: library, metric: invalidValues, arguments: { pattern: '^[A-Z]+$' }, mustBeLessThan: 10 }] }";
-      files["contracts/orders.yaml"] = files["contracts/orders.yaml"]!.replace(
-        "{ name: status, logicalType: string }",
-        () => rule,
+    // A deploy-time value whose name is not upper case, which Azure DevOps would not find.
+    const lowerCase = (files: Record<string, string>) => {
+      files["platform.yaml"] = files["platform.yaml"]!.replace(
+        "data_source: landing",
+        "data_source: ${envvar:synapse_source}",
       );
     };
-    // Bronze is raw, so it counts the table check too, and gets the notice.
-    const shown = ingestron(qualityProject("synapse", pattern), "plan", "--no-diff");
+    const shown = ingestron(qualityProject("synapse", lowerCase), "plan", "--no-diff");
     expect(shown.output).toContain(
-      'synapse: warnings\nflows/crm.yaml:1:1  warning  PACK_NOTICE\n  The table check "status_invalidvalues" isn\'t applied on Synapse: serverless T-SQL has no regular expressions.\n  Check the pattern in a layer another engine keeps, or write the check as a sql table check.\ntransforms/orders_clean.yaml:1:1  warning  PACK_NOTICE',
+      "synapse: warnings\nplatform.yaml:10:1  warning  PACK_NOTICE\n  The deploy-time value ${envvar:synapse_source} is read from the environment variable synapse_source, exactly as written.",
     );
-    const atFlows = (files: Record<string, string>) => {
+    const atPlatform = (files: Record<string, string>) => {
       files["platform.yaml"] +=
-        '  - code: PACK_NOTICE\n    about: { file: "flows/**" }\n    reason: Bronze only counts it.\n';
+        'accept:\n  - code: PACK_NOTICE\n    about: { file: "platform.yaml" }\n    reason: The pipeline maps it with env:.\n';
     };
     const { code, output } = ingestron(
-      qualityProject("synapse", (files) => (pattern(files), atFiles(files), atFlows(files))),
+      qualityProject("synapse", (files) => (lowerCase(files), atPlatform(files))),
       "plan",
       "--no-diff",
     );
@@ -131,7 +128,7 @@ describe("accepted warnings", () => {
     expect(output).not.toContain("ACCEPT_UNUSED");
     // Data Factory's notice is at no file, so the entry does not accept it.
     expect(output).toContain("adf: warnings\n(project)  warning  PACK_NOTICE");
-    expect(output).toContain("\n2 accepted warnings (platform.yaml)\n");
+    expect(output).toContain("\n1 accepted warning (platform.yaml)\n");
   });
 
   it("says an entry for a pack's notice is unused when no notice matches it", () => {

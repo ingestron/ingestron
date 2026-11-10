@@ -69,6 +69,9 @@ methods:
       quality.actions: { use: not-applicable, reason: Rows are not checked one by one. }
       quality.table-checks: { use: used, does: Counts over all rows after each load. }
     settings: { type: object }
+# A column's unique is a table check it runs with nothing to turn on (section 7.1).
+contract:
+  schema.*.properties.*.unique: { use: used, does: Counted over all rows after each load. }
 # What it does with the quality paths (section 11.7). A value it does not list
 # reports nothing.
 intent:
