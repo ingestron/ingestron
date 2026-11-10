@@ -164,7 +164,8 @@ function actionOf(action: string, at: Source | undefined): Judged {
 
 /**
  * When a `used` entry applies its value only in a layer with a duty (`onlyWhere`) that the
- * table's `does` does not list: why it is not applied, and the hint that names the duty.
+ * table's `does` does not list: why it is not applied, and the hint that names the duty. A
+ * `does` of `raw` meets `check`, since its checks count.
  * Undefined when the entry applies it here, or says nothing of a duty.
  */
 export function whereOutcome(
@@ -174,6 +175,8 @@ export function whereOutcome(
   if (use.use !== "used" || use.onlyWhere === undefined) return undefined;
   const duty = use.onlyWhere;
   if (Array.isArray(does) && does.includes(duty)) return undefined;
+  // A raw layer counts its checks: every action there is warn (section 5).
+  if (does === "raw" && duty === "check") return undefined;
   return {
     reason: `it is applied only in a layer whose does lists ${duty}.`,
     hint: `Add \`${duty}\` to the layer's \`does\` to apply it here.`,

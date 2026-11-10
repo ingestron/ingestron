@@ -108,8 +108,17 @@ describe("onlyWhere", () => {
     expect(whereOutcome(used, ["cleanse", "check"])).toBeUndefined();
   });
 
-  it("does not apply it in a layer without the duty, a raw layer, or one with no duties", () => {
-    const layers: ResolvedTable["does"][] = [["cleanse"], "raw", undefined];
+  it("applies check in a raw layer, whose checks count, and no other duty there", () => {
+    expect(whereOutcome(used, "raw")).toBeUndefined();
+    const cleanse = { ...used, onlyWhere: "cleanse" as const };
+    expect(whereOutcome(cleanse, "raw")).toEqual({
+      reason: "it is applied only in a layer whose does lists cleanse.",
+      hint: "Add `cleanse` to the layer's `does` to apply it here.",
+    });
+  });
+
+  it("does not apply it in a layer without the duty, or one with no duties", () => {
+    const layers: ResolvedTable["does"][] = [["cleanse"], undefined];
     for (const does of layers) {
       expect(whereOutcome(used, does)).toEqual({
         reason: "it is applied only in a layer whose does lists check.",

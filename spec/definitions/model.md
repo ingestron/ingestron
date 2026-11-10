@@ -717,7 +717,10 @@ standard that gives none.
   column's, the standard's `quality.default` and `quality.required`, a flow
   table's or transform's own, and a table check's. The table keeps every
   row, and its checks count. A default is never an error here; it only
-  becomes `warn`.
+  becomes `warn`. A pack that counts checks only where a layer checks
+  (`onlyWhere: check`, section 11.7) counts them in a `raw` layer too: there
+  every action is `warn`, so counting is all `check` asks. A list that leaves
+  out `check` has no such meaning, and its checks are not counted there.
 - **`LAYER_RESPONSIBILITY`.** A setting that asks for a duty the table's
   layer does not do is an error at the setting, whenever the table has
   `does` and it does not list the duty: `drop` or `fail` written as the
@@ -1942,7 +1945,8 @@ entry is one of:
   `checked` the date it was checked and `source` the page that says so.
   `onlyWhere`, optional, is one of the layer duties `check`, `cleanse`,
   `deduplicate` and `quarantine`: the pack applies it only in a layer whose
-  `does` lists that duty. It is read only for the paths of section 11.7.
+  `does` lists that duty, or, for `check`, whose `does` is `raw` (section 5).
+  It is read only for the paths of section 11.7.
   `zonesNotApplied`, optional, is read only on the entry for
   `cleanse.timezone`: the zones the pack cannot convert from or to, each with
   its reason, such as `{ Antarctica/Troll: Windows has no zone for
@@ -2125,7 +2129,10 @@ Each value is reported as follows, with the subject (section 1.2)
   (its layer's duties) does not list that duty, `NOT_APPLIED` the same way,
   with the reason `it is applied only in a layer whose does lists <duty>.`
   and the hint ``Add `<duty>` to the layer's `does` to apply it here.``
-  A table whose layer gives no duties lists none;
+  A table whose layer gives no duties lists none. A `does` of `raw` meets
+  `onlyWhere: check`: its checks count, each with the action `warn`
+  (section 5), so a pack that counts checks where a layer checks counts them
+  there too (case 140h);
 - when the entry found is `used` with a `status` whose `level` is `preview`,
   and the standard says `features: ga`, `PREVIEW_FEATURE` as section 11.5
   says, with `The <kind> rule`, `The <action> action` or `The table check`

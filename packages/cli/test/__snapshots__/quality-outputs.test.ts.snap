@@ -254,54 +254,7 @@ exports[`a medallion project on duckdb > compares each table's cleansing, time z
 `;
 
 exports[`a medallion project on duckdb > plans with errors, then warnings, then what is not applied on this platform 1`] = `
-"Not applied on this platform
-dev:
-contracts/customers.yaml:11:53  warning  NOT_APPLIED
-  The notNull rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:14:19  warning  NOT_APPLIED
-  The notNull rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:40:63  warning  NOT_APPLIED
-  The notNull rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:15:42  warning  NOT_APPLIED
-  The length rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:15:54  warning  NOT_APPLIED
-  The pattern rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:16:77  warning  NOT_APPLIED
-  The length rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:20:13  warning  NOT_APPLIED
-  The in rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:27:13  warning  NOT_APPLIED
-  The notIn rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:31:75  warning  NOT_APPLIED
-  The range rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:32:80  warning  NOT_APPLIED
-  The multipleOf rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:36:41  warning  NOT_APPLIED
-  The items rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:42:9  warning  NOT_APPLIED
-  The table check isn't applied on duckdb: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/orders.yaml:11:53  warning  NOT_APPLIED
-  The notNull rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/orders.yaml:12:62  warning  NOT_APPLIED
-  The notNull rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/orders.yaml:15:63  warning  NOT_APPLIED
-  The notNull rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-duckdb → build/duckdb (dev)
+"duckdb → build/duckdb (dev)
 create    dev/README.md
 create    dev/run.sql
 create    dev/tables/bronze.customers.sql
@@ -325,23 +278,23 @@ exports[`a medallion project on duckdb > says in its passport what each check do
 
 #### \`crm.bronze.customers\`
 
-None of these checks runs here.
+Checked by DuckDB each time \`run.sql\` runs. Results: the run prints each check's failing rows (in Azure, in the job's log).
 
-- \`id_not_null\`: \`id\` has a value. Not enforced: it is applied only in a layer whose does lists check.
-- \`email_not_null\`: \`email\` has a value. Not enforced: it is applied only in a layer whose does lists check.
-- \`updated_at_not_null\`: \`updated_at\` has a value. Not enforced: it is applied only in a layer whose does lists check.
-- \`email_min_length\`: \`email\` has at least 3 characters. Not enforced: it is applied only in a layer whose does lists check.
-- \`email_pattern\`: \`email\` matches \`^[^@]+@[^@]+$\`. Not enforced: it is applied only in a layer whose does lists check.
-- \`name_max_length\`: \`name\` has at most 100 characters. Not enforced: it is applied only in a layer whose does lists check.
-- \`country_invalidvalues\`: \`country\` is one of \`GB\`, \`IE\` or \`FR\`, or has no value. Not enforced: it is applied only in a layer whose does lists check.
-- \`status_missingvalues\`: \`status\` has a value and is not \`n/a\`. Not enforced: it is applied only in a layer whose does lists check.
-- \`age_minimum\`: \`age\` is at least 0. Not enforced: it is applied only in a layer whose does lists check.
-- \`age_exclusive_maximum\`: \`age\` is less than 150. Not enforced: it is applied only in a layer whose does lists check.
-- \`score_multiple_of\`: \`score\` is a multiple of 5. Not enforced: it is applied only in a layer whose does lists check.
-- \`tags_min_items\`: \`tags\` has at least 1 item. Not enforced: it is applied only in a layer whose does lists check.
-- \`tags_max_items\`: \`tags\` has at most 5 items. Not enforced: it is applied only in a layer whose does lists check.
-- \`tags_unique_items\`: \`tags\` has items that are all different. Not enforced: it is applied only in a layer whose does lists check.
-- \`some_customers\`: the number of rows is more than 0. Not enforced: it is applied only in a layer whose does lists check.
+- \`id_not_null\`: \`id\` has a value; counted only: bronze keeps raw rows.
+- \`email_not_null\`: \`email\` has a value; counted only: bronze keeps raw rows.
+- \`updated_at_not_null\`: \`updated_at\` has a value; counted only: bronze keeps raw rows.
+- \`email_min_length\`: \`email\` has at least 3 characters; counted only: bronze keeps raw rows.
+- \`email_pattern\`: \`email\` matches \`^[^@]+@[^@]+$\`; counted only: bronze keeps raw rows.
+- \`name_max_length\`: \`name\` has at most 100 characters; counted only: bronze keeps raw rows.
+- \`country_invalidvalues\`: \`country\` is one of \`GB\`, \`IE\` or \`FR\`, or has no value; counted only: bronze keeps raw rows.
+- \`status_missingvalues\`: \`status\` has a value and is not \`n/a\`; counted only: bronze keeps raw rows.
+- \`age_minimum\`: \`age\` is at least 0; counted only: bronze keeps raw rows.
+- \`age_exclusive_maximum\`: \`age\` is less than 150; counted only: bronze keeps raw rows.
+- \`score_multiple_of\`: \`score\` is a multiple of 5; counted only: bronze keeps raw rows.
+- \`tags_min_items\`: \`tags\` has at least 1 item; counted only: bronze keeps raw rows.
+- \`tags_max_items\`: \`tags\` has at most 5 items; counted only: bronze keeps raw rows.
+- \`tags_unique_items\`: \`tags\` has items that are all different; counted only: bronze keeps raw rows.
+- \`some_customers\`: the number of rows is more than 0, counted after the table is built, in the same run; counted only: bronze keeps raw rows.
 - \`one_per_person\`: Each person is one customer. Not checked: it is written for people to follow.
 
 Cleansing:
@@ -388,11 +341,11 @@ Cleansing:
 
 #### \`crm.bronze.orders\`
 
-None of these checks runs here.
+Checked by DuckDB each time \`run.sql\` runs. Results: the run prints each check's failing rows (in Azure, in the job's log).
 
-- \`id_not_null\`: \`id\` has a value. Not enforced: it is applied only in a layer whose does lists check.
-- \`customer_id_not_null\`: \`customer_id\` has a value. Not enforced: it is applied only in a layer whose does lists check.
-- \`updated_at_not_null\`: \`updated_at\` has a value. Not enforced: it is applied only in a layer whose does lists check.
+- \`id_not_null\`: \`id\` has a value; counted only: bronze keeps raw rows.
+- \`customer_id_not_null\`: \`customer_id\` has a value; counted only: bronze keeps raw rows.
+- \`updated_at_not_null\`: \`updated_at\` has a value; counted only: bronze keeps raw rows.
 
 Cleansing:
 
@@ -582,49 +535,10 @@ exports[`a medallion project on synapse > plans with errors, then warnings, then
   Before the first deployment to a factory that already has these integration runtimes, run \`az deployment group what-if\` with the template and that environment's parameter file, and check that it changes no runtime in a way you did not describe.
 Not applied on this platform
 dev, prod:
-contracts/customers.yaml:11:53  warning  NOT_APPLIED
-  The notNull rule isn't applied on synapse: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:14:19  warning  NOT_APPLIED
-  The notNull rule isn't applied on synapse: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:39:63  warning  NOT_APPLIED
-  The notNull rule isn't applied on synapse: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:15:42  warning  NOT_APPLIED
-  The length rule isn't applied on synapse: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
 contracts/customers.yaml:15:54  warning  NOT_APPLIED
   The pattern rule isn't applied on synapse: serverless T-SQL has no regular expressions.
-contracts/customers.yaml:16:77  warning  NOT_APPLIED
-  The length rule isn't applied on synapse: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:20:13  warning  NOT_APPLIED
-  The in rule isn't applied on synapse: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:27:13  warning  NOT_APPLIED
-  The notIn rule isn't applied on synapse: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:31:75  warning  NOT_APPLIED
-  The range rule isn't applied on synapse: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/customers.yaml:32:80  warning  NOT_APPLIED
-  The multipleOf rule isn't applied on synapse: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
 contracts/customers.yaml:35:41  warning  NOT_APPLIED
   The items rule isn't applied on synapse: views type no arrays.
-contracts/customers.yaml:41:9  warning  NOT_APPLIED
-  The table check isn't applied on synapse: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/orders.yaml:11:53  warning  NOT_APPLIED
-  The notNull rule isn't applied on synapse: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/orders.yaml:12:62  warning  NOT_APPLIED
-  The notNull rule isn't applied on synapse: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
-contracts/orders.yaml:15:63  warning  NOT_APPLIED
-  The notNull rule isn't applied on synapse: it is applied only in a layer whose does lists check.
-  Add \`check\` to the layer's \`does\` to apply it here.
 transforms/customers_clean.yaml:18:68  warning  NOT_APPLIED
   The fail action isn't applied on synapse: a view can't stop a load; checks.sql checks this rule and raises an error when it runs.
 standard.yaml:15:15  warning  NOT_APPLIED
@@ -671,23 +585,23 @@ exports[`a medallion project on synapse > says in its passport what each check d
 
 #### \`crm_dev.bronze.customers\`
 
-None of these checks runs here.
+Checked by Synapse serverless SQL: the view leaves out the rows a \`drop\` check fails each time it is queried, and \`checks.sql\` counts every check when it runs. Results: what \`checks.sql\` returns; nothing keeps them.
 
-- \`id_not_null\`: \`id\` has a value. Not enforced: it is applied only in a layer whose does lists check.
-- \`email_not_null\`: \`email\` has a value. Not enforced: it is applied only in a layer whose does lists check.
-- \`updated_at_not_null\`: \`updated_at\` has a value. Not enforced: it is applied only in a layer whose does lists check.
-- \`email_min_length\`: \`email\` has at least 3 characters. Not enforced: it is applied only in a layer whose does lists check.
+- \`id_not_null\`: \`id\` has a value; counted only: bronze keeps raw rows.
+- \`email_not_null\`: \`email\` has a value; counted only: bronze keeps raw rows.
+- \`updated_at_not_null\`: \`updated_at\` has a value; counted only: bronze keeps raw rows.
+- \`email_min_length\`: \`email\` has at least 3 characters; counted only: bronze keeps raw rows.
 - \`email_pattern\`: \`email\` matches \`^[^@]+@[^@]+$\`. Not enforced: serverless T-SQL has no regular expressions.
-- \`name_max_length\`: \`name\` has at most 100 characters. Not enforced: it is applied only in a layer whose does lists check.
-- \`country_invalidvalues\`: \`country\` is one of \`GB\`, \`IE\` or \`FR\`, or has no value. Not enforced: it is applied only in a layer whose does lists check.
-- \`status_missingvalues\`: \`status\` has a value and is not \`n/a\`. Not enforced: it is applied only in a layer whose does lists check.
-- \`age_minimum\`: \`age\` is at least 0. Not enforced: it is applied only in a layer whose does lists check.
-- \`age_exclusive_maximum\`: \`age\` is less than 150. Not enforced: it is applied only in a layer whose does lists check.
-- \`score_multiple_of\`: \`score\` is a multiple of 5. Not enforced: it is applied only in a layer whose does lists check.
+- \`name_max_length\`: \`name\` has at most 100 characters; counted only: bronze keeps raw rows.
+- \`country_invalidvalues\`: \`country\` is one of \`GB\`, \`IE\` or \`FR\`, or has no value; counted only: bronze keeps raw rows.
+- \`status_missingvalues\`: \`status\` has a value and is not \`n/a\`; counted only: bronze keeps raw rows.
+- \`age_minimum\`: \`age\` is at least 0; counted only: bronze keeps raw rows.
+- \`age_exclusive_maximum\`: \`age\` is less than 150; counted only: bronze keeps raw rows.
+- \`score_multiple_of\`: \`score\` is a multiple of 5; counted only: bronze keeps raw rows.
 - \`tags_min_items\`: \`tags\` has at least 1 item. Not enforced: views type no arrays.
 - \`tags_max_items\`: \`tags\` has at most 5 items. Not enforced: views type no arrays.
 - \`tags_unique_items\`: \`tags\` has items that are all different. Not enforced: views type no arrays.
-- \`some_customers\`: the number of rows is more than 0. Not enforced: it is applied only in a layer whose does lists check.
+- \`some_customers\`: the number of rows is more than 0, counted by \`checks.sql\`, over the rows the view keeps; counted only: bronze keeps raw rows.
 - \`one_per_person\`: Each person is one customer. Not checked: it is written for people to follow.
 
 Cleansing:
@@ -736,11 +650,11 @@ Cleansing:
 
 #### \`crm_dev.bronze.orders\`
 
-None of these checks runs here.
+Checked by Synapse serverless SQL: the view leaves out the rows a \`drop\` check fails each time it is queried, and \`checks.sql\` counts every check when it runs. Results: what \`checks.sql\` returns; nothing keeps them.
 
-- \`id_not_null\`: \`id\` has a value. Not enforced: it is applied only in a layer whose does lists check.
-- \`customer_id_not_null\`: \`customer_id\` has a value. Not enforced: it is applied only in a layer whose does lists check.
-- \`updated_at_not_null\`: \`updated_at\` has a value. Not enforced: it is applied only in a layer whose does lists check.
+- \`id_not_null\`: \`id\` has a value; counted only: bronze keeps raw rows.
+- \`customer_id_not_null\`: \`customer_id\` has a value; counted only: bronze keeps raw rows.
+- \`updated_at_not_null\`: \`updated_at\` has a value; counted only: bronze keeps raw rows.
 
 Cleansing:
 
