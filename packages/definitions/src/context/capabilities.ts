@@ -44,7 +44,8 @@ export function checksRun(context: Context, pack: string | undefined): boolean {
 }
 
 /**
- * Warns where something uses a capability that is off, at `pointer` in `document`; `table` is
+ * Warns where something uses a capability that is off, at `pointer` in `document` (without a
+ * place when the document is not known); `table` is
  * the one table the warning is about, when it is about one, and `pack` the pack whose
  * section turns it on, when it is turned on per pack.
  */
@@ -52,7 +53,7 @@ export function warnOff(
   context: Context,
   id: Id,
   message: string,
-  document: DefinitionDocument,
+  document: DefinitionDocument | undefined,
   pointer: string,
   table?: string,
   pack?: string,
@@ -63,7 +64,7 @@ export function warnOff(
   context.reporter.warning(
     "CAPABILITY_OFF",
     `${message}: the platform has ${capability?.title ?? id} off.`,
-    { document, pointer },
+    document && { document, pointer },
     `Turn it on with ${field} in platform.yaml.${needs}`,
     fixes,
     { ...(table !== undefined && { table }), feature: id },

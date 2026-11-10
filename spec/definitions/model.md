@@ -1608,14 +1608,15 @@ Every role is judged, whatever its `access`: a role whose `access` is neither
 name for a function) or `The filter "<name>"`. `<tables>` is `table "<name>"`,
 or `tables "<name>", "<name>"…` in the order of the tables. A declaring line
 gives one warning for each code, feature, pack and reason in an environment,
-naming every table it is about; its subject (section 1.2) has the feature, and
+naming every table it is about, at no place when the declaring line is not
+known; its subject (section 1.2) has the feature, and
 the `table` only when it names one table. Each table it names has the feature in
 its `notApplied` (section 11.7), with the `column` for a mask.
 
 The errors below are judged only for a pack that keeps a table in the
-environment that has a mask with `masks` on, or a filter with `filters` on, for
-that pack: a switch that no table uses needs nothing. Each is reported once, at the
-pack's `manage.masks` (at `manage.filters` when masks are off), where the
+environment to which it applies a mask or a filter (its coverage uses it and
+its switch is on, above): a switch that applies nothing needs nothing. Each is
+reported once, at the pack's `manage.masks` (at `manage.filters` when masks are off), where the
 Platform writes it:
 
 - `MASK_NEEDS_RUN_AS`: the pack's section gives no `run_as` (for `databricks`,

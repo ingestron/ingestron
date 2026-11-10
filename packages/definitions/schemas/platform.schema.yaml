@@ -291,7 +291,7 @@ properties:
         type: boolean
         description:
           "Filter the rows of tables with a column that one of the standard's row filters matches,
-          with a policy on each schema or table. Default: false."
+          with a policy on each schema or table. Needs tags. Default: false."
     description: Shared resources and metadata this bundle manages. Each needs privileges on the platform.
   grants:
     type: object

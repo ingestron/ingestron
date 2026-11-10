@@ -16,6 +16,15 @@ methods:
     accepts: [files]
     produces: table
     settings: { type: object }
+  uc-view:
+    action: store
+    description: Keeps the table as a view, which masks no columns.
+    accepts: [files]
+    produces: table
+    settings: { type: object }
+    # What differs on this method from the pack's coverage (section 11.5).
+    intent:
+      access.masks: { use: not-applicable, reason: A view here masks no columns. }
 platformSection:
   type: object
   additionalProperties: false

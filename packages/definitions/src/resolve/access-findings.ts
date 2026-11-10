@@ -50,17 +50,10 @@ function reportGroup(context: Context, group: Finding[]): void {
   const named = tables.length === 1 ? `table "${tables[0]}"` : `tables ${quoted(tables)}`;
   const table = tables.length === 1 ? tables[0] : undefined;
   if (first.code === "CAPABILITY_OFF") {
-    if (!first.at) return;
+    // Without a known declaring line it is reported without a place, as NOT_APPLIED is.
+    const { document, pointer = "" } = first.at ?? {};
     const message = `${first.what} in ${named} is not applied`;
-    warnOff(
-      context,
-      first.capability,
-      message,
-      first.at.document,
-      first.at.pointer,
-      table,
-      first.pack,
-    );
+    warnOff(context, first.capability, message, document, pointer, table, first.pack);
     return;
   }
   const reason = first.reason ?? "";

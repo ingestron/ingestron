@@ -16,7 +16,7 @@ const tagged = { masks: "Masks", filters: "Row filters" } as const;
 
 /**
  * Checks what each pack's masks and filters need: tags for each switch that is on, and the
- * rest only when a table the pack keeps has a mask or filter whose switch is on.
+ * rest only when the pack applies a mask or filter to a table it keeps.
  */
 export function checkPolicies(context: Context, judged: JudgedTable[]): void {
   for (const pack of context.packs) {
@@ -24,16 +24,16 @@ export function checkPolicies(context: Context, judged: JudgedTable[]): void {
       if (pack.capabilities?.some((capability) => capability.id === id))
         checkTags(context, pack.id, id);
     const kept = judged.filter((item) => item.keeper.pack === pack.id);
-    if (kept.some((item) => usesSwitchOn(context, pack.id, item)))
-      checkPack(context, pack.id, kept);
+    if (kept.some(appliesAny)) checkPack(context, pack.id, kept);
   }
 }
 
-/** True when the table has a mask with masks on, or a filter with filters on, for the pack. */
-function usesSwitchOn(context: Context, pack: string, { table }: JudgedTable): boolean {
-  const access = table.access;
-  const masked = (access?.masks.length ?? 0) > 0 && isOn(context, "masks", pack);
-  return masked || ((access?.filters.length ?? 0) > 0 && isOn(context, "filters", pack));
+/**
+ * True when the pack applies a mask or filter to the table: its coverage uses it and its
+ * switch is on. A switch that applies nothing needs nothing.
+ */
+function appliesAny({ masks, filters }: JudgedTable): boolean {
+  return masks.length + filters.length > 0;
 }
 
 /** Masks and filters match columns by their tags, so each needs tags on. */
@@ -67,10 +67,8 @@ function checkPack(context: Context, pack: string, kept: JudgedTable[]): void {
       at,
       `Give ${pack}.governance.functions, such as \${values.governance_schema}.`,
     );
-  if (kept.some((item) => item.masks.length + item.filters.length > 0)) {
-    checkPrincipals(context, pack, section);
-    checkLimits(context, pack, kept);
-  }
+  checkPrincipals(context, pack, section);
+  checkLimits(context, pack, kept);
 }
 
 /** The pack's section; for databricks, with the fields that moved into it read as the model has them. */
