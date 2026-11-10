@@ -190,7 +190,12 @@ and prints the values to replace instead. The README has, in order:
 3. **Values to replace before deploying**: a row for each name that is still
    `REPLACE_ME`, with each `file:line`, what it is (the comment above it),
    where to find it (the setting's `find`, else the connector's
-   documentation) and its environments (`all` for a value written once). The
+   documentation) and its environments (`all` for a value written once). For
+   a kit, a value in the Platform, or a project.yaml value a Platform field
+   reads as its whole value, takes that field's `find` from the field
+   reference: a pack's section field (`databricks.run_as.service_principal_name`)
+   or the Platform's own (`alerts[].to[]`), as the editor's hover shows it.
+   Other projects keep "Your platform team" there. The
    rows are the project's `REPLACE_ME` diagnostics, so they match `plan`.
    With none, "Nothing to replace: the project runs as written.", or, when
    every environment is resolved with the host's values only ([output

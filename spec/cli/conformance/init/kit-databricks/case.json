@@ -1,5 +1,5 @@
 {
-  "description": "The Databricks kit, in the folder sales: its project.yaml with the project id, and the values it leaves as REPLACE_ME counted",
+  "description": "The Databricks kit, in the folder sales: its project.yaml with the project id, the values it leaves as REPLACE_ME counted, and README.md saying where to find each from the field reference",
   "args": ["init", "sales", "--kit", "databricks/lakehouse-streaming@2026-11-10"],
   "date": "2026-11-10",
   "folder": "sales",

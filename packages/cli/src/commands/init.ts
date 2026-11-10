@@ -165,7 +165,7 @@ function create(
   const plan = { command: "plan" as const, environments: [], diffs: false };
   const where = { definitions: target, out: join(target, "build") };
   const code = generate({ ...options, ...plan, ...where }, io, packs, generated);
-  io.write(stillToReplace(files, generated, kept));
+  io.write(stillToReplace(files, generated, kept, source.kit !== undefined));
   return code;
 }
 

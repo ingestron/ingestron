@@ -32,13 +32,14 @@ export interface ReadmeFacts {
  */
 export function projectReadme(facts: ReadmeFacts): string {
   const { files, generated } = facts;
+  const kit = facts.kit !== undefined;
   const factory = throughDataFactory(files);
   return [
     `# ${facts.project}`,
     introduction(facts),
     "## Run it\n\n```sh\ningestron plan     # what would be generated, and what is still REPLACE_ME\ningestron apply    # writes the files under build/\n```",
-    valuesSection(replaceRows(files, generated), local(generated), factory),
-    checkSection(checkRows(files, generated)),
+    valuesSection(replaceRows(files, generated, kit), local(generated), factory),
+    checkSection(checkRows(files, generated, kit)),
     secretsSection(secretRows(files), files),
     deploySection(generated.outputs),
     askSection(generated),

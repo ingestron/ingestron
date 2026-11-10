@@ -1,0 +1,8 @@
+{
+  "description": "The retail starter, in the folder shop: its README says each Platform value is found with the platform team, as before kits, since only a kit project's README takes where to find a value from the field reference",
+  "args": ["init", "shop", "--template", "retail", "--yes"],
+  "date": "2026-11-10",
+  "folder": "shop",
+  "exit": 0,
+  "lastLine": "6 values are still REPLACE_ME: README.md lists each one and where to find it."
+}
