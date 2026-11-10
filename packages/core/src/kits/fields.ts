@@ -6,7 +6,10 @@ import { compareVersions, versionForms, versionProblem } from "./version.js";
 const idPattern = /^[a-z][a-z0-9]*(-[a-z0-9]+)*\/[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 const packPattern = /^[a-z][a-z0-9-]*@\d+$/;
 
-/** Whether a text is `<platform>/<name>` in lower-case words. */
+/**
+ * Whether a text is `<platform>/<name>` in lower-case words.
+ * @internal
+ */
 export const isId = (id: string): boolean => idPattern.test(id);
 
 /**

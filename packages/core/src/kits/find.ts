@@ -67,25 +67,41 @@ export function installedKits(root?: string): Kit[] {
 
 const forms = "A kit is named <id>, <id>@<version> or <git-url>#<path>@<tag>.";
 
+/**
+ * The text with any `user:password@` after `//` taken out, for messages: a URL is never shown
+ * with the user name and password it may hold. The password may itself hold `@`.
+ * @internal
+ */
+export function withoutCredentials(text: string): string {
+  return text.replace(/(\/\/)[^/?#\s]*@/g, "$1");
+}
+
+/** A git URL rather than a kit id: it has `://`, starts `<user>@<host>:`, or ends `.git`. */
+function looksLikeGitUrl(spec: string): boolean {
+  return spec.includes("://") || /^[\w.-]+@[\w.-]+:/.test(spec) || spec.endsWith(".git");
+}
+
 function gitSpec(spec: string, hash: number): { url: string; path: string; tag: string } {
   const url = spec.slice(0, hash);
   const rest = spec.slice(hash + 1);
   const at = rest.indexOf("@");
+  const shown = withoutCredentials(spec);
   if (url === "")
-    throw new Error(`The kit "${spec}" needs a git URL before the "#": <git-url>#<path>@<tag>.`);
+    throw new Error(`The kit "${shown}" needs a git URL before the "#": <git-url>#<path>@<tag>.`);
   if (at < 0 || at === rest.length - 1)
-    throw new Error(`The kit "${spec}" needs a tag after the folder: <git-url>#<path>@<tag>.`);
+    throw new Error(`The kit "${shown}" needs a tag after the folder: <git-url>#<path>@<tag>.`);
   if (at === 0)
     throw new Error(
-      `The kit "${spec}" needs the kit's folder before the tag: <git-url>#<path>@<tag>.`,
+      `The kit "${shown}" needs the kit's folder before the tag: <git-url>#<path>@<tag>.`,
     );
   return { url, path: rest.slice(0, at), tag: rest.slice(at + 1) };
 }
 
 /**
  * Reads what a command is given to name a kit: `<id>@<version>`, `<id>` alone (the newest
- * installed version), or `<git-url>#<path>@<tag>`. The path ends at the first `@` after the
- * `#`, so a tag may itself contain `@`. Throws an Error that shows the forms.
+ * version that is not a preview), or `<git-url>#<path>@<tag>`. The path ends at the first `@`
+ * after the `#`, so a tag may itself contain `@`. Throws an Error that shows the forms; a spec
+ * is shown without the user name and password a URL may hold.
  * @public
  */
 export function parseKitSpec(
@@ -97,6 +113,10 @@ export function parseKitSpec(
     );
   const hash = spec.indexOf("#");
   if (hash >= 0) return gitSpec(spec, hash);
+  if (looksLikeGitUrl(spec))
+    throw new Error(
+      `The kit "${withoutCredentials(spec)}" is a git URL; add the kit's folder and tag: <git-url>#<path>@<tag>.`,
+    );
   const at = spec.indexOf("@");
   const id = at < 0 ? spec : spec.slice(0, at);
   if (!isId(id))
@@ -107,7 +127,7 @@ export function parseKitSpec(
   const version = spec.slice(at + 1);
   if (versionProblem(version) !== undefined)
     throw new Error(
-      `The version "${version}" in "${spec}" is not a date. Use YYYY-MM-DD, or YYYY-MM-DD-preview.`,
+      `The version "${version}" in "${withoutCredentials(spec)}" is not a date. Use YYYY-MM-DD, or YYYY-MM-DD-preview.`,
     );
   return { id, version };
 }

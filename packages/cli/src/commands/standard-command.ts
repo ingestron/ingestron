@@ -8,12 +8,14 @@ import { generateAll, installedKits, packs, type Kit } from "@ingestron/core";
 import {
   compareVersions,
   environmentReportsText,
+  isId,
   kitFiles,
   packReportsText,
+  versionProblem,
 } from "@ingestron/core/internal";
 import type { Io, Options } from "../terminal/index.js";
 import { projectStandard, type ProjectStandard } from "./project-standard.js";
-import { catalogueKits, kitSource, refuseNewer } from "./sources.js";
+import { catalogueKits, kitSource, refuseNewer } from "./kit-source.js";
 
 /** Runs `standard install` or `standard list`. Returns the exit code. */
 export function standard(options: Options, io: Io): number {
@@ -36,8 +38,9 @@ function install(options: Options, io: Io, spec: string): number {
     throw new Error(
       `${own.file} has changes that are not committed; commit them first so git diff shows only the new standard.`,
     );
-  const { kit, done } = kitSource(spec, io.cwd);
+  const { kit, done, note } = kitSource(spec, io.cwd);
   try {
+    if (note) io.write(`${note}\n\n`);
     refuseNewer(kit);
     const text = readFileSync(join(kit.folder, "standard.yaml"), "utf8");
     writeFileSync(join(folder, own.file), withId(text, own.id));
@@ -86,7 +89,8 @@ function withId(text: string, id: string | undefined): string {
 function notApplied(kit: Kit, origin: ProjectStandard["origin"], cwd: string): string {
   const unavailable =
     "Not applied: the earlier version is not available, so the kit's other files cannot be compared.\n";
-  if (!origin) return unavailable;
+  if (!origin || !isId(origin.standard) || versionProblem(origin.version) !== undefined)
+    return unavailable;
   try {
     const changed = changedSince(kit, origin, cwd);
     if (changed.length === 0)
@@ -126,11 +130,20 @@ function changedFiles(
   return [...paths].filter((path) => !same(path)).sort(codePoints);
 }
 
-/** The project's problems with the new standard, as plan prints them; empty when it builds. */
+/**
+ * The project's problems with the new standard, as plan prints them; empty when it builds. The
+ * file is already written, so when building stops on an error, one line says so instead.
+ */
 function newProblems(folder: string): string {
-  const generated = generateAll(nodeFiles(folder), packs, process.env, "warning");
-  if (!generated.resolved) return environmentReportsText(generated.environmentReports);
-  return generated.ok ? "" : packReportsText(generated.packReports);
+  try {
+    const generated = generateAll(nodeFiles(folder), packs, process.env, "warning");
+    if (!generated.resolved) return environmentReportsText(generated.environmentReports);
+    return generated.ok ? "" : packReportsText(generated.packReports);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    const ended = /[.!?]$/.test(reason.trim()) ? reason.trim() : `${reason.trim()}.`;
+    return `Could not list the project's problems with the new standard: ${ended} Run ingestron plan to see them.\n`;
+  }
 }
 
 /** Every kit, installed first, then those only in the catalogue (spec/cli/kits.md). */

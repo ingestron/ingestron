@@ -16,7 +16,8 @@ import { environmentReportsText } from "@ingestron/core/internal";
 import { nameProblem, projectId } from "@ingestron/core";
 import { ignoredText, writeScaffold, type Answers } from "@ingestron/core/internal";
 import { kitFiles, kitTemplate } from "@ingestron/core/internal";
-import { kitSource, refuseNewer, standardSource, templateSource } from "./sources.js";
+import { kitSource, refuseNewer } from "./kit-source.js";
+import { standardSource, templateSource } from "./sources.js";
 
 /** Asks one question; `check` explains an answer that is not valid, and the question is asked again. */
 type Ask = (
@@ -54,8 +55,9 @@ export function init(options: Options, io: Io): number {
  * does not use.
  */
 function kitProject(options: Options, io: Io, cleanups: (() => void)[]): Source {
-  const { kit, done } = kitSource(options.init.kit!, io.cwd);
+  const { kit, done, note } = kitSource(options.init.kit!, io.cwd);
   cleanups.push(done);
+  if (note) io.write(`${note}\n`);
   refuseNewer(kit);
   const { connector, via, connectivity } = options.init;
   if (!connector && !via && !connectivity)

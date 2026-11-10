@@ -1,5 +1,13 @@
 // Kits: the conformance cases in spec/cli/conformance/kits/cases.json, and the version range check.
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
@@ -12,8 +20,11 @@ interface Broken {
   edits?: Record<string, [string, string][]>;
   files?: Record<string, string>;
   remove?: string[];
+  folders?: string[];
+  links?: Record<string, string>;
   place?: string;
-  error: string;
+  error?: string;
+  errorStarts?: string;
 }
 
 const conformance = resolve(import.meta.dirname, "../../../spec/cli/conformance/kits");
@@ -47,7 +58,38 @@ function build(item: Broken): { root: string; folder: string } {
     writeFileSync(join(folder, file), text);
   }
   for (const file of item.remove ?? []) rmSync(join(folder, file));
+  replaceFiles(folder, item);
   return { root, folder };
+}
+
+/** Each of the case's `folders` made a folder, and each of its `links` a symbolic link. */
+function replaceFiles(folder: string, item: Broken): void {
+  for (const file of item.folders ?? []) {
+    rmSync(join(folder, file));
+    mkdirSync(join(folder, file));
+  }
+  for (const [file, target] of Object.entries(item.links ?? {})) {
+    rmSync(join(folder, file));
+    symlinkSync(target, join(folder, file));
+  }
+}
+
+/** The message `body` throws. */
+function thrown(body: () => unknown): string {
+  try {
+    body();
+  } catch (error) {
+    return (error as Error).message;
+  }
+  throw new Error("Nothing was thrown.");
+}
+
+/** Checks the message against the case: exactly `error`, or starting with `errorStarts`. */
+function expectMessage(message: string, item: Broken): void {
+  if (item.errorStarts !== undefined) {
+    expect(message.startsWith(item.errorStarts), message).toBe(true);
+    expect(message.length).toBeGreaterThan(item.errorStarts.length);
+  } else expect(message).toBe(item.error);
 }
 
 describe("readKit", () => {
@@ -59,8 +101,9 @@ describe("readKit", () => {
   for (const item of cases.broken) {
     it(`refuses: ${item.name}`, () => {
       const { root, folder } = build(item);
-      expect(() => (item.place ? readKit(folder, root) : readKit(folder))).toThrow(
-        new Error(item.error),
+      expectMessage(
+        thrown(() => (item.place ? readKit(folder, root) : readKit(folder))),
+        item,
       );
     });
   }
@@ -70,7 +113,6 @@ describe("readKit", () => {
       name: "alone",
       from: cases.valid.folder,
       place: "anywhere",
-      error: "",
     });
     expect(readKit(folder).id).toBe("duckdb/local-medallion");
   });
@@ -92,7 +134,10 @@ describe("installedKits", () => {
   for (const item of cases.broken.filter((c) => c.place)) {
     it(`refuses a catalogue with a kit in the wrong place: ${item.name}`, () => {
       const { root: made } = build(item);
-      expect(() => installedKits(made)).toThrow(new Error(item.error));
+      expectMessage(
+        thrown(() => installedKits(made)),
+        item,
+      );
     });
   }
 });
