@@ -39,8 +39,9 @@ export type IntentUse =
       does: string;
       status?: FeatureStatus;
       /**
-       * Applied only in a layer whose `does` lists this duty; in any other layer the value
-       * is `NOT_APPLIED`. Read for the quality and cleansing paths only.
+       * Applied only in a layer whose `does` lists this duty, or, for `check`, whose `does` is
+       * `raw` (its checks count, each as `warn`); in any other layer, including one that gives
+       * no `does`, the value is `NOT_APPLIED`. Read for the quality and cleansing paths only.
        */
       onlyWhere?: LayerDuty;
       /**
