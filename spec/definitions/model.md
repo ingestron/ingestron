@@ -1098,10 +1098,11 @@ timestamp columns are in once the table is built:
   not all in one zone (columns converted to different zones, or only some
   converted), the table has no `timezone`. A column is in its `to` zone only
   when the step that keeps the table applies conversion: its method, else its
-  pack, declares the intent path `cleanse.timezone` as `used` (section 11.5) and
-  the entry's `onlyWhere`, if any, is met (section 11.7). Otherwise the column
-  stays in the zone it was in (its `from`), and a later table that reads it
-  converts it. A pack that says nothing of `cleanse.timezone` does not apply it.
+  pack, declares the intent path `cleanse.timezone` as `used` (section 11.5),
+  the entry's `onlyWhere`, if any, is met (section 11.7), and neither the
+  column's `from` nor its `to` is in the entry's `zonesNotApplied` (section 11.5).
+  Otherwise the column stays in the zone it was in (its `from`), and a later
+  table that reads it converts it. A pack that says nothing of `cleanse.timezone` does not apply it.
   A table whose steps cannot be judged yet, because it holds an unset reference,
   is taken to apply it. A table with no timestamp column has
   its input zone; a table that ends at the landed files has the Connection's, as nothing converts it.
@@ -1139,6 +1140,17 @@ not judged. A table that ends at the landed files is not converted by the
 standard's rule, and the conversions it writes are `NOT_APPLIED` as section 6.1
 says. A table's `timezone` is the zone its applied conversions give, as above; a
 conversion that is `NOT_APPLIED` leaves the column in the zone it was in.
+
+**A zone the pack cannot convert.** Where the step that keeps the table applies
+conversion and its `cleanse.timezone` entry lists zones in `zonesNotApplied`,
+each conversion whose `from` or `to` is listed is `NOT_APPLIED`, a warning, with
+the message `Time zone conversion isn't applied on <pack>: <reason>`, `<reason>`
+being the listed zone's (its `from`'s when both are listed), and the subject
+feature `cleanse.timezone`. It is reported at the column's `timezone` key when
+the table writes one; a conversion the standard's rule gives is reported at
+`cleanse.timestamps`, once for each listed zone in the table. The conversion
+stays in `ResolvedTable.cleanse` as the table resolves it, so a pack sees what
+it does not convert, and the column stays in its `from` zone, as above.
 
 ## 7. Platform defaults
 
@@ -1925,7 +1937,12 @@ entry is one of:
   `checked` the date it was checked and `source` the page that says so.
   `onlyWhere`, optional, is one of the layer duties `check`, `cleanse`,
   `deduplicate` and `quarantine`: the pack applies it only in a layer whose
-  `does` lists that duty. It is read only for the paths of section 11.7;
+  `does` lists that duty. It is read only for the paths of section 11.7.
+  `zonesNotApplied`, optional, is read only on the entry for
+  `cleanse.timezone`: the zones the pack cannot convert from or to, each with
+  its reason, such as `{ Antarctica/Troll: Windows has no zone for
+Antarctica/Troll. }`. A conversion from or to a listed zone is not applied
+  (section 6.3); every other conversion is;
 - `{ use: not-yet, reason }`: the pack does not apply it yet;
 - `{ use: elsewhere, reason }`: another step or pack does it;
 - `{ use: not-applicable, reason }`: it means nothing on the pack's platform.

@@ -53,3 +53,14 @@ methods:
     intent:
       cleanse.timezone: { use: not-yet, reason: Converting time zones is not done yet. }
     settings: { type: object }
+  zones-windows:
+    action: store
+    description: Keeps what it reads as a table, converting time zones it can name.
+    accepts: [files, table, query]
+    produces: table
+    intent:
+      cleanse.timezone:
+        use: used
+        does: The table converts timestamps between the zones it can name.
+        zonesNotApplied: { Antarctica/Troll: Windows has no zone for Antarctica/Troll. }
+    settings: { type: object }

@@ -1,0 +1,101 @@
+description: "A pack that converts time zones may list zones it cannot convert from or to (zonesNotApplied). A conversion from or to a listed zone is NOT_APPLIED with the zone's reason: at the column's timezone when the table writes it, and once at cleanse.timestamps for the standard's rule. The conversion stays in cleanse, and the column stays in its from zone, so each table keeps its source zone; every other conversion is applied."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [zones@1]
+    store: { default: zones-windows }
+    cleanse:
+      timestamps: { to: UTC }
+  troll.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: troll
+    connector: files
+    connectivity: public
+    timezone: Antarctica/Troll
+    settings: { path: /data/troll }
+  london.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: london
+    connector: files
+    connectivity: public
+    timezone: Europe/London
+    settings: { path: /data/london }
+  research.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: research
+    source: troll
+    tables:
+      readings: { object: readings, contract: readings }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: london
+    tables:
+      orders:
+        object: orders
+        contract: orders
+        cleanse:
+          columns:
+            shipped_at: { timezone: { to: Antarctica/Troll } }
+  readings.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: readings
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: readings
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer }
+          - { name: taken_at, logicalType: timestamp }
+          - { name: sent_at, logicalType: timestamp }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer }
+          - { name: shipped_at, logicalType: timestamp }
+expect:
+  tables:
+    - name: readings
+      timezone: Antarctica/Troll
+      cleanse:
+        columns:
+          taken_at: { timezone: { from: Antarctica/Troll, to: UTC } }
+          sent_at: { timezone: { from: Antarctica/Troll, to: UTC } }
+    - name: orders
+      timezone: Europe/London
+      cleanse:
+        columns:
+          shipped_at: { timezone: { from: Europe/London, to: Antarctica/Troll } }
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: standard.yaml
+      line: 7
+      message: "Time zone conversion isn't applied on zones: Windows has no zone for Antarctica/Troll."
+      subject: { table: readings, feature: cleanse.timezone }
+    - code: NOT_APPLIED
+      severity: warning
+      file: sales.yaml
+      line: 11
+      message: "Time zone conversion isn't applied on zones: Windows has no zone for Antarctica/Troll."
+      subject: { table: orders, feature: cleanse.timezone }

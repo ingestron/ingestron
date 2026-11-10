@@ -419,6 +419,7 @@ export type IntentUse = {
     does: string;
     status?: FeatureStatus;
     onlyWhere?: LayerDuty;
+    zonesNotApplied?: Readonly<Record<string, string>>;
 } | {
     use: "not-yet" | "elsewhere" | "not-applicable";
     reason: string;

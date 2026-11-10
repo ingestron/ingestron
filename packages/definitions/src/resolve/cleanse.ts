@@ -13,7 +13,13 @@ import {
   type OwnCleanse,
 } from "./cleanse-checks.js";
 import { isText } from "./cleanse-fit.js";
-import { appliesTimezone, judgeCleansing, type UsedOperations } from "./cleanse-judging.js";
+import {
+  appliesTimezone,
+  judgeCleansing,
+  unconvertedZone,
+  zonesNotApplied,
+  type UsedOperations,
+} from "./cleanse-judging.js";
 import { planConversions, type Conversion, type ConversionPlan } from "./cleanse-zones.js";
 import { checkDeduplicate } from "./deduplicate.js";
 import { listsDuty, requireDuty } from "./layer-duties.js";
@@ -59,8 +65,12 @@ function setZone(
   input: string | undefined,
 ): void {
   const applied = appliesTimezone(context, table);
+  const listed = zonesNotApplied(context, table);
   const planned = new Map(
-    [...zones.columns].map(([name, { from, to }]) => [name, { to: applied ? to : from }]),
+    [...zones.columns].map(([name, conversion]) => {
+      const converted = applied && unconvertedZone(conversion, listed) === undefined;
+      return [name, { to: converted ? conversion.to : conversion.from }];
+    }),
   );
   const zone = zoneAfter(table.contract, planned, input);
   if (zone === undefined) delete table.timezone;

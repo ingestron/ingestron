@@ -43,6 +43,12 @@ export type IntentUse =
        * is `NOT_APPLIED`. Read for the quality and cleansing paths only.
        */
       onlyWhere?: LayerDuty;
+      /**
+       * For `cleanse.timezone` only: the zones the pack cannot convert from or to, each with its
+       * reason, such as `{ "Antarctica/Troll": "Windows has no zone for Antarctica/Troll." }`. A
+       * conversion from or to one is `NOT_APPLIED`, and the column stays in its `from` zone.
+       */
+      zonesNotApplied?: Readonly<Record<string, string>>;
     }
   | { use: "not-yet" | "elsewhere" | "not-applicable"; reason: string };
 
