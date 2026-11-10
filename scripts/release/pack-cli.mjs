@@ -90,6 +90,8 @@ function manifest(version) {
 export async function packCli({ outDir = join(repository, ".release") } = {}) {
   const stage = join(outDir, "ingestron");
   rmSync(stage, { recursive: true, force: true });
+  // The CLI's version is a constant written from its package.json; refresh it before bundling.
+  execFileSync(process.execPath, [join(repository, "packages/cli/scripts/write-version.mjs")]);
   mkdirSync(stage, { recursive: true });
   const { metafile } = await build({
     entryPoints: [join(repository, "packages/cli/src/main.ts")],

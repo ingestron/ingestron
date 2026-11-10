@@ -1,7 +1,7 @@
 // The packed npm package installs offline into an empty folder and works there.
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -9,6 +9,7 @@ import test from "node:test";
 
 import { packCli } from "./pack-cli.mjs";
 
+const repository = join(import.meta.dirname, "../..");
 const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 
 test(
@@ -38,6 +39,15 @@ test(
     const manifest = JSON.parse(
       execFileSync("tar", ["-xzOf", tarball, "package/package.json"], { encoding: "utf8" }),
     );
+    // The bundle carries the CLI's own version as a constant, and reads no package.json for it.
+    const cli = JSON.parse(readFileSync(join(repository, "packages/cli/package.json"), "utf8"));
+    assert.equal(manifest.version, cli.version);
+    const bundle = execFileSync("tar", ["-xzOf", tarball, "package/dist/main.js"], {
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    assert.ok(bundle.includes(`manifestVersion = ${JSON.stringify(cli.version)}`));
+    assert.ok(!bundle.includes('"../package.json"'));
     assert.equal(manifest.name, "ingestron");
     assert.equal(manifest.license, "Apache-2.0");
     assert.equal(manifest.dependencies, undefined);

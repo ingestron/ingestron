@@ -33,7 +33,7 @@
     "NOTICE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "node scripts/write-version.mjs && tsc -p tsconfig.build.json",
     "typecheck": "pnpm build && tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
