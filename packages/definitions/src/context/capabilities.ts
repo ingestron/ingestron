@@ -22,13 +22,17 @@ export function isOn(context: Context, id: Id): boolean {
   return platform !== undefined && withMovedFields(platform.value).manage?.[id] === true;
 }
 
-/** Warns where something uses a capability that is off, at `pointer` in `document`. */
+/**
+ * Warns where something uses a capability that is off, at `pointer` in `document`; `table` is
+ * the one table the warning is about, when it is about one.
+ */
 export function warnOff(
   context: Context,
   id: Id,
   message: string,
   document: DefinitionDocument,
   pointer: string,
+  table?: string,
 ): void {
   const capability = context.packs
     .flatMap((pack) => pack.capabilities ?? [])
@@ -41,7 +45,7 @@ export function warnOff(
     { document, pointer },
     `Turn it on with ${field} in platform.yaml.${needs}`,
     fixes,
-    { feature: id },
+    { ...(table !== undefined && { table }), feature: id },
   );
 }
 

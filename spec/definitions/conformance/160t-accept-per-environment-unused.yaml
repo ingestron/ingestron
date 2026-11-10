@@ -1,0 +1,60 @@
+description: "An entry written for one environment's warning, run in an environment where the warning does not occur, is ACCEPT_UNUSED there and not an error. The fix removes it, as the list is written in the Platform."
+environment: prod
+files:
+  project.yaml: |
+    id: retail
+    values: { tags: false }
+    environments:
+      dev: {}
+      prod: { values: { tags: true } }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    manage: { tags: "${values.tags}" }
+    accept: 
+      - code: CAPABILITY_OFF
+        about: { feature: tags }
+        reason: The platform team applies the tags with its own Terraform.
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: email, logicalType: string, tags: [pii] }
+expect:
+  diagnostics:
+    - code: ACCEPT_UNUSED
+      severity: warning
+      file: platform.yaml
+      line: 6
+      message: 'The accept entry for CAPABILITY_OFF (feature "tags") matches no warning in this run.'
+      hint: "Remove the entry, or correct its code or about. To accept different warnings in each environment, write the list as a value: accept: ${values.accept}."
+      fixes: [Remove the entry]
+  accepted: []

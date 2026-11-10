@@ -233,8 +233,10 @@ from another with the same code.
 - `table` is the name of the table the warning is about. Every warning
   reported while one table is resolved (from its flow table or transform,
   its contract and its intent) has it, as does `RUNS_ON_SKIPPED` for a
-  transform left out with its input, and `NOT_APPLIED` for a contract field
-  (section 6).
+  transform left out with its input, `NOT_APPLIED` for a contract field
+  (section 6), and `CAPABILITY_OFF` for a contract field that only one table
+  uses (more than one table, and it has none, as for any warning found for
+  several tables).
 - `feature` is set on `NOT_APPLIED` and `CAPABILITY_OFF` only. For
   `CAPABILITY_OFF` it is the capability's id (`tags`, `schemas`, `comments`,
   `checks`). For `NOT_APPLIED` it is one of:
@@ -1148,6 +1150,7 @@ conversion that is `NOT_APPLIED` leaves the column in the zone it was in.
 | `manage.tags`        | `false`                                                                                                                                                                      |
 | `manage.comments`    | `false`                                                                                                                                                                      |
 | `manage.checks`      | `false`                                                                                                                                                                      |
+| `accept`             | empty (no warning is accepted)                                                                                                                                               |
 | everything else      | empty                                                                                                                                                                        |
 
 Loading without an environment uses the environment name `default`.
@@ -1387,7 +1390,12 @@ in order), `platform`, `names`, `deployValues`, `previewFeatures` and
 `operations` (the model's, exactly) and `qualityResults`, or
 `diagnostics` (matched in order on the fields given; `fixes` lists the fix
 titles, and `fixes: []` means the diagnostic has none; `subject` is matched
-on the keys given, and `subject: null` means the diagnostic has none), and optionally
+on the keys given, and `subject: null` means the diagnostic has none),
+`accepted` (the accepted warnings, in order and matched as `diagnostics`
+are, each written like a diagnostic with the entry's `reason` and `entry`,
+`{ file, line }`, beside it; `accepted: []` means nothing was accepted; the
+`diagnostics` are what remain, and a case that gives none expects none, as
+before), and optionally
 `fixed`, as in the config conformance cases. A case that expects
 `diagnostics` also checks `tables`, `previewFeatures`, `operations` and
 `qualityResults` when it gives them.
@@ -2137,6 +2145,110 @@ the place `quarantine` was written, `Quarantine isn't applied on <pack>:
 any other value. On a table that ends at the landed files, it is `NOT_APPLIED`
 on the ingest step's pack with the reason and hint that section 6 gives for a
 check there, whatever any pack says.
+
+## Accepted warnings
+
+The platform team can accept a warning it has looked at and decided to live
+with, and say why. Accepting a warning takes it out of the problem lists; it
+does not change what the definitions mean or what is generated. Section 1.2
+says what a warning is about, which is how an entry finds it.
+
+**The list.** The Platform has a top-level `accept` list (section 7: empty
+unless written). It belongs to the Platform because the platform team owns
+what its platform cannot do or does not turn on. Each entry is a mapping:
+
+- `code` (required): a problem code, such as `NOT_APPLIED`.
+- `about` (optional): narrows the entry, with any of `file`, `table` and
+  `feature` (below).
+- `reason` (required): text that is not empty. A missing or empty reason is an
+  ordinary schema error (`SCHEMA`) at the entry, from the Platform's schema.
+
+```yaml
+# platform.yaml
+accept:
+  - code: NOT_APPLIED
+    about: { feature: fail, table: orders }
+    reason: checks.sql runs from CI after each landing and pages the on-call team.
+  - code: CAPABILITY_OFF
+    about: { feature: tags }
+    reason: The platform team applies Unity Catalog tags with its own Terraform.
+  - code: NOT_APPLIED
+    about: { file: "flows/legacy/**" }
+    reason: Legacy flows are retired in March; no new rules are added.
+```
+
+**Matching.** Matching runs once, at the end of loading and resolving, over the
+problems of the result, so it sees the loader's warnings, the resolver's and
+the warnings for `{{ … }}` and `REPLACE_ME` alike. An entry accepts a problem
+when all of these hold:
+
+1. The problem is a warning. An error, or information, is never accepted.
+2. Its `code` equals the entry's `code`.
+3. Each key of `about` matches:
+   - `file`: a glob pattern matched against the file of the problem's
+     location, relative to the project folder, with the rules of `imports`
+     (the configuration specification, section 2): `*` matches any characters
+     except `/`, `**` matches any number of folders, `?` matches one character
+     except `/`. A problem without a location does not match.
+   - `table`: equals the problem's `subject.table`.
+   - `feature`: equals the problem's `subject.feature`.
+
+Without `about`, an entry accepts every warning with that code. A key that
+`about` does not give is not checked; a problem without the subject field a
+key names does not match. A warning from loading has no subject, so only
+`code` and `file` can accept it. A warning matched by more than one entry is
+accepted by the first of them in the list.
+
+**Which codes.** Each code has the levels it is ever reported at, recorded with
+its meaning in the code help (`severities`: `error`, `warning`,
+`information`). An entry accepts only the warnings of its code. Its `code` is
+`ACCEPT_CODE`, an error at the entry's `code`, when:
+
+- it is not a code this package or the loader reports;
+- it is a code that is never a warning, so there is nothing to accept;
+- it is `ACCEPT_CODE` or `ACCEPT_UNUSED`, which cannot be accepted, so that a
+  stale list always shows;
+- it is a code that is no longer reported (`CONTRACT_FIELD_UNUSED`).
+
+A code that is a warning in one place and an error in another, such as
+`DEDUPLICATE_MODE` or `REPLACE_ME`, is allowed: its entry accepts only the
+warnings. A warning that only a pack's building of the files reports
+(`PACK_NOTICE`, `SECRET_NAME_DIFFERS`) is not among the problems of a result
+that matching sees, so its entry is unused.
+
+An entry with an invalid code accepts nothing. The error stops the project
+resolving, as any error does, and the result has no model.
+
+**Unused entries.** An entry that matches no warning in the run is
+`ACCEPT_UNUSED`, a warning at the entry, so that a list does not outlive the
+warnings it was written for. An entry that another entry already accepts the
+same warning for still matches it and is used. `ACCEPT_UNUSED` is judged for
+the selected environment only, and only when the project resolved without
+errors, since errors can leave warnings unreported. When the project is
+resolved for each environment, an entry for one environment's warning is
+therefore unused in another. To accept different warnings per environment,
+write the list as a value: `accept: ${values.accept}`, with the environments
+overriding `values.accept` (in the configuration specification, a list
+replaces the earlier value, section 2, and a reference that is the whole value
+keeps the list's type, section 4.2). The fix of `ACCEPT_UNUSED`, `Remove the entry`, is
+given when the list is written in the Platform's file itself, and not when it
+comes from a value or an included file.
+
+**The result.** The result of resolving has `diagnostics`, the problems that
+remain, and `accepted`: one item for each accepted warning, in the order it was
+reported, with the warning itself (`diagnostic`, with its `subject`), the
+entry's `reason` and the `entry`, `{ file, line }`, where the entry is written.
+Through `${values.accept}` the entry is at the reference. `accepted` is empty
+when nothing was accepted, and when there is no Platform, or the project does
+not load: nothing is accepted then. The tools read this one result, so they
+agree: the command line prints a summary line, `<n> accepted warnings
+(platform.yaml)`, and leaves accepted warnings out of its problem lists, out
+of the editor's marks and out of the problems that `compare` shows. A run never
+fails because of warnings, so accepting one changes no exit code.
+
+**What accepting does not change.** The passport still says `not enforced`
+for an accepted `NOT_APPLIED` or `CAPABILITY_OFF`. Accepting quiets the
+warning; it does not make the feature enforced.
 
 ## Connector authoring metadata
 

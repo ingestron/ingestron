@@ -1,0 +1,60 @@
+description: "An accept entry with a code and a reason, and no about, accepts every warning with that code: it is left out of diagnostics and listed in accepted with the entry's reason and where the entry is written."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    accept:
+      - code: NOT_APPLIED
+        reason: The on-call team checks this rule from CI.
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - name: code
+            logicalType: string
+            logicalTypeOptions: { maxLength: 8 }
+            quality:
+              - { metric: invalidValues, arguments: { pattern: "^[A-Z]+$" }, mustBe: 0 }
+expect:
+  diagnostics: []
+  accepted:
+    - code: NOT_APPLIED
+      severity: warning
+      file: orders.odcs.yaml
+      line: 15
+      message: "The pattern rule isn't applied on quality: Its engine has no regular expressions."
+      subject: { table: orders, feature: pattern }
+      reason: The on-call team checks this rule from CI.
+      entry: { file: platform.yaml, line: 5 }

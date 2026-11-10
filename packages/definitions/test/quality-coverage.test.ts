@@ -54,7 +54,17 @@ describe("subject", () => {
       "orders.odcs.yaml": contract("      - { name: email, logicalType: string, tags: [pii] }\n"),
     });
     const off = result.diagnostics.find((item) => item.code === "CAPABILITY_OFF");
-    expect(off?.subject).toEqual({ feature: "tags" });
+    expect(off?.subject).toEqual({ table: "orders", feature: "tags" });
+  });
+
+  it("leaves the table out of CAPABILITY_OFF for a contract field that two tables use", () => {
+    const flow = base["sales.yaml"]!.concat("  returns: { object: returns, contract: orders }\n");
+    const result = resolve({
+      "sales.yaml": flow,
+      "orders.odcs.yaml": contract("      - { name: email, logicalType: string, tags: [pii] }\n"),
+    });
+    const off = result.diagnostics.filter((item) => item.code === "CAPABILITY_OFF");
+    expect(off.map((item) => item.subject)).toEqual([{ feature: "tags" }]);
   });
 
   it("names the intent value as coverage keys it on NOT_APPLIED, and the table", () => {

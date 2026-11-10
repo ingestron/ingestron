@@ -306,6 +306,50 @@ properties:
             privileges:
               - USE_SCHEMA
               - SELECT
+  accept:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      required: [code, reason]
+      properties:
+        code:
+          type: string
+          description: "The code of the warning to accept, as `ingestron check` prints it. Only warnings can be accepted."
+          examples: [NOT_APPLIED]
+        about:
+          type: object
+          additionalProperties: false
+          description: "Narrows the entry to warnings about this file, table or feature. Leave it out to accept every warning with the code."
+          properties:
+            file:
+              {
+                type: string,
+                description: "A pattern for the file the warning is in, relative to the project folder: `*` stays within a folder and `**` crosses folders.",
+                examples: ["flows/legacy/**"],
+              }
+            table:
+              { type: string, description: The table the warning is about., examples: [orders] }
+            feature:
+              {
+                type: string,
+                description: "What is not applied or is off: a rule kind, an action, an operation, a contract field path, or the capability that is off.",
+                examples: [fail],
+              }
+        reason:
+          type: string
+          minLength: 1
+          description: Why the warning is accepted. Required, so that whoever reads the list later knows.
+          examples: [checks.sql runs from CI after each landing and pages the on-call team.]
+    description: >-
+      Warnings the platform team has looked at and decided to live with. Each is left out of the
+      problem lists, and the run says how many were left out. An entry that matches no warning is a
+      warning itself. To accept different warnings in each environment, write `accept:
+      ${values.accept}`.
+    examples:
+      - - code: CAPABILITY_OFF
+          about: { feature: tags }
+          reason: The platform team applies Unity Catalog tags with its own Terraform.
 $defs:
   alertOn:
     type: array

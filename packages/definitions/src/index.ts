@@ -9,6 +9,9 @@ export {
   type ResolveResult,
 } from "./resolve/index.js";
 
+// Accepted warnings: what the Platform's `accept` list took out of the problems.
+export { type AcceptedWarning } from "./accept/index.js";
+
 // The pack contract: what a pack declares, the resolved model it receives,
 // and the helpers packs use to compare and fold environments.
 export {

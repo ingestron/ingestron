@@ -1,4 +1,4 @@
-description: A contract field that needs a capability the platform has not turned on is a warning with a fix that turns it on; so are grants without managed schemas.
+description: A contract field that needs a capability the platform has not turned on is a warning with a fix that turns it on; so are grants without managed schemas. The contract field is about the one table that uses the contract; the grants are about none.
 environment: dev
 files:
   project.yaml: |
@@ -50,6 +50,7 @@ expect:
         file: platform.yaml,
         line: 5,
         fixes: [Turn on manage.schemas],
+        subject: { feature: schemas, table: null },
       }
     - {
         code: CAPABILITY_OFF,
@@ -57,6 +58,7 @@ expect:
         file: orders.odcs.yaml,
         line: 11,
         fixes: [Turn on manage.tags],
+        subject: { table: orders, feature: tags },
       }
   fixed:
     - diagnostic: 1

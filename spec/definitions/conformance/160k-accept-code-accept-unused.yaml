@@ -1,0 +1,73 @@
+description: "ACCEPT_UNUSED and ACCEPT_CODE cannot be accepted: an entry that names either is ACCEPT_CODE, so a stale list always shows."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    accept:
+      - code: ACCEPT_UNUSED
+        reason: The on-call team checks this rule from CI.
+      - code: ACCEPT_CODE
+        reason: The on-call team checks this rule from CI.
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - name: code
+            logicalType: string
+            logicalTypeOptions: { maxLength: 8 }
+            quality:
+              - { metric: invalidValues, arguments: { pattern: "^[A-Z]+$" }, mustBe: 0 }
+expect:
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: orders.odcs.yaml
+      line: 15
+      subject: { table: orders, feature: pattern }
+    - code: ACCEPT_CODE
+      severity: error
+      file: platform.yaml
+      line: 5
+      message: '"ACCEPT_UNUSED" can''t be accepted, so that a stale list always shows.'
+      hint: "Remove the entry, or fix the entry that the warning is about."
+      fixes: [Remove the entry]
+    - code: ACCEPT_CODE
+      severity: error
+      file: platform.yaml
+      line: 7
+      message: '"ACCEPT_CODE" can''t be accepted, so that a stale list always shows.'
+      hint: "Remove the entry, or fix the entry that the warning is about."
+      fixes: [Remove the entry]
+  accepted: []

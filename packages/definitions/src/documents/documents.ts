@@ -83,6 +83,15 @@ export interface PlatformDoc {
   alerts?: AlertDoc[];
   manage?: { schemas?: boolean; tags?: boolean; comments?: boolean; checks?: boolean };
   grants?: Record<string, { principal: string; privileges: string[] }[]>;
+  /** Warnings the platform team accepts, each with a reason (specification, Accepted warnings). */
+  accept?: AcceptDoc[];
+}
+
+/** One entry of the Platform's `accept` list. */
+export interface AcceptDoc {
+  code: string;
+  about?: { file?: string; table?: string; feature?: string };
+  reason: string;
 }
 
 /** A `Connection` document. */

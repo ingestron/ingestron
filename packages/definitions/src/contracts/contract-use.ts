@@ -144,7 +144,7 @@ function walkContract(
     const at = [...pointer, key];
     const path = at.map((part) => (/^\d+$/.test(part) ? "*" : part)).join(".");
     const reported =
-      offCapability(context, document, at, path, usesOf(context, path)) ||
+      offCapability(context, document, at, path, usesOf(context, path), readers) ||
       notYet(context, document, at, path, value, readers);
     if (!reported) walkContract(context, document, child, at, readers);
   }
@@ -165,6 +165,7 @@ function offCapability(
   at: string[],
   path: string,
   uses: { pack: string; use: ContractUse }[],
+  readers: Reader[],
 ): boolean {
   const used = uses.flatMap(({ use }) => (use.use === "used" ? [use] : []));
   const needed = used.map((use) => use.needs).find((id) => id && !isOn(context, id as never));
@@ -180,8 +181,20 @@ function offCapability(
     `${at.at(-1)} in contract "${document.id}" is not applied`,
     document,
     `/${at.join("/")}`,
+    // About a table only when one table reads the field (specification section 1.2).
+    onlyOne(readersOf(at, readers)),
   );
   return true;
+}
+
+/** The name of the only reader, when there is exactly one. */
+function onlyOne(readers: Reader[]): string | undefined {
+  return readers.length === 1 ? readers[0]?.table : undefined;
+}
+
+/** The tables that read the field: every table for the contract's own, those using the entry for a schema entry's. */
+function readersOf(at: string[], readers: Reader[]): Reader[] {
+  return readers.filter((reader) => at[0] !== "schema" || at.length < 2 || at[1] === reader.entry);
 }
 
 /**
@@ -197,9 +210,7 @@ function notYet(
   parent: Record<string, unknown>,
   readers: Reader[],
 ): boolean {
-  const reading = readers.filter(
-    (reader) => at[0] !== "schema" || at.length < 2 || at[1] === reader.entry,
-  );
+  const reading = readersOf(at, readers);
   const owner = typeof parent.name === "string" ? ` of "${parent.name}"` : "";
   let warned = false;
   for (const reader of reading) {

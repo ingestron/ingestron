@@ -2,7 +2,7 @@
 // was written is reported once, a warning, or an error for `check` (specification section 1).
 import type { AnyDiagnostic, FileSource, Project } from "@ingestron/config";
 import { isMap, isScalar, isSeq, LineCounter, parseDocument, type Node } from "yaml";
-import type { ResolveOptions, ResolveResult } from "./resolve.js";
+import type { Resolution, ResolveOptions } from "./resolve.js";
 
 /**
  * The text that stands for a value only the project's owner knows.
@@ -38,8 +38,8 @@ export function withReplaceMe(
   files: FileSource,
   project: Project,
   options: Pick<ResolveOptions, "replaceMe">,
-  result: ResolveResult,
-): ResolveResult {
+  result: Resolution,
+): Resolution {
   const severity = options.replaceMe ?? "warning";
   const found = replaceMeDiagnostics(files, project, severity);
   if (found.length === 0) return result;

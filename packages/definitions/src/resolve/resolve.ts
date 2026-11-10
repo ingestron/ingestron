@@ -1,5 +1,6 @@
 // The entry point: load a project and resolve it for one environment.
 import { loadProject, nodeFiles, resolveProject, type FileSource } from "@ingestron/config";
+import { acceptWarnings, type AcceptedWarning } from "../accept/index.js";
 import { checkRunsOn } from "./runs-on.js";
 import { checkGrants } from "../context/index.js";
 import { checkContractFields, type ContractUser } from "../contracts/index.js";
@@ -71,9 +72,21 @@ export interface ResolveOptions {
 export interface ResolveResult {
   ok: boolean;
   model?: ResolvedModel;
-  /** Every problem, each warning from resolving with what it is about. */
+  /**
+   * Every problem that remains, each warning from resolving with what it is about: the
+   * warnings the Platform's `accept` list accepted are not here, but in `accepted`.
+   */
   diagnostics: Diagnostic[];
+  /**
+   * The warnings the Platform's `accept` list accepted, in the order they were reported, each
+   * with the entry's reason and where the entry is written (specification, Accepted warnings).
+   * Empty when nothing is accepted.
+   */
+  accepted: AcceptedWarning[];
 }
+
+/** A result before the accepted warnings are taken out of it. */
+export type Resolution = Omit<ResolveResult, "accepted">;
 
 const allKinds = Object.values(kinds);
 
@@ -98,7 +111,7 @@ function loadOptions(options: ResolveOptions) {
 export function resolveDefinitions(files: FileSource, options: ResolveOptions): ResolveResult {
   checkPlatformFields(options.packs);
   const loaded = resolveProject(files, { ...loadOptions(options), envvars: options.envvars ?? {} });
-  return withPlaceholders(
+  const resolution = withPlaceholders(
     files,
     loaded.ok
       ? withReplaceMe(
@@ -113,6 +126,7 @@ export function resolveDefinitions(files: FileSource, options: ResolveOptions): 
       : { ok: false, diagnostics: loaded.diagnostics },
     documentFiles(files, loaded.project?.documents),
   );
+  return acceptWarnings(files, loaded.ok ? loaded.project : undefined, resolution);
 }
 
 /**
@@ -125,21 +139,23 @@ export function resolveDefinitions(files: FileSource, options: ResolveOptions): 
 export function loadDefinitions(folder: string, options: ResolveOptions): ResolveResult {
   checkPlatformFields(options.packs);
   const loaded = loadProject(folder, loadOptions(options));
-  return withPlaceholders(
-    nodeFiles(folder),
+  const files = nodeFiles(folder);
+  const resolution = withPlaceholders(
+    files,
     loaded.ok
       ? withReplaceMe(
-          nodeFiles(folder),
+          files,
           loaded.project,
           options,
-          resolveLoaded(loaded.project, options, nodeFiles(folder), [
+          resolveLoaded(loaded.project, options, files, [
             ...loaded.diagnostics,
-            ...runsOnProblems(nodeFiles(folder), loaded.project, options.packs),
+            ...runsOnProblems(files, loaded.project, options.packs),
           ]),
         )
       : { ok: false, diagnostics: loaded.diagnostics },
-    documentFiles(nodeFiles(folder), loaded.project?.documents),
+    documentFiles(files, loaded.project?.documents),
   );
+  return acceptWarnings(files, loaded.ok ? loaded.project : undefined, resolution);
 }
 
 function resolveLoaded(
@@ -147,7 +163,7 @@ function resolveLoaded(
   options: ResolveOptions,
   files: FileSource,
   warnings: ResolveResult["diagnostics"],
-): ResolveResult {
+): Resolution {
   // Loading succeeded, so what it reported are warnings, kept with the result.
   // A value that holds an unset reference is not known yet, so no problem is reported at
   // it, except a settings failure: the settings check has already left out what it causes.

@@ -16,7 +16,8 @@ import {
   type ResolvedModel,
 } from "../src/index.js";
 import { checkReference, type ReferenceCase } from "./reference-cases.js";
-import { checkOperations, checkTables, comparableSubject } from "./table-expectations.js";
+import { checkAccepted, checkSeverities, flattened } from "./accepted-expectations.js";
+import { checkOperations, checkTables } from "./table-expectations.js";
 
 interface Case {
   description: string;
@@ -48,6 +49,8 @@ interface Case {
     operations?: Record<string, unknown>;
     qualityResults?: boolean;
     diagnostics?: Record<string, unknown>[];
+    /** The accepted warnings, each like a diagnostic with the entry's `reason` and `entry`. */
+    accepted?: Record<string, unknown>[];
     fixed?: { diagnostic: number; title: string; files: Record<string, string> }[];
   };
 }
@@ -194,22 +197,13 @@ describe("conformance", () => {
         return;
       }
       const result = resolveCase(testCase);
-      const { diagnostics } = testCase.expect;
+      checkSeverities([...result.diagnostics, ...result.accepted.map((item) => item.diagnostic)]);
+      const { diagnostics, accepted } = testCase.expect;
+      if (accepted) checkAccepted(result.accepted, accepted);
       // A case that expects only information still resolves, so its model can be checked too.
       if (diagnostics) checkBesideDiagnostics(result.model, testCase.expect);
       if (diagnostics) {
-        const actual = result.diagnostics.map(
-          ({ code, severity, message, hint, location, fixes, subject }) => ({
-            code,
-            severity,
-            message,
-            hint,
-            ...location,
-            // A diagnostic without fixes has none, so a case can say `fixes: []`.
-            fixes: (fixes ?? []).map((fix) => fix.title),
-            subject: comparableSubject(subject),
-          }),
-        );
+        const actual = result.diagnostics.map(flattened);
         expect(actual).toHaveLength(diagnostics.length);
         diagnostics.forEach((wanted, index) => expect(actual[index]).toMatchObject(wanted));
         checkFixed(result.diagnostics, testCase);
