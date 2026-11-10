@@ -35,6 +35,8 @@ properties:
   timezone:
     type: string
     description: "The time zone the source writes its timestamps in, as an IANA name. Without one, timestamps are taken to be in UTC. A cleansing rule can convert them."
+    find: "Ask whoever runs the source which zone its timestamps are written in. The source's server settings or the export job's settings usually say."
+    suggest: "<IANA time zone name>"
     examples:
       - Europe/London
   settings:

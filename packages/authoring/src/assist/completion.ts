@@ -111,6 +111,32 @@ function valueCompletions(
   return describedValues(project, place, environment);
 }
 
+/** A new item of a list whose items are a fixed set of values, such as a layer's duties. */
+function itemChoices(place: Place): Suggestion[] {
+  const schema = schemaFor(place.file, place.kind);
+  if (!schema) return [];
+  const written = new Set(listAt(place).map(String));
+  return schemasAt(schema, [...place.path, "0"])
+    .flatMap((item) =>
+      (item.enum ?? []).map((value, index) => ({
+        label: String(value),
+        kind: "value" as const,
+        ...(item.enumDescriptions?.[index] && { documentation: item.enumDescriptions[index] }),
+      })),
+    )
+    .filter((item) => !written.has(item.label));
+}
+
+/** The items written so far in the list at the place's path. */
+function listAt(place: Place): unknown[] {
+  const value = place.path.reduce<unknown>(
+    (node, key) =>
+      node && typeof node === "object" ? (node as Record<string, unknown>)[key] : undefined,
+    place.data,
+  );
+  return Array.isArray(value) ? value : [];
+}
+
 /** The field's allowed values with their meanings; for others' schemas, their values and examples. */
 function describedValues(
   project: Project,
@@ -119,6 +145,8 @@ function describedValues(
 ): Suggestion[] {
   const { kind, path } = place;
   const field = fieldAt(project, place, path, environment);
+  const items = place.part === "item" ? itemChoices(place) : [];
+  if (items.length > 0) return items;
   if (field?.values) return markFixed(project, place, environment, allowedValues(field));
   const ours = kind !== undefined && kind in referenceKinds && kind !== "DataContract";
   if (ours) return helpFor(project, place, field);
