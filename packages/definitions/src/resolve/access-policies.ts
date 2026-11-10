@@ -11,23 +11,37 @@ import { maskName } from "./access-judge.js";
 /** What the platform allows: policies on one schema and on one table, principals in one `EXCEPT`. */
 export const policyLimits = { schema: 100, table: 50, principals: 20 } as const;
 
-/** Checks what each pack's masks and filters need, for the packs that keep the tables. */
+/** What each switch is called in the warning that it needs tags. */
+const tagged = { masks: "Masks", filters: "Row filters" } as const;
+
+/**
+ * Checks what each pack's masks and filters need: tags for each switch that is on, and the
+ * rest only when a table the pack keeps has a mask or filter whose switch is on.
+ */
 export function checkPolicies(context: Context, judged: JudgedTable[]): void {
   for (const pack of context.packs) {
-    if (pack.capabilities?.some((capability) => capability.id === "masks"))
-      checkTags(context, pack.id);
+    for (const id of ["masks", "filters"] as const)
+      if (pack.capabilities?.some((capability) => capability.id === id))
+        checkTags(context, pack.id, id);
     const kept = judged.filter((item) => item.keeper.pack === pack.id);
-    const on = isOn(context, "masks", pack.id) || isOn(context, "filters", pack.id);
-    if (kept.length > 0 && on) checkPack(context, pack.id, kept);
+    if (kept.some((item) => usesSwitchOn(context, pack.id, item)))
+      checkPack(context, pack.id, kept);
   }
 }
 
-/** Masks match columns by their classification tags, so they need tags on. */
-function checkTags(context: Context, pack: string): void {
+/** True when the table has a mask with masks on, or a filter with filters on, for the pack. */
+function usesSwitchOn(context: Context, pack: string, { table }: JudgedTable): boolean {
+  const access = table.access;
+  const masked = (access?.masks.length ?? 0) > 0 && isOn(context, "masks", pack);
+  return masked || ((access?.filters.length ?? 0) > 0 && isOn(context, "filters", pack));
+}
+
+/** Masks and filters match columns by their tags, so each needs tags on. */
+function checkTags(context: Context, pack: string, id: keyof typeof tagged): void {
   const platform = context.platform;
-  if (!platform || !isOn(context, "masks", pack) || isOn(context, "tags", pack)) return;
-  const pointer = manageAt(context, pack, "masks");
-  warnOff(context, "tags", "Masks are not applied", platform, pointer, undefined, pack);
+  if (!platform || !isOn(context, id, pack) || isOn(context, "tags", pack)) return;
+  const pointer = manageAt(context, pack, id);
+  warnOff(context, "tags", `${tagged[id]} are not applied`, platform, pointer, undefined, pack);
 }
 
 function checkPack(context: Context, pack: string, kept: JudgedTable[]): void {

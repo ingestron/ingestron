@@ -1,0 +1,76 @@
+description: "Masks and filters on, with no run_as and no governance.functions, are no error while no table the pack keeps has a mask or filter: an unused switch needs nothing. A masked column on a table another pack keeps does not count (section 8.2)."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, databricks@1]
+    governance:
+      masks: { confidential: hash }
+      filters:
+        region_rows: { function: region_filter, match: { tag: region } }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    databricks:
+      manage: { tags: true, masks: true, filters: true }
+  lake.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: lake
+    source: shop
+    store: { uses: uc-table }
+    tables:
+      orders: { object: orders, contract: orders }
+  local.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: local
+    source: shop
+    tables:
+      customers: { object: customers, contract: customers }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: email, logicalType: string, classification: confidential }
+          - { name: country, logicalType: string, tags: [region] }
+expect:
+  tables:
+    - name: orders
+      access: null
+    - name: customers
+      access:
+        masks: [{ column: email, classification: confidential, mask: hash }]
+        filters: [{ name: region_rows, column: country, function: region_filter }]

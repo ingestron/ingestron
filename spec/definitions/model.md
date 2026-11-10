@@ -1335,11 +1335,12 @@ above. The Platform schema's `manage` accepts `grants`, `masks` and `filters`
 (each a boolean), since `manage` written at the top is the `databricks`
 section's moved field.
 
-Masks match columns by their classification tags, so a pack that declares a
-`masks` capability and has `masks` on with `tags` off is `CAPABILITY_OFF` at
-that pack's `manage.masks`, about the capability `tags`:
-`Masks are not applied: the platform has <title> off.`, with the hint and fix
-that turn `tags` on for that pack, as above.
+Masks and row filters match columns by their tags, so for each of `masks` and
+`filters` that a pack declares as a capability and has on with `tags` off, it is
+`CAPABILITY_OFF` at that pack's `manage.masks` or `manage.filters`, about the
+capability `tags`: `Masks are not applied: the platform has <title> off.` or
+`Row filters are not applied: the platform has <title> off.`, with the hint and
+fix that turn `tags` on for that pack, as above.
 
 ### 7.2 Pack sections
 
@@ -1612,7 +1613,8 @@ the `table` only when it names one table. Each table it names has the feature in
 its `notApplied` (section 11.7), with the `column` for a mask.
 
 The errors below are judged only for a pack that keeps a table in the
-environment and has `masks` or `filters` on. Each is reported once, at the
+environment that has a mask with `masks` on, or a filter with `filters` on, for
+that pack: a switch that no table uses needs nothing. Each is reported once, at the
 pack's `manage.masks` (at `manage.filters` when masks are off), where the
 Platform writes it:
 
