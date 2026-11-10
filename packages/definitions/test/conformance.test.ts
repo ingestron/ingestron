@@ -69,6 +69,7 @@ const packs = [
   "pack-databricks.yaml",
   "pack-rule.yaml",
   "pack-quality.yaml",
+  "pack-dedupe.yaml",
 ].map((file) =>
   packOf(
     parse(readFileSync(join(folder, file), "utf8")) as PackInfo & { buildEnvironments?: true },

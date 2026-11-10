@@ -992,21 +992,28 @@ It happens after cleansing and before the row checks. It needs the layer's
 which rows belong together.`, with the hint `Mark the key columns
 `primaryKey: true` in contract "<id>".`
 - `DEDUPLICATE_MODE`, when the table is stored by a step (a table that ends at
-  the landed files, or that an ingest step writes, has none). It is judged by the
-  table's resolved `history` (section 11.1) and how its store step keeps rows.
-  A store step **appends** when its method has an alias for the setting
-  `mode` (section 11.4) and the step's `mode` setting is `append`; the pack
-  declares that alias, and the model knows no other way to tell an append from
-  a replace.
-  - With `history: latest` or `full`, a warning at `cleanse.deduplicate`: `Deduplicate
-is redundant for "<table>": its history is <history>, which already decides
-what is kept for each key.`, with the hint `Remove deduplicate.` and the fix
-    `Remove deduplicate`, which removes the key. The subject's feature is
-    `deduplicate`.
-  - In a store that appends (history `none`), an error at `cleanse.deduplicate`:
+  the landed files, or that an ingest step writes, has none). It is judged first
+  by how the store step keeps rows, then by the table's resolved `history`
+  (section 11.1). A store step **appends** when its method has an alias for the
+  setting `mode` (section 11.4) and the step's `mode` setting is `append`; the
+  pack declares that alias, and the model knows no other way to tell an append
+  from a replace. This is judged before history: an appending store is an error
+  whatever the table's `history` says, such as a written `mode: append` that
+  the layer's `history: latest` does not change.
+  - In a store that appends, an error at `cleanse.deduplicate`:
     `Deduplicate cannot work for "<table>": its store appends rows, and rows
 already kept cannot be deduplicated.`, with the hint `Set history: latest to
 keep one row per key, or deduplicate in a transform that reads this table.`
+  - Otherwise, with `history: latest` or `full` and only when the keeping
+    step's method, else its pack, declares `history=<value>` as `used`
+    (section 11.5, found as `intentUseOf` finds it), a warning at
+    `cleanse.deduplicate`: `Deduplicate is redundant for "<table>": its history
+is <history>, which already decides what is kept for each key.`, with the
+    hint `Remove deduplicate.` and the fix `Remove deduplicate`, which removes
+    the key. The subject's feature is `deduplicate`. When the step declares the
+    history `not-applicable`, `not-yet` or `elsewhere`, or says nothing, the
+    store does not keep that history, so `deduplicate` is what keeps one row
+    per key: it stands, with no `DEDUPLICATE_MODE`.
 
   A `DEDUPLICATE_MODE` or `DEDUPLICATE_KEY` leaves the operation unjudged for
   `NOT_APPLIED`; a `DEDUPLICATE_MODE` warning leaves `deduplicate` in the

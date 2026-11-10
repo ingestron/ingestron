@@ -1,0 +1,56 @@
+description: "Deduplicate stands, with no DEDUPLICATE_MODE, on a table whose history is latest when the keeping method declares that history not-applicable (a view keeps none): the history is NOT_APPLIED and deduplicate is what keeps one row per key."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [dedupe@1]
+    layers:
+      - { name: bronze, history: latest }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: dedupe
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    store: { uses: dedupe-view }
+    tables:
+      orders:
+        object: orders
+        contract: orders
+        cleanse:
+          deduplicate: { order_by: [updated_at] }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: updated_at, logicalType: timestamp }
+expect:
+  tables:
+    - name: orders
+      cleanse: { deduplicate: { orderBy: [updated_at] } }
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: standard.yaml
+      line: 6
+      message: "history: latest isn't applied on dedupe: A view keeps no history."
+      subject: { table: orders, feature: history=latest }

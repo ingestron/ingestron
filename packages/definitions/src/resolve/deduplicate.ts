@@ -3,6 +3,7 @@
 import type { Fix } from "@ingestron/config";
 import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
+import { intentUseOf } from "../intent/index.js";
 import type { ResolvedTable } from "../pack/index.js";
 import { placeOf, reportColumn, type OwnCleanse } from "./cleanse-checks.js";
 
@@ -57,34 +58,46 @@ function appends(context: Context, table: ResolvedTable): boolean {
   return method?.aliases?.mode !== undefined && table.store.settings.mode === "append";
 }
 
+/** True when the keeping step's method, else its pack, declares the history as `used`. */
+function keepsHistory(context: Context, table: ResolvedTable, history: string): boolean {
+  if (!table.store) return false;
+  const method = context.pack.methods[table.store.method];
+  const pack = context.packs.find((candidate) => candidate.id === table.store?.pack);
+  const use =
+    (method && intentUseOf(method, "history", history)) ??
+    (pack && intentUseOf(pack, "history", history));
+  return use?.use === "used";
+}
+
 function checkMode(
   context: Context,
   table: ResolvedTable,
   at: Source,
 ): "warning" | "error" | undefined {
   if (!table.store || table.endsAtFiles) return undefined;
-  const history = table.intent.history;
-  if (history === "latest" || history === "full") {
-    const fix: Fix = {
-      title: "Remove deduplicate",
-      edits: [{ file: at.document.file, pointer: at.pointer, remove: true }],
-    };
-    context.reporter.warning(
+  if (appends(context, table)) {
+    context.reporter.error(
       "DEDUPLICATE_MODE",
-      `Deduplicate is redundant for "${table.name}": its history is ${history}, which already decides what is kept for each key.`,
+      `Deduplicate cannot work for "${table.name}": its store appends rows, and rows already kept cannot be deduplicated.`,
       at,
-      "Remove deduplicate.",
-      [fix],
-      { feature: "deduplicate" },
+      "Set history: latest to keep one row per key, or deduplicate in a transform that reads this table.",
     );
-    return "warning";
+    return "error";
   }
-  if (!appends(context, table)) return undefined;
-  context.reporter.error(
+  const history = table.intent.history;
+  if ((history !== "latest" && history !== "full") || !keepsHistory(context, table, history))
+    return undefined;
+  const fix: Fix = {
+    title: "Remove deduplicate",
+    edits: [{ file: at.document.file, pointer: at.pointer, remove: true }],
+  };
+  context.reporter.warning(
     "DEDUPLICATE_MODE",
-    `Deduplicate cannot work for "${table.name}": its store appends rows, and rows already kept cannot be deduplicated.`,
+    `Deduplicate is redundant for "${table.name}": its history is ${history}, which already decides what is kept for each key.`,
     at,
-    "Set history: latest to keep one row per key, or deduplicate in a transform that reads this table.",
+    "Remove deduplicate.",
+    [fix],
+    { feature: "deduplicate" },
   );
-  return "error";
+  return "warning";
 }
