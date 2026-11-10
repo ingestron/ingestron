@@ -51,8 +51,10 @@ once. `version` and `replaces` are text (`2026-11-01`), never a YAML date.
 ## Rules
 
 Each rule has a conformance case in `conformance/kits/cases.json` with the exact
-message. `readKit` checks them in this order and stops at the first that is
-broken.
+message. A file that is not valid YAML gives `<file> is not valid YAML: <reason>`,
+where the reason is the YAML reader's own, so those cases give the start of the
+message only. `readKit` checks the rules in this order and stops at the first
+that is broken.
 
 1. `kit.yaml` exists, is a regular file, is valid YAML and is a mapping.
 2. No key other than those above, and none missing from the required ones.
@@ -118,16 +120,26 @@ A kit spec, as the commands accept it, is one of:
 - `<id>@<version>`: one version of a kit. The installed one when there is
   one; else the catalogue, cloned at the tag `<id>@<version>`, from which
   `kits/<id>/<version>` is read.
-- `<id>`: the kit's newest version that is not a preview: the newest
-  installed one, or, when none of the kit is installed, the newest in the
-  catalogue's tags. Versions are ordered by date; on the same date the preview
-  comes first, so the newest is the last. A preview version is used only
-  when it is named.
+- `<id>`: the kit's newest version that is not a preview, among the installed
+  versions and the catalogue's tags (`git ls-remote --tags`). The installed
+  copy is used when it is that version; else the catalogue is cloned at its
+  tag. When the catalogue cannot be read, the newest installed version is
+  used, and the command first prints
+  `Could not reach the catalogue; using the newest installed version, <id>@<version>.`
+  When none of the kit is installed either, it is the error below. Versions
+  are ordered by date; on the same date the preview comes first, so the newest
+  is the last. A preview version is used only when it is named.
 - `<git-url>#<path>@<tag>`: a kit from a repository, cloned at `<tag>`. The
   path ends at the first `@` after the `#`, so a tag may itself contain `@`.
   The path must stay inside the repository.
 
-A spec that is none of these is an error that shows the three forms.
+A spec that is none of these is an error that shows the three forms. A git
+URL without `#` is told the form it needs:
+`The kit "<git-url>" is a git URL; add the kit's folder and tag: <git-url>#<path>@<tag>.`
+A spec is a git URL when it has `://`, starts `<user>@<host>:`, or ends `.git`.
+Every message that shows a spec or a URL shows it without the user name and
+password it may contain: `https://user:secret@example.com/kits.git` is shown as
+`https://example.com/kits.git`.
 
 A clone uses the user's own `git`: it is shallow, at one tag
 (`git clone --depth 1 --branch <tag>`), runs no hooks and fetches no
@@ -221,22 +233,29 @@ as for any command.
    the Standard's path. Its comments are kept. Nothing else in the project is
    written.
 5. **What it prints**, each part after a blank line:
+   - for `<id>` alone when the catalogue cannot be read, the line
+     `Could not reach the catalogue; using the newest installed version, <id>@<version>.`;
    - `Replaced <file> with <id>@<version>.`, or, when the old Standard has an
      `origin`, `Replaced <file> with <id>@<version> (was <origin version>).`;
    - the kit's `notes`, when it has any;
    - what was not applied. The old version is the kit named by the old
-     Standard's `origin` (`<standard>@<version>`), found as any spec is. Its
+     Standard's `origin` (`<standard>@<version>`), found as any spec is, when
+     `standard` is a kit id (`<platform>/<name>`) and `version` a kit version. Its
      files and the new version's, as `init --kit` would copy them, are
      compared, except the standard: a file in one and not the other, or with
      other content, has changed. Then
      `Not applied: the kit's other files that changed since <old version>; compare them with yours:`
      and each such path on a line of its own, indented two spaces, in
      code-point order. With none, `Not applied: no other kit file changed since <old version>.`
-     When the old Standard has no `origin`, or its version cannot be found or
-     its files read,
+     When the old Standard has no `origin`, or its `origin` names something
+     other than a kit id and version (such as a URL, which is never cloned),
+     or its version cannot be found or its files read,
      `Not applied: the earlier version is not available, so the kit's other files cannot be compared.`
    - the project's problems, when it no longer builds with the new
-     Standard, as `plan` prints them. The new file stays written.
+     Standard, as `plan` prints them. The new file stays written. When the
+     problems cannot be worked out, as when building the project stops on an
+     error, one line instead:
+     `Could not list the project's problems with the new standard: <reason> Run ingestron plan to see them.`
    - `Next: run ingestron plan, then review git diff.`
 
 It exits 0 once the file is written; 1 when it writes nothing.
@@ -258,6 +277,14 @@ then the installed kits. With no kits to show, `No kits found.` (or
 ### Git
 
 Each git command on the catalogue (`ls-remote` and `clone`), and each clone of
-a kit's git URL, runs with `GIT_TERMINAL_PROMPT=0`, so git never waits for a
-password, and in a temporary folder rather than the user's, unless the URL is
-a relative path, which is read from the user's folder.
+a kit's git URL, runs with `GIT_TERMINAL_PROMPT=0`, and with `-o BatchMode=yes`
+added to `GIT_SSH_COMMAND` (to the user's own command, else to `ssh`), so
+neither git nor ssh waits for a password. It runs in a temporary folder rather
+than the user's, unless the URL is a relative path, which is read from the
+user's folder.
+
+`ls-remote` is stopped after 15 seconds and a clone after 60 seconds. git's
+reason is then `git did not answer within <n> seconds.`, and the command goes
+on as when git fails: `standard list` shows the installed kits, `<id>` alone
+takes the newest installed version, and a clone gives
+`Could not clone <url>: git did not answer within 60 seconds.`

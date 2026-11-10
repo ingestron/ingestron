@@ -1,5 +1,5 @@
 {
-  "description": "Kits (spec/cli/kits.md). readKit: the valid kit is read; each broken case starts from a copy of the valid kit, applies edits (text replacements in a file), files (whole file replaced) and remove (files deleted), and must fail with the message. A case with place puts the copy at that path below a catalogue root and reads it as installedKits does.",
+  "description": "Kits (spec/cli/kits.md). readKit: the valid kit is read; each broken case starts from a copy of the valid kit, applies edits (text replacements in a file), files (whole file replaced), remove (files deleted), folders (each file replaced by an empty folder) and links (each file replaced by a symbolic link to the target given), and must fail with the message: exactly error, or, with errorStarts, a message that begins so (the rest is the YAML reader's reason). A case with place puts the copy at that path below a catalogue root and reads it as installedKits does. specs: what parseKitSpec reads from each spec, or its exact error.",
   "valid": {
     "folder": "catalogue/duckdb/local-medallion/2026-11-01",
     "kit": {
@@ -23,6 +23,28 @@
       "from": "catalogue/duckdb/local-medallion/2026-11-01",
       "remove": ["kit.yaml"],
       "error": "kit.yaml is missing. A kit folder needs kit.yaml, standard.yaml, platform.yaml, project.yaml and README.md."
+    },
+    {
+      "name": "kit.yaml is not valid YAML",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "files": {
+        "kit.yaml": "id: [duckdb/local-medallion\n"
+      },
+      "errorStarts": "kit.yaml is not valid YAML: "
+    },
+    {
+      "name": "kit.yaml is a folder",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "folders": ["kit.yaml"],
+      "error": "kit.yaml is not a regular file. Replace it with the file itself."
+    },
+    {
+      "name": "kit.yaml is a symbolic link",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "links": {
+        "kit.yaml": "README.md"
+      },
+      "error": "kit.yaml is not a regular file. Replace it with the file itself."
     },
     {
       "name": "kit.yaml is not a mapping",
@@ -71,6 +93,14 @@
         "kit.yaml": [["{ ingestron: \">=2.4.0\" }", "{}"]]
       },
       "error": "kit.yaml: \"requires.ingestron\" is missing. Add it, such as \">=2.4.0\"."
+    },
+    {
+      "name": "requires is not a mapping",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "kit.yaml": [["requires: { ingestron: \">=2.4.0\" }", "requires: \">=2.4.0\""]]
+      },
+      "error": "kit.yaml: \"requires\" must be a mapping with ingestron in it, such as requires: { ingestron: \">=2.4.0\" }."
     },
     {
       "name": "title is not text",
@@ -257,6 +287,28 @@
       "error": "README.md is missing. A kit folder needs kit.yaml, standard.yaml, platform.yaml, project.yaml and README.md."
     },
     {
+      "name": "README.md is a folder",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "folders": ["README.md"],
+      "error": "README.md is not a regular file. Replace it with the file itself."
+    },
+    {
+      "name": "standard.yaml is a symbolic link",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "links": {
+        "standard.yaml": "kit.yaml"
+      },
+      "error": "standard.yaml is not a regular file. Replace it with the file itself."
+    },
+    {
+      "name": "standard.yaml is not valid YAML",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "files": {
+        "standard.yaml": "packs: [duckdb@2\n"
+      },
+      "errorStarts": "standard.yaml is not valid YAML: "
+    },
+    {
       "name": "standard.yaml is not a mapping",
       "from": "catalogue/duckdb/local-medallion/2026-11-01",
       "files": {
@@ -303,6 +355,19 @@
       "from": "catalogue/duckdb/local-medallion/2026-11-01",
       "edits": {
         "standard.yaml": [["standard: duckdb/local-medallion", "standard: duckdb/other"]]
+      },
+      "error": "standard.yaml: origin must say standard: duckdb/local-medallion and version: 2026-11-01, the same as kit.yaml. Correct it."
+    },
+    {
+      "name": "standard origin is not a mapping",
+      "from": "catalogue/duckdb/local-medallion/2026-11-01",
+      "edits": {
+        "standard.yaml": [
+          [
+            "origin:\n  standard: duckdb/local-medallion\n  version: 2026-11-01",
+            "origin: duckdb/local-medallion@2026-11-01"
+          ]
+        ]
       },
       "error": "standard.yaml: origin must say standard: duckdb/local-medallion and version: 2026-11-01, the same as kit.yaml. Correct it."
     },
@@ -400,6 +465,22 @@
     {
       "spec": "#team/orders@v1",
       "error": "The kit \"#team/orders@v1\" needs a git URL before the \"#\": <git-url>#<path>@<tag>."
+    },
+    {
+      "spec": "https://user:s3cret@example.com/kits.git",
+      "error": "The kit \"https://example.com/kits.git\" is a git URL; add the kit's folder and tag: <git-url>#<path>@<tag>."
+    },
+    {
+      "spec": "git@github.com:acme/kits.git",
+      "error": "The kit \"git@github.com:acme/kits.git\" is a git URL; add the kit's folder and tag: <git-url>#<path>@<tag>."
+    },
+    {
+      "spec": "https://user:s3cret@example.com/kits.git#kits/a/b",
+      "error": "The kit \"https://example.com/kits.git#kits/a/b\" needs a tag after the folder: <git-url>#<path>@<tag>."
+    },
+    {
+      "spec": "https://user:p@ss@example.com/kits.git#@v1",
+      "error": "The kit \"https://example.com/kits.git#@v1\" needs the kit's folder before the tag: <git-url>#<path>@<tag>."
     }
   ]
 }

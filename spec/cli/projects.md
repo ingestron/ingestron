@@ -264,6 +264,12 @@ is written to project.yaml, the environments default to the kit's own, and
 CLI's own version does not meet:
 `The kit <id>@<version> needs ingestron <range>; this is <version>.`
 
+`--kit <id>` alone takes the kit's newest version that is not a preview,
+installed or in the catalogue ([kits.md](kits.md), "Where kits are found").
+When the catalogue cannot be read, `init` uses the newest installed version
+and first prints
+`Could not reach the catalogue; using the newest installed version, <id>@<version>.`
+
 With `--connector`, `--connectivity` or `--via`, the kit gives the Standard
 and the composition above gives the source:
 

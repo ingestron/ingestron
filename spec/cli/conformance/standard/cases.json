@@ -30,9 +30,18 @@
       "output": "Replaced standard.yaml with duckdb/local-medallion@2026-11-10 (was 2026-11-10).\n\nFirst version.\n\nNot applied: no other kit file changed since 2026-11-10.\n\nNext: run ingestron plan, then review git diff.\n"
     },
     {
+      "name": "install the kit's id alone without the catalogue",
+      "args": ["standard", "install", "duckdb/local-medallion"],
+      "exit": 0,
+      "output": "Could not reach the catalogue; using the newest installed version, duckdb/local-medallion@2026-11-10.\n\nReplaced standard.yaml with duckdb/local-medallion@2026-11-10 (was 2026-11-10).\n\nFirst version.\n\nNot applied: no other kit file changed since 2026-11-10.\n\nNext: run ingestron plan, then review git diff.\n"
+    },
+    {
       "name": "install refuses a standard with changes not committed",
       "args": ["standard", "install", "duckdb/local-medallion@2026-11-10"],
-      "change": { "file": "standard.yaml", "append": "# a change\n" },
+      "change": {
+        "file": "standard.yaml",
+        "append": "# a change\n"
+      },
       "exit": 1,
       "output": "standard.yaml has changes that are not committed; commit them first so git diff shows only the new standard.\n"
     },
