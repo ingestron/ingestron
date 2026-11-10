@@ -91,6 +91,8 @@ describe("the ssh command of a kit's git calls", () => {
     "GIT_CONFIG_COUNT",
     "GIT_CONFIG_KEY_0",
     "GIT_CONFIG_VALUE_0",
+    "GIT_CONFIG_GLOBAL",
+    "GIT_CONFIG_NOSYSTEM",
   ];
   const saved = Object.fromEntries(names.map((name) => [name, process.env[name]]));
   afterEach(() => {
@@ -100,9 +102,14 @@ describe("the ssh command of a kit's git calls", () => {
     }
   });
 
-  /** The ssh command a kit's git call runs with, for this environment. */
+  /**
+   * The ssh command a kit's git call runs with, for this environment. The machine's own git
+   * configuration is not read, so a core.sshCommand set there does not change the answer.
+   */
   function sshFor(env: Record<string, string | undefined>): string | undefined {
     for (const name of names) delete process.env[name];
+    process.env.GIT_CONFIG_GLOBAL = "/dev/null";
+    process.env.GIT_CONFIG_NOSYSTEM = "1";
     for (const [name, value] of Object.entries(env))
       if (value !== undefined) process.env[name] = value;
     return kitGit("https://example.com/kits.git", temp(), 5_000).env.GIT_SSH_COMMAND;
