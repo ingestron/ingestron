@@ -163,7 +163,9 @@ describe("moving a setting or a Platform field", () => {
         expect(after.built, `${name}: ${fix.title}`).toEqual(before.built);
         applied.push(`${name}: ${fix.title}`);
       }
-    });
+      // Each fix generates every environment of the project again, so a project with several
+      // fixes takes longer than the default 5 seconds when the whole repository validates.
+    }, 30_000);
   }
 
   it("applies the fixes of the projects written the old way", () => {
