@@ -92,12 +92,15 @@ as from a git URL, is checked on its contents only.
 - **Installed.** `@ingestron/standards` holds Ingestron's own kits in its
   `kits` folder, laid out as above. They work offline. The installed kits are
   the first of these folders that exists:
-  1. the `kits` folder of `@ingestron/standards`, as `@ingestron/core`
-     resolves the package;
-  2. a `kits` folder beside the folder that holds the running code. A
+  1. a `kits` folder beside the folder that holds the running code. A
      release bundled into one file, such as the `ingestron` npm package or
      the VS Code extension, cannot resolve the package, so its build copies
      the package's `kits` folder there, as it copies the other data folders.
+     It comes first, so the kits shipped with the running code are the ones
+     used, even when some other copy of `@ingestron/standards`, such as a
+     hoisted or global one, can be resolved;
+  2. the `kits` folder of `@ingestron/standards`, as `@ingestron/core`
+     resolves the package.
 
   When neither exists, there are none.
 

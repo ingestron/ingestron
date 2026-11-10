@@ -19,13 +19,22 @@ function packageKitsFolder(): string | undefined {
 }
 
 /**
- * The installed kits' folder: the first of `candidates` that exists, by default the
- * `@ingestron/standards` package's `kits` folder, then the `kits` folder a bundled release copies
- * beside its code. Undefined when none exists.
+ * Where the installed kits are looked for, in order: the `kits` folder a bundled release copies
+ * beside its code, then the `@ingestron/standards` package's `kits` folder, so the kits shipped
+ * with the running code win over any other copy of the package that resolves.
+ * @internal
+ */
+export function kitsFolderCandidates(): (string | undefined)[] {
+  return [bundledKitsFolder, packageKitsFolder()];
+}
+
+/**
+ * The installed kits' folder: the first of `candidates` that exists, by default
+ * `kitsFolderCandidates()`. Undefined when none exists.
  * @internal
  */
 export function standardsKitsFolder(
-  candidates: (string | undefined)[] = [packageKitsFolder(), bundledKitsFolder],
+  candidates: (string | undefined)[] = kitsFolderCandidates(),
 ): string | undefined {
   return candidates.find((folder) => folder !== undefined && existsSync(folder));
 }
@@ -39,9 +48,9 @@ function folders(parent: string): string[] {
 
 /**
  * Every kit below `root`, which holds `<platform>/<name>/<version>/` folders, sorted by id and
- * then version (a preview before its general version). `root` defaults to the `kits` folder of
- * `@ingestron/standards`, or, in a bundled release that cannot resolve that package, the `kits`
- * folder copied beside its code. There are none when no such folder is there. A kit
+ * then version (a preview before its general version). `root` defaults to the `kits` folder a
+ * bundled release copies beside its code, else the `kits` folder of `@ingestron/standards`.
+ * There are none when no such folder is there. A kit
  * that breaks a rule of kit.yaml throws the error `readKit` gives.
  * @public
  */
