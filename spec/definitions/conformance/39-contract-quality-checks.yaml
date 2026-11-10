@@ -46,20 +46,33 @@ files:
 expect:
   tables:
     - expectations:
-        - { name: id_not_null, check: "`id` IS NOT NULL", action: warn }
+        - {
+            name: id_not_null,
+            check: "`id` IS NOT NULL",
+            rule: { kind: notNull, column: id },
+            action: warn,
+          }
         - {
             name: unit_invalidvalues,
             check: "`unit` IS NULL OR `unit` IN ('kg', 'o\\'z')",
+            rule: { kind: in, column: unit, values: [kg, "o'z"], allowNull: true },
             action: drop,
           }
         - {
             name: unit_known,
             check: "`unit` IS NOT NULL AND `unit` NOT IN ('', 'N/A')",
+            rule: { kind: notIn, column: unit, values: ["", N/A], allowNull: false },
             action: drop,
           }
         - {
             name: unit_invalidvalues_2,
             check: "`unit` IS NULL OR `unit` RLIKE '^[a-z]+$'",
+            rule: { kind: pattern, column: unit, pattern: "^[a-z]+$" },
             action: drop,
           }
-        - { name: unit_nullvalues, check: "`unit` IS NOT NULL", action: drop }
+        - {
+            name: unit_nullvalues,
+            check: "`unit` IS NOT NULL",
+            rule: { kind: notNull, column: unit },
+            action: drop,
+          }

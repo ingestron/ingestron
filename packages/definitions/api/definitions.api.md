@@ -122,6 +122,7 @@ export interface Contract {
     checks: {
         name: string;
         check: string;
+        rule?: RowRule;
     }[];
     // (undocumented)
     columns: Column[];
@@ -231,11 +232,11 @@ export interface EnvironmentsProblem {
 export interface Expectation {
     // (undocumented)
     action: "warn" | "drop" | "fail";
-    // (undocumented)
     check: string;
     from: "contract" | "definition";
     // (undocumented)
     name: string;
+    rule?: RowRule;
 }
 
 // @public
@@ -789,6 +790,42 @@ export interface ResolveResult {
     // (undocumented)
     ok: boolean;
 }
+
+// @public
+export type RowRule = {
+    kind: "notNull";
+    column: string;
+} | {
+    kind: "in" | "notIn";
+    column: string;
+    values: unknown[];
+    allowNull: boolean;
+} | {
+    kind: "pattern";
+    column: string;
+    pattern: string;
+} | {
+    kind: "length";
+    column: string;
+    min?: number;
+    max?: number;
+} | {
+    kind: "range";
+    column: string;
+    min?: number | string;
+    max?: number | string;
+    exclusive?: boolean;
+} | {
+    kind: "multipleOf";
+    column: string;
+    value: number;
+} | {
+    kind: "items";
+    column: string;
+    min?: number;
+    max?: number;
+    unique?: boolean;
+};
 
 // @public
 export interface Rule {

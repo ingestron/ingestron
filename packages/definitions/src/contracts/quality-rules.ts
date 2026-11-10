@@ -13,13 +13,14 @@ import {
   type Rule,
   type UncheckedRule,
 } from "./quality-notes.js";
-import { tableCheckOf, type TableCheck } from "../pack/index.js";
+import { tableCheckOf, type RowRule, type TableCheck } from "../pack/index.js";
 import { literal, optionChecks } from "./type-options.js";
 
 /** A check made from a contract rule, before its action is chosen. */
 export interface RuleCheck {
   name: string;
   check: string;
+  rule?: RowRule;
 }
 
 /** A contract object's rules: checks of each row, and checks over all rows. */
@@ -47,7 +48,7 @@ export function ruleChecks(context: Context, entry: Entry, at: Source): ObjectCh
       const name = unique(names, nameOf(property.name, rule));
       const where = { ...at, pointer: `${at.pointer}/properties/${column}/quality/${index}` };
       const check = rowCheck(property.name, rule);
-      if (check) found.rows.push({ name, check });
+      if (check) found.rows.push({ name, ...check });
       else
         overTable(
           context,
@@ -102,31 +103,55 @@ function allowsNone(rule: Rule): boolean {
 }
 
 /** The check of one row a column rule becomes, or undefined when it has none. */
-function rowCheck(column: string, rule: Rule): string | undefined {
+function rowCheck(column: string, rule: Rule): Omit<RuleCheck, "name"> | undefined {
   if ((rule.type ?? "library") !== "library" || !allowsNone(rule)) return undefined;
   const args = isRecord(rule.arguments) ? rule.arguments : {};
-  return metrics[String(rule.metric)]?.(`\`${column}\``, args);
+  return metrics[String(rule.metric)]?.(column, args);
 }
 
-type Metric = (name: string, args: Record<string, unknown>) => string | undefined;
+type Metric = (
+  column: string,
+  args: Record<string, unknown>,
+) => Omit<RuleCheck, "name"> | undefined;
 
-/** Each metric that a check of one row can hold, as SQL. */
+/** Each metric that a check of one row can hold, as SQL and as a rule. */
 const metrics: Record<string, Metric> = {
-  nullValues: (name) => `${name} IS NOT NULL`,
-  missingValues: (name, { missingValues: listed }) => {
+  nullValues: (column) => ({
+    check: `\`${column}\` IS NOT NULL`,
+    rule: { kind: "notNull", column },
+  }),
+  missingValues: (column, { missingValues: listed }) => {
     if (!Array.isArray(listed)) return undefined;
+    const name = `\`${column}\``;
     const values = listed.filter((value) => value !== null);
     const notIn = values.length > 0 ? `${name} NOT IN (${values.map(literal).join(", ")})` : "";
     // Null counts as missing only when the list names it.
-    if (values.length < listed.length)
-      return [`${name} IS NOT NULL`, notIn].filter(Boolean).join(" AND ");
-    return notIn ? `${name} IS NULL OR ${notIn}` : undefined;
+    if (values.length < listed.length) {
+      const check = [`${name} IS NOT NULL`, notIn].filter(Boolean).join(" AND ");
+      const rule: RowRule = notIn
+        ? { kind: "notIn", column, values, allowNull: false }
+        : { kind: "notNull", column };
+      return { check, rule };
+    }
+    return notIn
+      ? {
+          check: `${name} IS NULL OR ${notIn}`,
+          rule: { kind: "notIn", column, values, allowNull: true },
+        }
+      : undefined;
   },
-  invalidValues: (name, { validValues, pattern }) => {
+  invalidValues: (column, { validValues, pattern }) => {
+    const name = `\`${column}\``;
     if (Array.isArray(validValues))
-      return `${name} IS NULL OR ${name} IN (${validValues.map(literal).join(", ")})`;
+      return {
+        check: `${name} IS NULL OR ${name} IN (${validValues.map(literal).join(", ")})`,
+        rule: { kind: "in", column, values: validValues, allowNull: true },
+      };
     return typeof pattern === "string"
-      ? `${name} IS NULL OR ${name} RLIKE ${literal(pattern)}`
+      ? {
+          check: `${name} IS NULL OR ${name} RLIKE ${literal(pattern)}`,
+          rule: { kind: "pattern", column, pattern },
+        }
       : undefined;
   },
 };

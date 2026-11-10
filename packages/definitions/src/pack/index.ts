@@ -21,6 +21,7 @@ export type {
   FullName,
   Grant,
   Origin,
+  RowRule,
   Permission,
   PreviewFeature,
   ResolvedModel,

@@ -37,6 +37,7 @@ export {
   type Method,
   type Naming,
   type Origin,
+  type RowRule,
   type Pack,
   type PackInfo,
   type PackNotice,

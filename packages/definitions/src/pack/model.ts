@@ -86,7 +86,7 @@ export interface Contract {
   /** Columns marked `primaryKey`, in `primaryKeyPosition` order. */
   primaryKey: string[];
   /** Row checks made from the contract's quality rules (specification section 6). */
-  checks: { name: string; check: string }[];
+  checks: { name: string; check: string; rule?: RowRule }[];
   /** Checks over all rows, run after each refresh when checks are on. */
   tableChecks: TableCheck[];
   /** Quality rules nothing checks, and why; text rules among them. */
@@ -111,12 +111,42 @@ export interface ContractRole {
 }
 
 /**
+ * One row check of a contract as data, so a pack can write it in its own SQL
+ * (specification section 6). `column` is the column's name, without quotes.
+ * A row passes only when the rule is true for it: a null value fails `notNull`,
+ * passes `in` and `notIn` only when `allowNull` is true, and passes every other kind.
+ * @public
+ */
+export type RowRule =
+  | { kind: "notNull"; column: string }
+  | { kind: "in" | "notIn"; column: string; values: unknown[]; allowNull: boolean }
+  | { kind: "pattern"; column: string; pattern: string }
+  | { kind: "length"; column: string; min?: number; max?: number }
+  | {
+      kind: "range";
+      column: string;
+      /** A number, or a date's text. */
+      min?: number | string;
+      max?: number | string;
+      /** The limit itself is not allowed. */
+      exclusive?: boolean;
+    }
+  | { kind: "multipleOf"; column: string; value: number }
+  | { kind: "items"; column: string; min?: number; max?: number; unique?: boolean };
+
+/**
  * A row check; `action` decides what happens to a row that fails.
  * @public
  */
 export interface Expectation {
   name: string;
+  /** The check as Spark SQL text. */
   check: string;
+  /**
+   * The same check as data. Set for every check made from a contract; absent for
+   * one written in a flow or a transform.
+   */
+  rule?: RowRule;
   action: "warn" | "drop" | "fail";
   /** `contract`: a required column; `definition`: written in the flow or transform. */
   from: "contract" | "definition";

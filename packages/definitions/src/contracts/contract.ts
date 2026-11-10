@@ -130,6 +130,7 @@ export function expectationsFor(
     .map((column) => ({
       name: `${column.name}_not_null`,
       check: `\`${column.name}\` IS NOT NULL`,
+      rule: { kind: "notNull" as const, column: column.name },
       action: quality.required,
       from: "contract" as const,
     }));

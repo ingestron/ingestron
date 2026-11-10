@@ -48,6 +48,7 @@ expect:
     - expectations:
         - name: id_not_null
           check: "`id` IS NOT NULL"
+          rule: { kind: notNull, column: id }
           action: fail
           from: contract
         - name: positive_total

@@ -80,6 +80,7 @@ expect:
       expectations:
         - name: id_not_null
           check: "`id` IS NOT NULL"
+          rule: { kind: notNull, column: id }
           action: warn
           from: contract
   names:

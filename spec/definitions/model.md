@@ -723,6 +723,40 @@ this way, is not compared.
   `expectations`, is `QUALITY_RULE_NOT_CHECKED`, a warning at the rule or
   expectation, and no other quality problem is reported for it. Required
   columns are not reported.
+- Each expectation made from a contract (a required column, a row rule or a
+  `logicalTypeOptions` option) also carries `rule`, the same check as data a
+  pack can write in its own SQL; `check` keeps the Spark SQL text above,
+  unchanged. An expectation written in a flow or a transform has no `rule`.
+  A `rule` has a `kind` and the column's name without quotes:
+
+  | `kind`       | Fields                      | Made from                                                                                                                                      |
+  | ------------ | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `notNull`    |                             | a required column; `nullValues`; `missingValues` listing only `null`                                                                           |
+  | `in`         | `values`, `allowNull: true` | `invalidValues` with `validValues`                                                                                                             |
+  | `notIn`      | `values`, `allowNull`       | `missingValues`: `allowNull: false` when its list names `null` (then `values` are the others), else `true`                                     |
+  | `pattern`    | `pattern`                   | `invalidValues` with `pattern`; option `pattern`                                                                                               |
+  | `length`     | `min`, `max`                | options `minLength`, `maxLength` (one each)                                                                                                    |
+  | `range`      | `min` or `max`, `exclusive` | options `minimum`, `maximum` (`exclusive` left out) and `exclusiveMinimum`, `exclusiveMaximum` (`exclusive: true`); a date's limit is its text |
+  | `multipleOf` | `value`                     | option `multipleOf`                                                                                                                            |
+  | `items`      | `min`, `max`, `unique`      | options `minItems`, `maxItems`, and `uniqueItems: true` as `unique: true`                                                                      |
+
+  Each option is its own expectation, so a `length`, `range` or `items` rule
+  holds one limit and leaves the other fields out. An option whose value is
+  not of the type ODCS gives it makes an expectation with no `rule`.
+  A row passes a rule only when the rule is true for it: a null column value
+  fails `notNull`, passes `in` and `notIn` when `allowNull` is true, fails
+  them when it is false, and passes every other kind. The `check` text
+  gives the same answer for every row and is never null. A pack that reads
+  `rule` MUST keep that meaning, so a null never counts as a pass by
+  accident of how the engine treats an unknown result. Databricks does not
+  say what its expectations do with a check that is null: its expectations
+  page (https://learn.microsoft.com/en-us/azure/databricks/ldp/expectations,
+  read 2026-11-10) says only that the constraint "must evaluate to true or
+  false for each record" and that a record that "fails this condition"
+  triggers the expectation. Ingestron's checks are written so that none is
+  ever null, and the meaning above does not depend on what Databricks does
+  with one.
+
 - A contract's object `tags`, a column's `tags` and its `classification` are
   kept on the contract and its columns for packs that tag tables.
 

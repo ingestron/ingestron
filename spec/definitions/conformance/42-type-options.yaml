@@ -50,21 +50,63 @@ files:
 expect:
   tables:
     - expectations:
-        - { name: code_min_length, check: "`code` IS NULL OR length(`code`) >= 2", action: drop }
-        - { name: code_max_length, check: "`code` IS NULL OR length(`code`) <= 8", action: drop }
-        - { name: code_pattern, check: "`code` IS NULL OR `code` RLIKE '^[A-Z]+$'", action: drop }
-        - { name: qty_minimum, check: "`qty` IS NULL OR `qty` >= 0", action: drop }
-        - { name: qty_exclusive_maximum, check: "`qty` IS NULL OR `qty` < 1000", action: drop }
-        - { name: qty_multiple_of, check: "`qty` IS NULL OR `qty` % 5 = 0", action: drop }
+        - {
+            name: code_min_length,
+            check: "`code` IS NULL OR length(`code`) >= 2",
+            rule: { kind: length, column: code, min: 2 },
+            action: drop,
+          }
+        - {
+            name: code_max_length,
+            check: "`code` IS NULL OR length(`code`) <= 8",
+            rule: { kind: length, column: code, max: 8 },
+            action: drop,
+          }
+        - {
+            name: code_pattern,
+            check: "`code` IS NULL OR `code` RLIKE '^[A-Z]+$'",
+            rule: { kind: pattern, column: code, pattern: "^[A-Z]+$" },
+            action: drop,
+          }
+        - {
+            name: qty_minimum,
+            check: "`qty` IS NULL OR `qty` >= 0",
+            rule: { kind: range, column: qty, min: 0 },
+            action: drop,
+          }
+        - {
+            name: qty_exclusive_maximum,
+            check: "`qty` IS NULL OR `qty` < 1000",
+            rule: { kind: range, column: qty, max: 1000, exclusive: true },
+            action: drop,
+          }
+        - {
+            name: qty_multiple_of,
+            check: "`qty` IS NULL OR `qty` % 5 = 0",
+            rule: { kind: multipleOf, column: qty, value: 5 },
+            action: drop,
+          }
         - {
             name: placed_minimum,
             check: "`placed` IS NULL OR `placed` >= '2020-01-01'",
+            rule: { kind: range, column: placed, min: "2020-01-01" },
             action: drop,
           }
-        - { name: lines_min_items, check: "`lines` IS NULL OR size(`lines`) >= 1", action: drop }
-        - { name: lines_max_items, check: "`lines` IS NULL OR size(`lines`) <= 50", action: drop }
+        - {
+            name: lines_min_items,
+            check: "`lines` IS NULL OR size(`lines`) >= 1",
+            rule: { kind: items, column: lines, min: 1 },
+            action: drop,
+          }
+        - {
+            name: lines_max_items,
+            check: "`lines` IS NULL OR size(`lines`) <= 50",
+            rule: { kind: items, column: lines, max: 50 },
+            action: drop,
+          }
         - {
             name: lines_unique_items,
             check: "`lines` IS NULL OR size(array_distinct(`lines`)) = size(`lines`)",
+            rule: { kind: items, column: lines, unique: true },
             action: drop,
           }
