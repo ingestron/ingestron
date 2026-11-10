@@ -17,6 +17,11 @@ export function isNotText(column: Column): boolean {
   return column.logicalType !== undefined && column.logicalType !== "string";
 }
 
+/** True when the column's contract gives a type and it is not a timestamp. */
+export function isNotTimestamp(column: Column): boolean {
+  return column.logicalType !== undefined && column.logicalType !== "timestamp";
+}
+
 /** Whether a value is one the type holds, by the type's `logicalType`. */
 const values: Record<string, (value: unknown) => boolean> = {
   string: (value) => typeof value === "string",

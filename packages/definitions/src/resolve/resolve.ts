@@ -23,6 +23,7 @@ import { transformTables } from "./transforms.js";
 import { buildModel } from "./build-model.js";
 import { checkOperations } from "./operations.js";
 import { checkPlatform } from "./platform-sections.js";
+import { checkZoneNames } from "./timezones.js";
 import { holdsUnsetEnvvar } from "../diagnostics/index.js";
 import { recordOutputs, runPackCheck } from "../context/index.js";
 import { checkPlatformFields } from "../reference/index.js";
@@ -158,6 +159,7 @@ function resolveLoaded(
   checkSettingsKeys(context);
   checkPlatform(context);
   checkGrants(context);
+  checkZoneNames(context);
   const namer = createNamer(context);
   const flows = flowTables(context, namer);
   const tables = [...flows, ...transformTables(context, namer, flows)];

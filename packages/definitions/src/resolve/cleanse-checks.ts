@@ -4,12 +4,17 @@ import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
 import type { CleanseDoc, ColumnCleanseDoc } from "../documents/index.js";
 import type { Column, Contract } from "../pack/index.js";
-import { fitsKey, fitsValue, isNotText } from "./cleanse-fit.js";
+import { fitsKey, fitsValue, isNotText, isNotTimestamp } from "./cleanse-fit.js";
+import { checkZoneName, type InputZones } from "./timezones.js";
 
-/** A table's own cleansing and where its `cleanse` key is (or would be) written. */
+/**
+ * A table's own cleansing and where its `cleanse` key is (or would be) written, and the zones
+ * its inputs are in (specification section 6.3).
+ */
 export interface OwnCleanse {
   doc: CleanseDoc | undefined;
   at: Source;
+  zones: InputZones;
 }
 
 /** The place `parts` below the table's `cleanse` key; a name is escaped as a JSON Pointer. */
@@ -34,14 +39,18 @@ export function reportColumn(context: Context, contract: Contract, name: string,
 }
 
 /** The operations a table writes for a column, in the order they are checked and applied. */
-export const operations = ["trim", "empty", "map", "case", "default"] as const;
+export const operations = ["timezone", "trim", "empty", "map", "case", "default"] as const;
 
 /** One of the operations on a column. */
 export type Operation = (typeof operations)[number];
 
-/** What a column's block asks for an operation: `trim: false` and `empty: false` ask for none. */
+/**
+ * What a column's block asks for an operation: `trim: false`, `empty: false` and `timezone: false`
+ * ask for none. A `timezone` is as written, whose `from` may be left to the table's input zone.
+ */
 export function writtenOf(block: ColumnCleanseDoc, operation: Operation): unknown {
   const asked: Record<Operation, unknown> = {
+    timezone: block.timezone || undefined,
     trim: block.trim === true ? true : undefined,
     empty: block.empty === null ? true : undefined,
     map: block.map && { ...block.map },
@@ -76,12 +85,38 @@ interface Subject {
 
 function checkColumn(subject: Subject, block: ColumnCleanseDoc): boolean {
   const results = [
+    checkZone(subject, block),
     ...(["trim", "empty"] as const).map((operation) => checkText(subject, block, operation)),
     checkMap(subject, block),
     checkText(subject, block, "case"),
     checkDefault(subject, block),
   ];
   return !results.includes(false);
+}
+
+/**
+ * `CLEANSE_TYPE` for a `timezone` written on a column that is not a timestamp, and
+ * `TIMEZONE_NAME` for a `from` or `to` that is not a zone.
+ */
+function checkZone(subject: Subject, block: ColumnCleanseDoc): boolean {
+  const { context, contract, column, own } = subject;
+  const zone = block.timezone;
+  if (!zone) return true;
+  const typed = !isNotTimestamp(column);
+  if (!typed) {
+    context.reporter.error(
+      "CLEANSE_TYPE",
+      `"timezone" works on timestamps, and "${column.name}" is ${column.logicalType} in contract "${contract.id}".`,
+      placeOf(own, "columns", column.name, "timezone"),
+      `Remove "timezone" from "${column.name}", or convert it where it is still a timestamp.`,
+    );
+  }
+  const names = (["from", "to"] as const).flatMap((key) => {
+    const name = zone[key];
+    if (name === undefined) return [];
+    return [checkZoneName(context, name, placeOf(own, "columns", column.name, "timezone", key))];
+  });
+  return typed && !names.includes(false);
 }
 
 /** `CLEANSE_TYPE` for `trim`, `empty` or `case` written on a column that is not text. */

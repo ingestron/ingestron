@@ -1,0 +1,85 @@
+description: "A table carries the zone its timestamps are in. A flow table is in its connection's zone; a silver transform converts from what bronze kept, so the converted column is in the standard's zone; a gold transform that reads it, with the same rule, converts nothing, and is in that zone too. The conversion is the first operation of the column."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    layers:
+      - { name: bronze, does: raw }
+      - { name: silver, does: [cleanse] }
+      - { name: gold, does: [cleanse] }
+    cleanse:
+      text: { trim: true }
+      timestamps: { to: UTC }
+  crm.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: crm
+    connector: files
+    connectivity: public
+    timezone: Europe/London
+    settings: { path: /data/crm }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: crm
+    tables:
+      customers: { object: customers, contract: customers }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: name, logicalType: string }
+          - { name: signed_up, logicalType: timestamp }
+          - { name: birthday, logicalType: date }
+  a_clean.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: customers_clean
+    inputs: [customers]
+    contract: customers
+  b_top.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: customers_top
+    layer: gold
+    inputs: [customers_clean]
+    contract: customers
+expect:
+  tables:
+    - name: customers
+      layer: bronze
+      timezone: Europe/London
+      cleanse: null
+    - name: customers_clean
+      layer: silver
+      timezone: UTC
+      cleanse:
+        columns:
+          id: null
+          name: { timezone: null, trim: true }
+          signed_up: { timezone: { from: Europe/London, to: UTC }, trim: null }
+          birthday: null
+    - name: customers_top
+      layer: gold
+      timezone: UTC
+      cleanse:
+        columns:
+          id: null
+          name: { timezone: null, trim: true }
+          signed_up: null
+          birthday: null

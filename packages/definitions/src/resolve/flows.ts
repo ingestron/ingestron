@@ -92,7 +92,7 @@ function flowTable(
     ...tableSteps(steps, connection, doc.object),
     ...sourceNotKnown(context, flow),
   };
-  checkTableIntent(context, table, places, flowChecks(flow, name));
+  checkTableIntent(context, table, places, flowChecks(flow, name, connection));
   return table;
 }
 

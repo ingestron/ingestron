@@ -134,7 +134,7 @@ function transformTable(
     store: stepOf(steps.store),
     ...(steps.serve && { serve: stepOf(steps.serve) }),
   };
-  checkTableIntent(context, table, places, transformChecks(doc));
+  checkTableIntent(context, table, places, transformChecks(doc, resolved));
   return table;
 }
 

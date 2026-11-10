@@ -1,0 +1,66 @@
+description: "A conversion that the pack keeping the table does not apply is NOT_APPLIED where it is written: a column's timezone at its key, and the standard's cleanse.timestamps at its key, once for the table. A conversion that is not made is not judged. The table still has the zone its conversions give."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+    cleanse:
+      timestamps: { to: UTC }
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    timezone: Europe/London
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      customers:
+        object: customers
+        contract: customers
+        cleanse:
+          columns:
+            updated_at: { timezone: { to: Asia/Tokyo } }
+            seen_at: { timezone: { to: Europe/London } }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: created_at, logicalType: timestamp }
+          - { name: updated_at, logicalType: timestamp }
+          - { name: seen_at, logicalType: timestamp }
+expect:
+  tables:
+    - name: customers
+      timezone: null
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: standard.yaml
+      line: 6
+      message: 'Cleansing "timezone" of timestamp columns isn''t applied on quality: Converting time zones is not done yet.'
+      subject: { table: customers, feature: cleanse.timezone }
+    - code: NOT_APPLIED
+      severity: warning
+      file: sales.yaml
+      line: 11
+      message: 'Cleansing "timezone" of "updated_at" isn''t applied on quality: Converting time zones is not done yet.'
+      subject: { table: customers, feature: cleanse.timezone }

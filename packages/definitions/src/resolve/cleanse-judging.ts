@@ -13,7 +13,7 @@ import { judgementOf, type Judged } from "./quality-judging.js";
 /** Which operations a table's cleansing has, and where each came from. */
 export interface UsedOperations {
   /** Operations that reached at least one column from the standard's defaults. */
-  fromStandard: Set<"trim" | "empty">;
+  fromStandard: Set<"trim" | "empty" | "timezone">;
   /** The operations the table writes, by column, in the contract's order. */
   written: { column: string; operation: Operation }[];
 }
@@ -51,12 +51,12 @@ function judgedItems(context: Context, table: ResolvedTable, { own, used, dedupl
     at,
     feature: path,
   });
-  const standard = (["trim", "empty"] as const)
+  const standard = (["timezone", "trim", "empty"] as const)
     .filter((operation) => used.fromStandard.has(operation))
     .map((operation) =>
-      item(`cleanse.${operation}`, `Cleansing "${operation}" of text columns`, {
+      item(`cleanse.${operation}`, `Cleansing "${operation}" of ${columnsOf(operation)} columns`, {
         document: context.standard,
-        pointer: `/cleanse/text/${operation}`,
+        pointer: standardKey(operation),
       }),
     );
   const written = used.written.map(({ column, operation }) =>
@@ -70,6 +70,16 @@ function judgedItems(context: Context, table: ResolvedTable, { own, used, dedupl
     ? [item("deduplicate", "Deduplicate", placeOf(own, "deduplicate"))]
     : [];
   return [...standard, ...written, ...dedupe];
+}
+
+/** The kind of columns the standard's default for the operation reaches. */
+function columnsOf(operation: "trim" | "empty" | "timezone"): string {
+  return operation === "timezone" ? "timestamp" : "text";
+}
+
+/** Where the standard writes its default for the operation. */
+function standardKey(operation: "trim" | "empty" | "timezone"): string {
+  return operation === "timezone" ? "/cleanse/timestamps/to" : `/cleanse/text/${operation}`;
 }
 
 /** `NOT_APPLIED` for an operation on a table that ends at the landed files. */

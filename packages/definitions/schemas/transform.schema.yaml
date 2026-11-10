@@ -107,11 +107,30 @@ $defs:
     properties:
       columns:
         type: object
-        description: "Cleansing for named columns of the contract, applied in this order after the cast: trim, empty, map, case, default."
+        description: "Cleansing for named columns of the contract, applied in this order after the cast: timezone, trim, empty, map, case, default."
         additionalProperties:
           type: object
           additionalProperties: false
           properties:
+            timezone:
+              description: "Converts a timestamp column to another time zone, before the other operations. `false` takes away the standard's rule for this column."
+              oneOf:
+                - { const: false }
+                - type: object
+                  additionalProperties: false
+                  required: [to]
+                  properties:
+                    from:
+                      type: string
+                      description: "The zone the column is in. Default: the zone of the table's inputs."
+                      examples: [Europe/London]
+                    to:
+                      type: string
+                      description: The zone to convert to, such as `UTC`.
+                      examples: [UTC]
+              examples:
+                - { to: UTC }
+                - { from: Europe/London, to: UTC }
             trim:
               type: boolean
               description: "`true` removes leading and trailing whitespace; `false` takes away the standard's trim for this column."

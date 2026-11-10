@@ -109,7 +109,7 @@ properties:
   cleanse:
     type: object
     additionalProperties: false
-    description: "Cleansing for the columns of tables in layers that cleanse, or in flows when a layer says nothing: what to do with every text column. A table's own `cleanse` adds to it or takes it away."
+    description: "Cleansing for the columns of tables in layers that cleanse, or in flows when a layer says nothing: what to do with every text and timestamp column. A table's own `cleanse` adds to it or takes it away."
     properties:
       text:
         type: object
@@ -126,6 +126,16 @@ properties:
             enumDescriptions:
               - Turn an empty string into null.
               - Leave empty strings as they are.
+      timestamps:
+        type: object
+        additionalProperties: false
+        required: [to]
+        description: What to do with every timestamp column of the contract.
+        properties:
+          to:
+            type: string
+            description: "The time zone to convert to, as `UTC` or an IANA name. Columns are converted from the zone of the table's inputs, which a connection's `timezone` sets."
+            examples: [UTC]
   load:
     type: object
     additionalProperties: false

@@ -901,7 +901,7 @@ cleanse:
 ```
 
 The operations on one column are, in this order and after the cast to the
-contract's types: `trim` (`true`: removes leading and trailing whitespace),
+contract's types: `timezone` (section 6.3), `trim` (`true`: removes leading and trailing whitespace),
 `empty` (`null`: turns an empty string into null), `map` (replaces the listed
 values exactly), `case` (`upper` or `lower`) and `default` (replaces null with
 a value). `trim: false` and `empty: false` take the operation away. Row checks
@@ -918,8 +918,8 @@ writes for that column, when the table does not end at the landed files and:
 A column is text when its contract `logicalType` is `string`. Then
 `ResolvedTable.cleanse.columns` has, for each column with at least one
 operation, in the contract's column order, an object with the keys of
-`ColumnCleanse` in the order above: `trim: true`, `empty: true`, `map`, `case`
-and `default`. A table with no operation and no `deduplicate` has no
+`ColumnCleanse` in the order above: `timezone`, `trim: true`, `empty: true`,
+`map`, `case` and `default`. A table with no operation and no `deduplicate` has no
 `cleanse`.
 
 **Judged against the contract.** Each column's type is the type of the contract
@@ -956,8 +956,8 @@ operations are not judged below.
 
 **Not applied.** The step that keeps the table (section 11.7) judges each
 operation for the intent path `cleanse.trim`, `cleanse.empty`, `cleanse.map`,
-`cleanse.case` and `cleanse.default`, with the value `true`, as it judges
-a quality rule, and for `deduplicate` (section 6.2). The table is judged for
+`cleanse.case`, `cleanse.default` and, for a time zone conversion (section 6.3),
+`cleanse.timezone`, with the value `true`, as it judges a quality rule, and for `deduplicate` (section 6.2). The table is judged for
 the operations it writes, each at the key that wrote it in the flow table
 or transform; and for those that came from the standard's `cleanse.text`,
 once for each operation that reached at least one column, at the default's
@@ -1022,6 +1022,101 @@ is <history>, which already decides what is kept for each key.`, with the
 `deduplicate` is `NOT_APPLIED` as an operation of section 6.1 is, with the
 path `deduplicate`, the value `true`, the feature `deduplicate` and the
 message `Deduplicate isn't applied on <pack>: <reason>`.
+
+### 6.3 Time zones
+
+A timestamp column can be converted from the zone its source wrote it in to the
+zone the warehouse keeps. The zone is carried from table to table, so a later
+table never converts what an earlier one has converted.
+
+**Declaring it.**
+
+```yaml
+# connections/crm.yaml: the zone the source writes its timestamps in
+timezone: Europe/London
+
+# standard.yaml: every timestamp column of the tables that cleanse
+cleanse:
+  timestamps: { to: UTC }
+
+# a transform, or a flow table
+cleanse:
+  columns:
+    signed_up: { timezone: { to: Europe/London } } # from the table's zone
+    created_at: { timezone: { from: UTC, to: Europe/London } } # from a zone named here
+    exported_at: { timezone: false } # the standard's rule does not apply
+```
+
+- A Connection's `timezone` is the zone its timestamps are written in: a wall
+  clock with no offset. A Connection with none is taken to be in `UTC`.
+- The standard's `cleanse.timestamps.to` gives a `timezone` to each column
+  whose contract `logicalType` is `timestamp`, in the tables that the standard's
+  `cleanse.text` reaches (section 6.1), not overriding what the table writes
+  for that column.
+- A column's `timezone` is `{ to }`, `{ from, to }` or `false`. `false` takes
+  the standard's rule away from that column. `from` is the zone the column's
+  timestamps are in; without it, the table's input zone below.
+- A zone is `UTC` or a name from the IANA time zone database, written exactly
+  (case matters). A name that is not on the list the implementation ships is
+  `TIMEZONE_NAME`, an error at the name: a Connection's `timezone`, the
+  standard's `cleanse.timestamps.to`, and a column's `from` and `to`. A value
+  that holds an unset reference is not checked. The message is `"<name>" is not
+a time zone name.` and the hint is `Did you mean "<listed name>"?` when a
+  listed name differs from it only in case, else `Use a name from the IANA time
+zone database, such as Europe/London, or UTC.` The list is generated from
+  the tz database that the Node.js 22 runtime ships (`Intl.supportedValuesOf`),
+  with `UTC` and `Etc/UTC`, into `packages/definitions/src/data/zones.json`,
+  which records the database's version; every zone this specification, its
+  cases and the published standards use is on it.
+- `timezone` on a column whose `logicalType` is given and is not `timestamp` is
+  `CLEANSE_TYPE` (section 6.1): `"timezone" works on timestamps, and
+"<column>" is <type> in contract "<id>".`, with the hint `Remove "timezone"
+from "<column>", or convert it where it is still a timestamp.`
+
+**The zone of a table.** `ResolvedTable.timezone` is the zone the table's
+timestamp columns are in once the table is built:
+
+- the **input zone** of a flow table is its Connection's `timezone`, else `UTC`;
+  of a transform, the zone of its inputs when they all have the same one. When
+  they differ, the transform has no input zone;
+- a column converted from a zone to another is then in the `to` zone; a
+  timestamp column that is not converted stays in the input zone;
+- the table's zone is the zone all its timestamp columns are in. When they are
+  not all in one zone (columns converted to different zones, or only some
+  converted), the table has no `timezone`. A table with no timestamp column has
+  its input zone; a table that ends at the landed files has the Connection's.
+
+**What is converted.** A column's conversion is `{ from, to }`: `from` is the
+column's own, else the input zone; `to` is the column's own, else the
+standard's. `ResolvedTable.cleanse.columns[<column>].timezone` holds it, and
+it is the first of the column's operations. A conversion whose `from` and `to`
+are the same zone is not made and is not recorded: that is how a later table
+reading a converted one does not convert it again. So:
+
+- a table whose inputs are all in `UTC` converts a column `{ to: UTC }` or by
+  the standard's `cleanse.timestamps: { to: UTC }` to nothing;
+- a silver table that converts `Europe/London` to `UTC` has the zone `UTC`, and
+  a gold table that reads it with the same rule converts nothing.
+
+`TIMEZONE_SOURCE`, an error: the table has no input zone (its inputs are in
+different zones) and a column is converted without `from`. It is reported once
+for each such column: at the column's `timezone` when the table writes one, else
+(for the standard's rule) at the transform's `inputs`. The message is `The
+inputs of "<table>" are in different time zones (<zones>), so "<column>" needs a
+"from" zone.`, with the zones listed in the order of the inputs, each once (an input that has no `timezone` is listed as `more than one`), and
+the hint `Write timezone: { from: <zone>, to: <zone> } for "<column>".`. When
+anything in this section is reported, the table has no `cleanse` (section 6.1);
+its `timezone` is its input zone.
+
+**Not applied.** A conversion is judged for the intent path `cleanse.timezone`
+with the value `true` (section 6.1): each the table writes at its `timezone`
+key, and, once, the standard's at `cleanse.timestamps` when it reached at least
+one column, as `Cleansing "timezone" of timestamp columns isn't applied on
+<pack>: <reason>`. A conversion that is not made (`from` and `to` the same) is
+not judged. A table that ends at the landed files is not converted by the
+standard's rule, and the conversions it writes are `NOT_APPLIED` as section 6.1
+says. A table's `timezone` is the zone its conversions give, whether or not a
+pack applies them.
 
 ## 7. Platform defaults
 
@@ -1451,7 +1546,7 @@ object without a `name` is a load error at the item.
 | `load`                                     | `default` (a load mode), `deletes` (a delete mode) and `when`, a list of rules, each with some of the facts `connectivity`, `connector`, `input` and `layer`, and `use`, a load mode. Rules are checked in order: the first whose facts all match chooses `load.mode`. |
 | `audit`, `rescued`, `retention`, `storage` | The same as a layer's or a table's, for every table.                                                                                                                                                                                                                   |
 | `quality.results`                          | `true`: keep the results of checks as a table.                                                                                                                                                                                                                         |
-| `cleanse`                                  | Defaults for the tables' columns (section 6.1): `text`, with `trim: true` and `empty: null`, for every text column.                                                                                                                                                    |
+| `cleanse`                                  | Defaults for the tables' columns (sections 6.1 and 6.3): `text`, with `trim: true` and `empty: null`, for every text column, and `timestamps`, with `to: <zone>`, for every timestamp column.                                                                          |
 | `operations`                               | Policy for runs, below.                                                                                                                                                                                                                                                |
 | `fixed`                                    | Intent that no layer, flow or transform may change: any of `load`, `history`, `sequence`, `audit`, `rescued`, `retention`, `storage` and `operations`, in the forms below. It is separate from each action's `fixed` settings.                                         |
 
@@ -1939,7 +2034,8 @@ The same warning at the same place is reported once (section 1.2).
 
 Cleansing and deduplicate (sections 6.1 and 6.2) are judged by the same step, for
 the paths `cleanse.trim`, `cleanse.empty`, `cleanse.map`, `cleanse.case`,
-`cleanse.default` and `deduplicate`, each with the value `true`. An entry that is
+`cleanse.default`, `cleanse.timezone` (section 6.3) and `deduplicate`, each with
+the value `true`. An entry that is
 `used` with `onlyWhere: cleanse` or `onlyWhere: deduplicate` is `NOT_APPLIED` in a
 table whose `does` does not list that duty, with the reason `it is applied only in
 a layer whose does lists <duty>.` and the hint ``Add `<duty>` to the layer's `does`

@@ -11,6 +11,7 @@ import type {
   StandardIntentDoc,
   TableIntentDoc,
 } from "../intent/index.js";
+import type { CleanseDoc, ColumnCleanseDoc } from "./cleanse-docs.js";
 import type { RulesDoc } from "./rules.js";
 
 /** An action's method choice and settings, as written in a flow or transform. */
@@ -26,24 +27,6 @@ export interface ExpectationDoc {
   action?: "warn" | "drop" | "fail";
 }
 
-/**
- * One column's cleansing as written (specification section 6.1). `trim: false` and
- * `empty: false` take away what the standard gives; `empty: null` turns empty text into null.
- */
-export interface ColumnCleanseDoc {
-  trim?: boolean;
-  empty?: null | false;
-  map?: Record<string, string | number | boolean | null>;
-  case?: "upper" | "lower";
-  default?: string | number | boolean;
-}
-
-/** A table's own cleansing as written (specification sections 6.1 and 6.2). */
-export interface CleanseDoc {
-  columns?: Record<string, ColumnCleanseDoc>;
-  deduplicate?: { order_by: string[] };
-}
-
 /** A `Standard` document. */
 export interface StandardDoc extends StandardIntentDoc {
   id: string;
@@ -54,7 +37,7 @@ export interface StandardDoc extends StandardIntentDoc {
   layers?: (string | LayerDoc)[];
   types?: Record<string, string>;
   /** Defaults for the tables' columns (specification section 6.1). */
-  cleanse?: { text?: Pick<ColumnCleanseDoc, "trim" | "empty"> };
+  cleanse?: { text?: Pick<ColumnCleanseDoc, "trim" | "empty">; timestamps?: { to: string } };
   quality?: {
     required?: "warn" | "drop" | "fail";
     default?: "warn" | "drop" | "fail";
@@ -109,6 +92,8 @@ export interface ConnectionDoc {
   id: string;
   connector: string;
   connectivity: string;
+  /** The zone the source writes its timestamps in (specification section 6.3). */
+  timezone?: string;
   settings?: Record<string, unknown>;
 }
 

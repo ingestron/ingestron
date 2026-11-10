@@ -32,6 +32,11 @@ properties:
       - The platform reaches it over private networking, such as ExpressRoute or a peered network.
       - The platform cannot reach it; something inside the source's network must bring the data.
     description: How the data platform reaches the source. Standards choose methods by this.
+  timezone:
+    type: string
+    description: "The time zone the source writes its timestamps in, as an IANA name. Without one, timestamps are taken to be in UTC. A cleansing rule can convert them."
+    examples:
+      - Europe/London
   settings:
     type: object
     description: Connector settings, such as `path` for files. Write secrets as `${secret:…}`.

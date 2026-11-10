@@ -1,0 +1,66 @@
+description: "A table whose timestamp columns are not all in one zone has no zone. A transform that reads it, and converts a column without from, has no zone to convert from: TIMEZONE_SOURCE, with the input listed as more than one zone."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    layers:
+      - { name: bronze, does: [cleanse] }
+      - { name: silver, does: [cleanse] }
+  crm.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: crm
+    connector: files
+    connectivity: public
+    timezone: Europe/London
+    settings: { path: /data/crm }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: crm
+    tables:
+      events:
+        object: events
+        contract: events
+        cleanse:
+          columns:
+            a: { timezone: { to: Asia/Tokyo } }
+  events.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: events
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: events
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: a, logicalType: timestamp }
+          - { name: b, logicalType: timestamp }
+  clean.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: events_clean
+    inputs: [events]
+    contract: events
+    cleanse:
+      columns:
+        a: { timezone: { to: UTC } }
+        b: { timezone: { from: Europe/London, to: UTC } }
+expect:
+  diagnostics:
+    - code: TIMEZONE_SOURCE
+      severity: error
+      file: clean.yaml
+      line: 8
+      message: 'The inputs of "events_clean" are in different time zones (more than one), so "a" needs a "from" zone.'
+      hint: 'Write timezone: { from: <zone>, to: <zone> } for "a".'
