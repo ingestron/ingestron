@@ -1,10 +1,16 @@
 // Accepted warnings (specification, Accepted warnings): the Platform's `accept` list takes the
 // warnings it names out of the result's problems, and says which entries are invalid or unused.
-import type { DefinitionDocument, FileSource, Fix, Project, Severity } from "@ingestron/config";
+import {
+  matchesImport,
+  type DefinitionDocument,
+  type FileSource,
+  type Fix,
+  type Project,
+  type Severity,
+} from "@ingestron/config";
 import { codeHelp, loadingCodeHelp, type Diagnostic } from "../diagnostics/index.js";
 import { kinds, type AcceptDoc, type PlatformDoc } from "../documents/index.js";
 import { holdsReference, writtenValue } from "../internal/index.js";
-import { matchesGlob } from "./glob.js";
 
 /**
  * A warning the Platform's `accept` list accepted, with the entry that did.
@@ -77,7 +83,7 @@ function aboutMatches(about: NonNullable<AcceptDoc["about"]>, warning: Diagnosti
   const at = warning.location?.file;
   const { file, table, feature } = about;
   return (
-    (file === undefined || (at !== undefined && matchesGlob(at, file))) &&
+    (file === undefined || (at !== undefined && matchesImport(file, at))) &&
     (table === undefined || warning.subject?.table === table) &&
     (feature === undefined || warning.subject?.feature === feature)
   );

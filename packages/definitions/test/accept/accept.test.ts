@@ -1,5 +1,5 @@
 // Accepted warnings beyond the conformance cases (specification, Accepted warnings): the
-// severities each code lists, the glob rules, and both entry points.
+// severities each code lists, and both entry points.
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -7,7 +7,6 @@ import { memoryFiles } from "@ingestron/config";
 import { describe, expect, it } from "vitest";
 import { codeHelp, loadDefinitions, loadingCodeHelp, resolveDefinitions } from "../../src/index.js";
 import { severitiesOf } from "../../src/accept/index.js";
-import { matchesGlob } from "../../src/accept/glob.js";
 import type { PackInfo } from "../../src/index.js";
 
 describe("severities", () => {
@@ -30,19 +29,6 @@ describe("severities", () => {
     expect(severitiesOf("NOT_A_CODE")).toBeUndefined();
     expect(severitiesOf("constructor")).toBeUndefined();
     expect(severitiesOf("toString")).toBeUndefined();
-  });
-});
-
-describe("glob", () => {
-  it("follows the rules of imports", () => {
-    expect(matchesGlob("flows/a.yaml", "flows/*.yaml")).toBe(true);
-    expect(matchesGlob("flows/legacy/a.yaml", "flows/*.yaml")).toBe(false);
-    expect(matchesGlob("flows/legacy/a.yaml", "flows/**")).toBe(true);
-    expect(matchesGlob("a.yaml", "**/a.yaml")).toBe(true);
-    expect(matchesGlob("x/y/a.yaml", "**/a.yaml")).toBe(true);
-    expect(matchesGlob("a.yaml", "?.yaml")).toBe(true);
-    expect(matchesGlob("ab.yaml", "?.yaml")).toBe(false);
-    expect(matchesGlob("aXyaml", "a.yaml")).toBe(false);
   });
 });
 

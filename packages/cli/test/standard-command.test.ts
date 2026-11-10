@@ -162,6 +162,22 @@ describe("standard install", () => {
     expect(read(project, "standard.yaml")).toContain("default: sometimes");
   });
 
+  it("finds the standard through an import written ./standard.yaml", () => {
+    const project = kitProject();
+    edit(project, "project.yaml", (text) =>
+      text.replace("  - standard.yaml", "  - ./standard.yaml"),
+    );
+    committed(project);
+    const { code, output } = ingestron(
+      project,
+      "standard",
+      "install",
+      "duckdb/local-medallion@2026-11-10",
+    );
+    expect(code, output).toBe(0);
+    expect(output).not.toContain("no Standard document");
+  });
+
   it("refuses a project with no Standard document, or with two", () => {
     const none = kitProject();
     edit(none, "project.yaml", (text) => text.replace("  - standard.yaml\n", ""));

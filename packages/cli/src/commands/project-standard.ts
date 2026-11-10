@@ -2,7 +2,7 @@
 // "standard install"): project.yaml's imports, and each imported file's `kind`, `id` and
 // `origin`. Nothing is checked against a schema, so a standard that the CLI now rejects, or a
 // half-edited flow, does not stop the standard being replaced.
-import { nodeFiles, type FileSource } from "@ingestron/config";
+import { matchesImport, nodeFiles, type FileSource } from "@ingestron/config";
 import { isMap, parseDocument } from "yaml";
 
 /** The project's Standard document: its file, its id and where it came from. */
@@ -59,34 +59,14 @@ function header(files: FileSource, file: string): Header {
   return isMap(document.contents) ? (document.toJS() as Header) : {};
 }
 
-/** The files the imports match, in path order, as the loader reads `imports`. */
+/** The files the imports match, in path order, by the rule the loader reads `imports` with. */
 function importedFiles(files: FileSource, patterns: string[]): string[] {
-  const matchers = patterns
-    .map((pattern) => pattern.replace(/^(\.\/)+/, ""))
-    .filter((pattern) => !pattern.startsWith("/") && !pattern.split("/").includes(".."))
-    .map(globPattern);
   return files
     .list()
-    .filter((path) => path !== "project.yaml" && matchers.some((matcher) => matcher.test(path)))
+    .filter(
+      (path) => path !== "project.yaml" && patterns.some((pattern) => matchesImport(pattern, path)),
+    )
     .sort();
-}
-
-/**
- * A pattern of `imports` as a regular expression (spec/config/syntax.md): `*` matches any
- * characters except `/`, `**` any number of folders, and `?` one character except `/`.
- */
-function globPattern(pattern: string): RegExp {
-  const source = pattern
-    .split(/(\*\*\/|\*\*|\*|\?)/)
-    .map((part) => {
-      if (part === "**/") return "(?:.*/)?";
-      if (part === "**") return ".*";
-      if (part === "*") return "[^/]*";
-      if (part === "?") return "[^/]";
-      return part.replace(/[.+^${}()|[\]\\]/g, "\\$&");
-    })
-    .join("");
-  return new RegExp(`^${source}$`);
 }
 
 /** The Standard's `origin`, when it names a kit and a version as text. */

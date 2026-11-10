@@ -1,4 +1,4 @@
-description: "An about.file glob is matched against the file of the warning's location, relative to the project: * stays inside a folder."
+description: "An about.file glob is matched against the file of the warning's location, relative to the project, by the rules of imports: * stays inside a folder, and a leading ./ is dropped."
 environment: dev
 files:
   project.yaml: |
@@ -16,7 +16,7 @@ files:
     id: lake
     accept:
       - code: NOT_APPLIED
-        about: { file: "*.odcs.yaml" }
+        about: { file: "./*.odcs.yaml" }
         reason: The on-call team checks this rule from CI.
   source.yaml: |
     apiVersion: ingestron.io/v1

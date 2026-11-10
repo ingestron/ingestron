@@ -54,7 +54,13 @@ imports: # required; one or more glob patterns
   (`UNKNOWN_ENVIRONMENT`).
 - An environment MAY name `runs-on`, a pack id; the loaded project records it
   for the selected environment, and the definitions say what it changes.
-- Import patterns are relative to the manifest's folder. `*` matches any
+- Import patterns are relative to the manifest's folder. A pattern is first
+  normalised: `.` and empty parts are dropped and `..` is resolved, so
+  `./flows//*.yaml` is `flows/*.yaml` and `a/../b/*.yaml` is `b/*.yaml`. A
+  pattern that is absolute, has a backslash or a scheme such as `https:`, or
+  leaves the project folder is refused (`PATH_OUTSIDE_PROJECT`) and matches
+  nothing. Other settings that take file patterns, such as the definitions'
+  accepted warnings, follow this one rule. `*` matches any
   characters except `/`, `**` matches any number of folders, and `?` matches
   one character except `/`. A pattern that matches no file is a warning
   (`NO_MATCH`). The manifest itself is never imported. Documents are processed

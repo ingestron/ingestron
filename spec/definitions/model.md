@@ -2186,10 +2186,12 @@ when all of these hold:
 2. Its `code` equals the entry's `code`.
 3. Each key of `about` matches:
    - `file`: a glob pattern matched against the file of the problem's
-     location, relative to the project folder, with the rules of `imports`
-     (the configuration specification, section 2): `*` matches any characters
-     except `/`, `**` matches any number of folders, `?` matches one character
-     except `/`. A problem without a location does not match.
+     location, relative to the project folder, by the one rule `imports`
+     follows (the configuration specification, section 2): the pattern is
+     normalised first, so `./flows/**` is `flows/**`, and a pattern that
+     `imports` would refuse matches nothing; `*` matches any characters except
+     `/`, `**` matches any number of folders, `?` matches one character except
+     `/`. A problem without a location does not match.
    - `table`: equals the problem's `subject.table`.
    - `feature`: equals the problem's `subject.feature`.
 

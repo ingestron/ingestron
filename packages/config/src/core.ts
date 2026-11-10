@@ -42,3 +42,6 @@ export {
   type Severity,
   type TextEdit,
 } from "./diagnostics/index.js";
+
+// Patterns: the rule `imports` matches paths by, for other places that take file patterns.
+export { matchesImport } from "./internal/index.js";

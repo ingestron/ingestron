@@ -3,10 +3,9 @@
 import { readYaml, type LoadContext } from "../resolve/index.js";
 import { isRecord, mergeValues } from "../internal/index.js";
 import { error, warning } from "../diagnostics/index.js";
-import { matchesGlob } from "../internal/index.js";
 import { parsePointer } from "../internal/index.js";
 import type { JsonSchema } from "../kinds/index.js";
-import { resolveProjectPath } from "../internal/index.js";
+import { importMatcher } from "../internal/index.js";
 import { resolveNode } from "../resolve/index.js";
 import type { Scope } from "../resolve/index.js";
 import { createSchemaChecker } from "../validate/index.js";
@@ -189,8 +188,8 @@ export function importedPaths(context: LoadContext, manifest: Manifest): string[
       manifest.file,
       nodeAtKeys(manifest.file, ["imports", String(index)]),
     );
-    const fullPattern = resolveProjectPath(manifest.file.path, pattern);
-    if (fullPattern === undefined) {
+    const matcher = importMatcher(manifest.file.path, pattern);
+    if (matcher === undefined) {
       context.diagnostics.push(
         error(
           "PATH_OUTSIDE_PROJECT",
@@ -201,7 +200,7 @@ export function importedPaths(context: LoadContext, manifest: Manifest): string[
       );
       return;
     }
-    const matches = allPaths.filter((path) => matchesGlob(path, fullPattern));
+    const matches = allPaths.filter(matcher);
     if (matches.length === 0) {
       context.diagnostics.push(
         warning(

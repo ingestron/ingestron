@@ -13,6 +13,7 @@ describe("the ./core subpath", () => {
       "formatDiagnostics",
       "isSecretReference",
       "manifestSchema",
+      "matchesImport",
       "memoryFiles",
       "resolveProject",
       "toEditorSchema",
