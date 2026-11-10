@@ -31,7 +31,7 @@ files:
         contract: customers
         cleanse:
           columns:
-            updated_at: { timezone: { to: Asia/Tokyo } }
+            updated_at: { timezone: { to: UTC } }
             seen_at: { timezone: { to: Europe/London } }
   customers.odcs.yaml: |
     apiVersion: v3.1.0

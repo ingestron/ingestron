@@ -1059,7 +1059,7 @@ cleanse:
   the standard's rule away from that column. `from` is the zone the column's
   timestamps are in; without it, the table's input zone below.
 - A zone is `UTC` or a name from the IANA time zone database, aliases included
-  (`Asia/Kolkata` and `Asia/Calcutta`, `GMT`, `Etc/GMT+5`), written exactly
+  (a zone's older and newer names are both accepted), written exactly
   (case matters). A name that is not on the list the implementation ships is
   `TIMEZONE_NAME`, an error at the name: a Connection's `timezone`, the
   standard's `cleanse.timestamps.to`, and a column's `from` and `to`. A value

@@ -34,7 +34,7 @@ files:
         cleanse:
           columns:
             b: { timezone: false }
-            c: { timezone: { to: Asia/Tokyo } }
+            c: { timezone: { to: UTC } }
             d: { timezone: { from: UTC, to: Europe/London } }
             e: { timezone: { to: Europe/London } }
       plain:
@@ -74,7 +74,7 @@ expect:
           id: null
           a: { timezone: { from: Europe/London, to: UTC } }
           b: null
-          c: { timezone: { from: Europe/London, to: Asia/Tokyo } }
+          c: { timezone: { from: Europe/London, to: UTC } }
           d: { timezone: { from: UTC, to: Europe/London } }
           e: null
           day: null

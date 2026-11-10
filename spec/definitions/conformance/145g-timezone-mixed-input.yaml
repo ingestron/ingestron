@@ -32,7 +32,7 @@ files:
         contract: events
         cleanse:
           columns:
-            a: { timezone: { to: Asia/Tokyo } }
+            a: { timezone: { to: UTC } }
   events.odcs.yaml: |
     apiVersion: v3.1.0
     kind: DataContract
