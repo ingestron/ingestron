@@ -1,0 +1,74 @@
+description: "Each column whose classification the standard masks gets that mask, in the contract's order: a built-in as written, any other name as a function, kept as written. Other columns are untouched, and the classification tag key is classification when the standard gives none."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    governance:
+      classification:
+        values: [public, internal, confidential, restricted, secret, payment]
+      masks:
+        confidential: hash
+        restricted: "null"
+        secret: redact
+        internal: mask_internal
+        payment: governance.masks.mask_card
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      customers: { object: customers, contract: customers }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true, classification: public }
+          - { name: email, logicalType: string, classification: confidential }
+          - { name: birth_date, logicalType: date, classification: restricted }
+          - { name: notes, logicalType: string, classification: secret }
+          - { name: segment, logicalType: string, classification: internal }
+          - { name: card, logicalType: string, classification: payment }
+          - { name: country, logicalType: string }
+expect:
+  standard:
+    governance:
+      classification:
+        values: [public, internal, confidential, restricted, secret, payment]
+        tag: classification
+  tables:
+    - name: customers
+      access:
+        grants: []
+        exact: false
+        masks:
+          - { column: email, classification: confidential, mask: hash }
+          - { column: birth_date, classification: restricted, mask: "null" }
+          - { column: notes, classification: secret, mask: redact }
+          - { column: segment, classification: internal, mask: { function: mask_internal } }
+          - {
+              column: card,
+              classification: payment,
+              mask: { function: governance.masks.mask_card },
+            }
+        filters: []

@@ -5,6 +5,8 @@ import type { NotApplied } from "../diagnostics/index.js";
 import type { GovernanceDoc } from "../documents/index.js";
 import type { FeatureStatus, Intent, LayerDuty, ResolvedOperations } from "../intent/index.js";
 import type { StepOutput } from "./pack.js";
+import type { TableAccess } from "./access.js";
+import type { TableCleanse } from "./cleanse.js";
 import type { TableCheck } from "./table-checks.js";
 
 /**
@@ -175,41 +177,6 @@ export interface FullName {
 }
 
 /**
- * What is done to one column's values, after the cast to the contract's types and before the
- * table's checks (specification section 6.1). The operations are applied in this order:
- * `timezone`, `trim`, `empty`, `map`, `case`, `default`.
- * @example { trim: true, empty: true, case: "lower" }
- * @public
- */
-export interface ColumnCleanse {
-  /** Converts a timestamp from one zone to another, where a column's zones are known. */
-  timezone?: { from: string; to: string };
-  /** Removes leading and trailing whitespace from text. */
-  trim?: true;
-  /** Turns an empty string into null. */
-  empty?: true;
-  /** Replaces the listed values exactly; a value of null turns it into null. */
-  map?: Record<string, unknown>;
-  /** Changes text to upper or lower case. */
-  case?: "upper" | "lower";
-  /** Replaces null with this value. */
-  default?: unknown;
-}
-
-/**
- * What is done to a table's rows before its checks (specification sections 6.1 and 6.2):
- * the columns that have at least one operation, in the contract's order, and deduplicate.
- * @example { columns: { email: { trim: true, case: "lower" } }, deduplicate: { orderBy: ["updated_at"] } }
- * @public
- */
-export interface TableCleanse {
-  /** The operations of each column that has any, by column name, in the contract's order. */
-  columns: Record<string, ColumnCleanse>;
-  /** Keeps one row for each primary key: the last by these contract columns. */
-  deduplicate?: { orderBy: string[] };
-}
-
-/**
  * One table to build, from a flow or a transform. Tables come in dependency
  * order: every input before the tables that read it.
  * @example
@@ -302,6 +269,12 @@ export interface ResolvedTable {
    */
   notApplied?: NotApplied[];
   /**
+   * Who may use the table, and which of its columns and rows are hidden (specification
+   * section 8.2). Absent when the table has no grants, masks or filters, and on a table that
+   * ends at the landed files.
+   */
+  access?: TableAccess;
+  /**
    * A flow table's `source` when it holds an unset `${envvar:…}`, which only an editor's
    * resolution allows (specification section 1). The connection is then a stand-in with no
    * settings, and unless the flow names its ingest method with `uses`, the table has no
@@ -366,6 +339,8 @@ export interface ResolvedPlatform {
   sections: Record<string, Record<string, unknown>>;
   manage: { schemas: boolean; tags: boolean; comments: boolean; checks: boolean };
   grants: Record<string, Grant[]>;
+  /** The principal each contract role is on this platform, by role; `{}` when not given (section 8.2). */
+  principals: Record<string, string>;
 }
 
 /**
@@ -376,7 +351,10 @@ export interface ResolvedPlatform {
  */
 export interface ResolvedModel {
   project: { id: string; name?: string; environment: string };
-  /** The standard: its id, packs and governance section as written, when it has one. */
+  /**
+   * The standard: its id, packs and governance section as written, when it has one, with
+   * `classification.tag` filled in (`classification` by default; specification section 8.1).
+   */
   standard: { id: string; packs: string[]; governance?: GovernanceDoc };
   platform: ResolvedPlatform;
   layers: string[];

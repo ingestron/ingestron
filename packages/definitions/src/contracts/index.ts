@@ -7,6 +7,7 @@ export {
 } from "./contract-use.js";
 export {
   actionPlace,
+  contractEntryAt,
   expectationPlaces,
   standardQualityAt,
   tableCheckPlaces,

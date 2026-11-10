@@ -27,6 +27,8 @@ export interface LayerDoc {
   /** What the layer does with its rows: `raw`, or the duties it lists (specification section 5). */
   does?: "raw" | LayerDuty[];
   quality?: QualityDoc;
+  /** Who may use the layer's tables (specification sections 5 and 8.2). */
+  access?: { contract?: boolean; roles?: { role: string; access?: "read" | "write" }[] };
 }
 
 /** What a standard, a layer, a flow table or a transform says about keeping rows and results. */

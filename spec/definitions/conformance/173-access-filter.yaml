@@ -1,0 +1,84 @@
+description: "A row filter applies to each table with exactly one column its match names: by tag key, by tag key and value, or by classification, the classification counting as the tag the standard names. A table with no such column gets no filter."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    governance:
+      classification: { tag: sensitivity }
+      filters:
+        region_rows: { function: region_filter, match: { tag: region } }
+        eu_rows: { function: governance.filters.eu_only, match: { tag: residency, value: eu } }
+        restricted_rows: { function: steward_only, match: { tag: sensitivity, value: restricted } }
+        tenant_rows: { function: tenant_filter, match: { classification: tenant } }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lakehouse
+    manage: { tags: true }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+      stores: { object: stores, contract: stores }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: country, logicalType: string, tags: [region] }
+          - { name: home, logicalType: string, tags: ["residency:eu"] }
+          - { name: away, logicalType: string, tags: ["residency:us"] }
+          - { name: owner, logicalType: string, classification: restricted }
+          - { name: tenant_id, logicalType: string, classification: tenant }
+  stores.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: stores
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: stores
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: city, logicalType: string, tags: ["area:north"] }
+expect:
+  standard:
+    governance:
+      classification: { tag: sensitivity }
+  tables:
+    - name: orders
+      access:
+        grants: []
+        exact: false
+        masks: []
+        filters:
+          - { name: region_rows, column: country, function: region_filter }
+          - { name: eu_rows, column: home, function: governance.filters.eu_only }
+          - { name: restricted_rows, column: owner, function: steward_only }
+          - { name: tenant_rows, column: tenant_id, function: tenant_filter }
+    - name: stores
+      access: null

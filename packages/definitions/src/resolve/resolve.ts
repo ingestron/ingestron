@@ -22,6 +22,7 @@ import type { PackInfo } from "../pack/index.js";
 import { checkDuplicateNames, createNamer } from "../tables/index.js";
 import { transformTables } from "./transforms.js";
 import { buildModel } from "./build-model.js";
+import { resolveAccess } from "./access.js";
 import { checkOperations } from "./operations.js";
 import { checkPlatform } from "./platform-sections.js";
 import { checkZoneNames } from "./timezones.js";
@@ -194,6 +195,7 @@ function resolveLoaded(
   const products = resolveProducts(context, tables);
   checkGovernance(context, products);
   checkOperations(context, tables);
+  resolveAccess(context, tables);
   // Project-wide checks only make sense once every table resolved.
   withNotApplied(reporter, tables);
   const together = options.environmentsTogether === true;

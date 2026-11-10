@@ -330,6 +330,11 @@ properties:
             type: array
             items: { type: string }
             description: "Classifications that make a contract sensitive: it must then say who may use it (roles)."
+          tag:
+            type: string
+            minLength: 1
+            description: "The tag key a column's classification is set as on the platform, which masks and filters match. Default: classification."
+            examples: [sensitivity]
       access:
         type: object
         additionalProperties: false
@@ -344,6 +349,65 @@ properties:
                 type: array
                 items: { enum: [access, description, firstLevelApprovers] }
                 description: "Fields each role of a sensitive contract must give: its access, its purpose (description) and who approves it."
+          grants:
+            enum: [additive, exact]
+            description: "Whether grants only add what the contracts name, or also take away what they do not. Default: additive."
+            enumDescriptions:
+              - Grant what the contracts and layers name, and take nothing away.
+              - Also take away the privileges granted directly on each table to anyone they do not name.
+      masks:
+        type: object
+        description: "How columns are masked, by classification: null, hash, redact, or the name of a function your team owns."
+        additionalProperties:
+          type: string
+          pattern: "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*\\.[A-Za-z_][A-Za-z0-9_]*)?$"
+          description: "null, hash (text only), redact (text only), or a function's name in one part or three (catalog.schema.function)."
+          examples: [hash]
+        examples:
+          - { confidential: hash, restricted: "null" }
+      filters:
+        type: object
+        description: "Row filters, by name: each gives a function your team owns the column its match names, on every table that has one."
+        propertyNames: { pattern: "^[a-z][a-z0-9_]*$" }
+        additionalProperties:
+          type: object
+          additionalProperties: false
+          required: [function, match]
+          properties:
+            function:
+              type: string
+              pattern: "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*\\.[A-Za-z_][A-Za-z0-9_]*)?$"
+              description: "A BOOLEAN function your team owns, in one part or three (catalog.schema.function), given the matched column: rows it returns true for are shown."
+              examples: [region_filter]
+            match:
+              description: "The column the function is given: by tag key, by tag key and value, or by classification. It must name one column of each table."
+              oneOf:
+                - type: object
+                  additionalProperties: false
+                  required: [tag]
+                  properties:
+                    tag:
+                      {
+                        type: string,
+                        minLength: 1,
+                        description: The tag key a column has.,
+                        examples: [region],
+                      }
+                    value: { type: string, description: The tag's value., examples: [eu] }
+                - type: object
+                  additionalProperties: false
+                  required: [classification]
+                  properties:
+                    classification:
+                      {
+                        type: string,
+                        minLength: 1,
+                        description: The column's classification.,
+                        examples: [restricted],
+                      }
+              examples: [{ tag: region }]
+        examples:
+          - { region_rows: { function: region_filter, match: { tag: region } } }
 $defs:
   layerName: { type: string, pattern: "^[a-z][a-z0-9_]*$" }
   duration:
@@ -576,6 +640,36 @@ $defs:
                 - Keep one row per key.
                 - Check rows; failed rows are dropped or stop the update as the actions say.
                 - Keep rows that fail a dropping check in a table of their own.
+      access:
+        type: object
+        additionalProperties: false
+        description: "Who may use this layer's tables, beside or instead of the roles their contracts name."
+        properties:
+          contract:
+            type: boolean
+            description: "Whether the contracts' roles are granted on this layer's tables. Default: true."
+          roles:
+            type: array
+            description: "Roles granted on every table in this layer, beside the contracts'."
+            items:
+              type: object
+              additionalProperties: false
+              required: [role]
+              properties:
+                role:
+                  {
+                    type: string,
+                    minLength: 1,
+                    description: "The role, as a contract names roles: the Platform's principals map it to a principal.",
+                    examples: [data-engineers],
+                  }
+                access:
+                  enum: [read, write]
+                  description: "read or write. Default: read."
+                  enumDescriptions:
+                    - Read the tables.
+                    - Read and change the tables.
+            examples: [[{ role: data-engineers, access: write }]]
       quality:
         type: object
         additionalProperties: false

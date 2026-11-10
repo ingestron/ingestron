@@ -11,7 +11,6 @@ export {
   type ContractDoc,
   type ExpectationDoc,
   type FlowDoc,
-  type GovernanceDoc,
   type PlatformDoc,
   type ProductDoc,
   type StandardDoc,
@@ -26,4 +25,5 @@ export {
   withMovedFields,
   type MovedField,
 } from "./platform-fields.js";
+export type { FilterMatch, GovernanceDoc } from "./governance-docs.js";
 export type { RuleDoc, RulesDoc } from "./rules.js";

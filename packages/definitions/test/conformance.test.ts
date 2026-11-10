@@ -44,6 +44,7 @@ interface Case {
     products?: Record<string, unknown>[];
     names?: Record<string, unknown>;
     platform?: Record<string, unknown>;
+    standard?: Record<string, unknown>;
     deployValues?: Record<string, unknown>[];
     previewFeatures?: Record<string, unknown>[];
     operations?: Record<string, unknown>;
@@ -109,6 +110,7 @@ function checkModel(model: ResolvedModel, wanted: Case["expect"]): void {
   if (wanted.products) checkProducts(model, wanted.products);
   if (wanted.names) expect(model.names).toMatchObject(wanted.names);
   if (wanted.platform) expect(model.platform).toMatchObject(wanted.platform);
+  if (wanted.standard) expect(model.standard).toMatchObject(wanted.standard);
   if (wanted.deployValues) expect(model.deployValues).toEqual(wanted.deployValues);
   if (wanted.previewFeatures) expect(model.previewFeatures).toEqual(wanted.previewFeatures);
   checkOperations(model, wanted);

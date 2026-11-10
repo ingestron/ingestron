@@ -4,6 +4,7 @@ import type { Context } from "../context/index.js";
 import type { ResolvedModel, ResolvedProduct, ResolvedTable } from "../pack/index.js";
 import { resolvePlatform } from "../platform/index.js";
 import { renderName, type TableNamer } from "../tables/index.js";
+import { governanceOf } from "./access.js";
 import { previewFeaturesOf } from "./judge.js";
 import { operationsOf } from "./operations.js";
 
@@ -20,6 +21,7 @@ export function buildModel(
   const pipeline = renderName(context, namer.patterns.pipeline, base);
   const job = renderName(context, namer.patterns.job, base);
   if (!pipeline || !job) return undefined;
+  const governance = governanceOf(context);
   return {
     project: {
       id: project.id,
@@ -29,7 +31,7 @@ export function buildModel(
     standard: {
       id: context.standard.value.id,
       packs: context.standard.value.packs,
-      ...(context.standard.value.governance && { governance: context.standard.value.governance }),
+      ...(governance && { governance }),
     },
     platform: resolvePlatform(context, together),
     layers: namer.layers,

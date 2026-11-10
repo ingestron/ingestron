@@ -24,6 +24,11 @@ export function rememberPlaces(contract: Contract, places: ContractPlaces): void
   contractPlaces.set(contract, places);
 }
 
+/** Where the schema entry the table uses is written, for a place under one of its columns. */
+export function contractEntryAt(contract: Contract): Source | undefined {
+  return contractPlaces.get(contract)?.entry;
+}
+
 /** Where an expectation's rule and its action were written; either may be unknown. */
 export interface ExpectationPlace {
   rule?: Source;

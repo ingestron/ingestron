@@ -306,6 +306,18 @@ properties:
             privileges:
               - USE_SCHEMA
               - SELECT
+  principals:
+    type: object
+    additionalProperties:
+      type: string
+      minLength: 1
+      description: "The user, group or service principal the role is on this platform."
+      examples: ["${values.marketing_group}"]
+    description: >-
+      The principal each contract role is on this platform, by role, usually per environment through
+      `${values.…}`. A role not listed is its own principal.
+    examples:
+      - { marketing-analysts: "${values.marketing_group}" }
   accept:
     type: array
     items:

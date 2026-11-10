@@ -8,6 +8,7 @@ import { layerCodeHelp } from "./layer-codes.js";
 import { methodCodeHelp } from "./method-codes.js";
 import { platformCodeHelp } from "./platform-codes.js";
 import { productCodeHelp } from "./product-codes.js";
+import { accessCodeHelp } from "./access-codes.js";
 import { cleanseCodeHelp } from "./cleanse-codes.js";
 import { transformCodeHelp } from "./transform-codes.js";
 
@@ -21,6 +22,7 @@ export const codeHelp: Record<DefinitionCode, CodeHelp> = {
   ...intentCodeHelp,
   ...platformCodeHelp,
   ...productCodeHelp,
+  ...accessCodeHelp,
   ...transformCodeHelp,
   ...cleanseCodeHelp,
   ...acceptCodeHelp,

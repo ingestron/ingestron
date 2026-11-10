@@ -19,12 +19,14 @@ export {
   compareTargets,
   environmentsDiagnostics,
   splitDeployText,
+  type AccessGrant,
   type Action,
   type Alert,
   type Capability,
   type ChosenBy,
   type Column,
   type ColumnCleanse,
+  type ColumnMask,
   type Connector,
   type Contract,
   type ContractRole,
@@ -41,6 +43,7 @@ export {
   type Method,
   type Naming,
   type Origin,
+  type RowFilter,
   type RowRule,
   type Pack,
   type PackInfo,
@@ -57,6 +60,7 @@ export {
   type Step,
   type StepOutput,
   type SuppliedValue,
+  type TableAccess,
   type TableCheck,
   type TableCleanse,
   type TargetComparison,
@@ -64,7 +68,13 @@ export {
 } from "./pack/index.js";
 
 // Documents: the kinds a project holds and the schemas the package ships.
-export { contractReads, kinds, packageSchema, type GovernanceDoc } from "./documents/index.js";
+export {
+  contractReads,
+  kinds,
+  packageSchema,
+  type FilterMatch,
+  type GovernanceDoc,
+} from "./documents/index.js";
 
 // Intent: the words a standard, flow or transform uses for how data is loaded and kept.
 export {

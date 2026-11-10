@@ -14,7 +14,6 @@ export type {
   Alert,
   ChosenBy,
   Column,
-  ColumnCleanse,
   Contract,
   ContractRole,
   DeployValue,
@@ -31,7 +30,6 @@ export type {
   ResolvedTable,
   Schedule,
   Step,
-  TableCleanse,
 } from "./model.js";
 export type {
   Action,
@@ -47,5 +45,7 @@ export type {
   Rule,
   StepOutput,
 } from "./pack.js";
+export type { AccessGrant, ColumnMask, RowFilter, TableAccess } from "./access.js";
+export type { ColumnCleanse, TableCleanse } from "./cleanse.js";
 export { runsOnProblems } from "./runs-on-pack.js";
 export { tableCheckOf, type TableCheck } from "./table-checks.js";

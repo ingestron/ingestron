@@ -742,6 +742,12 @@ standard that gives none.
   When no layer does, it is ``Add `<duty>` to the layer's `does`.`` A layer with no
   `does` asks nothing of its tables.
 
+**Layer access.** A layer written as an object MAY give `access`, who may use
+its tables (section 8.2): `contract: false` grants none of the contracts'
+roles on the layer's tables (the default, `true`, grants them), and `roles`,
+a list of `{ role, access }`, is granted on every table in the layer, beside
+the contract's. A role's `access` is `read` (the default) or `write`.
+
 **Transform columns.** When a transform's code is SQL whose outermost
 `SELECT` names every column it returns (each an identifier, `table.column`, or
 an expression with `AS <name>`; no `*`), those names are compared with the
@@ -1179,6 +1185,7 @@ it does not convert, and the column stays in its `from` zone, as above.
 | `manage.comments`    | `false`                                                                                                                                                                      |
 | `manage.checks`      | `false`                                                                                                                                                                      |
 | `accept`             | empty (no warning is accepted)                                                                                                                                               |
+| `principals`         | empty (each role is its own principal, section 8.2)                                                                                                                          |
 | everything else      | empty                                                                                                                                                                        |
 
 Loading without an environment uses the environment name `default`.
@@ -1216,8 +1223,12 @@ The list changes nothing else; what a pack reads is still the model's
 `platform`.
 
 **Common fields, alerts and moved fields.** The Platform keeps the fields
-every pack reads (`tags`, `naming`, `schedule`, `settings`) and gains `alerts`
-and one section per pack (section 7.2). Each item of `alerts` is either
+every pack reads (`tags`, `naming`, `schedule`, `settings`) and gains `alerts`,
+`principals` and one section per pack (section 7.2). `principals` maps a
+contract role to the principal it is on this platform, a user, group or
+service principal, usually per environment through `${values.…}`; the model's
+`platform.principals` is the mapping as written, `{}` when it is not given
+(section 8.2). Each item of `alerts` is either
 `{ kind: email, to: [<address>…], on: […] }` or
 `{ kind: destination, id: <text>, on: […] }`, a destination that the platform
 holds; `on` lists `failure` and `slow` and is `[failure]` when left out. The
@@ -1402,9 +1413,21 @@ governance:
     values: [public, internal, confidential, restricted]
     columns: required # or optional, the default
     sensitive: [confidential, restricted]
+    tag: classification # the platform's tag key; the default
   access:
     sensitive: { require: [description, firstLevelApprovers] } # also access
+    grants: additive # or exact (section 8.2)
+  masks: { confidential: hash, restricted: "null" } # section 8.2
+  filters: # section 8.2
+    region_rows: { function: region_filter, match: { tag: region } }
 ```
+
+`classification.tag`, `access.grants`, `masks` and `filters` say how access is
+generated (section 8.2); they check nothing here. The model's
+`standard.governance` is the section as written, with `classification.tag`
+filled in: `classification` when the standard does not give it. A standard
+without `governance` has none in the model, and its tag key is
+`classification`.
 
 Every problem here is an error at the value that causes it, and all are
 reported in one run:
@@ -1423,6 +1446,100 @@ reported in one run:
   `classification`), or a role lacks a field `access.sensitive.require` names
   (at that role).
 
+### 8.2 Access
+
+Who may use each table, and which of its columns and rows are hidden, is
+resolved once from the contracts, the standard and the Platform, so every pack
+applies the same answer. Whether the step that keeps a table applies it, and
+whether the platform turns it on, is judged separately.
+
+```yaml
+# standard.yaml
+layers:
+  - name: bronze
+    access: { contract: false, roles: [{ role: data-engineers, access: write }] }
+  - silver
+governance:
+  classification: { tag: classification } # the tag key; the default
+  access: { grants: exact } # or additive, the default
+  masks: # classification: mask
+    confidential: hash # null, hash, redact, or a function's name
+    restricted: "null"
+  filters:
+    region_rows:
+      function: region_filter # a BOOLEAN function the team owns
+      match: { tag: region } # or { tag, value }, or { classification }
+
+# platform.yaml
+principals:
+  marketing-analysts: ${values.marketing_group}
+```
+
+**Which tables.** Access is resolved for every table that does not end at the
+landed files. A table that ends there keeps no table, so it has none.
+
+**Grants.** A table's grants are, in order:
+
+1. each role of its contract (ODCS `roles`), with `from: contract`, unless the
+   table's layer gives `access.contract: false`;
+2. each role of its layer's `access.roles`, with `from: layer`.
+
+Each is `{ role, principal, privileges, from }`. `principal` is the Platform's
+`principals` entry for the role, else the role itself. `privileges` is
+`[read]` for `access: read` or no `access`, and `[read, write]` for `write`;
+each pack says what they are in its own words. A role is listed each time it
+is written, so one principal may appear more than once.
+
+`ROLE_ACCESS`: a contract role whose `access` is neither `read` nor `write` is
+an error at the `access`, once for each contract a table uses:
+`The role "<role>" of contract "<id>" has access "<access>"; it must be read or write.`
+with the hint `Write read, or write for read and write. Leave it out to read.`
+A layer role's `access` is checked by the Standard schema.
+
+**Exact.** `exact` is `true` when the standard's `governance.access.grants` is
+`exact`, and `false` when it is `additive` or not given: then nothing granted
+otherwise is taken away.
+
+**Masks.** `governance.masks` maps a classification to its mask: `null`,
+`hash` or `redact`, or the name of a function the team owns, in one part or
+three. For each column of the table's contract whose `classification` is a
+key of `masks`, in the contract's column order, the table has
+`{ column, classification, mask }`: `mask` is `null`, `hash` or `redact` as
+written, and `{ function: <name> }` for any other name, exactly as written (a
+pack says where a one-part name lives).
+
+`MASK_TYPE`: `hash` or `redact` for a column whose `logicalType` is given and
+is not `string` is an error at the column's `classification`, once for each
+contract column:
+`The mask "<mask>" for "<classification>" works on text, and "<column>" is <type> in contract "<id>".`
+with the hint
+`Mask "<classification>" with "null" or a function of your own, or classify "<column>" differently.`
+`null` and a function take a column of any type.
+
+**Filters.** `governance.filters` maps a filter's name to its `function`, the
+name of a BOOLEAN function the team owns (in one part or three, kept as
+written), and its `match`, which names the column the function is given:
+
+- `{ classification: <value> }`: the columns classified `<value>`;
+- `{ tag: <key> }`: the columns with a tag whose key is `<key>`;
+- `{ tag: <key>, value: <value> }`: the columns with that tag key and value.
+
+A column's tags are its contract `tags`, each `<key>` or `<key>:<value>`, and,
+for a classified column, `<tag>:<classification>`, where `<tag>` is
+`governance.classification.tag`: the tags a platform sets on it. For each
+filter, in the order written, a table whose contract has one such column has
+`{ name, column, function }`; a table with none does not have the filter.
+
+`FILTER_MATCH`: a filter that matches two or more columns of a table is an
+error at the filter, once for each contract:
+`The filter "<name>" matches <n> columns of contract "<id>": <columns>. A filter matches one column of each table.`
+with the columns in the contract's order, joined with `, `, and the hint
+`Narrow its match, such as with a tag value, or tag only one of the columns.`
+
+**In the model.** `ResolvedTable.access` is `{ grants, exact, masks, filters }`
+when any of `grants`, `masks` and `filters` is not empty; otherwise the table
+has no `access`, as before access was resolved.
+
 ## 9. Conformance
 
 Each case in [conformance/](conformance/) gives `files` (the project), an
@@ -1434,7 +1551,7 @@ optional `environmentsTogether: true` (section 7), an optional
 with `fullName` written as `catalog.schema.table`, and `null` at any key for
 a value the table does not have, such as `serve: null` for a step or
 `settings: { mode: null }` for a setting), `products` (partial objects,
-in order), `platform`, `names`, `deployValues`, `previewFeatures` and
+in order), `standard` (a partial object), `platform`, `names`, `deployValues`, `previewFeatures` and
 `operations` (the model's, exactly) and `qualityResults`, or
 `diagnostics` (matched in order on the fields given; `fixes` lists the fix
 titles, and `fixes: []` means the diagnostic has none; `subject` is matched
@@ -1609,7 +1726,8 @@ defaults for the tables in the layer, `history`, `audit`, `rescued`,
 `results`, as in the standard's `quality`; section 11.2 says how they apply),
 and `does`, what the layer does with its rows (section 5):
 `raw`, which keeps every row as it arrived, or a list of the duties
-`cleanse`, `deduplicate`, `check` and `quarantine`, each at most once. A
+`cleanse`, `deduplicate`, `check` and `quarantine`, each at most once, and
+`access`, who may use its tables (sections 5 and 8.2). A
 `does` that is neither, or an empty list, is a load error at the value. An
 object without a `name` is a load error at the item.
 

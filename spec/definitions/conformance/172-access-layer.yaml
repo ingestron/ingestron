@@ -1,0 +1,102 @@
+description: "A layer's access: contract false grants none of the contract's roles on its tables, and its roles are granted on every table in the layer, after the contract's."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    layers:
+      - name: bronze
+        access:
+          contract: false
+          roles: [{ role: data-engineers, access: write }]
+      - name: silver
+        access:
+          roles: [{ role: auditors }]
+      - gold
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lakehouse
+    principals: { auditors: internal-audit }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  clean.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: orders_clean
+    inputs: [orders]
+    contract: orders
+  totals.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: totals
+    inputs: [orders_clean]
+    contract: orders
+    layer: gold
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+    roles:
+      - { role: marketing-analysts, access: read }
+expect:
+  tables:
+    - name: orders
+      layer: bronze
+      access:
+        grants:
+          - {
+              role: data-engineers,
+              principal: data-engineers,
+              privileges: [read, write],
+              from: layer,
+            }
+        exact: false
+        masks: []
+        filters: []
+    - name: orders_clean
+      layer: silver
+      access:
+        grants:
+          - {
+              role: marketing-analysts,
+              principal: marketing-analysts,
+              privileges: [read],
+              from: contract,
+            }
+          - { role: auditors, principal: internal-audit, privileges: [read], from: layer }
+    - name: totals
+      layer: gold
+      access:
+        grants:
+          - {
+              role: marketing-analysts,
+              principal: marketing-analysts,
+              privileges: [read],
+              from: contract,
+            }

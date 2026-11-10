@@ -43,13 +43,17 @@ function defaultMode(environment: string, together: boolean): ResolvedPlatform["
 /** Settings that are empty when not given. */
 function collectionsOf(
   doc: PlatformDoc,
-): Pick<ResolvedPlatform, "tags" | "permissions" | "notifications" | "manage" | "grants"> {
+): Pick<
+  ResolvedPlatform,
+  "tags" | "permissions" | "notifications" | "manage" | "grants" | "principals"
+> {
   return {
     tags: { ...doc.tags },
     permissions: [...(doc.permissions ?? [])],
     notifications: { on_failure: [...(doc.notifications?.on_failure ?? [])] },
     manage: { schemas: false, tags: false, comments: false, checks: false, ...doc.manage },
     grants: { ...doc.grants },
+    principals: { ...doc.principals },
   };
 }
 

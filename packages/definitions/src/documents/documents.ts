@@ -14,6 +14,7 @@ import type {
   TableIntentDoc,
 } from "../intent/index.js";
 import type { CleanseDoc, ColumnCleanseDoc } from "./cleanse-docs.js";
+import type { GovernanceDoc } from "./governance-docs.js";
 import type { RulesDoc } from "./rules.js";
 
 /** An action's method choice and settings, as written in a flow or transform. */
@@ -48,16 +49,6 @@ export interface StandardDoc extends StandardIntentDoc {
   governance?: GovernanceDoc;
 }
 
-/**
- * The standard's governance section (specification section 8.1).
- * @public
- */
-export interface GovernanceDoc {
-  products?: { require?: ("owner" | "purpose" | "support" | "domain")[] };
-  classification?: { values?: string[]; columns?: "required" | "optional"; sensitive?: string[] };
-  access?: { sensitive?: { require?: ("access" | "description" | "firstLevelApprovers")[] } };
-}
-
 /** An alert as the Platform writes it: `on` is `[failure]` when left out. */
 export type AlertDoc =
   | { kind: "email"; to: string[]; on?: ("failure" | "slow")[] }
@@ -85,6 +76,8 @@ export interface PlatformDoc {
   grants?: Record<string, { principal: string; privileges: string[] }[]>;
   /** Warnings the platform team accepts, each with a reason (specification, Accepted warnings). */
   accept?: AcceptDoc[];
+  /** The principal each contract role is on this platform, by role (section 8.2). */
+  principals?: Record<string, string>;
 }
 
 /** One entry of the Platform's `accept` list. */
