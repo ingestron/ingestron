@@ -7,7 +7,6 @@ import {
   resolveDefinitions,
   type AcceptAtBuild,
   type AcceptedWarning,
-  type Diagnostic,
   type Pack,
   type ResolvedModel,
   type ResolveResult,
@@ -24,11 +23,6 @@ export interface ResolvedEnvironment {
   deploy?: ResolvedModel;
   /** Resolved with the host's values, for every other pack; absent when no such pack needs it. */
   host?: ResolvedModel;
-  /**
-   * The `NOT_APPLIED` and `CAPABILITY_OFF` warnings of the resolution that gave `model`,
-   * accepted or not, for the passports.
-   */
-  notes: Diagnostic[];
   /** The Platform's entries for warnings of a pack's build, from the resolution for deploy. */
   acceptAtBuild: AcceptAtBuild[];
 }
@@ -141,12 +135,9 @@ function alone(name: string, result: ResolveResult, ...earlier: ResolveResult[])
   return { environment: { name, model, host: model, ...noted(result) }, report };
 }
 
-/** What the passports and the packs' builds read of the resolution that gave the model. */
-function noted(result: ResolveResult): Pick<ResolvedEnvironment, "notes" | "acceptAtBuild"> {
-  const notes = [...result.diagnostics, ...result.accepted.map((item) => item.diagnostic)].filter(
-    (item) => item.code === "NOT_APPLIED" || item.code === "CAPABILITY_OFF",
-  );
-  return { notes, acceptAtBuild: result.acceptAtBuild ?? [] };
+/** What the packs' builds read of the resolution that gave the model. */
+function noted(result: ResolveResult): Pick<ResolvedEnvironment, "acceptAtBuild"> {
+  return { acceptAtBuild: result.acceptAtBuild ?? [] };
 }
 
 /** An environment resolved for deploy first, then with the host's values where a pack needs them. */

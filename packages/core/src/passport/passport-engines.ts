@@ -9,6 +9,8 @@ export interface Engine {
   row: Record<Expectation["action"], string>;
   /** When a table check is counted. */
   counted: string;
+  /** Where the rows a `drop` check leaves out are kept, after "kept in". */
+  quarantine(fullName: string): string;
   /** What a table check that fails does, with each action, after "if it fails, ". */
   table: Record<TableCheck["action"], string>;
 }
@@ -32,6 +34,7 @@ export const engines: Record<string, Engine> = {
       fail: "stops the update",
     },
     counted: "after each refresh",
+    quarantine: (fullName) => `\`${fullName}\``,
     table: { warn: "the run goes on", fail: "the refresh job fails" },
   },
   duckdb: {
@@ -43,6 +46,7 @@ export const engines: Record<string, Engine> = {
       fail: "stops the run, and nothing is published",
     },
     counted: "after the table is built, in the same run",
+    quarantine: (fullName) => `\`${fullName}\` in the run's database (in Azure, only for that run)`,
     table: { warn: "the run goes on", fail: "the run stops, and nothing is published" },
   },
   synapse: {
@@ -54,6 +58,7 @@ export const engines: Record<string, Engine> = {
       fail: "makes `checks.sql` raise an error",
     },
     counted: "by `checks.sql`, over the rows the view keeps",
+    quarantine: (fullName) => `\`${fullName}\``,
     table: { warn: "`checks.sql` returns the count", fail: "`checks.sql` raises an error" },
   },
 };
@@ -64,6 +69,7 @@ export function otherEngine(pack: string): Engine {
     intro: () => `Checked by ${pack} when it builds the table.`,
     row: { warn: "is kept, and counted", drop: "is left out of the table", fail: "stops the load" },
     counted: "after the table is built",
+    quarantine: (fullName) => `\`${fullName}\``,
     table: { warn: "the run goes on", fail: "the run fails" },
   };
 }

@@ -3,7 +3,6 @@
 // why; and what is cleansed.
 import {
   fullNameText,
-  type Diagnostic,
   type Expectation,
   type ResolvedModel,
   type ResolvedProduct,
@@ -12,35 +11,31 @@ import {
 } from "@ingestron/definitions";
 import { cleansingLines } from "./passport-cleansing.js";
 import { engines, otherEngine, type Engine, type Keeps } from "./passport-engines.js";
-import { isResults, keeperOf, notApplied, relevant } from "./passport-not-applied.js";
+import {
+  isResults,
+  keeperOf,
+  notApplied,
+  relevant,
+  zonesNotApplied,
+} from "./passport-not-applied.js";
 import { code, notBuilt, outputTables } from "./passport-sections.js";
 import { ruleWords, tableCheckWords } from "./passport-words.js";
 
 /** Section 5: per output, each table that builds it, its checks and its cleansing. */
-export function quality(
-  model: ResolvedModel,
-  product: ResolvedProduct,
-  notes: readonly Diagnostic[] = [],
-): string {
+export function quality(model: ResolvedModel, product: ResolvedProduct): string {
   const parts = outputTables(model, product).map(({ output, tables }) =>
     tables.length === 0
       ? `### ${output.name}\n\n${notBuilt}`
-      : [`### ${output.name}`, ...tables.map((built) => tableQuality(model, built, notes))].join(
-          "\n\n",
-        ),
+      : [`### ${output.name}`, ...tables.map((built) => tableQuality(model, built))].join("\n\n"),
   );
   return ["## Quality", ...parts].join("\n\n");
 }
 
-function tableQuality(
-  model: ResolvedModel,
-  table: ResolvedTable,
-  notes: readonly Diagnostic[],
-): string {
-  const unapplied = relevant(table, notApplied(table, notes));
+function tableQuality(model: ResolvedModel, table: ResolvedTable): string {
+  const unapplied = relevant(table, notApplied(table));
   const keeps = keepsOf(model, table, unapplied);
   const checks = checkLines(table, unapplied, keeps);
-  const cleansing = cleansingLines(table, unapplied);
+  const cleansing = cleansingLines(table, unapplied, zonesNotApplied(table));
   const runs = checks.some((line) => line.runs);
   return [
     `#### ${titleOf(table)}`,
@@ -171,7 +166,7 @@ function rowEffect(table: ResolvedTable, item: Expectation, engine: Engine, keep
   if (table.does === "raw") return `counted only: ${table.layer} keeps raw rows`;
   const effect = `a row that fails ${engine.row[item.action]}`;
   return item.action === "drop" && keeps.quarantine
-    ? `${effect}, and kept in \`${keeps.quarantine}\``
+    ? `${effect}, and kept in ${engine.quarantine(keeps.quarantine)}`
     : effect;
 }
 

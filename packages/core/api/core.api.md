@@ -7,7 +7,6 @@
 import { AcceptAtBuild } from '@ingestron/definitions';
 import { AcceptedWarning } from '@ingestron/definitions';
 import { AnyDiagnostic } from '@ingestron/config';
-import { Diagnostic } from '@ingestron/definitions';
 import { FileSource } from '@ingestron/config';
 import { OutputFolder } from '@ingestron/generate';
 import { Pack } from '@ingestron/definitions';

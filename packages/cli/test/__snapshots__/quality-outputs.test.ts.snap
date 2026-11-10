@@ -353,9 +353,9 @@ Cleansing:
 
 Checked by DuckDB each time \`run.sql\` runs. Results: the run prints each check's failing rows (in Azure, in the job's log), and keeps them in \`silver._ingestron_checks\` in the run's database (in Azure, only for that run).
 
-- \`id_not_null\`: \`id\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.customers_clean_quarantine\`.
-- \`email_not_null\`: \`email\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.customers_clean_quarantine\`.
-- \`updated_at_not_null\`: \`updated_at\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.customers_clean_quarantine\`.
+- \`id_not_null\`: \`id\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.customers_clean_quarantine\` in the run's database (in Azure, only for that run).
+- \`email_not_null\`: \`email\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.customers_clean_quarantine\` in the run's database (in Azure, only for that run).
+- \`updated_at_not_null\`: \`updated_at\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.customers_clean_quarantine\` in the run's database (in Azure, only for that run).
 - \`email_min_length\`: \`email\` has at least 3 characters; a row that fails is kept, and counted.
 - \`email_pattern\`: \`email\` matches \`^[^@]+@[^@]+$\`; a row that fails is kept, and counted.
 - \`name_max_length\`: \`name\` has at most 100 characters; a row that fails is kept, and counted.
@@ -403,9 +403,9 @@ Cleansing:
 
 Checked by DuckDB each time \`run.sql\` runs. Results: the run prints each check's failing rows (in Azure, in the job's log), and keeps them in \`silver._ingestron_checks\` in the run's database (in Azure, only for that run).
 
-- \`id_not_null\`: \`id\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.orders_clean_quarantine\`.
-- \`customer_id_not_null\`: \`customer_id\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.orders_clean_quarantine\`.
-- \`updated_at_not_null\`: \`updated_at\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.orders_clean_quarantine\`.
+- \`id_not_null\`: \`id\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.orders_clean_quarantine\` in the run's database (in Azure, only for that run).
+- \`customer_id_not_null\`: \`customer_id\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.orders_clean_quarantine\` in the run's database (in Azure, only for that run).
+- \`updated_at_not_null\`: \`updated_at\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.orders_clean_quarantine\` in the run's database (in Azure, only for that run).
 
 Cleansing:
 

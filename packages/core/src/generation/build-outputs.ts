@@ -221,7 +221,7 @@ function apart(pack: Pack, targets: readonly ResolvedEnvironment[]): Result {
 /** The passports, each environment's in a folder of its own. */
 function productsOutput(environments: readonly ResolvedEnvironment[]): Output {
   const files = Object.fromEntries(
-    environments.flatMap((item) => within(item.name, passports(item.model, item.notes))),
+    environments.flatMap((item) => within(item.name, passports(item.model))),
   );
   return {
     name: "products",

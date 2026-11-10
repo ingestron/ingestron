@@ -30,30 +30,57 @@ const named: Record<string, string> = {
   deduplicate: "Keeping one row for each key",
 };
 
-/** The Cleansing list: each column's operations, deduplicate and the time zone, in words. */
-export function cleansingLines(table: ResolvedTable, unapplied: Map<string, string>): string[] {
-  const skipped = (operation: string) => unapplied.has(`cleanse.${operation}`);
-  const columns = Object.entries(table.cleanse?.columns ?? {}).flatMap(([column, cleanse]) => {
+/**
+ * The Cleansing list: each column's operations, deduplicate and the time zone, in words.
+ * `zones` are the columns whose time zone conversion is not applied, each with why.
+ */
+export function cleansingLines(
+  table: ResolvedTable,
+  unapplied: Map<string, string>,
+  zones: Map<string, string>,
+): string[] {
+  const done = [...columnLines(table, unapplied, zones), ...dedupeLine(table, unapplied)];
+  const notDone = [...unapplied]
+    .filter(([feature]) => named[feature] !== undefined)
+    .map(([feature, why]) => `- ${named[feature]} is not applied: ${why}.`);
+  const zonesNotDone = [...zones].map(
+    ([column, why]) => `- \`${column}\`: time zone conversion is not applied: ${why}.`,
+  );
+  return [
+    ...(done.length > 0 ? done : ["- Nothing is cleansed."]),
+    ...notDone,
+    ...zonesNotDone,
+    ...zoneLine(table),
+  ];
+}
+
+/** Each column's operations the engine applies, in the order they are applied. */
+function columnLines(
+  table: ResolvedTable,
+  unapplied: Map<string, string>,
+  zones: Map<string, string>,
+): string[] {
+  return Object.entries(table.cleanse?.columns ?? {}).flatMap(([column, cleanse]) => {
+    const applied = (operation: keyof ColumnCleanse) =>
+      cleanse[operation] !== undefined &&
+      !unapplied.has(`cleanse.${operation}`) &&
+      !(operation === "timezone" && zones.has(column));
     const words = (Object.keys(operations) as (keyof ColumnCleanse)[])
-      .filter((operation) => cleanse[operation] !== undefined && !skipped(operation))
+      .filter(applied)
       .map((operation) =>
         (operations[operation] as (value: unknown) => string)(cleanse[operation]),
       );
     return words.length > 0 ? [`- \`${column}\`: ${words.join("; ")}.`] : [];
   });
+}
+
+/** One row for each key, when the table deduplicates and its engine applies it. */
+function dedupeLine(table: ResolvedTable, unapplied: Map<string, string>): string[] {
   const dedupe = table.cleanse?.deduplicate;
+  if (!dedupe || unapplied.has("deduplicate")) return [];
   const key = table.contract.primaryKey.map((column) => `\`${column}\``).join(", ");
-  const deduplicate =
-    dedupe && !unapplied.has("deduplicate")
-      ? [
-          `- One row for each ${key}: the last by ${dedupe.orderBy.map((column) => `\`${column}\``).join(", then ")}.`,
-        ]
-      : [];
-  const notDone = [...unapplied]
-    .filter(([feature]) => named[feature] !== undefined)
-    .map(([feature, why]) => `- ${named[feature]} is not applied: ${why}.`);
-  const done = [...columns, ...deduplicate];
-  return [...(done.length > 0 ? done : ["- Nothing is cleansed."]), ...notDone, ...zoneLine(table)];
+  const order = dedupe.orderBy.map((column) => `\`${column}\``).join(", then ");
+  return [`- One row for each ${key}: the last by ${order}.`];
 }
 
 /** The time zone of the table's timestamps, when it has any. */

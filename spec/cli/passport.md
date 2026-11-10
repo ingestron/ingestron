@@ -53,10 +53,12 @@ passport, written for someone who does not know the tools. Its sections, in orde
 
 ## Quality
 
-Section 5 is written from the model and from the environment's `NOT_APPLIED`
-and `CAPABILITY_OFF` warnings, whether or not the Platform accepts them
-(definitions specification, "Accepted warnings"): accepting a warning quiets
-it, and does not make the feature enforced. The engine is the pack of the step
+Section 5 is written from the model alone. What the engine does not apply is
+each table's `notApplied` (definitions specification, section 11.7), which
+lists exactly that table's `NOT_APPLIED` features, whether or not the Platform
+accepts the warnings (definitions specification, "Accepted warnings"):
+accepting a warning quiets it, and does not make the feature enforced. A rule
+the platform has off is the contract's rule with `notEnforced`. The engine is the pack of the step
 that keeps the table (its store, else its transform, else its ingest step).
 
 **What checks it.** One sentence, the engine, when its checks run and where
@@ -93,7 +95,8 @@ does>. ``, the rule's words from its `rule`, the column in code (for
   (`warn`); `a row that fails is left out of the table` (`drop`; on Synapse,
   `… of the view, and checks.sql counts it`), followed by ``, and kept in
 `<quarantine>` `` when the table has a quarantine its engine keeps, by the
-  quarantine's full name; `a row that fails stops the update` (`fail`; on
+  quarantine's full name (on DuckDB followed by `in the run's database (in
+Azure, only for that run)`, as its results are); `a row that fails stops the update` (`fail`; on
   DuckDB `stops the run, and nothing is published`).
 - A table check: `` `<name>`: <what it counts, compared>, counted <when>; if
 it fails, <what happens>. ``, such as: the number of rows is more than 0,
@@ -102,21 +105,16 @@ it fails, <what happens>. ``, such as: the number of rows is more than 0,
   line ends `counted only: <layer> keeps raw rows.` in place of what a failing
   row does.
 - A check whose rule kind, action or table checks the engine does not apply
-  (`NOT_APPLIED` about the table, with that kind, action or `table-checks` as
-  its feature), and a rule an engine or the platform could check but does not
+  (an item of the table's `notApplied` with that kind, action or
+  `table-checks` as its feature), and a rule an engine or the platform could check but does not
   here (the model's `notEnforced`, such as `CAPABILITY_OFF` for a count over
   all rows with checks off): `` `<name>`: <words>. Not enforced: <reason>. ``,
-  the reason being the warning's own, after `isn't applied on <pack>:`.
+  the reason being the item's `reason`, without its closing full stop.
 - A rule nobody could check as written, a text rule among them:
   `` `<name>`: <description> Not checked: <reason>. ``
 - A quarantine or results the table asks for that its engine does not keep:
   ``Keeping the rows a `drop` check leaves out. Not enforced: <reason>.`` and
   `Keeping the checks' results. Not enforced: <reason>.`
-
-A warning about several tables has no table (definitions specification,
-section 1.2); it is a table's when its message names the pack that keeps the
-table and, when its reason names a duty its layer's `does` must list, the
-table's `does` does not list it.
 
 **Cleansing.** `Cleansing:`, then a list: for each column with an operation
 the engine applies, in the contract's order, `` `<column>`: `` and its
@@ -126,7 +124,10 @@ becomes no value`, `` `UK` becomes `GB` ``, `lower case`, `` no value becomes
 `active` ``); then ``One row for each `<key>`: the last by `<column>`.`` when
 the table deduplicates; or `Nothing is cleansed.` when it does neither. Each
 operation the engine does not apply is a line `<operation> is not applied:
-<reason>.` instead. Last, for a table with a timestamp column, `Its
+<reason>.` instead, and a column whose time zone conversion is not applied (an
+item of `notApplied` with that `column`) has its conversion left out and a
+line `` `<column>`: time zone conversion is not applied: <reason>. ``; the
+table's other columns keep theirs. Last, for a table with a timestamp column, `Its
 timestamps are in <zone>.`, or `Its timestamps are not all in one time zone:
 see each column above.`
 

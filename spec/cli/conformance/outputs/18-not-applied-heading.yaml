@@ -1,4 +1,4 @@
-description: "Errors come first, then the other warnings, then the features the engine does not apply under their own heading, grouped by the environments that have them; they never fail a run."
+description: "The features the engine does not apply are taken out of the groups and shown after them, under their own heading, grouped by the environments that have them; the other warnings stay in their groups, and none of them fails a run."
 files:
   project.yaml: |
     id: retail

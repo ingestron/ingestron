@@ -2,7 +2,6 @@
 // an index, generated from the same model as the pipelines.
 import {
   passportFile,
-  type Diagnostic,
   type GovernanceDoc,
   type ResolvedModel,
   type ResolvedProduct,
@@ -14,20 +13,15 @@ import { quality } from "./passport-quality.js";
 
 /**
  * `README.md` and `<product id>.md` per product; none without products. From a model
- * resolved for deploy, each deploy-time value reads as supplied when deploying. `notes` are
- * the `NOT_APPLIED` and `CAPABILITY_OFF` warnings of the resolution that gave the model,
- * accepted or not: the passport says what they leave not enforced.
+ * resolved for deploy, each deploy-time value reads as supplied when deploying.
  * @internal
  */
-export function passports(
-  model: ResolvedModel,
-  notes: readonly Diagnostic[] = [],
-): Record<string, string> {
+export function passports(model: ResolvedModel): Record<string, string> {
   if (model.products.length === 0) return {};
   return Object.fromEntries(
     [
       ["README.md", index(model)],
-      ...model.products.map((product) => [passportFile(product.id), page(model, product, notes)]),
+      ...model.products.map((product) => [passportFile(product.id), page(model, product)]),
     ].map(([path, text]) => [path, supplied(model, text!)]),
   );
 }
@@ -51,17 +45,13 @@ function firstSentence(text: string | undefined): string {
   return text?.match(/^[\s\S]*?[.!?](?=\s|$)/)?.[0] ?? text ?? "";
 }
 
-function page(
-  model: ResolvedModel,
-  product: ResolvedProduct,
-  notes: readonly Diagnostic[],
-): string {
+function page(model: ResolvedModel, product: ResolvedProduct): string {
   return `${[
     summary(product),
     team(product),
     provides(model, product),
     columns(model, product),
-    quality(model, product, notes),
+    quality(model, product),
     freshness(model, product),
     access(model, product),
     `## Lineage\n\n${lineage(model, product)}`,

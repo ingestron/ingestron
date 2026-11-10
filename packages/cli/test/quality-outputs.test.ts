@@ -3,8 +3,8 @@
 // (spec/cli/passport.md, section 5) and compare's facts for each table.
 import { nodeFiles } from "@ingestron/config";
 import { compareEnvironments, generatedOutputs } from "@ingestron/core";
-import { passports, tableFacts } from "@ingestron/core/internal";
-import { loadDefinitions, type Diagnostic } from "@ingestron/definitions";
+import { tableFacts } from "@ingestron/core/internal";
+import { loadDefinitions } from "@ingestron/definitions";
 import { packs } from "@ingestron/core";
 import { describe, expect, it } from "vitest";
 import { run } from "../src/index.js";
@@ -159,55 +159,5 @@ describe("compare", () => {
       );
     });
     expect(compareEnvironments(nodeFiles(folder), "dev", "prod")).toMatchSnapshot();
-  });
-});
-
-describe("what the passport says is not applied", () => {
-  const resolved = () =>
-    loadDefinitions(qualityProject("duckdb"), {
-      packs: [...packs],
-      environment: "dev",
-      environmentsTogether: true,
-    }).model!;
-  const note = (message: string, feature: string, table?: string): Diagnostic => ({
-    code: "NOT_APPLIED",
-    severity: "warning",
-    message,
-    subject: { ...(table !== undefined && { table }), feature },
-  });
-  const lines = (page: string, heading: string) => {
-    const start = page.indexOf(`#### \`${heading}\``);
-    return page.slice(start, page.indexOf("\n#### ", start + 1)).split("\n");
-  };
-
-  it("leaves an operation the engine does not apply out of the column, and says why", () => {
-    const page = passports(resolved(), [
-      note(
-        'Cleansing "case" of "email" isn\'t applied on duckdb: Its engine keeps the case.',
-        "cleanse.case",
-        "customers_clean",
-      ),
-    ])["crm.md"]!;
-    const silver = lines(page, "crm.silver.customers_clean");
-    expect(silver).toContain(
-      "- `email`: spaces at either end removed; empty text becomes no value.",
-    );
-    expect(silver).toContain("- Changing case is not applied: Its engine keeps the case.");
-  });
-
-  it("gives a warning about several tables to each table it can be about", () => {
-    // About several tables, so it has no table: the duty it names decides which.
-    const page = passports(resolved(), [
-      note(
-        "The range rule isn't applied on duckdb: it is applied only in a layer whose does lists check.",
-        "range",
-      ),
-    ])["crm.md"]!;
-    const age = (heading: string) =>
-      lines(page, heading).find((line) => line.startsWith("- `age_minimum`:"));
-    expect(age("crm.bronze.customers")).toContain("Not enforced: it is applied only");
-    expect(age("crm.silver.customers_clean")).toBe(
-      "- `age_minimum`: `age` is at least 0; a row that fails is kept, and counted.",
-    );
   });
 });

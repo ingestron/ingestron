@@ -1,6 +1,6 @@
 // What the engine that keeps a table does not apply, and why, for the passport's section 5
-// (spec/cli/passport.md): from the environment's warnings, accepted or not.
-import type { Diagnostic, ResolvedTable } from "@ingestron/definitions";
+// (spec/cli/passport.md): from the model's notApplied, accepted or not.
+import type { ResolvedTable } from "@ingestron/definitions";
 
 /** The pack of the step that keeps the table: its store, else its transform, else its ingest. */
 export function keeperOf(table: ResolvedTable): string | undefined {
@@ -8,42 +8,31 @@ export function keeperOf(table: ResolvedTable): string | undefined {
   return (table.store ?? table.transform ?? table.ingest)?.pack;
 }
 
-/** The reason in a `NOT_APPLIED` message, `<what> isn't applied on <pack>: <reason>`. */
-function reasonOf(message: string): string {
-  const reason = /isn't applied on [^:]+: (.*)$/s.exec(message)?.[1] ?? message;
+/** A reason as a clause, without its closing full stop: the passport writes its own. */
+function clause(reason: string): string {
   return reason.trim().replace(/\.$/, "");
-}
-
-/** The duty a reason says the feature is applied only with, if it says one. */
-function dutyOf(reason: string): string | undefined {
-  return /applied only in a layer whose does lists (\w+)/.exec(reason)?.[1];
 }
 
 /**
  * Why each feature of the table is not applied, by feature (a rule kind, an action,
- * `table-checks`, `quarantine`, a `cleanse.` path or `deduplicate`): from the warnings about
- * the table, accepted or not. A warning about several tables has no table; it is the table's
- * when it names the pack that keeps the table and, for a reason that names a duty, the
- * table's layer lacks that duty.
+ * `table-checks`, `quarantine`, a `cleanse.` path or `deduplicate`), from the model's
+ * `notApplied`, which lists exactly this table's, accepted or not. A time zone conversion
+ * not applied to a column is in {@link zonesNotApplied} instead.
  */
-export function notApplied(
-  table: ResolvedTable,
-  notes: readonly Diagnostic[],
-): Map<string, string> {
+export function notApplied(table: ResolvedTable): Map<string, string> {
   const found = new Map<string, string>();
-  const keeper = keeperOf(table);
-  const own = notes.filter((note) => note.subject?.table === table.name);
-  const shared = notes.filter((note) => {
-    if (note.subject?.table !== undefined || keeper === undefined) return false;
-    if (!note.message.includes(`isn't applied on ${keeper}:`)) return false;
-    const duty = dutyOf(note.message);
-    return duty === undefined || !(Array.isArray(table.does) && table.does.includes(duty as never));
-  });
-  for (const note of [...own, ...shared]) {
-    const feature = note.subject?.feature;
-    if (note.code !== "NOT_APPLIED" || feature === undefined || found.has(feature)) continue;
-    found.set(feature, reasonOf(note.message));
-  }
+  for (const item of table.notApplied ?? [])
+    if (item.column === undefined && !found.has(item.feature))
+      found.set(item.feature, clause(item.reason));
+  return found;
+}
+
+/** Each column whose time zone conversion is not applied, and why. */
+export function zonesNotApplied(table: ResolvedTable): Map<string, string> {
+  const found = new Map<string, string>();
+  for (const item of table.notApplied ?? [])
+    if (item.feature === "cleanse.timezone" && item.column !== undefined && !found.has(item.column))
+      found.set(item.column, clause(item.reason));
   return found;
 }
 

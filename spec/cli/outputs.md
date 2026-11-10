@@ -84,9 +84,12 @@ where `<n>` counts the accepted warnings, each once whatever environments have
 it (the same as above), and `<file>` is the file the accepting entries are
 written in, the Platform's, such as `platform.yaml`, with several joined by
 `, `. For one warning it reads `1 accepted warning (<file>)`. Accepted warnings
-are not shown. So the output is: errors, then the other warnings, then those
-not applied on this platform, then the accepted count. None of it changes an
-exit code: a warning never fails a run.
+are not shown. So the output is: the environments' groups, in the order of
+their first diagnostic, each with its errors before its other warnings; then
+the packs' groups; then the warnings not applied on this platform; then the
+accepted count. A group of warnings can therefore come before a group with an
+error, as when every environment has a warning and only one has an error. None
+of it changes an exit code: a warning never fails a run.
 
 When any environment has problems, nothing is planned or written, no output
 folder is checked, and the exit code is 1: a bundle cannot be written with one
