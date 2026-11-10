@@ -4,7 +4,10 @@ import type { DefinitionCode } from "./diagnostics.js";
 
 /** What each code means and how to fix it. */
 export const layerCodeHelp: Record<
-  Extract<DefinitionCode, "UNKNOWN_LAYER" | "DUPLICATE_LAYER" | "LAYER_RESPONSIBILITY">,
+  Extract<
+    DefinitionCode,
+    "UNKNOWN_LAYER" | "DUPLICATE_LAYER" | "LAYER_RESPONSIBILITY" | "QUARANTINE_UNUSED"
+  >,
   { meaning: string; fix: string }
 > = {
   UNKNOWN_LAYER: {
@@ -19,5 +22,10 @@ export const layerCodeHelp: Record<
     meaning:
       "A table asks for something its layer does not do, such as a drop or fail action in a layer whose does leaves out check.",
     fix: "Put the table in a layer that does it, add the duty to the layer's does, or remove the setting.",
+  },
+  QUARANTINE_UNUSED: {
+    meaning:
+      "A table asks to keep the rows that fail a check in a table of their own, but none of its checks has the action drop, so no row is ever set aside. A warning.",
+    fix: "Set a check's action to drop, or remove quarantine.",
   },
 };

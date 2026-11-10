@@ -97,7 +97,12 @@ function uniqueCheck(name: string, column: string, action: TableCheck["action"])
 /** The quality default, except that drop warns: no row can be dropped after the refresh. */
 function tableAction(context: Context): TableCheck["action"] {
   const quality = { ...context.pack.defaults.quality, ...context.standard.value.quality };
-  return quality.default === "fail" ? "fail" : "warn";
+  return tableCheckAction(quality.default);
+}
+
+/** A table check fails when the quality default is `fail`, and otherwise warns. */
+export function tableCheckAction(action: "warn" | "drop" | "fail"): TableCheck["action"] {
+  return action === "fail" ? "fail" : "warn";
 }
 
 function unique(names: Set<string>, name: string): string {

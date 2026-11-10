@@ -78,6 +78,17 @@ properties:
               ],
           }
     description: Your own checks on the table's rows.
+  quality:
+    type: object
+    additionalProperties: false
+    description: "Quarantine and results for the result table only."
+    properties:
+      quarantine:
+        type: boolean
+        description: "Whether rows that fail a check with the action `drop` are kept in a table of their own, `<table>_quarantine`. The table's layer must list `quarantine` in its `does`."
+      results:
+        type: boolean
+        description: "Whether the results of this table's checks are kept as a table that can be queried."
   cleanse:
     { $ref: "#/$defs/cleanse", description: "Cleansing for the result's columns, and deduplicate." }
   history:

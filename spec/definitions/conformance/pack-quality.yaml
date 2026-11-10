@@ -61,3 +61,5 @@ intent:
   cleanse.map: { use: not-applicable, reason: Its engine cannot replace listed values. }
   cleanse.timezone: { use: not-yet, reason: Converting time zones is not done yet. }
   deduplicate: { use: not-yet, reason: Keeping one row per key is not done yet. }
+  quality.quarantine: { use: not-yet, reason: Rows that fail a check are not kept apart yet. }
+  quality.results: { use: not-yet, reason: The results of checks are not kept yet. }

@@ -1,0 +1,112 @@
+description: "Quarantine written on a table or on its layer where no check drops rows is the warning QUARANTINE_UNUSED, at the place it was written, and the table has no quarantine table. A table check never drops. The standard's own quarantine reaching such a table is silent."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    quality: { default: warn, quarantine: true }
+    layers:
+      - { name: bronze, does: raw }
+      - { name: silver, does: [check, quarantine] }
+      - name: gold
+        does: [check, quarantine]
+        quality: { quarantine: true }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    manage: { checks: true }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    layer: silver
+    tables:
+      orders:
+        object: orders
+        contract: orders
+  b_drops.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: drops
+    source: shop
+    layer: silver
+    tables:
+      kept:
+        object: kept
+        contract: orders
+        expectations:
+          - { name: positive, check: total > 0, action: drop }
+  c_own.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: own
+    source: shop
+    layer: silver
+    tables:
+      own_orders:
+        object: own_orders
+        contract: orders
+        quality: { quarantine: true }
+  d_top.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: top
+    layer: gold
+    inputs: [orders]
+    contract: orders
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true, unique: true }
+          - { name: total, logicalType: number, physicalType: "DECIMAL(18,2)" }
+expect:
+  tables:
+    - name: kept
+      quality: { quarantine: true }
+      quarantine: { column: _failed_checks }
+    - name: own_orders
+      quality: { quarantine: true }
+      quarantine: null
+    - name: orders
+      quality: { quarantine: true }
+      quarantine: null
+    - name: top
+      quality: { quarantine: true }
+      quarantine: null
+  diagnostics:
+    - code: QUARANTINE_UNUSED
+      severity: warning
+      file: c_own.yaml
+      line: 10
+      message: No check drops rows, so nothing is quarantined.
+      hint: Set a check's action to drop, or remove quarantine.
+      subject: { table: own_orders }
+    - code: QUARANTINE_UNUSED
+      severity: warning
+      file: standard.yaml
+      line: 11
+      message: No check drops rows, so nothing is quarantined.
+      hint: Set a check's action to drop, or remove quarantine.
+      subject: { table: top }

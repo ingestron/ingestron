@@ -1,0 +1,109 @@
+description: "Quarantine is judged by the pack that keeps the table, at the place it was written: NOT_APPLIED with the pack's reason. A table that ends at the landed files is not reached by the standard's quarantine, and one written on the table is NOT_APPLIED there, with the hint to add a store step."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+    quality: { default: drop, quarantine: true }
+    layers:
+      - { name: silver, does: [check, quarantine] }
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      orders:
+        object: orders
+        contract: orders
+        expectations:
+          - { name: positive, check: total > 0 }
+  b_files.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: files
+    source: source
+    store: { uses: none }
+    tables:
+      landed:
+        object: landed
+        contract: orders
+        expectations:
+          - { name: positive, check: total > 0 }
+  c_own.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: own
+    source: source
+    store: { uses: none }
+    tables:
+      landed_own:
+        object: landed_own
+        contract: orders
+        quality: { quarantine: true }
+        expectations:
+          - { name: positive, check: total > 0 }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: total, logicalType: number, physicalType: "DECIMAL(18,2)" }
+expect:
+  tables:
+    - name: landed
+      quality: null
+      quarantine: null
+    - name: landed_own
+      quality: { quarantine: true }
+      quarantine: null
+    - name: orders
+      quality: { quarantine: true }
+      quarantine: { column: _failed_checks }
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: b_files.yaml
+      line: 11
+      message: 'Expectation "positive" isn''t applied on quality: the table ends at the landed files, and nothing checks them.'
+      hint: Add a store step to have it checked.
+      subject: { table: landed, feature: expectations }
+    - code: NOT_APPLIED
+      severity: warning
+      file: c_own.yaml
+      line: 12
+      message: 'Expectation "positive" isn''t applied on quality: the table ends at the landed files, and nothing checks them.'
+      hint: Add a store step to have it checked.
+      subject: { table: landed_own, feature: expectations }
+    - code: NOT_APPLIED
+      severity: warning
+      file: c_own.yaml
+      line: 10
+      message: "Quarantine isn't applied on quality: the table ends at the landed files, and nothing checks them."
+      hint: Add a store step to have it checked.
+      subject: { table: landed_own, feature: quarantine }
+    - code: NOT_APPLIED
+      severity: warning
+      file: standard.yaml
+      line: 5
+      message: "Quarantine isn't applied on quality: Rows that fail a check are not kept apart yet."
+      subject: { table: orders, feature: quarantine }

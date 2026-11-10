@@ -3,8 +3,9 @@
 // including where a pack applies it only in a layer with a duty this table's layer lacks.
 import type { Context } from "../context/index.js";
 import {
+  actionPlace,
   expectationPlaces,
-  standardQualityAt,
+  layerObject,
   tableCheckPlaces,
   type ExpectationPlace,
 } from "../contracts/index.js";
@@ -106,7 +107,7 @@ function packUse(context: Context, keeper: JudgingStep, item: Judged): IntentUse
 
 /** The values judged, in order: each expectation's kind and action, then each table check and its action. */
 function judgedValues(context: Context, table: ResolvedTable, own: OwnExpectations): Judged[] {
-  const places = expectationPlaces(context, table.contract, own.docs, own.at);
+  const places = expectationPlaces(context, table.contract, own.docs, own.at, table.layer);
   const expectations = table.expectations.flatMap((expectation, index) => {
     const place: ExpectationPlace = places[index] ?? {};
     const kind = expectation.rule?.kind;
@@ -118,12 +119,14 @@ function judgedValues(context: Context, table: ResolvedTable, own: OwnExpectatio
     ];
   });
   const tableAt = tableCheckPlaces(table.contract);
-  const written = context.standard.value.quality?.default;
+  const written =
+    layerObject(context, table.layer)?.layer.quality?.default ??
+    context.standard.value.quality?.default;
   const tableChecks = table.contract.tableChecks.flatMap((check, index) => [
     { path: "quality.table-checks", value: "true", what: "The table check", at: tableAt[index] },
     actionOf(
       check.action,
-      check.action === written ? standardQualityAt(context, "default") : undefined,
+      check.action === written ? actionPlace(context, table.layer, "default") : undefined,
     ),
   ]);
   return [...expectations, ...tableChecks];

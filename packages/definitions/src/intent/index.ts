@@ -15,6 +15,8 @@ export {
   type FlowIntentDoc,
   type LayerDoc,
   type OperationsDoc,
+  type QualityDoc,
+  type QuarantineDoc,
   type StandardIntentDoc,
   type TableIntentDoc,
 } from "./sections.js";

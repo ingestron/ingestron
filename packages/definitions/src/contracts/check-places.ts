@@ -5,6 +5,7 @@ import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
 import type { ExpectationDoc } from "../documents/index.js";
 import type { Contract } from "../pack/index.js";
+import { layerObject } from "./layer-quality.js";
 
 /** Where a contract's checks were written. */
 interface ContractPlaces {
@@ -32,15 +33,16 @@ export interface ExpectationPlace {
 /**
  * Where each expectation `expectationsFor` makes was written, in its order: a required
  * column's `required`, a check's rule or option, a definition's own expectation; and its
- * action: the definition's own `action`, else the standard's `quality.required` or
- * `quality.default`, unknown when the pack's default gives it. `ownAt` is the definition's
- * `expectations` list.
+ * action: the definition's own `action`, else the `quality.required` or `quality.default` of the
+ * table's `layer`, else the standard's, unknown when the pack's default gives it. `ownAt` is
+ * the definition's `expectations` list.
  */
 export function expectationPlaces(
   context: Context,
   contract: Contract,
   own: ExpectationDoc[] = [],
   ownAt?: Source,
+  layer?: string,
 ): ExpectationPlace[] {
   const places = contractPlaces.get(contract);
   const entry = places?.entry;
@@ -52,20 +54,20 @@ export function expectationPlaces(
             ...(entry && {
               rule: { ...entry, pointer: `${entry.pointer}/properties/${index}/required` },
             }),
-            ...withAction(standardQualityAt(context, "required")),
+            ...withAction(actionPlace(context, layer, "required")),
           },
         ],
   );
   const rules = contract.checks.map((_, index) => ({
     ...(places?.checks[index] && { rule: places.checks[index] }),
-    ...withAction(standardQualityAt(context, "default")),
+    ...withAction(actionPlace(context, layer, "default")),
   }));
   const written = own.map((expectation, index) => {
     const at = ownAt && { ...ownAt, pointer: `${ownAt.pointer}/${index}` };
     const action =
       expectation.action !== undefined
         ? at && { ...at, pointer: `${at.pointer}/action` }
-        : standardQualityAt(context, "default");
+        : actionPlace(context, layer, "default");
     return { ...(at && { rule: at }), ...withAction(action) };
   });
   return [...required, ...rules, ...written];
@@ -85,6 +87,21 @@ export function standardQualityAt(
   return context.standard.value.quality?.[key] === undefined
     ? undefined
     : { document: context.standard, pointer: `/quality/${key}` };
+}
+
+/**
+ * Where the table's `layer` writes its `quality.<key>`, else where the standard does; undefined
+ * when the pack's default gives it.
+ */
+export function actionPlace(
+  context: Context,
+  layer: string | undefined,
+  key: "required" | "default",
+): Source | undefined {
+  const found = layerObject(context, layer);
+  if (found?.layer.quality?.[key] !== undefined)
+    return { document: context.standard, pointer: `/layers/${found.index}/quality/${key}` };
+  return standardQualityAt(context, key);
 }
 
 function withAction(action: Source | undefined): { action?: Source } {

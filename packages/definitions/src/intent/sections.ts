@@ -26,7 +26,21 @@ export interface LayerDoc {
   retention?: Intent["retention"];
   /** What the layer does with its rows: `raw`, or the duties it lists (specification section 5). */
   does?: "raw" | LayerDuty[];
-  quality?: { required?: "warn" | "drop" | "fail"; default?: "warn" | "drop" | "fail" };
+  quality?: QualityDoc;
+}
+
+/** What a standard, a layer, a flow table or a transform says about keeping rows and results. */
+export interface QuarantineDoc {
+  /** Rows that fail a check with the action `drop` go to a table of their own. */
+  quarantine?: boolean;
+  /** The results of the checks are kept as a table. */
+  results?: boolean;
+}
+
+/** A layer's `quality`: the actions of its tables' checks, quarantine and results. */
+export interface QualityDoc extends QuarantineDoc {
+  required?: "warn" | "drop" | "fail";
+  default?: "warn" | "drop" | "fail";
 }
 
 /** What a `Standard` document says about intent, apart from its layers. */

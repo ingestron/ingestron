@@ -11,11 +11,13 @@ import type { IntentPlaces } from "./complete.js";
 import { judgeIntent } from "./judge.js";
 import { checkActionDuties } from "./layer-duties.js";
 import { judgeQuality, type OwnExpectations } from "./quality-judging.js";
+import { applyQuality, type OwnQuality } from "./table-quality.js";
 import { connectionZone } from "./timezones.js";
 
 /** What a flow table or transform writes about its checks and its cleansing, and where. */
 export interface OwnChecks {
   expectations: OwnExpectations;
+  quality: OwnQuality;
   cleanse: OwnCleanse;
 }
 
@@ -29,6 +31,7 @@ export function flowChecks(
   const at = (field: string) => ({ document: flow, pointer: `/tables/${name}/${field}` });
   return {
     expectations: { docs: doc?.expectations, at: at("expectations") },
+    quality: { doc: doc?.quality, at: at("quality"), origin: "table" },
     cleanse: {
       doc: doc?.cleanse,
       at: at("cleanse"),
@@ -45,6 +48,7 @@ export function transformChecks(
   const at = (field: string) => ({ document: doc, pointer: `/${field}` });
   return {
     expectations: { docs: doc.value.expectations, at: at("expectations") },
+    quality: { doc: doc.value.quality, at: at("quality"), origin: "definition" },
     cleanse: {
       doc: doc.value.cleanse,
       at: at("cleanse"),
@@ -58,7 +62,8 @@ export function transformChecks(
 
 /**
  * Checks the table's audit column names and the duties its own actions ask of its layer,
- * then judges its intent, then its checks, then checks and judges its cleansing.
+ * then judges its intent, then its checks, then resolves its quarantine and results, then
+ * checks and judges its cleansing.
  */
 export function checkTableIntent(
   context: Context,
@@ -70,5 +75,6 @@ export function checkTableIntent(
   checkActionDuties(context, table, own.expectations);
   judgeIntent(context, table, places);
   judgeQuality(context, table, own.expectations);
+  applyQuality(context, table, own.quality);
   applyCleansing(context, table, own.cleanse);
 }

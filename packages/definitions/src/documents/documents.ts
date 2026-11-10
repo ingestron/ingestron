@@ -8,6 +8,8 @@ import { schemasFolder } from "../folders.js";
 import type {
   FlowIntentDoc,
   LayerDoc,
+  QualityDoc,
+  QuarantineDoc,
   StandardIntentDoc,
   TableIntentDoc,
 } from "../intent/index.js";
@@ -38,11 +40,7 @@ export interface StandardDoc extends StandardIntentDoc {
   types?: Record<string, string>;
   /** Defaults for the tables' columns (specification section 6.1). */
   cleanse?: { text?: Pick<ColumnCleanseDoc, "trim" | "empty">; timestamps?: { to: string } };
-  quality?: {
-    required?: "warn" | "drop" | "fail";
-    default?: "warn" | "drop" | "fail";
-    results?: boolean;
-  };
+  quality?: QualityDoc;
   ingest?: RulesDoc;
   transform?: RulesDoc;
   store?: RulesDoc;
@@ -102,6 +100,7 @@ export interface FlowTableDoc extends FlowIntentDoc {
   object: string;
   contract: string;
   expectations?: ExpectationDoc[];
+  quality?: QuarantineDoc;
   cleanse?: CleanseDoc;
   ingest?: { with?: Record<string, unknown> };
   store?: { with?: Record<string, unknown> };
@@ -128,6 +127,7 @@ export interface TransformDoc extends TableIntentDoc {
   code?: string;
   contract: string;
   expectations?: ExpectationDoc[];
+  quality?: QuarantineDoc;
   cleanse?: CleanseDoc;
   transform?: ActionDoc;
   store?: ActionDoc;

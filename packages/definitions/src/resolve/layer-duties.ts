@@ -5,7 +5,7 @@ import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
 import type { ExpectationDoc } from "../documents/index.js";
 import type { LayerDuty } from "../intent/index.js";
-import { expectationsFor } from "../contracts/index.js";
+import { expectationsFor, layerTableChecks } from "../contracts/index.js";
 import type { Contract, Expectation, ResolvedTable } from "../pack/index.js";
 
 /** The `does` of the standard's layer of that name; undefined when the layer gives none. */
@@ -16,8 +16,8 @@ export function doesOf(context: Context, layer: string): ResolvedTable["does"] {
 }
 
 /**
- * The table's `expectations`, with the contract's, the standard's and its own actions as its
- * layer allows, and its `does` when the layer gives one.
+ * The table's `expectations`, with the contract's, the standard's and its layer's and its own
+ * actions as its layer allows, and its `does` when the layer gives one.
  */
 export function checksIn(
   context: Context,
@@ -26,7 +26,12 @@ export function checksIn(
   own: ExpectationDoc[] | undefined,
 ): Pick<ResolvedTable, "expectations" | "does"> {
   const layerDoes = doesOf(context, layer);
-  const expectations = actionsFor(layerDoes, contract, expectationsFor(context, contract, own));
+  layerTableChecks(context, layer, contract);
+  const expectations = actionsFor(
+    layerDoes,
+    contract,
+    expectationsFor(context, contract, own, layer),
+  );
   // The table's own copy of a list, so nothing that reads the table can change the standard.
   const does = Array.isArray(layerDoes) ? [...layerDoes] : layerDoes;
   return { expectations, ...(does !== undefined && { does }) };

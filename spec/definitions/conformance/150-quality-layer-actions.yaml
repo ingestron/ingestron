@@ -1,0 +1,95 @@
+description: "A layer's quality required and default replace the standard's for the tables in the layer, and a table's own expectation action replaces both. The layer's default also decides its table checks. Each table's qualityOrigins says where its defaults were written."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    quality: { required: warn, default: warn }
+    layers:
+      - bronze
+      - name: silver
+        quality: { required: drop, default: fail }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    manage: { checks: true }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    layer: silver
+    tables:
+      orders:
+        object: orders
+        contract: orders
+        expectations:
+          - { name: positive, check: total > 0 }
+          - { name: small, check: total < 100, action: warn }
+  refunds.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: refunds
+    source: shop
+    tables:
+      refunds:
+        object: refunds
+        contract: orders
+        expectations:
+          - { name: positive, check: total > 0 }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true, unique: true }
+          - name: total
+            logicalType: number
+            physicalType: "DECIMAL(18,2)"
+            quality:
+              - { metric: nullValues, mustBe: 0 }
+expect:
+  tables:
+    - name: refunds
+      expectations:
+        - { name: id_not_null, action: warn }
+        - { name: total_nullvalues, action: warn }
+        - { name: positive, action: warn }
+      contract:
+        tableChecks:
+          - { name: id_unique, action: warn }
+      qualityOrigins:
+        required: { layer: standard, file: standard.yaml, line: 5 }
+        default: { layer: standard, file: standard.yaml, line: 5 }
+    - name: orders
+      expectations:
+        - { name: id_not_null, action: drop }
+        - { name: total_nullvalues, action: fail }
+        - { name: positive, action: fail }
+        - { name: small, action: warn }
+      contract:
+        tableChecks:
+          - { name: id_unique, action: fail }
+      qualityOrigins:
+        required: { layer: layer, file: standard.yaml, line: 9 }
+        default: { layer: layer, file: standard.yaml, line: 9 }
+  diagnostics: []

@@ -1,7 +1,7 @@
 // The project-level intent (specification section 11.6): the operations policy and the
 // quality results, which belong to no table. The tags the standard requires are checked
 // here; the pack that runs the jobs judges `operations`, and each store step's pack judges
-// `quality.results`.
+// each table's `quality.results`.
 import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
 import { holdsUnsetEnvvar } from "../diagnostics/index.js";
@@ -14,6 +14,7 @@ import {
 import type { Method, PackInfo, ResolvedTable } from "../pack/index.js";
 import { reportJudgement } from "./judge.js";
 import { outcomeOfUse, type Judgement, type Outcome } from "./judgements.js";
+import { qualityPlace } from "./table-quality.js";
 
 /** The operations policy in effect: the standard's, with defaults, and what it fixes over it. */
 export function operationsOf(context: Context): ResolvedOperations {
@@ -115,22 +116,25 @@ function unjudged(use: IntentUse | undefined): Outcome | undefined {
 const noPack = "No pack of this standard runs jobs.";
 
 /**
- * Judges `quality.results: true` against the pack of each store step, once for each pack and
- * reason: the method's own entry decides, else the pack's.
+ * Judges `quality.results: true` of each table against the pack of its store step, where the
+ * value was written, once for each place, pack and reason: the method's own entry decides, else
+ * the pack's.
  */
 function judgeQualityResults(context: Context, tables: ResolvedTable[]): void {
-  if (context.standard.value.quality?.results !== true) return;
-  const at = { document: context.standard, pointer: "/quality/results" };
-  const judgements = tables
-    .filter((table) => judgeable(context, table))
-    .map((table) => {
-      const step = table.store!;
-      return qualityJudgement(context, step.pack, context.pack.methods[step.method]);
+  const once = new Map<string, { judgement: Judgement; at: Source }>();
+  for (const table of tables) {
+    const at = qualityPlace(table, "results");
+    if (table.quality?.results !== true || !at || !judgeable(context, table)) continue;
+    const step = table.store!;
+    const judgement = qualityJudgement(context, step.pack, context.pack.methods[step.method]);
+    if (!judgement) continue;
+    const where = at.document.locate(at.pointer);
+    once.set(JSON.stringify([where.file, at.pointer, judgement.pack, judgement.outcome]), {
+      judgement,
+      at,
     });
-  const once = new Map<string, Judgement>();
-  for (const judgement of judgements)
-    if (judgement) once.set(JSON.stringify([judgement.pack, judgement.outcome]), judgement);
-  for (const judgement of once.values()) reportJudgement(context, judgement, at);
+  }
+  for (const { judgement, at } of once.values()) reportJudgement(context, judgement, at);
 }
 
 /** A table with a store step, whose values are known. */

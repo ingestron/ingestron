@@ -105,6 +105,9 @@ properties:
       results:
         type: boolean
         description: "Whether the results of the checks are kept as a table that can be queried. Default: false."
+      quarantine:
+        type: boolean
+        description: "Whether rows that fail a check with the action `drop` are kept in a table of their own, `<table>_quarantine`, with a column `_failed_checks` that names the checks they failed. It reaches the tables of layers whose `does` lists `quarantine`. Default: false."
     description: "What happens to rows that fail a check: required columns and your own expectations."
   cleanse:
     type: object
@@ -592,6 +595,12 @@ $defs:
               - Keep the row and record that it failed.
               - Leave the row out of the table.
               - Stop the update.
+          results:
+            type: boolean
+            description: "Whether the results of the checks of this layer's tables are kept as a table that can be queried."
+          quarantine:
+            type: boolean
+            description: "Whether rows that fail a check with the action `drop` are kept in a table of their own, `<table>_quarantine`, for the tables of this layer. The layer's `does` must list `quarantine`."
   method: { type: string, pattern: "^[a-z][a-z0-9-]*$" }
   naming:
     type: object

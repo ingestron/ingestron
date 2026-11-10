@@ -743,6 +743,9 @@ this way, is not compared.
 
 ## 6. Contracts and quality
 
+The quality `required` and `default` actions below are the standard's, over
+which those of the table's layer apply (section 11.2).
+
 - A table's contract is the ODCS document it links to. The contract's
   `schema` entry whose `name` equals the table's name is used, or the only
   entry when there is one (`CONTRACT_TABLE` otherwise).
@@ -1546,8 +1549,9 @@ layer's duties on its one entry.`). The standard's layers, in order, are the nam
 specification that reads `layers` (a table's default layer, `UNKNOWN_LAYER`,
 the `layer` naming variable) reads the names. An object may also give, as the
 defaults for the tables in the layer, `history`, `audit`, `rescued`,
-`retention` and `quality` (its `required` and `default`, as in the standard's
-`quality`), and `does`, what the layer does with its rows (section 5):
+`retention` and `quality` (its `required`, `default`, `quarantine` and
+`results`, as in the standard's `quality`; section 11.2 says how they apply),
+and `does`, what the layer does with its rows (section 5):
 `raw`, which keeps every row as it arrived, or a list of the duties
 `cleanse`, `deduplicate`, `check` and `quarantine`, each at most once. A
 `does` that is neither, or an empty list, is a load error at the value. An
@@ -1561,7 +1565,7 @@ object without a `name` is a load error at the item.
 | `origin`                                   | `{ standard, version }`: the published standard this one was made from.                                                                                                                                                                                                |
 | `load`                                     | `default` (a load mode), `deletes` (a delete mode) and `when`, a list of rules, each with some of the facts `connectivity`, `connector`, `input` and `layer`, and `use`, a load mode. Rules are checked in order: the first whose facts all match chooses `load.mode`. |
 | `audit`, `rescued`, `retention`, `storage` | The same as a layer's or a table's, for every table.                                                                                                                                                                                                                   |
-| `quality.results`                          | `true`: keep the results of checks as a table.                                                                                                                                                                                                                         |
+| `quality`                                  | `required` and `default`, the actions for failed checks (section 6); `quarantine: true`, to keep rows a `drop` check removes in a table of their own (section 11.7); `results: true`, to keep the results of checks as a table.                                        |
 | `cleanse`                                  | Defaults for the tables' columns (sections 6.1 and 6.3): `text`, with `trim: true` and `empty: null`, for every text column, and `timestamps`, with `to: <zone>`, for every timestamp column.                                                                          |
 | `operations`                               | Policy for runs, below.                                                                                                                                                                                                                                                |
 | `fixed`                                    | Intent that no layer, flow or transform may change: any of `load`, `history`, `sequence`, `audit`, `rescued`, `retention`, `storage` and `operations`, in the forms below. It is separate from each action's `fixed` settings.                                         |
@@ -1569,7 +1573,8 @@ object without a `name` is a load error at the item.
 **Flows and transforms.** A flow and a flow table may give `load`, `history`,
 `sequence` and `audit`; a transform may give `history`, `sequence` and
 `audit`. A flow table and a transform may also give `cleanse`, with `columns`
-and `deduplicate` (sections 6.1 and 6.2).
+and `deduplicate` (sections 6.1 and 6.2), and `quality`, with `quarantine` and
+`results` (section 11.2).
 
 **Load.** How a flow table's data leaves the source. A table's `load` is
 `{ mode, cursor, deletes: { mode, when } }`.
@@ -1705,6 +1710,32 @@ it was written (none for `pack`). The paths are those of `intentPaths`: `load.mo
 `storage.clustering` and `storage.features`; a list has one origin, under its
 path. The origin's layer name `layer` is used only for intent. Comparing
 targets (section 2.1) leaves `intentOrigins` out, as it leaves out `origins`.
+
+**Quality.** The actions of a table's checks, its quarantine and its results
+are merged the same way, from the standard's `quality`, the `quality` of the
+table's layer (a layer written as an object) and the `quality` of the flow
+table or transform, a later one winning. They are not part of `intent`.
+
+- `required` and `default`, the actions of the table's checks (section 6): the
+  pack's defaults, then the standard's, then the layer's. An action a flow
+  table or transform writes on its own expectation (`action`) wins over all of
+  them. The layer's `default` also decides its table checks, as the
+  standard's does (a table check fails when the default is `fail`, and
+  otherwise warns). After that, a table whose `does` lacks `check` has every
+  action `warn` (section 5).
+- `quarantine` and `results`, each `true` or `false`: the standard's, then
+  the layer's, then the flow table's or transform's. Section 11.7 says where
+  `quarantine` reaches. The standard's `results` reaches every table.
+
+Each table has `qualityOrigins`, the origin (as `intentOrigins` has) of each of
+`required`, `default`, `quarantine` and `results` that the standard, its layer
+or the table writes: the layer that last set it (`standard`, `layer`,
+`definition` for a transform, `table` for a flow table) with the `file` and
+`line` where it was written. A key nothing wrote is absent, and so is
+`qualityOrigins` when there are none. It is not a value in generated files:
+comparing targets (section 2.1) leaves it out. The table's `quality` holds the
+`quarantine` and `results` that were written, `{ quarantine?, results? }`, and
+is absent when neither was.
 
 ### 11.3 Pack defaults
 
@@ -1998,11 +2029,15 @@ value is `NOT_APPLIED` at the standard, naming the first pack in its list:
 pack's own `not-yet` or `not-applicable` entry for it, else `No pack of this
 standard runs jobs.` An `elsewhere` entry of the first pack reports nothing.
 
-**Judging `quality.results`.** With `quality.results: true`, each table's store
-step is judged by its method's entry, else its pack's, for `quality.results`
-(section 11.5), reported at `/quality/results`: `quality.results: true isn't
-applied on <pack>: <reason>`. It is reported once for each pack and reason. A
-pack with no entry reports nothing.
+**Judging `quality.results`.** Each table whose `quality.results` is `true`
+(section 11.2) has its store step judged by its method's entry, else its
+pack's, for `quality.results` (section 11.5), reported where that value was
+written (`/quality/results` in the standard, `/layers/<n>/quality/results` in a
+layer, `quality/results` in a flow table or transform):
+`quality.results: true isn't applied on <pack>: <reason>`. It is reported once
+for each place, pack and reason. A pack with no entry reports nothing. The
+model's `qualityResults` stays the standard's own value, and says nothing of
+tables that turn results on or off.
 
 ### 11.7 Quality and cleansing
 
@@ -2056,6 +2091,52 @@ the value `true`. An entry that is
 table whose `does` does not list that duty, with the reason `it is applied only in
 a layer whose does lists <duty>.` and the hint ``Add `<duty>` to the layer's `does`
 to apply it here.``
+
+**Quarantine.** `quality.quarantine: true` (section 11.2) keeps the rows that
+fail a check whose action is `drop` in a table of their own, with the names of
+the checks they failed, instead of losing them. It reaches a table as follows:
+
+- Written on a flow table or a transform, it asks for the table's layer to
+  quarantine. When the table has `does` and it does not list `quarantine`, it
+  is `LAYER_RESPONSIBILITY` (section 5), an error at the setting, whose message
+  is `The layer "<layer>" does not list quarantine in its does, so quarantine
+cannot be set here.` and the table has no quarantine. A table whose layer
+  gives no `does` quarantines.
+- Written on a layer, it reaches the tables of that layer. When that layer
+  gives `does` and it does not list `quarantine`, it is the same error at the
+  layer's setting (`/layers/<n>/quality/quarantine`), reported once, and the
+  layer's tables have no quarantine from it.
+- Written on the standard, it reaches only the tables whose layer's `does`
+  lists `quarantine` and that do not end at the landed files. For every other
+  table, including one whose layer gives no `does`, it is silent: no error, no
+  warning, and nothing in the model. A
+  layer or a table that writes `quarantine: false` wins over it, as section
+  11.2 says.
+
+Only `true` asks for the duty; `false` is never an error. The table's
+`quality.quarantine` is the value that reaches it (`true` or `false`), with its
+origin in `qualityOrigins`.
+
+A table whose `quality.quarantine` is `true` and none of whose expectations has
+the action `drop` (a table check never drops) has no quarantine table. When
+`quarantine: true` was written on the table itself or on its layer, that is
+`QUARANTINE_UNUSED`, a warning at the place `quarantine` was written, `No check
+drops rows, so nothing is quarantined.`, with the hint `Set a check's action to
+drop, or remove quarantine.` When it reaches the table from the standard, it is
+silent: the author of a standard cannot know which tables have a `drop` check,
+and the table still says in the model that it asks for quarantine. Otherwise
+the table has `quarantine`
+in the model: `{ fullName, column }`. `fullName` is the table's own full name
+with `_quarantine` added to its table name, in the same catalog and schema
+(`<table>_quarantine`), and `column` is `_failed_checks`, the column that holds
+the names of the checks a row failed. The model only says what is wanted; a
+pack that builds the table declares `quality.quarantine` (section 11.5), and
+the table's keeping step is judged for it as section 11.7 judges the rest, at
+the place `quarantine` was written, `Quarantine isn't applied on <pack>:
+<reason>` with the subject feature `quarantine`, `onlyWhere` and `status` as for
+any other value. On a table that ends at the landed files, it is `NOT_APPLIED`
+on the ingest step's pack with the reason and hint that section 6 gives for a
+check there, whatever any pack says.
 
 ## Connector authoring metadata
 

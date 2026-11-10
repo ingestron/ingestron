@@ -85,7 +85,7 @@ describe("completion", () => {
     const items = at("flows/shop.yaml", (text) =>
       ordersWithSettings(text).replace("    object: orders\n", "    object: orders\n    |\n"),
     );
-    const fields = ["audit", "cleanse", "history", "ingest", "load", "sequence", "serve"];
+    const fields = "audit cleanse history ingest load quality sequence serve".split(" ");
     expect(labels(items)).toEqual(fields);
   });
 

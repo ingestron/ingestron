@@ -1,0 +1,74 @@
+description: "Quality results are judged for each table whose results are on, by the pack that keeps it, at the place the value was written: the standard's, a layer's or the table's. Tables whose results are off, and a place the table overrides, report nothing. A place and reason are reported once."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+    layers:
+      - bronze
+      - name: silver
+        quality: { results: true }
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      orders:
+        object: orders
+        contract: orders
+        quality: { results: true }
+      invoices:
+        object: invoices
+        contract: orders
+  b_silver.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: silver_sales
+    source: source
+    layer: silver
+    tables:
+      refunds:
+        object: refunds
+        contract: orders
+      quiet:
+        object: quiet
+        contract: orders
+        quality: { results: false }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  qualityResults: false
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: standard.yaml
+      line: 8
+      message: "quality.results: true isn't applied on quality: The results of checks are not kept yet."
+    - code: NOT_APPLIED
+      severity: warning
+      file: sales.yaml
+      line: 9
+      message: "quality.results: true isn't applied on quality: The results of checks are not kept yet."

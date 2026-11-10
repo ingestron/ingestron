@@ -1,6 +1,7 @@
 // Reads the parts of a table's ODCS contract that generation uses (section 6).
 import { notAppliedAtFiles, notCheckedAtFiles } from "./at-files.js";
 import { rememberPlaces } from "./check-places.js";
+import { qualityActions } from "./layer-quality.js";
 import { ruleChecks } from "./quality-rules.js";
 import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
@@ -142,13 +143,17 @@ export function expectationsNotChecked(
   );
 }
 
-/** Not-null checks for required columns, then the table's own checks, with actions filled in. */
+/**
+ * Not-null checks for required columns, then the table's own checks, with actions filled in:
+ * the standard's, over which the table's `layer` applies.
+ */
 export function expectationsFor(
   context: Context,
   contract: Contract,
   own: ExpectationDoc[] = [],
+  layer?: string,
 ): Expectation[] {
-  const quality = { ...context.pack.defaults.quality, ...context.standard.value.quality };
+  const quality = qualityActions(context, layer);
   const required = contract.columns
     .filter((column) => !column.nullable)
     .map((column) => ({

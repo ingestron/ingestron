@@ -264,6 +264,26 @@ export interface ResolvedTable {
    */
   does?: "raw" | LayerDuty[];
   /**
+   * What the standard, the table's layer and the table itself say about keeping rows that
+   * fail a check (`quarantine`) and the results of its checks (`results`), the last winning
+   * (specification section 11.2). Absent when none of them wrote either. A standard's
+   * `quarantine` appears only on the tables it reaches (section 11.7).
+   */
+  quality?: { quarantine?: boolean; results?: boolean };
+  /**
+   * For each of `required`, `default`, `quarantine` and `results` that the standard, the
+   * table's layer or the table wrote, where it was last written. Absent when none were.
+   */
+  qualityOrigins?: Partial<Record<"required" | "default" | "quarantine" | "results", Origin>>;
+  /**
+   * Set when rows that fail a check with the action `drop` are kept, instead of dropped, in a
+   * table of their own: its full name (`<table>_quarantine`, in the table's own catalog and
+   * schema) and the column that holds the names of the checks a row failed
+   * (`_failed_checks`). Absent when `quality.quarantine` is not `true`, and when no check of
+   * the table drops rows (specification section 11.7).
+   */
+  quarantine?: { fullName: FullName; column: string };
+  /**
    * A flow table's `source` when it holds an unset `${envvar:…}`, which only an editor's
    * resolution allows (specification section 1). The connection is then a stand-in with no
    * settings, and unless the flow names its ingest method with `uses`, the table has no
