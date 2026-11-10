@@ -3,8 +3,8 @@
 # store method not-null checks only in a layer that checks, and empty-to-null and
 # deduplicate only in a layer that cleanses or deduplicates. No trimming, no
 # replacing of values and no deduplicate otherwise. One more store method does not
-# count failing rows (no warn action). Its connector is its own, so it offers no
-# fixes in the other cases.
+# count failing rows (no warn action), and another checks no row but runs table
+# checks. Its connector is its own, so it offers no fixes in the other cases.
 id: quality
 version: 1
 defaults:
@@ -59,6 +59,15 @@ methods:
     produces: table
     intent:
       quality.actions=warn: { use: not-yet, reason: A failing row is not counted yet. }
+    settings: { type: object }
+  quality-counts:
+    action: store
+    description: Keeps the landed files as a table, and counts over all rows after each load.
+    accepts: [files]
+    produces: table
+    intent:
+      quality.actions: { use: not-applicable, reason: Rows are not checked one by one. }
+      quality.table-checks: { use: used, does: Counts over all rows after each load. }
     settings: { type: object }
 # What it does with the quality paths (section 11.7). A value it does not list
 # reports nothing.

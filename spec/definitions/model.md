@@ -2071,8 +2071,15 @@ resolving for deploy (section 1.1). The values judged, in this order, are:
   neither is its action. An expectation with no `rule` is judged on its action
   only;
 - for each table check, `quality.table-checks` (value `true`) at its rule (a
-  column's `unique` for its `duplicateValues` check), then its action at the
-  standard's `quality.default`, as above.
+  column's `unique` for its `duplicateValues` check), then its action. A
+  table check's action is part of the table check: a pack that runs table
+  checks runs each with its action, so the action is judged against
+  `quality.table-checks` (value `true`), as `The <action> action`, with the
+  feature the action, not against the row checks' `quality.actions`. It is
+  judged at the layer's or the standard's `quality.default` when the action is
+  the one written there, else at the table check's own place. A table check
+  whose `quality.table-checks` is `NOT_APPLIED` is not judged on its action,
+  and an action with no place at all is not judged.
 
 Each value is reported as follows, with the subject (section 1.2)
 `{ table, feature }`, `feature` being the rule kind, the action or

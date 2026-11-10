@@ -127,18 +127,35 @@ function judgedValues(
       judgementOf(context, keeper, rule, table.does)?.outcome.kind === "not-applied";
     return unapplied ? [rule] : [rule, actionOf(expectation.action, place.action ?? place.rule)];
   });
+  return [...expectations, ...tableCheckValues(context, table, keeper)];
+}
+
+/**
+ * Each table check and its action, which is judged against `quality.table-checks` too: a
+ * pack that runs table checks runs each with its action. The action is left out when the
+ * table check is not applied, and when it has no place: at the quality default that wrote
+ * it, else at the table check.
+ */
+function tableCheckValues(context: Context, table: ResolvedTable, keeper: JudgingStep): Judged[] {
   const tableAt = tableCheckPlaces(table.contract);
   const written =
     layerObject(context, table.layer)?.layer.quality?.default ??
     context.standard.value.quality?.default;
-  const tableChecks = table.contract.tableChecks.flatMap((check, index) => [
-    { path: "quality.table-checks", value: "true", what: "The table check", at: tableAt[index] },
-    actionOf(
-      check.action,
-      check.action === written ? actionPlace(context, table.layer, "default") : undefined,
-    ),
-  ]);
-  return [...expectations, ...tableChecks];
+  return table.contract.tableChecks.flatMap((check, index) => {
+    const item = {
+      path: "quality.table-checks",
+      value: "true",
+      what: "The table check",
+      at: tableAt[index],
+    };
+    const unapplied =
+      judgementOf(context, keeper, item, table.does)?.outcome.kind === "not-applied";
+    const at =
+      (check.action === written ? actionPlace(context, table.layer, "default") : undefined) ??
+      tableAt[index];
+    if (unapplied || !at) return [item];
+    return [item, { ...item, what: `The ${check.action} action`, at, feature: check.action }];
+  });
 }
 
 function actionOf(action: string, at: Source | undefined): Judged {
