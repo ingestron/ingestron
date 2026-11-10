@@ -32,23 +32,54 @@ interface Cloning {
 }
 
 /**
+ * The user's own ssh command with `-o BatchMode=yes` after it, so ssh never waits for a password
+ * (spec/cli/kits.md, "Git"). The command is found in git's order: `GIT_SSH_COMMAND`, then
+ * `core.sshCommand` (read by `configured`, only when needed), then `GIT_SSH`, else `ssh`.
+ */
+export function kitSshCommand(
+  env: NodeJS.ProcessEnv,
+  configured: () => string | undefined,
+): string {
+  const program = env.GIT_SSH?.trim();
+  const ssh =
+    env.GIT_SSH_COMMAND?.trim() || configured()?.trim() || (program && quoted(program)) || "ssh";
+  return `${ssh} -o BatchMode=yes`;
+}
+
+/** A program path as one word for the shell, quoted only when it needs it. */
+function quoted(path: string): string {
+  return /^[\w@%+=:,./-]+$/.test(path) ? path : `'${path.replaceAll("'", "'\\''")}'`;
+}
+
+/** `git config --get core.sshCommand` as git would read it in `cwd`; nothing when it is not set. */
+function configuredSshCommand(place: GitPlace): string | undefined {
+  try {
+    const value = execFileSync("git", ["config", "--get", "core.sshCommand"], {
+      stdio: "pipe",
+      encoding: "utf8",
+      ...place,
+    });
+    return value.trim() || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * How git runs for a kit's repository (spec/cli/kits.md, "Git"): in a temporary folder, not the
  * user's `folder`, unless the URL is a relative path; never asking for a password, neither git
- * nor ssh; and stopped after `timeout` milliseconds.
+ * nor ssh, and keeping the user's own ssh command; and stopped after `timeout` milliseconds.
  */
 export function kitGit(url: string, folder: string, timeout: number): GitPlace {
   const named = /^[a-z][a-z0-9+.-]*:/i.test(url) || /^[\w.-]+@[\w.-]+:/.test(url);
   const relativePath = !named && !isAbsolute(url);
-  const ssh = process.env.GIT_SSH_COMMAND?.trim() || "ssh";
-  return {
+  const place: GitPlace = {
     cwd: relativePath ? folder : tmpdir(),
-    env: {
-      ...process.env,
-      GIT_TERMINAL_PROMPT: "0",
-      GIT_SSH_COMMAND: `${ssh} -o BatchMode=yes`,
-    },
+    env: { ...process.env, GIT_TERMINAL_PROMPT: "0" },
     timeout,
   };
+  place.env.GIT_SSH_COMMAND = kitSshCommand(process.env, () => configuredSshCommand(place));
+  return place;
 }
 
 /** Clones `url` (at `tag`) into a temporary folder; returns the entry `inside` it and the clone. */

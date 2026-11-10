@@ -84,10 +84,28 @@ function newestKit(id: string, kits: Kit[], own: Kit[], cwd: string): KitFound {
     );
   const newest = general.at(-1)!;
   const found = own.find((kit) => kit.version === newest);
-  if (!found) return catalogueKit(id, newest, cwd);
+  if (!found) {
+    // The newest version is in the catalogue only. If it cannot be cloned, an installed one does.
+    const fallback = own.filter((kit) => !kit.version.endsWith("-preview")).at(-1);
+    let cloned: Cloned;
+    try {
+      cloned = catalogueClone(id, newest, cwd);
+    } catch (error) {
+      if (!fallback) throw error;
+      return usingInstalled(id, fallback);
+    }
+    return readCloned(`${id}@${newest}`, cloned, () =>
+      readKit(cloned.path, join(cloned.folder, "kits")),
+    );
+  }
   if (!unreachable) return { kit: found, done: noCleanup };
-  const note = `Could not reach the catalogue; using the newest installed version, ${id}@${newest}.`;
-  return { kit: found, done: noCleanup, note };
+  return usingInstalled(id, found);
+}
+
+/** The installed kit used for `<id>` alone when the catalogue gave nothing, with its note. */
+function usingInstalled(id: string, kit: Kit): KitFound {
+  const note = `Could not reach the catalogue; using the newest installed version, ${id}@${kit.version}.`;
+  return { kit, done: noCleanup, note };
 }
 
 function noKit(id: string, kits: Kit[]): string {
@@ -154,17 +172,23 @@ export function refuseNewer(kit: Kit): void {
     );
 }
 
-/** The catalogue cloned at the tag `<id>@<version>`, and `kits/<id>/<version>` read. */
-function catalogueKit(id: string, version: string, cwd: string): KitFound {
-  const inside = `kits/${id}/${version}`;
+type Cloned = ReturnType<typeof clonedEntry>;
+
+/** The catalogue cloned at the tag `<id>@<version>`, with the kit's folder in it. */
+function catalogueClone(id: string, version: string, cwd: string): Cloned {
   const url = catalogueUrl();
-  const found = clonedEntry({
+  return clonedEntry({
     url,
-    inside,
+    inside: `kits/${id}/${version}`,
     kind: "folder",
     tag: `${id}@${version}`,
     git: kitGit(url, cwd, gitTimeouts.clone),
   });
+}
+
+/** The catalogue cloned at the tag `<id>@<version>`, and `kits/<id>/<version>` read. */
+function catalogueKit(id: string, version: string, cwd: string): KitFound {
+  const found = catalogueClone(id, version, cwd);
   return readCloned(`${id}@${version}`, found, () =>
     readKit(found.path, join(found.folder, "kits")),
   );

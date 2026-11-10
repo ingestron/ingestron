@@ -123,10 +123,13 @@ A kit spec, as the commands accept it, is one of:
 - `<id>`: the kit's newest version that is not a preview, among the installed
   versions and the catalogue's tags (`git ls-remote --tags`). The installed
   copy is used when it is that version; else the catalogue is cloned at its
-  tag. When the catalogue cannot be read, the newest installed version is
-  used, and the command first prints
+  tag. When the catalogue cannot be read, or the newer version cannot be
+  cloned (git fails, is stopped, or the tag has no folder for the kit), the
+  newest installed version that is not a preview is used, and the command
+  first prints
   `Could not reach the catalogue; using the newest installed version, <id>@<version>.`
-  When none of the kit is installed either, it is the error below. Versions
+  When no such version is installed, it is the error below (for a clone that
+  fails, git's own message, as for a named version). Versions
   are ordered by date; on the same date the preview comes first, so the newest
   is the last. A preview version is used only when it is named.
 - `<git-url>#<path>@<tag>`: a kit from a repository, cloned at `<tag>`. The
@@ -278,8 +281,12 @@ then the installed kits. With no kits to show, `No kits found.` (or
 
 Each git command on the catalogue (`ls-remote` and `clone`), and each clone of
 a kit's git URL, runs with `GIT_TERMINAL_PROMPT=0`, and with `-o BatchMode=yes`
-added to `GIT_SSH_COMMAND` (to the user's own command, else to `ssh`), so
-neither git nor ssh waits for a password. It runs in a temporary folder rather
+added to the user's own ssh command, so neither git nor ssh waits for a
+password. The user's own command is found as git finds it: `GIT_SSH_COMMAND`,
+else `core.sshCommand` (`git config --get core.sshCommand`, read in the folder
+the call runs in, so a repository's setting applies when the call runs there),
+else `GIT_SSH`, else `ssh`. A user's `ssh -i ~/.ssh/work` is therefore kept,
+and only `-o BatchMode=yes` follows it. It runs in a temporary folder rather
 than the user's, unless the URL is a relative path, which is read from the
 user's folder.
 

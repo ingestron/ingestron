@@ -2,8 +2,8 @@
 // are found" and "Git"). A git on PATH made in the test stands in for the real one: no network.
 import { chmodSync, readFileSync, writeFileSync } from "node:fs";
 import { delimiter, join } from "node:path";
-import { describe, expect, it } from "vitest";
-import { gitTimeouts } from "../src/commands/clone.js";
+import { afterEach, describe, expect, it } from "vitest";
+import { gitTimeouts, kitGit, kitSshCommand } from "../src/commands/clone.js";
 import { ingestron, offlineCatalogue, temp } from "./kit-catalogue.js";
 
 offlineCatalogue();
@@ -46,12 +46,15 @@ describe("git on the catalogue", () => {
     const out = join(temp(), "env.txt");
     const savedSsh = process.env.GIT_SSH_COMMAND;
     try {
-      withGit(`echo "$GIT_TERMINAL_PROMPT|$GIT_SSH_COMMAND" >> "${out}"; exit 128`, () => {
-        delete process.env.GIT_SSH_COMMAND;
-        ingestron(temp(), "standard", "list");
-        process.env.GIT_SSH_COMMAND = "ssh -i ~/.ssh/kits";
-        ingestron(temp(), "init", "x", "--kit", "file:///no/such.git#kits/a/b@v1");
-      });
+      withGit(
+        `[ "$1" = config ] && exit 1\necho "$GIT_TERMINAL_PROMPT|$GIT_SSH_COMMAND" >> "${out}"; exit 128`,
+        () => {
+          delete process.env.GIT_SSH_COMMAND;
+          ingestron(temp(), "standard", "list");
+          process.env.GIT_SSH_COMMAND = "ssh -i ~/.ssh/kits";
+          ingestron(temp(), "init", "x", "--kit", "file:///no/such.git#kits/a/b@v1");
+        },
+      );
     } finally {
       if (savedSsh === undefined) delete process.env.GIT_SSH_COMMAND;
       else process.env.GIT_SSH_COMMAND = savedSsh;
@@ -62,7 +65,7 @@ describe("git on the catalogue", () => {
   });
 
   it("stops git when it does not answer in time", () => {
-    withGit("exec sleep 5", () => {
+    withGit('[ "$1" = config ] && exit 1\nexec sleep 5', () => {
       gitTimeouts.lsRemote = 200;
       gitTimeouts.clone = 300;
       const listed = ingestron(temp(), "standard", "list", "--platform", "duckdb");
@@ -78,5 +81,69 @@ describe("git on the catalogue", () => {
         "Could not clone file:///no/such.git: git did not answer within 0.3 seconds.\n",
       );
     });
+  });
+});
+
+describe("the ssh command of a kit's git calls", () => {
+  const names = [
+    "GIT_SSH_COMMAND",
+    "GIT_SSH",
+    "GIT_CONFIG_COUNT",
+    "GIT_CONFIG_KEY_0",
+    "GIT_CONFIG_VALUE_0",
+  ];
+  const saved = Object.fromEntries(names.map((name) => [name, process.env[name]]));
+  afterEach(() => {
+    for (const name of names) {
+      if (saved[name] === undefined) delete process.env[name];
+      else process.env[name] = saved[name];
+    }
+  });
+
+  /** The ssh command a kit's git call runs with, for this environment. */
+  function sshFor(env: Record<string, string | undefined>): string | undefined {
+    for (const name of names) delete process.env[name];
+    for (const [name, value] of Object.entries(env))
+      if (value !== undefined) process.env[name] = value;
+    return kitGit("https://example.com/kits.git", temp(), 5_000).env.GIT_SSH_COMMAND;
+  }
+  const config = (value: string) => ({
+    GIT_CONFIG_COUNT: "1",
+    GIT_CONFIG_KEY_0: "core.sshCommand",
+    GIT_CONFIG_VALUE_0: value,
+  });
+
+  it("keeps core.sshCommand and adds BatchMode after it", () => {
+    expect(sshFor(config("ssh -i ~/.ssh/work"))).toBe("ssh -i ~/.ssh/work -o BatchMode=yes");
+  });
+
+  it("keeps an explicit GIT_SSH_COMMAND over core.sshCommand", () => {
+    const env = { ...config("ssh -i ~/.ssh/work"), GIT_SSH_COMMAND: "ssh -i ~/.ssh/kits" };
+    expect(sshFor(env)).toBe("ssh -i ~/.ssh/kits -o BatchMode=yes");
+  });
+
+  it("keeps GIT_SSH when there is no other setting", () => {
+    expect(sshFor({ GIT_SSH: "/opt/bin/wrapper" })).toBe("/opt/bin/wrapper -o BatchMode=yes");
+    expect(sshFor({ GIT_SSH: "/opt/my bin/wrapper" })).toBe(
+      "'/opt/my bin/wrapper' -o BatchMode=yes",
+    );
+  });
+
+  it("reads core.sshCommand before GIT_SSH, as git does", () => {
+    expect(sshFor({ ...config("ssh -i ~/.ssh/work"), GIT_SSH: "/opt/bin/wrapper" })).toBe(
+      "ssh -i ~/.ssh/work -o BatchMode=yes",
+    );
+  });
+
+  it("uses ssh when nothing is set", () => {
+    expect(sshFor({})).toBe("ssh -o BatchMode=yes");
+  });
+
+  it("builds the command from the environment and a reader of core.sshCommand", () => {
+    expect(kitSshCommand({}, () => undefined)).toBe("ssh -o BatchMode=yes");
+    expect(kitSshCommand({ GIT_SSH_COMMAND: " ssh -F x " }, () => "never")).toBe(
+      "ssh -F x -o BatchMode=yes",
+    );
+    expect(kitSshCommand({}, () => "  ")).toBe("ssh -o BatchMode=yes");
   });
 });
