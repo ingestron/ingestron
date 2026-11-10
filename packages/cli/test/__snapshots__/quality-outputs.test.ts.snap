@@ -1,0 +1,807 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`a medallion project on databricks > compares each table's cleansing, time zone, duties and quarantine 1`] = `
+{
+  "customers": {
+    "does": "raw",
+    "timezone": "Europe/London",
+  },
+  "customers_clean": {
+    "cleanse.columns.contacted_at.timezone.from": "UTC",
+    "cleanse.columns.contacted_at.timezone.to": "Europe/London",
+    "cleanse.columns.country.case": "upper",
+    "cleanse.columns.country.empty": true,
+    "cleanse.columns.country.map.-": null,
+    "cleanse.columns.country.map.UK": "GB",
+    "cleanse.columns.country.map.United Kingdom": "GB",
+    "cleanse.columns.country.trim": true,
+    "cleanse.columns.email.case": "lower",
+    "cleanse.columns.email.empty": true,
+    "cleanse.columns.email.trim": true,
+    "cleanse.columns.last_seen.timezone.from": "Europe/London",
+    "cleanse.columns.last_seen.timezone.to": "UTC",
+    "cleanse.columns.name.empty": true,
+    "cleanse.columns.status.default": "active",
+    "cleanse.columns.status.empty": true,
+    "cleanse.columns.status.trim": true,
+    "cleanse.columns.updated_at.timezone.from": "Europe/London",
+    "cleanse.columns.updated_at.timezone.to": "UTC",
+    "cleanse.columns.vip.default": false,
+    "cleanse.deduplicate.orderBy": [
+      "updated_at",
+    ],
+    "does": [
+      "cleanse",
+      "deduplicate",
+      "check",
+      "quarantine",
+    ],
+    "quarantine": "dev.silver.customers_clean_quarantine",
+  },
+  "orders": {
+    "does": "raw",
+    "timezone": "Europe/London",
+  },
+  "orders_clean": {
+    "cleanse.columns.status.case": "upper",
+    "cleanse.columns.status.empty": true,
+    "cleanse.columns.status.trim": true,
+    "cleanse.columns.updated_at.timezone.from": "Europe/London",
+    "cleanse.columns.updated_at.timezone.to": "UTC",
+    "cleanse.deduplicate.orderBy": [
+      "updated_at",
+    ],
+    "does": [
+      "cleanse",
+      "deduplicate",
+      "check",
+      "quarantine",
+    ],
+    "quarantine": "dev.silver.orders_clean_quarantine",
+    "timezone": "UTC",
+  },
+}
+`;
+
+exports[`a medallion project on databricks > plans with errors, then warnings, then what is not applied on this platform 1`] = `
+"dev, prod: warnings
+contracts/customers.yaml:42:9  warning  CAPABILITY_OFF
+  "rowCount" rule compares a count over all rows, which is checked after each refresh only when manage.checks is on.
+  Turn on databricks.manage.checks in platform.yaml to run it after each refresh.
+  Fix: Turn on manage.checks.
+contracts/customers.yaml:42:7  warning  CAPABILITY_OFF
+  quality in contract "crm.customers" is not applied: the platform has Table checks off.
+  Turn it on with databricks.manage.checks in platform.yaml. It needs: SELECT on each table for the run_as identity (an owner has it); Serverless jobs.
+  Fix: Turn on manage.checks.
+databricks → build/databricks (dev, prod)
+create    databricks.yml
+create    resources/crm.pipeline.yml
+create    src/crm/bronze/customers.sql
+create    src/crm/bronze/orders.sql
+create    src/crm/silver/customers_clean.sql
+create    src/crm/silver/orders_clean.py
+
+6 files: 6 create. Ready to apply.
+products → build/products (dev, prod)
+create    dev/README.md
+create    dev/crm.md
+create    prod/README.md
+create    prod/crm.md
+
+4 files: 4 create. Ready to apply.
+"
+`;
+
+exports[`a medallion project on databricks > says in its passport what each check does, where results are, and what is cleansed 1`] = `
+"## Quality
+
+### customers
+
+#### \`dev.bronze.customers\`
+
+Checked by Databricks on each pipeline update. Results: the pipeline's event log, published as a table.
+
+- \`id_not_null\`: \`id\` has a value; counted only: bronze keeps raw rows.
+- \`email_not_null\`: \`email\` has a value; counted only: bronze keeps raw rows.
+- \`updated_at_not_null\`: \`updated_at\` has a value; counted only: bronze keeps raw rows.
+- \`email_min_length\`: \`email\` has at least 3 characters; counted only: bronze keeps raw rows.
+- \`email_pattern\`: \`email\` matches \`^[^@]+@[^@]+$\`; counted only: bronze keeps raw rows.
+- \`name_max_length\`: \`name\` has at most 100 characters; counted only: bronze keeps raw rows.
+- \`country_invalidvalues\`: \`country\` is one of \`GB\`, \`IE\` or \`FR\`, or has no value; counted only: bronze keeps raw rows.
+- \`status_missingvalues\`: \`status\` has a value and is not \`n/a\`; counted only: bronze keeps raw rows.
+- \`age_minimum\`: \`age\` is at least 0; counted only: bronze keeps raw rows.
+- \`age_exclusive_maximum\`: \`age\` is less than 150; counted only: bronze keeps raw rows.
+- \`score_multiple_of\`: \`score\` is a multiple of 5; counted only: bronze keeps raw rows.
+- \`tags_min_items\`: \`tags\` has at least 1 item; counted only: bronze keeps raw rows.
+- \`tags_max_items\`: \`tags\` has at most 5 items; counted only: bronze keeps raw rows.
+- \`tags_unique_items\`: \`tags\` has items that are all different; counted only: bronze keeps raw rows.
+- \`some_customers\`: Not enforced: it counts all rows, which is checked only when the platform turns on checks.
+- \`one_per_person\`: Each person is one customer. Not checked: it is written for people to follow.
+
+Cleansing:
+
+- Nothing is cleansed.
+- Its timestamps are in Europe/London.
+
+#### \`dev.silver.customers_clean\`
+
+Checked by Databricks on each pipeline update. Results: the pipeline's event log, published as a table.
+
+- \`id_not_null\`: \`id\` has a value; a row that fails is left out of the table, and kept in \`dev.silver.customers_clean_quarantine\`.
+- \`email_not_null\`: \`email\` has a value; a row that fails is left out of the table, and kept in \`dev.silver.customers_clean_quarantine\`.
+- \`updated_at_not_null\`: \`updated_at\` has a value; a row that fails is left out of the table, and kept in \`dev.silver.customers_clean_quarantine\`.
+- \`email_min_length\`: \`email\` has at least 3 characters; a row that fails is kept, and counted.
+- \`email_pattern\`: \`email\` matches \`^[^@]+@[^@]+$\`; a row that fails is kept, and counted.
+- \`name_max_length\`: \`name\` has at most 100 characters; a row that fails is kept, and counted.
+- \`country_invalidvalues\`: \`country\` is one of \`GB\`, \`IE\` or \`FR\`, or has no value; a row that fails is kept, and counted.
+- \`status_missingvalues\`: \`status\` has a value and is not \`n/a\`; a row that fails is kept, and counted.
+- \`age_minimum\`: \`age\` is at least 0; a row that fails is kept, and counted.
+- \`age_exclusive_maximum\`: \`age\` is less than 150; a row that fails is kept, and counted.
+- \`score_multiple_of\`: \`score\` is a multiple of 5; a row that fails is kept, and counted.
+- \`tags_min_items\`: \`tags\` has at least 1 item; a row that fails is kept, and counted.
+- \`tags_max_items\`: \`tags\` has at most 5 items; a row that fails is kept, and counted.
+- \`tags_unique_items\`: \`tags\` has items that are all different; a row that fails is kept, and counted.
+- \`recent\`: \`updated_at >= TIMESTAMP '2000-01-01'\`; a row that fails stops the update.
+- \`some_customers\`: Not enforced: it counts all rows, which is checked only when the platform turns on checks.
+- \`one_per_person\`: Each person is one customer. Not checked: it is written for people to follow.
+
+Cleansing:
+
+- \`email\`: spaces at either end removed; empty text becomes no value; lower case.
+- \`name\`: empty text becomes no value.
+- \`country\`: spaces at either end removed; empty text becomes no value; \`United Kingdom\` becomes \`GB\`, \`UK\` becomes \`GB\`, \`-\` becomes no value; upper case.
+- \`status\`: spaces at either end removed; empty text becomes no value; no value becomes \`active\`.
+- \`vip\`: no value becomes false.
+- \`contacted_at\`: converted from UTC to Europe/London.
+- \`last_seen\`: converted from Europe/London to UTC.
+- \`updated_at\`: converted from Europe/London to UTC.
+- One row for each \`id\`: the last by \`updated_at\`.
+- Its timestamps are not all in one time zone: see each column above.
+
+### orders
+
+#### \`dev.bronze.orders\`
+
+Checked by Databricks on each pipeline update. Results: the pipeline's event log, published as a table.
+
+- \`id_not_null\`: \`id\` has a value; counted only: bronze keeps raw rows.
+- \`customer_id_not_null\`: \`customer_id\` has a value; counted only: bronze keeps raw rows.
+- \`updated_at_not_null\`: \`updated_at\` has a value; counted only: bronze keeps raw rows.
+
+Cleansing:
+
+- Nothing is cleansed.
+- Its timestamps are in Europe/London.
+
+#### \`dev.silver.orders_clean\`
+
+Checked by Databricks on each pipeline update. Results: the pipeline's event log, published as a table.
+
+- \`id_not_null\`: \`id\` has a value; a row that fails is left out of the table, and kept in \`dev.silver.orders_clean_quarantine\`.
+- \`customer_id_not_null\`: \`customer_id\` has a value; a row that fails is left out of the table, and kept in \`dev.silver.orders_clean_quarantine\`.
+- \`updated_at_not_null\`: \`updated_at\` has a value; a row that fails is left out of the table, and kept in \`dev.silver.orders_clean_quarantine\`.
+
+Cleansing:
+
+- \`status\`: spaces at either end removed; empty text becomes no value; upper case.
+- \`updated_at\`: converted from Europe/London to UTC.
+- One row for each \`id\`: the last by \`updated_at\`.
+- Its timestamps are in UTC.
+"
+`;
+
+exports[`a medallion project on duckdb > compares each table's cleansing, time zone, duties and quarantine 1`] = `
+{
+  "customers": {
+    "does": "raw",
+    "timezone": "Europe/London",
+  },
+  "customers_clean": {
+    "cleanse.columns.contacted_at.timezone.from": "UTC",
+    "cleanse.columns.contacted_at.timezone.to": "Europe/London",
+    "cleanse.columns.country.case": "upper",
+    "cleanse.columns.country.empty": true,
+    "cleanse.columns.country.map.-": null,
+    "cleanse.columns.country.map.UK": "GB",
+    "cleanse.columns.country.map.United Kingdom": "GB",
+    "cleanse.columns.country.trim": true,
+    "cleanse.columns.email.case": "lower",
+    "cleanse.columns.email.empty": true,
+    "cleanse.columns.email.trim": true,
+    "cleanse.columns.last_seen.timezone.from": "Europe/London",
+    "cleanse.columns.last_seen.timezone.to": "UTC",
+    "cleanse.columns.name.empty": true,
+    "cleanse.columns.status.default": "active",
+    "cleanse.columns.status.empty": true,
+    "cleanse.columns.status.trim": true,
+    "cleanse.columns.updated_at.timezone.from": "Europe/London",
+    "cleanse.columns.updated_at.timezone.to": "UTC",
+    "cleanse.columns.vip.default": false,
+    "cleanse.deduplicate.orderBy": [
+      "updated_at",
+    ],
+    "does": [
+      "cleanse",
+      "deduplicate",
+      "check",
+      "quarantine",
+    ],
+    "quarantine": "crm.silver.customers_clean_quarantine",
+  },
+  "orders": {
+    "does": "raw",
+    "timezone": "Europe/London",
+  },
+  "orders_clean": {
+    "cleanse.columns.status.case": "upper",
+    "cleanse.columns.status.empty": true,
+    "cleanse.columns.status.trim": true,
+    "cleanse.columns.updated_at.timezone.from": "Europe/London",
+    "cleanse.columns.updated_at.timezone.to": "UTC",
+    "cleanse.deduplicate.orderBy": [
+      "updated_at",
+    ],
+    "does": [
+      "cleanse",
+      "deduplicate",
+      "check",
+      "quarantine",
+    ],
+    "quarantine": "crm.silver.orders_clean_quarantine",
+    "timezone": "UTC",
+  },
+}
+`;
+
+exports[`a medallion project on duckdb > plans with errors, then warnings, then what is not applied on this platform 1`] = `
+"Not applied on this platform
+dev:
+contracts/customers.yaml:11:53  warning  NOT_APPLIED
+  The notNull rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:14:19  warning  NOT_APPLIED
+  The notNull rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:40:63  warning  NOT_APPLIED
+  The notNull rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:15:42  warning  NOT_APPLIED
+  The length rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:15:54  warning  NOT_APPLIED
+  The pattern rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:16:77  warning  NOT_APPLIED
+  The length rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:20:13  warning  NOT_APPLIED
+  The in rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:27:13  warning  NOT_APPLIED
+  The notIn rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:31:75  warning  NOT_APPLIED
+  The range rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:32:80  warning  NOT_APPLIED
+  The multipleOf rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:36:41  warning  NOT_APPLIED
+  The items rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:42:9  warning  NOT_APPLIED
+  The table check isn't applied on duckdb: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/orders.yaml:11:53  warning  NOT_APPLIED
+  The notNull rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/orders.yaml:12:62  warning  NOT_APPLIED
+  The notNull rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/orders.yaml:15:63  warning  NOT_APPLIED
+  The notNull rule isn't applied on duckdb: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+duckdb → build/duckdb (dev)
+create    dev/README.md
+create    dev/run.sql
+create    dev/tables/bronze.customers.sql
+create    dev/tables/bronze.orders.sql
+create    dev/tables/silver.customers_clean.sql
+create    dev/tables/silver.orders_clean.sql
+
+6 files: 6 create. Ready to apply.
+products → build/products (dev)
+create    dev/README.md
+create    dev/crm.md
+
+2 files: 2 create. Ready to apply.
+"
+`;
+
+exports[`a medallion project on duckdb > says in its passport what each check does, where results are, and what is cleansed 1`] = `
+"## Quality
+
+### customers
+
+#### \`crm.bronze.customers\`
+
+None of these checks runs here.
+
+- \`id_not_null\`: \`id\` has a value. Not enforced: it is applied only in a layer whose does lists check.
+- \`email_not_null\`: \`email\` has a value. Not enforced: it is applied only in a layer whose does lists check.
+- \`updated_at_not_null\`: \`updated_at\` has a value. Not enforced: it is applied only in a layer whose does lists check.
+- \`email_min_length\`: \`email\` has at least 3 characters. Not enforced: it is applied only in a layer whose does lists check.
+- \`email_pattern\`: \`email\` matches \`^[^@]+@[^@]+$\`. Not enforced: it is applied only in a layer whose does lists check.
+- \`name_max_length\`: \`name\` has at most 100 characters. Not enforced: it is applied only in a layer whose does lists check.
+- \`country_invalidvalues\`: \`country\` is one of \`GB\`, \`IE\` or \`FR\`, or has no value. Not enforced: it is applied only in a layer whose does lists check.
+- \`status_missingvalues\`: \`status\` has a value and is not \`n/a\`. Not enforced: it is applied only in a layer whose does lists check.
+- \`age_minimum\`: \`age\` is at least 0. Not enforced: it is applied only in a layer whose does lists check.
+- \`age_exclusive_maximum\`: \`age\` is less than 150. Not enforced: it is applied only in a layer whose does lists check.
+- \`score_multiple_of\`: \`score\` is a multiple of 5. Not enforced: it is applied only in a layer whose does lists check.
+- \`tags_min_items\`: \`tags\` has at least 1 item. Not enforced: it is applied only in a layer whose does lists check.
+- \`tags_max_items\`: \`tags\` has at most 5 items. Not enforced: it is applied only in a layer whose does lists check.
+- \`tags_unique_items\`: \`tags\` has items that are all different. Not enforced: it is applied only in a layer whose does lists check.
+- \`some_customers\`: the number of rows is more than 0. Not enforced: it is applied only in a layer whose does lists check.
+- \`one_per_person\`: Each person is one customer. Not checked: it is written for people to follow.
+
+Cleansing:
+
+- Nothing is cleansed.
+- Its timestamps are in Europe/London.
+
+#### \`crm.silver.customers_clean\`
+
+Checked by DuckDB each time \`run.sql\` runs. Results: the run prints each check's failing rows (in Azure, in the job's log), and keeps them in \`silver._ingestron_checks\` in the run's database (in Azure, only for that run).
+
+- \`id_not_null\`: \`id\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.customers_clean_quarantine\`.
+- \`email_not_null\`: \`email\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.customers_clean_quarantine\`.
+- \`updated_at_not_null\`: \`updated_at\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.customers_clean_quarantine\`.
+- \`email_min_length\`: \`email\` has at least 3 characters; a row that fails is kept, and counted.
+- \`email_pattern\`: \`email\` matches \`^[^@]+@[^@]+$\`; a row that fails is kept, and counted.
+- \`name_max_length\`: \`name\` has at most 100 characters; a row that fails is kept, and counted.
+- \`country_invalidvalues\`: \`country\` is one of \`GB\`, \`IE\` or \`FR\`, or has no value; a row that fails is kept, and counted.
+- \`status_missingvalues\`: \`status\` has a value and is not \`n/a\`; a row that fails is kept, and counted.
+- \`age_minimum\`: \`age\` is at least 0; a row that fails is kept, and counted.
+- \`age_exclusive_maximum\`: \`age\` is less than 150; a row that fails is kept, and counted.
+- \`score_multiple_of\`: \`score\` is a multiple of 5; a row that fails is kept, and counted.
+- \`tags_min_items\`: \`tags\` has at least 1 item; a row that fails is kept, and counted.
+- \`tags_max_items\`: \`tags\` has at most 5 items; a row that fails is kept, and counted.
+- \`tags_unique_items\`: \`tags\` has items that are all different; a row that fails is kept, and counted.
+- \`recent\`: \`updated_at >= TIMESTAMP '2000-01-01'\`; a row that fails stops the run, and nothing is published.
+- \`some_customers\`: the number of rows is more than 0, counted after the table is built, in the same run; if it fails, the run goes on.
+- \`one_per_person\`: Each person is one customer. Not checked: it is written for people to follow.
+
+Cleansing:
+
+- \`email\`: spaces at either end removed; empty text becomes no value; lower case.
+- \`name\`: empty text becomes no value.
+- \`country\`: spaces at either end removed; empty text becomes no value; \`United Kingdom\` becomes \`GB\`, \`UK\` becomes \`GB\`, \`-\` becomes no value; upper case.
+- \`status\`: spaces at either end removed; empty text becomes no value; no value becomes \`active\`.
+- \`vip\`: no value becomes false.
+- \`contacted_at\`: converted from UTC to Europe/London.
+- \`last_seen\`: converted from Europe/London to UTC.
+- \`updated_at\`: converted from Europe/London to UTC.
+- One row for each \`id\`: the last by \`updated_at\`.
+- Its timestamps are not all in one time zone: see each column above.
+
+### orders
+
+#### \`crm.bronze.orders\`
+
+None of these checks runs here.
+
+- \`id_not_null\`: \`id\` has a value. Not enforced: it is applied only in a layer whose does lists check.
+- \`customer_id_not_null\`: \`customer_id\` has a value. Not enforced: it is applied only in a layer whose does lists check.
+- \`updated_at_not_null\`: \`updated_at\` has a value. Not enforced: it is applied only in a layer whose does lists check.
+
+Cleansing:
+
+- Nothing is cleansed.
+- Its timestamps are in Europe/London.
+
+#### \`crm.silver.orders_clean\`
+
+Checked by DuckDB each time \`run.sql\` runs. Results: the run prints each check's failing rows (in Azure, in the job's log), and keeps them in \`silver._ingestron_checks\` in the run's database (in Azure, only for that run).
+
+- \`id_not_null\`: \`id\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.orders_clean_quarantine\`.
+- \`customer_id_not_null\`: \`customer_id\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.orders_clean_quarantine\`.
+- \`updated_at_not_null\`: \`updated_at\` has a value; a row that fails is left out of the table, and kept in \`crm.silver.orders_clean_quarantine\`.
+
+Cleansing:
+
+- \`status\`: spaces at either end removed; empty text becomes no value; upper case.
+- \`updated_at\`: converted from Europe/London to UTC.
+- One row for each \`id\`: the last by \`updated_at\`.
+- Its timestamps are in UTC.
+"
+`;
+
+exports[`a medallion project on landing > compares each table's cleansing, time zone, duties and quarantine 1`] = `
+{
+  "customers": {
+    "does": "raw",
+    "timezone": "Europe/London",
+  },
+  "orders": {
+    "does": "raw",
+    "timezone": "Europe/London",
+  },
+}
+`;
+
+exports[`a medallion project on landing > plans with errors, then warnings, then what is not applied on this platform 1`] = `
+"dev, prod: warnings
+project.yaml:19:5  warning  NO_MATCH
+  No files match the import "transforms/*.yaml".
+  Check the pattern. It is relative to the manifest's folder.
+adf: warnings
+(project)  warning  PACK_NOTICE
+  Integration runtime \`shir-crm\` (self-hosted): the deployment writes it by name and type, as Data Factory Studio does; where it creates it, register a node, with network access and any required source drivers, before the copies run.
+  Before the first deployment to a factory that already has these integration runtimes, run \`az deployment group what-if\` with the template and that environment's parameter file, and check that it changes no runtime in a way you did not describe.
+Not applied on this platform
+dev, prod:
+contracts/customers.yaml:41:9  warning  NOT_APPLIED
+  The "rowCount" rule isn't applied on adf: the table ends at the landed files, and nothing checks them.
+  Add a store step to have it checked.
+contracts/customers.yaml:20:13  warning  NOT_APPLIED
+  The "invalidValues" rule isn't applied on adf: the table ends at the landed files, and nothing checks them.
+  Add a store step to have it checked.
+contracts/customers.yaml:27:13  warning  NOT_APPLIED
+  The "missingValues" rule isn't applied on adf: the table ends at the landed files, and nothing checks them.
+  Add a store step to have it checked.
+adf → build/adf (dev, prod)
+create    factory/arm-template-parameters-definition.json
+create    factory/dataset/ds_crm_crm_crm.json
+create    factory/dataset/ds_crm_landing.json
+create    factory/integrationRuntime/shir-crm.json
+create    factory/linkedService/ls_crm_crm_crm.json
+create    factory/linkedService/ls_crm_keyvault.json
+create    factory/linkedService/ls_crm_landing.json
+create    factory/pipeline/pl_crm_crm.json
+create    factory/trigger/tr_crm_crm.json
+create    parameters/dev.json
+create    parameters/prod.json
+
+11 files: 11 create. Ready to apply.
+products → build/products (dev, prod)
+create    dev/README.md
+create    dev/crm.md
+create    prod/README.md
+create    prod/crm.md
+
+4 files: 4 create. Ready to apply.
+"
+`;
+
+exports[`a medallion project on landing > says in its passport what each check does, where results are, and what is cleansed 1`] = `
+"## Quality
+
+### customers
+
+#### Landed files at \`abfss://landing@crmdev.dfs.core.windows.net/crm/crm.dbo.Customers/crm.dbo.Customers.parquet\`
+
+Nothing checks these rows: the table ends at the landed files.
+
+- \`id_not_null\`: \`id\` has a value. Not enforced: the table ends at the landed files, and nothing checks them.
+- \`email_not_null\`: \`email\` has a value. Not enforced: the table ends at the landed files, and nothing checks them.
+- \`updated_at_not_null\`: \`updated_at\` has a value. Not enforced: the table ends at the landed files, and nothing checks them.
+- \`some_customers\`: Not enforced: the table ends at the landed files, and nothing checks them.
+- \`one_per_person\`: Each person is one customer. Not checked: it is written for people to follow.
+- \`country_invalidvalues\`: Not enforced: the table ends at the landed files, and nothing checks them.
+- \`status_missingvalues\`: Not enforced: the table ends at the landed files, and nothing checks them.
+
+Cleansing:
+
+- Nothing is cleansed.
+- Its timestamps are in Europe/London.
+
+### orders
+
+#### Landed files at \`abfss://landing@crmdev.dfs.core.windows.net/crm/crm.dbo.Orders/crm.dbo.Orders.parquet\`
+
+Nothing checks these rows: the table ends at the landed files.
+
+- \`id_not_null\`: \`id\` has a value. Not enforced: the table ends at the landed files, and nothing checks them.
+- \`customer_id_not_null\`: \`customer_id\` has a value. Not enforced: the table ends at the landed files, and nothing checks them.
+- \`updated_at_not_null\`: \`updated_at\` has a value. Not enforced: the table ends at the landed files, and nothing checks them.
+
+Cleansing:
+
+- Nothing is cleansed.
+- Its timestamps are in Europe/London.
+"
+`;
+
+exports[`a medallion project on synapse > compares each table's cleansing, time zone, duties and quarantine 1`] = `
+{
+  "customers": {
+    "does": "raw",
+    "timezone": "Europe/London",
+  },
+  "customers_clean": {
+    "cleanse.columns.contacted_at.timezone.from": "UTC",
+    "cleanse.columns.contacted_at.timezone.to": "Europe/London",
+    "cleanse.columns.country.case": "upper",
+    "cleanse.columns.country.empty": true,
+    "cleanse.columns.country.map.-": null,
+    "cleanse.columns.country.map.UK": "GB",
+    "cleanse.columns.country.map.United Kingdom": "GB",
+    "cleanse.columns.country.trim": true,
+    "cleanse.columns.email.case": "lower",
+    "cleanse.columns.email.empty": true,
+    "cleanse.columns.email.trim": true,
+    "cleanse.columns.last_seen.timezone.from": "Europe/London",
+    "cleanse.columns.last_seen.timezone.to": "UTC",
+    "cleanse.columns.name.empty": true,
+    "cleanse.columns.status.default": "active",
+    "cleanse.columns.status.empty": true,
+    "cleanse.columns.status.trim": true,
+    "cleanse.columns.updated_at.timezone.from": "Europe/London",
+    "cleanse.columns.updated_at.timezone.to": "UTC",
+    "cleanse.columns.vip.default": false,
+    "cleanse.deduplicate.orderBy": [
+      "updated_at",
+    ],
+    "does": [
+      "cleanse",
+      "deduplicate",
+      "check",
+      "quarantine",
+    ],
+    "quarantine": "crm_dev.silver.customers_clean_quarantine",
+  },
+  "orders": {
+    "does": "raw",
+    "timezone": "Europe/London",
+  },
+  "orders_clean": {
+    "cleanse.columns.status.case": "upper",
+    "cleanse.columns.status.empty": true,
+    "cleanse.columns.status.trim": true,
+    "cleanse.columns.updated_at.timezone.from": "Europe/London",
+    "cleanse.columns.updated_at.timezone.to": "UTC",
+    "cleanse.deduplicate.orderBy": [
+      "updated_at",
+    ],
+    "does": [
+      "cleanse",
+      "deduplicate",
+      "check",
+      "quarantine",
+    ],
+    "quarantine": "crm_dev.silver.orders_clean_quarantine",
+    "timezone": "UTC",
+  },
+}
+`;
+
+exports[`a medallion project on synapse > plans with errors, then warnings, then what is not applied on this platform 1`] = `
+"adf: warnings
+(project)  warning  PACK_NOTICE
+  Integration runtime \`shir-crm\` (self-hosted): the deployment writes it by name and type, as Data Factory Studio does; where it creates it, register a node, with network access and any required source drivers, before the copies run.
+  Before the first deployment to a factory that already has these integration runtimes, run \`az deployment group what-if\` with the template and that environment's parameter file, and check that it changes no runtime in a way you did not describe.
+Not applied on this platform
+dev, prod:
+contracts/customers.yaml:11:53  warning  NOT_APPLIED
+  The notNull rule isn't applied on synapse: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:14:19  warning  NOT_APPLIED
+  The notNull rule isn't applied on synapse: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:39:63  warning  NOT_APPLIED
+  The notNull rule isn't applied on synapse: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:15:42  warning  NOT_APPLIED
+  The length rule isn't applied on synapse: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:15:54  warning  NOT_APPLIED
+  The pattern rule isn't applied on synapse: serverless T-SQL has no regular expressions.
+contracts/customers.yaml:16:77  warning  NOT_APPLIED
+  The length rule isn't applied on synapse: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:20:13  warning  NOT_APPLIED
+  The in rule isn't applied on synapse: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:27:13  warning  NOT_APPLIED
+  The notIn rule isn't applied on synapse: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:31:75  warning  NOT_APPLIED
+  The range rule isn't applied on synapse: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:32:80  warning  NOT_APPLIED
+  The multipleOf rule isn't applied on synapse: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/customers.yaml:35:41  warning  NOT_APPLIED
+  The items rule isn't applied on synapse: views type no arrays.
+contracts/customers.yaml:41:9  warning  NOT_APPLIED
+  The table check isn't applied on synapse: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/orders.yaml:11:53  warning  NOT_APPLIED
+  The notNull rule isn't applied on synapse: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/orders.yaml:12:62  warning  NOT_APPLIED
+  The notNull rule isn't applied on synapse: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+contracts/orders.yaml:15:63  warning  NOT_APPLIED
+  The notNull rule isn't applied on synapse: it is applied only in a layer whose does lists check.
+  Add \`check\` to the layer's \`does\` to apply it here.
+transforms/customers_clean.yaml:18:68  warning  NOT_APPLIED
+  The fail action isn't applied on synapse: a view can't stop a load; checks.sql checks this rule and raises an error when it runs.
+standard.yaml:15:15  warning  NOT_APPLIED
+  Quarantine isn't applied on synapse: a view keeps no rows to quarantine; checks.sql returns how many rows each drop check leaves out instead.
+standard.yaml:9:25  warning  NOT_APPLIED
+  quality.results: true isn't applied on synapse: a view keeps no results; checks.sql returns each check's counts instead when it runs.
+synapse → build/synapse (dev, prod)
+create    checks.sql
+create    checks/dev.sql
+create    checks/prod.sql
+create    environments/dev.sql
+create    environments/prod.sql
+create    views.sql
+
+6 files: 6 create. Ready to apply.
+adf → build/adf (dev, prod)
+create    factory/arm-template-parameters-definition.json
+create    factory/dataset/ds_crm_crm_crm.json
+create    factory/dataset/ds_crm_landing.json
+create    factory/integrationRuntime/shir-crm.json
+create    factory/linkedService/ls_crm_crm_crm.json
+create    factory/linkedService/ls_crm_keyvault.json
+create    factory/linkedService/ls_crm_landing.json
+create    factory/pipeline/pl_crm_crm.json
+create    factory/trigger/tr_crm_crm.json
+create    parameters/dev.json
+create    parameters/prod.json
+
+11 files: 11 create. Ready to apply.
+products → build/products (dev, prod)
+create    dev/README.md
+create    dev/crm.md
+create    prod/README.md
+create    prod/crm.md
+
+4 files: 4 create. Ready to apply.
+"
+`;
+
+exports[`a medallion project on synapse > says in its passport what each check does, where results are, and what is cleansed 1`] = `
+"## Quality
+
+### customers
+
+#### \`crm_dev.bronze.customers\`
+
+None of these checks runs here.
+
+- \`id_not_null\`: \`id\` has a value. Not enforced: it is applied only in a layer whose does lists check.
+- \`email_not_null\`: \`email\` has a value. Not enforced: it is applied only in a layer whose does lists check.
+- \`updated_at_not_null\`: \`updated_at\` has a value. Not enforced: it is applied only in a layer whose does lists check.
+- \`email_min_length\`: \`email\` has at least 3 characters. Not enforced: it is applied only in a layer whose does lists check.
+- \`email_pattern\`: \`email\` matches \`^[^@]+@[^@]+$\`. Not enforced: serverless T-SQL has no regular expressions.
+- \`name_max_length\`: \`name\` has at most 100 characters. Not enforced: it is applied only in a layer whose does lists check.
+- \`country_invalidvalues\`: \`country\` is one of \`GB\`, \`IE\` or \`FR\`, or has no value. Not enforced: it is applied only in a layer whose does lists check.
+- \`status_missingvalues\`: \`status\` has a value and is not \`n/a\`. Not enforced: it is applied only in a layer whose does lists check.
+- \`age_minimum\`: \`age\` is at least 0. Not enforced: it is applied only in a layer whose does lists check.
+- \`age_exclusive_maximum\`: \`age\` is less than 150. Not enforced: it is applied only in a layer whose does lists check.
+- \`score_multiple_of\`: \`score\` is a multiple of 5. Not enforced: it is applied only in a layer whose does lists check.
+- \`tags_min_items\`: \`tags\` has at least 1 item. Not enforced: views type no arrays.
+- \`tags_max_items\`: \`tags\` has at most 5 items. Not enforced: views type no arrays.
+- \`tags_unique_items\`: \`tags\` has items that are all different. Not enforced: views type no arrays.
+- \`some_customers\`: the number of rows is more than 0. Not enforced: it is applied only in a layer whose does lists check.
+- \`one_per_person\`: Each person is one customer. Not checked: it is written for people to follow.
+
+Cleansing:
+
+- Nothing is cleansed.
+- Its timestamps are in Europe/London.
+
+#### \`crm_dev.silver.customers_clean\`
+
+Checked by Synapse serverless SQL: the view leaves out the rows a \`drop\` check fails each time it is queried, and \`checks.sql\` counts every check when it runs. Results: what \`checks.sql\` returns; nothing keeps them.
+
+- \`id_not_null\`: \`id\` has a value; a row that fails is left out of the view, and \`checks.sql\` counts it.
+- \`email_not_null\`: \`email\` has a value; a row that fails is left out of the view, and \`checks.sql\` counts it.
+- \`updated_at_not_null\`: \`updated_at\` has a value; a row that fails is left out of the view, and \`checks.sql\` counts it.
+- \`email_min_length\`: \`email\` has at least 3 characters; a row that fails stays in the view, and \`checks.sql\` counts it.
+- \`email_pattern\`: \`email\` matches \`^[^@]+@[^@]+$\`. Not enforced: serverless T-SQL has no regular expressions.
+- \`name_max_length\`: \`name\` has at most 100 characters; a row that fails stays in the view, and \`checks.sql\` counts it.
+- \`country_invalidvalues\`: \`country\` is one of \`GB\`, \`IE\` or \`FR\`, or has no value; a row that fails stays in the view, and \`checks.sql\` counts it.
+- \`status_missingvalues\`: \`status\` has a value and is not \`n/a\`; a row that fails stays in the view, and \`checks.sql\` counts it.
+- \`age_minimum\`: \`age\` is at least 0; a row that fails stays in the view, and \`checks.sql\` counts it.
+- \`age_exclusive_maximum\`: \`age\` is less than 150; a row that fails stays in the view, and \`checks.sql\` counts it.
+- \`score_multiple_of\`: \`score\` is a multiple of 5; a row that fails stays in the view, and \`checks.sql\` counts it.
+- \`tags_min_items\`: \`tags\` has at least 1 item. Not enforced: views type no arrays.
+- \`tags_max_items\`: \`tags\` has at most 5 items. Not enforced: views type no arrays.
+- \`tags_unique_items\`: \`tags\` has items that are all different. Not enforced: views type no arrays.
+- \`recent\`: \`[updated_at] >= '2000-01-01'\`. Not enforced: a view can't stop a load; checks.sql checks this rule and raises an error when it runs.
+- \`some_customers\`: the number of rows is more than 0, counted by \`checks.sql\`, over the rows the view keeps; if it fails, \`checks.sql\` returns the count.
+- \`one_per_person\`: Each person is one customer. Not checked: it is written for people to follow.
+- Keeping the rows a \`drop\` check leaves out. Not enforced: a view keeps no rows to quarantine; checks.sql returns how many rows each drop check leaves out instead.
+- Keeping the checks' results. Not enforced: a view keeps no results; checks.sql returns each check's counts instead when it runs.
+
+Cleansing:
+
+- \`email\`: spaces at either end removed; empty text becomes no value; lower case.
+- \`name\`: empty text becomes no value.
+- \`country\`: spaces at either end removed; empty text becomes no value; \`United Kingdom\` becomes \`GB\`, \`UK\` becomes \`GB\`, \`-\` becomes no value; upper case.
+- \`status\`: spaces at either end removed; empty text becomes no value; no value becomes \`active\`.
+- \`vip\`: no value becomes false.
+- \`contacted_at\`: converted from UTC to Europe/London.
+- \`last_seen\`: converted from Europe/London to UTC.
+- \`updated_at\`: converted from Europe/London to UTC.
+- One row for each \`id\`: the last by \`updated_at\`.
+- Its timestamps are not all in one time zone: see each column above.
+
+### orders
+
+#### \`crm_dev.bronze.orders\`
+
+None of these checks runs here.
+
+- \`id_not_null\`: \`id\` has a value. Not enforced: it is applied only in a layer whose does lists check.
+- \`customer_id_not_null\`: \`customer_id\` has a value. Not enforced: it is applied only in a layer whose does lists check.
+- \`updated_at_not_null\`: \`updated_at\` has a value. Not enforced: it is applied only in a layer whose does lists check.
+
+Cleansing:
+
+- Nothing is cleansed.
+- Its timestamps are in Europe/London.
+
+#### \`crm_dev.silver.orders_clean\`
+
+Checked by Synapse serverless SQL: the view leaves out the rows a \`drop\` check fails each time it is queried, and \`checks.sql\` counts every check when it runs. Results: what \`checks.sql\` returns; nothing keeps them.
+
+- \`id_not_null\`: \`id\` has a value; a row that fails is left out of the view, and \`checks.sql\` counts it.
+- \`customer_id_not_null\`: \`customer_id\` has a value; a row that fails is left out of the view, and \`checks.sql\` counts it.
+- \`updated_at_not_null\`: \`updated_at\` has a value; a row that fails is left out of the view, and \`checks.sql\` counts it.
+- Keeping the rows a \`drop\` check leaves out. Not enforced: a view keeps no rows to quarantine; checks.sql returns how many rows each drop check leaves out instead.
+- Keeping the checks' results. Not enforced: a view keeps no results; checks.sql returns each check's counts instead when it runs.
+
+Cleansing:
+
+- \`status\`: spaces at either end removed; empty text becomes no value; upper case.
+- \`updated_at\`: converted from Europe/London to UTC.
+- One row for each \`id\`: the last by \`updated_at\`.
+- Its timestamps are in UTC.
+"
+`;
+
+exports[`compare > shows a table's cleansing and time zone where environments differ 1`] = `
+"# dev ↔ prod: crm
+
+## Platform
+
+- \`mode\`: \`development\` → \`production\`
+- \`workspace.host\`: \`https://adb-1111111111111111.1.azuredatabricks.net\` → \`https://adb-2222222222222222.2.azuredatabricks.net\`
+- \`sections.databricks.workspace.host\`: \`https://adb-1111111111111111.1.azuredatabricks.net\` → \`https://adb-2222222222222222.2.azuredatabricks.net\`
+
+## Table customers
+
+- \`full name\`: \`dev.bronze.customers\` → \`prod.bronze.customers\`
+- \`ingest.connection.settings.path\`: \`abfss://landing@crmdev.dfs.core.windows.net/crm\` → \`abfss://landing@crmprod.dfs.core.windows.net/crm\`
+- \`timezone\`: \`Europe/London\` → \`UTC\`
+
+## Table orders
+
+- \`full name\`: \`dev.bronze.orders\` → \`prod.bronze.orders\`
+- \`ingest.connection.settings.path\`: \`abfss://landing@crmdev.dfs.core.windows.net/crm\` → \`abfss://landing@crmprod.dfs.core.windows.net/crm\`
+- \`timezone\`: \`Europe/London\` → \`UTC\`
+
+## Table customers_clean
+
+- \`full name\`: \`dev.silver.customers_clean\` → \`prod.silver.customers_clean\`
+- \`cleanse.columns.email.case\`: \`lower\` → \`upper\`
+- \`cleanse.columns.last_seen.timezone.from\`: \`Europe/London\` → not set
+- \`cleanse.columns.last_seen.timezone.to\`: \`UTC\` → not set
+- \`cleanse.columns.updated_at.timezone.from\`: \`Europe/London\` → not set
+- \`cleanse.columns.updated_at.timezone.to\`: \`UTC\` → not set
+- \`quarantine\`: \`dev.silver.customers_clean_quarantine\` → \`prod.silver.customers_clean_quarantine\`
+
+## Table orders_clean
+
+- \`full name\`: \`dev.silver.orders_clean\` → \`prod.silver.orders_clean\`
+- \`cleanse.columns.updated_at.timezone.from\`: \`Europe/London\` → not set
+- \`cleanse.columns.updated_at.timezone.to\`: \`UTC\` → not set
+- \`quarantine\`: \`dev.silver.orders_clean_quarantine\` → \`prod.silver.orders_clean_quarantine\`
+"
+`;

@@ -4,7 +4,10 @@
 
 ```ts
 
+import { AcceptAtBuild } from '@ingestron/definitions';
+import { AcceptedWarning } from '@ingestron/definitions';
 import { AnyDiagnostic } from '@ingestron/config';
+import { Diagnostic } from '@ingestron/definitions';
 import { FileSource } from '@ingestron/config';
 import { OutputFolder } from '@ingestron/generate';
 import { Pack } from '@ingestron/definitions';
@@ -268,6 +271,7 @@ export function readSample(folder: string, kind: Sample["kind"]): Sample;
 
 // @public
 export interface Report {
+    accepted?: AcceptedWarning[];
     diagnostics: AnyDiagnostic[];
     failed: boolean;
     name: string;

@@ -4,7 +4,7 @@ import { formatDiagnostics, type AnyDiagnostic, type FileSource } from "@ingestr
 import { packLoadProblem, type Pack, type SuppliedValue } from "@ingestron/definitions";
 import { generateAll, type Generated } from "./build-outputs.js";
 import { packs } from "../packs/index.js";
-import { environmentReportsText, packReportsText } from "./report-text.js";
+import { reportsText } from "./report-text.js";
 import type { Report } from "./resolve-environments.js";
 
 export type { Report } from "./resolve-environments.js";
@@ -68,7 +68,8 @@ export interface GeneratedOutputs {
   deployed: string[];
   /**
    * The reports as plan prints them before planning: each environment's problems, then each
-   * pack's problems or warnings. Empty when there are none.
+   * pack's problems or warnings, then the warnings not applied on this platform under their
+   * heading, then the count of accepted warnings. Empty when there are none.
    */
   text: string;
 }
@@ -111,8 +112,7 @@ export function outputsOf(available: readonly Pack[], generate: () => Generated)
     files: output.files,
     ...(output.deployValues && { deployValues: output.deployValues }),
   }));
-  const text =
-    environmentReportsText(generated.environmentReports) + packReportsText(generated.packReports);
+  const text = reportsText(generated.environmentReports, generated.packReports);
   const deployed = generated.together
     ? generated.environmentReports
         .map((report) => report.name)

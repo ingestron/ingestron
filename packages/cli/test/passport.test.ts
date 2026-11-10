@@ -113,8 +113,20 @@ describe("passports", () => {
   });
 
   it("writes checks that contain backticks as code that stays whole", () => {
+    const resolved = model(project());
+    const customers = resolved.tables.find((item) => item.name === "customers")!;
+    // A check a flow writes has no rule to put in words, so its text is shown.
+    customers.expectations = [
+      { name: "email_has_at", check: "`email` LIKE '%@%'", action: "warn", from: "definition" },
+    ];
+    expect(passports(resolved)["customers.md"]).toContain(
+      "- `email_has_at`: `` `email` LIKE '%@%' ``; a row that fails is kept, and counted.",
+    );
+  });
+
+  it("writes a contract's checks in words", () => {
     expect(passports(model(project()))["customers.md"]).toContain(
-      "- `email_not_null`: `` `email` IS NOT NULL ``, checked on every load",
+      "- `email_not_null`: `email` has a value; a row that fails is left out of the table.",
     );
   });
 
@@ -136,7 +148,7 @@ describe("passports", () => {
     expect(page).toContain(
       "- `whole_days`: Each day is a whole calendar day. Not checked: it is written for people to follow.",
     );
-    expect(page).toMatch(/- `daily_sales_rowcount`: Not checked: it counts all rows/);
+    expect(page).toMatch(/- `daily_sales_rowcount`: Not enforced: it counts all rows/);
   });
 
   it("writes a URN id's passport under a safe file name, and links to it", () => {

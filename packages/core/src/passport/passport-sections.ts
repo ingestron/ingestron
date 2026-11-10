@@ -121,44 +121,6 @@ export function columns(model: ResolvedModel, product: ResolvedProduct): string 
   return ["## Columns", ...parts].join("\n\n");
 }
 
-/** What happens to a row that fails a check, for the end of "a row that fails ...". */
-const failing = {
-  drop: "is left out of the table",
-  warn: "is kept, and the failure is recorded",
-  fail: "stops the load",
-};
-
-/** Section 5: each check and when it runs, or why it does not. */
-export function quality(model: ResolvedModel, product: ResolvedProduct): string {
-  const parts = outputTables(model, product).flatMap(({ output, tables }) =>
-    tables.length === 0
-      ? [`### ${output.name}\n\n${notBuilt}`]
-      : tables.map((built) => {
-          const rows = built.endsAtFiles
-            ? []
-            : built.expectations.map(
-                (item) =>
-                  `- \`${item.name}\`: ${code(item.check)}, checked on every load; a row that fails ${failing[item.action]}.`,
-              );
-          const counts = built.contract.tableChecks.map(
-            (item) => `- \`${item.name}\`: checked after each refresh.`,
-          );
-          const unchecked = built.contract.unchecked.map(
-            (item) =>
-              `- \`${item.name}\`: ${item.description ? `${oneLine(item.description)} ` : ""}Not checked: ${item.reason}.`,
-          );
-          const lines = [...rows, ...counts, ...unchecked];
-          return `### ${output.name}\n\n${lines.length > 0 ? lines.join("\n") : "No quality rules."}`;
-        }),
-  );
-  return ["## Quality", ...parts].join("\n\n");
-}
-
-/** Text on one line, as in a list item. */
-function oneLine(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
-}
-
 /** Section 6: the contracts' promises and the refresh schedule. */
 export function freshness(model: ResolvedModel, product: ResolvedProduct): string {
   const promises = new Set(

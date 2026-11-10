@@ -5,7 +5,9 @@ export {
   environmentOutputs,
   environmentReportsText,
   environmentsToGenerate,
+  notAppliedHeading,
   packReportsText,
+  reportsText,
 } from "./generation/index.js";
 export { tableFacts } from "./compare/index.js";
 export { requestFor } from "./request/index.js";

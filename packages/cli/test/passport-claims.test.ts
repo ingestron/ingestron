@@ -61,8 +61,8 @@ describe("passport claims", () => {
     }));
     const page = passports(resolved)["customers.md"]!;
     expect(page).toContain("a row that fails is left out of the table.");
-    expect(page).toContain("a row that fails is kept, and the failure is recorded.");
-    expect(page).toContain("a row that fails stops the load.");
+    expect(page).toContain("a row that fails is kept, and counted.");
+    expect(page).toContain("a row that fails stops the update.");
     expect(page).not.toMatch(/rows that fail: (drop|warn|fail)/);
   });
 

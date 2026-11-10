@@ -5,6 +5,9 @@ import { resolveProject, type AnyDiagnostic, type FileSource } from "@ingestron/
 import {
   kinds,
   resolveDefinitions,
+  type AcceptAtBuild,
+  type AcceptedWarning,
+  type Diagnostic,
   type Pack,
   type ResolvedModel,
   type ResolveResult,
@@ -21,6 +24,13 @@ export interface ResolvedEnvironment {
   deploy?: ResolvedModel;
   /** Resolved with the host's values, for every other pack; absent when no such pack needs it. */
   host?: ResolvedModel;
+  /**
+   * The `NOT_APPLIED` and `CAPABILITY_OFF` warnings of the resolution that gave `model`,
+   * accepted or not, for the passports.
+   */
+  notes: Diagnostic[];
+  /** The Platform's entries for warnings of a pack's build, from the resolution for deploy. */
+  acceptAtBuild: AcceptAtBuild[];
 }
 
 /**
@@ -34,6 +44,8 @@ export interface Report {
   failed: boolean;
   /** The problems and warnings it found, each once. */
   diagnostics: AnyDiagnostic[];
+  /** The warnings the Platform's `accept` list accepted, each once; absent when none. */
+  accepted?: AcceptedWarning[];
 }
 
 /** Every environment, and the reports; `ok` when none has problems. */
@@ -125,7 +137,16 @@ type Result = { environment?: ResolvedEnvironment; report: Report };
 function alone(name: string, result: ResolveResult, ...earlier: ResolveResult[]): Result {
   const report = reportOf(name, [...earlier, result]);
   if (!result.model) return { report };
-  return { environment: { name, model: result.model, host: result.model }, report };
+  const model = result.model;
+  return { environment: { name, model, host: model, ...noted(result) }, report };
+}
+
+/** What the passports and the packs' builds read of the resolution that gave the model. */
+function noted(result: ResolveResult): Pick<ResolvedEnvironment, "notes" | "acceptAtBuild"> {
+  const notes = [...result.diagnostics, ...result.accepted.map((item) => item.diagnostic)].filter(
+    (item) => item.code === "NOT_APPLIED" || item.code === "CAPABILITY_OFF",
+  );
+  return { notes, acceptAtBuild: result.acceptAtBuild ?? [] };
 }
 
 /** An environment resolved for deploy first, then with the host's values where a pack needs them. */
@@ -137,26 +158,49 @@ function deployed(item: DeclaredEnvironment, available: readonly Pack[], resolve
   if (!targets.some(folds)) return alone(item.name, resolve(item.environment, false), deploy);
   if (!targets.some((pack) => !folds(pack)))
     return {
-      environment: { name: item.name, model, deploy: model },
+      environment: { name: item.name, model, deploy: model, ...noted(deploy) },
       report: reportOf(item.name, [deploy]),
     };
   const host = resolve(item.environment, false);
   const report = reportOf(item.name, [deploy, host]);
   if (!host.model) return { report };
-  return { environment: { name: item.name, model, deploy: model, host: host.model }, report };
+  const environment = { name: item.name, model, deploy: model, host: host.model, ...noted(deploy) };
+  return { environment, report };
 }
 
-/** The diagnostics of every resolution, each once; failed when any resolution failed. */
+/** The diagnostics and accepted warnings of every resolution, each once; failed when any failed. */
 function reportOf(name: string, results: ResolveResult[]): Report {
+  const diagnostics = once(results.flatMap((result) => result.diagnostics));
+  const accepted = onceAccepted(results.flatMap((result) => result.accepted));
+  return {
+    name,
+    failed: results.some((result) => !result.model),
+    diagnostics,
+    ...(accepted.length > 0 && { accepted }),
+  };
+}
+
+/** Two diagnostics are the same when their code, file, line and message are. */
+export function diagnosticKey({ code, message, location }: AnyDiagnostic): string {
+  return JSON.stringify([code, location?.file, location?.line, message]);
+}
+
+function once<Item extends AnyDiagnostic>(items: Item[]): Item[] {
   const seen = new Set<string>();
-  const diagnostics = results
-    .flatMap((result) => result.diagnostics)
-    .filter((diagnostic) => {
-      const { code, message, location } = diagnostic;
-      const key = JSON.stringify([code, location?.file, location?.line, message]);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  return { name, failed: results.some((result) => !result.model), diagnostics };
+  return items.filter((item) => {
+    const key = diagnosticKey(item);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function onceAccepted(items: AcceptedWarning[]): AcceptedWarning[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const key = diagnosticKey(item.diagnostic);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
