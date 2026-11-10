@@ -10,7 +10,7 @@ import {
   type TableCheck,
 } from "@ingestron/definitions";
 import { cleansingLines } from "./passport-cleansing.js";
-import { engines, otherEngine, type Engine, type Keeps } from "./passport-engines.js";
+import { engines, otherEngine, rawIntro, type Engine, type Keeps } from "./passport-engines.js";
 import {
   isResults,
   keeperOf,
@@ -86,7 +86,8 @@ function engineOf(table: ResolvedTable): Engine {
 function introOf(table: ResolvedTable, keeps: Keeps, runs: boolean): string {
   if (table.endsAtFiles) return "Nothing checks these rows: the table ends at the landed files.";
   if (!runs) return "None of these checks runs here.";
-  return engineOf(table).intro(table, keeps);
+  const engine = engineOf(table);
+  return table.does === "raw" ? rawIntro(engine, table, keeps) : engine.intro(table, keeps);
 }
 
 /** A line of the list, and whether it is a check that runs. */

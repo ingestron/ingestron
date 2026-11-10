@@ -99,7 +99,7 @@ exports[`a medallion project on databricks > says in its passport what each chec
 
 #### \`dev.bronze.customers\`
 
-Checked by Databricks on each pipeline update. Results: the pipeline's event log, published as a table.
+Counted only by Databricks on each pipeline update: \`bronze\` keeps raw rows, so no check leaves a row out. Results: the pipeline's event log, published as a table.
 
 - \`id_not_null\`: \`id\` has a value; counted only: bronze keeps raw rows.
 - \`email_not_null\`: \`email\` has a value; counted only: bronze keeps raw rows.
@@ -162,7 +162,7 @@ Cleansing:
 
 #### \`dev.bronze.orders\`
 
-Checked by Databricks on each pipeline update. Results: the pipeline's event log, published as a table.
+Counted only by Databricks on each pipeline update: \`bronze\` keeps raw rows, so no check leaves a row out. Results: the pipeline's event log, published as a table.
 
 - \`id_not_null\`: \`id\` has a value; counted only: bronze keeps raw rows.
 - \`customer_id_not_null\`: \`customer_id\` has a value; counted only: bronze keeps raw rows.
@@ -278,7 +278,7 @@ exports[`a medallion project on duckdb > says in its passport what each check do
 
 #### \`crm.bronze.customers\`
 
-Checked by DuckDB each time \`run.sql\` runs. Results: the run prints each check's failing rows (in Azure, in the job's log).
+Counted only by DuckDB each time \`run.sql\` runs: \`bronze\` keeps raw rows, so no check leaves a row out. Results: the run prints each check's failing rows (in Azure, in the job's log).
 
 - \`id_not_null\`: \`id\` has a value; counted only: bronze keeps raw rows.
 - \`email_not_null\`: \`email\` has a value; counted only: bronze keeps raw rows.
@@ -341,7 +341,7 @@ Cleansing:
 
 #### \`crm.bronze.orders\`
 
-Checked by DuckDB each time \`run.sql\` runs. Results: the run prints each check's failing rows (in Azure, in the job's log).
+Counted only by DuckDB each time \`run.sql\` runs: \`bronze\` keeps raw rows, so no check leaves a row out. Results: the run prints each check's failing rows (in Azure, in the job's log).
 
 - \`id_not_null\`: \`id\` has a value; counted only: bronze keeps raw rows.
 - \`customer_id_not_null\`: \`customer_id\` has a value; counted only: bronze keeps raw rows.
@@ -585,7 +585,7 @@ exports[`a medallion project on synapse > says in its passport what each check d
 
 #### \`crm_dev.bronze.customers\`
 
-Checked by Synapse serverless SQL: the view leaves out the rows a \`drop\` check fails each time it is queried, and \`checks.sql\` counts every check when it runs. Results: what \`checks.sql\` returns; nothing keeps them.
+Counted only by \`checks.sql\` when it runs: \`bronze\` keeps raw rows, so no check leaves a row out. Results: what \`checks.sql\` returns; nothing keeps them.
 
 - \`id_not_null\`: \`id\` has a value; counted only: bronze keeps raw rows.
 - \`email_not_null\`: \`email\` has a value; counted only: bronze keeps raw rows.
@@ -650,7 +650,7 @@ Cleansing:
 
 #### \`crm_dev.bronze.orders\`
 
-Checked by Synapse serverless SQL: the view leaves out the rows a \`drop\` check fails each time it is queried, and \`checks.sql\` counts every check when it runs. Results: what \`checks.sql\` returns; nothing keeps them.
+Counted only by \`checks.sql\` when it runs: \`bronze\` keeps raw rows, so no check leaves a row out. Results: what \`checks.sql\` returns; nothing keeps them.
 
 - \`id_not_null\`: \`id\` has a value; counted only: bronze keeps raw rows.
 - \`customer_id_not_null\`: \`customer_id\` has a value; counted only: bronze keeps raw rows.

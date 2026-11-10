@@ -78,6 +78,14 @@ a `drop` check fails each time it is queried, and `checks.sql` counts every
 check when it runs. Results: what `checks.sql` returns; nothing keeps
 them.``
 - Any other pack: `Checked by <pack id> when it builds the table.`
+- A table in a layer whose `does` is `raw`, whatever the engine: its checks
+  only count, so the sentence says so and never that rows are left out:
+  ``Counted only by <engine words>: `<layer>` keeps raw rows, so no check
+leaves a row out. Results: …``, the results as the engine's own sentence
+  gives them. The engine words are `Databricks on each pipeline update`,
+  ``DuckDB each time `run.sql` runs``, `` `checks.sql` when it runs`` on
+  Synapse, and `<pack id> when it builds the table` for any other pack (which
+  ends the sentence with no results).
 - A table that ends at the landed files: `Nothing checks these rows: the
 table ends at the landed files.`
 - A table none of whose checks runs: `None of these checks runs here.`
