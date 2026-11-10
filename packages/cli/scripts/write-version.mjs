@@ -1,6 +1,8 @@
 // Writes src/manifest-version.ts from package.json's version, so the CLI knows its own version
 // without reading a file next to it: in a bundle, that file is the bundle's package.json, not
-// the CLI's. `pnpm build` runs it first; test/version.test.ts checks the two agree.
+// the CLI's. `pnpm build` runs it first. With --check it writes nothing and fails when the file
+// does not hold package.json's version: `pnpm validate` runs that before building, so a commit
+// whose manifest-version.ts is stale fails.
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -18,4 +20,11 @@ try {
 } catch {
   // Not written yet.
 }
-if (old !== text) writeFileSync(file, text);
+if (process.argv.includes("--check")) {
+  if (old !== text) {
+    console.error(
+      `src/manifest-version.ts does not hold package.json's version ${version}. Run pnpm build and commit the file.`,
+    );
+    process.exit(1);
+  }
+} else if (old !== text) writeFileSync(file, text);
