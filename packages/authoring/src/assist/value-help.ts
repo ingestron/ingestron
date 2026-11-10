@@ -7,7 +7,7 @@ import { packs } from "@ingestron/core";
 import { layerNames, type FieldInfo } from "@ingestron/definitions";
 import { stringify } from "yaml";
 import type { Suggestion } from "./completion.js";
-import type { Place } from "../navigation/index.js";
+import { listAt, type Place } from "../navigation/index.js";
 import type { Project } from "../project/index.js";
 import { packIds, packLists } from "./pack-lists.js";
 import { standardPacks } from "./smart.js";
@@ -50,15 +50,6 @@ function itemValues(project: Project, place: Place, field: FieldInfo): Suggestio
   return choices
     .filter((choice) => !written.has(choice))
     .map((label) => ({ label, kind: "value" as const }));
-}
-
-function listAt(place: Place): unknown[] {
-  const value = place.path.reduce<unknown>(
-    (node, key) =>
-      node && typeof node === "object" ? (node as Record<string, unknown>)[key] : undefined,
-    place.data,
-  );
-  return Array.isArray(value) ? value : [];
 }
 
 /** Inside { } or [ ]: the default in flow style, or an empty mapping or list to fill. */

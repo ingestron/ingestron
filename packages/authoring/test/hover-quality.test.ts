@@ -140,6 +140,31 @@ describe("completion of the fields quality and cleansing add", () => {
     expect(labels(more)).toEqual(["deduplicate", "check", "quarantine"]);
   });
 
+  it("offers nothing once every duty is written, not raw", () => {
+    const all = "does: [cleanse, deduplicate, check, quarantine, |]";
+    expect(inStandard(`layers:\n  - name: silver\n    ${all}\n`)).toEqual([]);
+  });
+
+  it("offers the duties left on a new line of a block list", () => {
+    const items = inStandard("layers:\n  - name: silver\n    does:\n      - cleanse\n      - |\n");
+    expect(labels(items)).toEqual(["deduplicate", "check", "quarantine"]);
+    const full = inStandard(
+      "layers:\n  - name: silver\n    does:\n      - cleanse\n      - deduplicate\n      - check\n      - quarantine\n      - |\n",
+    );
+    expect(full).toEqual([]);
+  });
+
+  it("offers an alert's remaining moments", () => {
+    const platform = `${readFileSync(join(retail, "platform.yaml"), "utf8").replace(
+      "on: [failure] }",
+      "on: [failure, |] }",
+    )}`;
+    const text = platform.replace("|", "");
+    const project = openProject(retail, new Map([[join(retail, "platform.yaml"), text]]));
+    const items = completionsAt(project, "platform.yaml", text, platform.indexOf("|"), "dev");
+    expect(labels(items)).toEqual(["slow"]);
+  });
+
   it("describes each duty", () => {
     const items = inStandard("layers:\n  - name: silver\n    does: [|]\n");
     const check = items.find((item) => item.label === "check");

@@ -10,7 +10,7 @@ import { schemaFor, schemasAt } from "../project/index.js";
 import { skeletons } from "./skeletons.js";
 import { firstFields, itemSnippets, newTables, preferred, rankMethods } from "./smart.js";
 import { methodChoices } from "./method-suggestions.js";
-import { flowFacts, placeAt, writtenKeys, type Place } from "../navigation/index.js";
+import { flowFacts, listAt, placeAt, writtenKeys, type Place } from "../navigation/index.js";
 import { fieldAt, fieldsIn } from "./fields.js";
 import { markFixed } from "./fixed.js";
 import type { Suggestion } from "./suggestion.js";
@@ -111,12 +111,18 @@ function valueCompletions(
   return describedValues(project, place, environment);
 }
 
-/** A new item of a list whose items are a fixed set of values, such as a layer's duties. */
-function itemChoices(place: Place): Suggestion[] {
+/**
+ * What is left of a list whose items are a fixed set of values, such as a layer's duties:
+ * nothing when all are written. Undefined when the list's items are not a fixed set.
+ */
+function itemChoices(place: Place): Suggestion[] | undefined {
   const schema = schemaFor(place.file, place.kind);
-  if (!schema) return [];
-  const written = new Set(listAt(place).map(String));
-  return schemasAt(schema, [...place.path, "0"])
+  if (!schema) return undefined;
+  const fixed = schemasAt(schema, [...place.path, "0"]).filter((item) => item.enum);
+  if (fixed.length === 0) return undefined;
+  // Branches of a `oneOf` may each give the same set.
+  const taken = new Set(listAt(place).map(String));
+  return fixed
     .flatMap((item) =>
       (item.enum ?? []).map((value, index) => ({
         label: String(value),
@@ -124,17 +130,7 @@ function itemChoices(place: Place): Suggestion[] {
         ...(item.enumDescriptions?.[index] && { documentation: item.enumDescriptions[index] }),
       })),
     )
-    .filter((item) => !written.has(item.label));
-}
-
-/** The items written so far in the list at the place's path. */
-function listAt(place: Place): unknown[] {
-  const value = place.path.reduce<unknown>(
-    (node, key) =>
-      node && typeof node === "object" ? (node as Record<string, unknown>)[key] : undefined,
-    place.data,
-  );
-  return Array.isArray(value) ? value : [];
+    .filter((item) => !taken.has(item.label) && Boolean(taken.add(item.label)));
 }
 
 /** The field's allowed values with their meanings; for others' schemas, their values and examples. */
@@ -145,8 +141,9 @@ function describedValues(
 ): Suggestion[] {
   const { kind, path } = place;
   const field = fieldAt(project, place, path, environment);
-  const items = place.part === "item" ? itemChoices(place) : [];
-  if (items.length > 0) return items;
+  // A list of a fixed set offers what is left of it, even when nothing is.
+  const items = place.part === "item" ? itemChoices(place) : undefined;
+  if (items) return items;
   if (field?.values) return markFixed(project, place, environment, allowedValues(field));
   const ours = kind !== undefined && kind in referenceKinds && kind !== "DataContract";
   if (ours) return helpFor(project, place, field);
