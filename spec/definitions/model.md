@@ -1530,7 +1530,9 @@ A layer role's `access` is checked by the Standard schema.
 
 **Exact.** `exact` is `true` when the standard's `governance.access.grants` is
 `exact`, and `false` when it is `additive` or not given: then nothing granted
-otherwise is taken away.
+otherwise is taken away. Exact grants reach every table whose grants are
+applied (below), so a table that grants no role has every direct grant on it
+taken away.
 
 **Masks.** `governance.masks` maps a classification to its mask: `null`,
 `hash` or `redact`, or the name of a function the team owns, in one part or
@@ -1570,8 +1572,14 @@ with the columns in the contract's order, joined with `, `, and the hint
 `Narrow its match, such as with a tag value, or tag only one of the columns.`
 
 **In the model.** `ResolvedTable.access` is `{ grants, exact, masks, filters }`
-when any of `grants`, `masks` and `filters` is not empty; otherwise the table
-has no `access`, as before access was resolved.
+when any of `grants`, `masks` and `filters` is not empty. With exact grants, a
+table that has none of them but whose grants are applied by the pack that
+keeps it (judged below, as for a role: the keeping step's entry for
+`access.grants=read` is `used` and the platform turns `grants` on for that
+pack) has `{ grants: [], exact: true, masks: [], filters: [] }`, and its exact
+grants are judged as any table's. Otherwise the table has no `access`, as
+before access was resolved; additive grants, the default, give no table an
+`access` it did not have.
 
 **Judging access.** A table's access is judged by the step that keeps the
 table, as checks are (section 11.7): its store step, else its ingest step when

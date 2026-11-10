@@ -27,6 +27,8 @@ export interface JudgedTable {
 /**
  * Judges the access of each table whose keeping step is known: `NOT_APPLIED` and
  * `CAPABILITY_OFF` at each declaring line, `ROLE_ACCESS` where a role would be granted.
+ * With exact grants, a table without access whose grants are applied is given access with
+ * no grants and `exact`, so its direct grants are taken away too.
  * Returns each judged table with what its pack applies, for the checks of the pack's policies.
  */
 export function judgeAccess(context: Context, tables: ResolvedTable[]): JudgedTable[] {
@@ -54,6 +56,7 @@ function judgeTable(
   const found = (item: Omit<Finding, "table" | "pack">) =>
     findings.push({ ...item, table: table.name, pack: keeper.pack });
   const grants = judge("access.grants", "read", "grants");
+  if (grants === "applied") reachExact(context, table);
   judgeRoles(context, table, { grants, judge, found });
   if (table.access?.exact && grants === "applied") {
     const at = { document: context.standard, pointer: "/governance/access/grants" };
@@ -80,6 +83,15 @@ function judgeTable(
     return state === "applied";
   });
   return { table, keeper, masks, filters };
+}
+
+/**
+ * With exact grants, a table whose grants are applied has access even with no role, no
+ * mask and no filter: its direct grants are taken away too.
+ */
+function reachExact(context: Context, table: ResolvedTable): void {
+  if (table.access || context.standard.value.governance?.access?.grants !== "exact") return;
+  table.access = { grants: [], exact: true, masks: [], filters: [] };
 }
 
 interface RoleJudging {
