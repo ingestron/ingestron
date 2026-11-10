@@ -89,8 +89,18 @@ export interface Contract {
   checks: { name: string; check: string; rule?: RowRule }[];
   /** Checks over all rows, run after each refresh when checks are on. */
   tableChecks: TableCheck[];
-  /** Quality rules nothing checks, and why; text rules among them. */
-  unchecked: { name: string; description?: string; reason: string }[];
+  /**
+   * Quality rules nothing checks, and why; text rules among them. `notEnforced` is the warning
+   * reported for a rule an engine or the platform could check but does not here:
+   * `NOT_APPLIED` on a table that ends at the landed files, `CAPABILITY_OFF` for a count over
+   * all rows with checks off. A rule nobody could check as written has none.
+   */
+  unchecked: {
+    name: string;
+    description?: string;
+    reason: string;
+    notEnforced?: "NOT_APPLIED" | "CAPABILITY_OFF";
+  }[];
   /** The contract object's tags. */
   tags: string[];
   /** Who may use the data, as the contract declares it (ODCS `roles`). */

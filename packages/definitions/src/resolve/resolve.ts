@@ -1,6 +1,6 @@
 // The entry point: load a project and resolve it for one environment.
 import { loadProject, nodeFiles, resolveProject, type FileSource } from "@ingestron/config";
-import { acceptWarnings, type AcceptedWarning } from "../accept/index.js";
+import { acceptWarnings, type AcceptAtBuild, type AcceptedWarning } from "../accept/index.js";
 import { checkRunsOn } from "./runs-on.js";
 import { checkGrants } from "../context/index.js";
 import { checkContractFields, type ContractUser } from "../contracts/index.js";
@@ -83,10 +83,16 @@ export interface ResolveResult {
    * Empty when nothing is accepted.
    */
   accepted: AcceptedWarning[];
+  /**
+   * The Platform's `accept` entries whose code only a pack's building of the files reports,
+   * such as `PACK_NOTICE`, for the tool that builds the files to match and judge (specification,
+   * Accepted warnings). Absent when there are none.
+   */
+  acceptAtBuild?: AcceptAtBuild[];
 }
 
 /** A result before the accepted warnings are taken out of it. */
-export type Resolution = Omit<ResolveResult, "accepted">;
+export type Resolution = Omit<ResolveResult, "accepted" | "acceptAtBuild">;
 
 const allKinds = Object.values(kinds);
 

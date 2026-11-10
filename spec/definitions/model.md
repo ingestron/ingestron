@@ -1360,6 +1360,11 @@ From a contract, the model also keeps its `roles` (`role`, `access`,
 `description`, `firstLevelApprovers`) and its `slaProperties` as `sla`
 (`property`, `value` as text, `unit`), and its quality rules nothing checks
 (`name`, `description`, and why: text rules among them), for the passport.
+Such a rule that an engine or the platform could check, but does not here,
+also has `notEnforced`, the code of the warning reported for it:
+`NOT_APPLIED` on a table that ends at the landed files, `CAPABILITY_OFF` for a
+count over all rows with checks off (section 6). A rule nobody could check as
+written, a `text` rule among them, has none.
 
 ### 8.1 Governance
 
@@ -2241,8 +2246,12 @@ accepted by the first of them in the list.
 
 **Which codes.** Each code has the levels it is ever reported at, recorded with
 its meaning in the code help (`severities`: `error`, `warning`,
-`information`). An entry accepts only the warnings of its code. Its `code` is
-`ACCEPT_CODE`, an error at the entry's `code`, when:
+`information`), and where it is reported (`origin`): `resolve` for a code that
+loading and resolving report, `build` for one that only a pack's building of
+the files reports (`PACK_NOTICE`, `SECRET_NAME_DIFFERS`; section 2.1). A
+loading code is reported by loading, which is part of resolving. An entry
+accepts only the warnings of its code. Its `code` is `ACCEPT_CODE`, an error
+at the entry's `code`, when:
 
 - it is not a code this package or the loader reports;
 - it is a code that is never a warning, so there is nothing to accept;
@@ -2252,16 +2261,20 @@ its meaning in the code help (`severities`: `error`, `warning`,
 
 A code that is a warning in one place and an error in another, such as
 `DEDUPLICATE_MODE` or `REPLACE_ME`, is allowed: its entry accepts only the
-warnings. A warning that only a pack's building of the files reports
-(`PACK_NOTICE`, `SECRET_NAME_DIFFERS`) is not among the problems of a result
-that matching sees, so its entry is unused.
+warnings. A warning whose origin is `build` is not among the problems of a
+result, so matching here never sees it. Its entry is valid, is not judged
+unused here, and is given to the tool that builds the files, in the result's
+`acceptAtBuild` (below): that tool matches the packs' warnings with the same
+rules, and judges the entry unused there (the command line's output folders
+specification, section 3).
 
 An entry with an invalid code accepts nothing. The error stops the project
 resolving, as any error does, and the result has no model.
 
 **Unused entries.** An entry that matches no warning in the run is
 `ACCEPT_UNUSED`, a warning at the entry, so that a list does not outlive the
-warnings it was written for. An entry that another entry already accepts the
+warnings it was written for. An entry whose code's origin is `build` is not
+judged here. An entry that another entry already accepts the
 same warning for still matches it and is used. `ACCEPT_UNUSED` is judged for
 the selected environment only, and only when the project resolved without
 errors, since errors can leave warnings unreported. When the project is
@@ -2280,7 +2293,14 @@ reported, with the warning itself (`diagnostic`, with its `subject`), the
 entry's `reason` and the `entry`, `{ file, line }`, where the entry is written.
 Through `${values.accept}` the entry is at the reference. `accepted` is empty
 when nothing was accepted, and when there is no Platform, or the project does
-not load: nothing is accepted then. The tools read this one result, so they
+not load: nothing is accepted then. When the list has valid entries whose
+code's origin is `build`, the result also has `acceptAtBuild`: each such entry,
+in the list's order, with its `code`, `about` and `reason`, where it is written
+(`entry`, as above), and `unused`, the `ACCEPT_UNUSED` warning to report when
+no warning of a build matches it, with its fix as above. The package also
+gives the matching itself, `acceptsWarning(entry, warning)`, true when the
+entry accepts the warning by the rules above, so that a tool matches the
+packs' warnings exactly as resolving matches its own. The tools read this one result, so they
 agree: the command line prints a summary line, `<n> accepted warnings
 (platform.yaml)`, and leaves accepted warnings out of its problem lists, out
 of the editor's marks and out of the problems that `compare` shows. A run never

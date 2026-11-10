@@ -10,7 +10,7 @@ export {
 } from "./resolve/index.js";
 
 // Accepted warnings: what the Platform's `accept` list took out of the problems.
-export { type AcceptedWarning } from "./accept/index.js";
+export { acceptsWarning, type AcceptAtBuild, type AcceptedWarning } from "./accept/index.js";
 
 // The pack contract: what a pack declares, the resolved model it receives,
 // and the helpers packs use to compare and fold environments.
@@ -114,6 +114,7 @@ export {
 export {
   codeHelp,
   loadingCodeHelp,
+  type CodeHelp,
   type DefinitionCode,
   type Diagnostic,
   type DiagnosticSubject,

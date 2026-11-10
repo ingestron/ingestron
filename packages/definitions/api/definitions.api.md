@@ -12,6 +12,22 @@ import { KindDefinition } from '@ingestron/config';
 import type { Severity } from '@ingestron/config';
 
 // @public
+export interface AcceptAtBuild {
+    about?: {
+        file?: string;
+        table?: string;
+        feature?: string;
+    };
+    code: string;
+    entry: {
+        file: string;
+        line: number;
+    };
+    reason: string;
+    unused: Diagnostic;
+}
+
+// @public
 export interface AcceptedWarning {
     diagnostic: Diagnostic;
     entry: {
@@ -20,6 +36,16 @@ export interface AcceptedWarning {
     };
     reason: string;
 }
+
+// @public
+export function acceptsWarning(entry: {
+    code: string;
+    about?: {
+        file?: string;
+        table?: string;
+        feature?: string;
+    };
+}, warning: Diagnostic): boolean;
 
 // @public
 export type Action = "ingest" | "transform" | "store" | "serve";
@@ -72,11 +98,15 @@ export interface ChosenBy {
 }
 
 // @public
-export const codeHelp: Record<DefinitionCode, {
-    meaning: string;
+export interface CodeHelp {
     fix: string;
+    meaning: string;
+    origin: "resolve" | "build";
     severities: readonly Severity[];
-}>;
+}
+
+// @public
+export const codeHelp: Record<DefinitionCode, CodeHelp>;
 
 // @public
 export interface Column {
@@ -168,6 +198,7 @@ export interface Contract {
         name: string;
         description?: string;
         reason: string;
+        notEnforced?: "NOT_APPLIED" | "CAPABILITY_OFF";
     }[];
 }
 
@@ -837,6 +868,7 @@ export interface ResolveOptions {
 
 // @public
 export interface ResolveResult {
+    acceptAtBuild?: AcceptAtBuild[];
     accepted: AcceptedWarning[];
     diagnostics: Diagnostic[];
     // (undocumented)

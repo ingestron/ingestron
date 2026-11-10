@@ -56,7 +56,7 @@ function atFilesRule(
     return notChecked(context, { rule, name }, at, false);
   const label = typeof rule.metric === "string" ? `"${rule.metric}"` : String(rule.type);
   notAppliedAtFiles(context, `The ${label} rule`, pack, at, kind ?? "table-checks");
-  return unchecked(name, rule, AT_FILES.replace(/\.$/, ""));
+  return unchecked(name, rule, AT_FILES.replace(/\.$/, ""), "NOT_APPLIED");
 }
 
 /** `NOT_APPLIED` for a check on a table that ends at the landed files, which nothing checks. */

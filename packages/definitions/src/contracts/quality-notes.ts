@@ -24,6 +24,8 @@ export interface UncheckedRule {
   name: string;
   description?: string;
   reason: string;
+  /** The warning that says an engine or the platform could check it, but does not here. */
+  notEnforced?: "NOT_APPLIED" | "CAPABILITY_OFF";
 }
 
 /** Why nothing checks a table that ends at the landed files. */
@@ -48,10 +50,20 @@ function labelOf(rule: Rule): string {
     : `A ${String(rule.type ?? "library")}`;
 }
 
-/** A rule nothing checks, with its words and the reason. */
-export function unchecked(name: string, rule: Rule, reason: string): UncheckedRule {
+/** A rule nothing checks, with its words, the reason and, if any, the warning that says so. */
+export function unchecked(
+  name: string,
+  rule: Rule,
+  reason: string,
+  notEnforced?: UncheckedRule["notEnforced"],
+): UncheckedRule {
   const description = typeof rule.description === "string" ? rule.description : undefined;
-  return { name, ...(description !== undefined && { description }), reason };
+  return {
+    name,
+    ...(description !== undefined && { description }),
+    reason,
+    ...(notEnforced !== undefined && { notEnforced }),
+  };
 }
 
 /**
@@ -84,6 +96,7 @@ export function notChecked(
     name,
     rule,
     "it counts all rows, which is checked only when the platform turns on checks",
+    "CAPABILITY_OFF",
   );
 }
 

@@ -5,7 +5,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { memoryFiles } from "@ingestron/config";
 import { describe, expect, it } from "vitest";
-import { codeHelp, loadDefinitions, loadingCodeHelp, resolveDefinitions } from "../../src/index.js";
+import {
+  acceptsWarning,
+  codeHelp,
+  loadDefinitions,
+  loadingCodeHelp,
+  resolveDefinitions,
+} from "../../src/index.js";
 import { severitiesOf } from "../../src/accept/index.js";
 import type { PackInfo } from "../../src/index.js";
 
@@ -23,6 +29,16 @@ describe("severities", () => {
     expect(severitiesOf("DEDUPLICATE_MODE")).toEqual(["error", "warning"]);
     expect(severitiesOf("NO_MATCH")).toEqual(["warning"]);
     expect(severitiesOf("ENVVAR_MISSING")).toEqual(["error", "information"]);
+  });
+
+  it("records where each code is reported: only a pack's build reports two of them", () => {
+    const fromBuild = Object.entries(codeHelp)
+      .filter(([, help]) => help.origin === "build")
+      .map(([code]) => code);
+    expect(fromBuild).toEqual(["SECRET_NAME_DIFFERS", "PACK_NOTICE"]);
+    expect(
+      Object.values(codeHelp).every((help) => ["resolve", "build"].includes(help.origin)),
+    ).toBe(true);
   });
 
   it("knows no code that does not exist, nor one that is a property of every object", () => {
@@ -129,5 +145,62 @@ describe("entry points", () => {
     } finally {
       rmSync(folder, { recursive: true, force: true });
     }
+  });
+});
+
+describe("entries for a pack's build", () => {
+  const atBuild =
+    'apiVersion: ingestron.io/v1\nkind: Platform\nid: lake\naccept:\n  - code: CAPABILITY_OFF\n    reason: Terraform applies the tags.\n  - code: PACK_NOTICE\n    about: { file: "factory/**" }\n    reason: The platform team keeps the runtime.\n';
+
+  it("are valid, not judged unused, and given to the building tool with their unused warning", () => {
+    const result = resolveDefinitions(memoryFiles({ ...project, "platform.yaml": atBuild }), {
+      packs: [pack],
+      environment: "dev",
+    });
+    expect(result.diagnostics).toEqual([]);
+    expect(result.acceptAtBuild).toEqual([
+      {
+        code: "PACK_NOTICE",
+        about: { file: "factory/**" },
+        reason: "The platform team keeps the runtime.",
+        entry: { file: "platform.yaml", line: 7 },
+        unused: expect.objectContaining({
+          code: "ACCEPT_UNUSED",
+          severity: "warning",
+          message:
+            'The accept entry for PACK_NOTICE (file "factory/**") matches no warning in this run.',
+          location: expect.objectContaining({ file: "platform.yaml", line: 7 }),
+          fixes: [expect.objectContaining({ title: "Remove the entry" })],
+        }),
+      },
+    ]);
+  });
+
+  it("are absent when the list has none", () => {
+    const result = resolveDefinitions(memoryFiles({ ...project, "platform.yaml": platform }), {
+      packs: [pack],
+      environment: "dev",
+    });
+    expect(result.acceptAtBuild).toBeUndefined();
+  });
+
+  it("match a build's warnings as resolving matches its own", () => {
+    const notice = {
+      code: "PACK_NOTICE",
+      severity: "warning" as const,
+      message: "The runtime keeps settings the files do not write.",
+      location: { file: "factory/linkedService/shir.json", line: 1, column: 1 },
+    };
+    expect(acceptsWarning({ code: "PACK_NOTICE" }, notice)).toBe(true);
+    expect(acceptsWarning({ code: "PACK_NOTICE", about: { file: "factory/**" } }, notice)).toBe(
+      true,
+    );
+    expect(acceptsWarning({ code: "PACK_NOTICE", about: { file: "views/**" } }, notice)).toBe(
+      false,
+    );
+    expect(acceptsWarning({ code: "SECRET_NAME_DIFFERS" }, notice)).toBe(false);
+    const nowhere = { code: notice.code, severity: notice.severity, message: notice.message };
+    expect(acceptsWarning({ code: "PACK_NOTICE", about: { file: "**" } }, nowhere)).toBe(false);
+    expect(acceptsWarning({ code: "PACK_NOTICE" }, { ...notice, severity: "error" })).toBe(false);
   });
 });

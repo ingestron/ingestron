@@ -1,7 +1,6 @@
 // Accepted warnings (specification, Accepted warnings): the Platform's `accept` list takes the
 // warnings it names out of the result's problems, and says which entries are invalid or unused.
 import {
-  matchesImport,
   type DefinitionDocument,
   type FileSource,
   type Fix,
@@ -11,6 +10,7 @@ import {
 import { codeHelp, loadingCodeHelp, type Diagnostic } from "../diagnostics/index.js";
 import { kinds, type AcceptDoc, type PlatformDoc } from "../documents/index.js";
 import { holdsReference, writtenValue } from "../internal/index.js";
+import { acceptsWarning, fromBuild, type AcceptAtBuild } from "./matching.js";
 
 /**
  * A warning the Platform's `accept` list accepted, with the entry that did.
@@ -73,22 +73,6 @@ function inWords(severity: Severity): string {
   return severity === "error" ? "an error" : severity;
 }
 
-/** True when the entry accepts the warning: the code and every key of `about` match. */
-function accepts(entry: AcceptDoc, warning: Diagnostic): boolean {
-  return entry.code === warning.code && aboutMatches(entry.about ?? {}, warning);
-}
-
-/** True when each key `about` gives matches the warning (a key it leaves out is not checked). */
-function aboutMatches(about: NonNullable<AcceptDoc["about"]>, warning: Diagnostic): boolean {
-  const at = warning.location?.file;
-  const { file, table, feature } = about;
-  return (
-    (file === undefined || (at !== undefined && matchesImport(file, at))) &&
-    (table === undefined || warning.subject?.table === table) &&
-    (feature === undefined || warning.subject?.feature === feature)
-  );
-}
-
 /** The entry in words, for the message of an unused one: `NOT_APPLIED (table "orders")`. */
 function describe(entry: AcceptDoc): string {
   const about = (["file", "table", "feature"] as const).flatMap((key) =>
@@ -121,7 +105,7 @@ export function acceptWarnings<Result extends Resolved>(
   files: FileSource,
   project: Project | undefined,
   result: Result,
-): Result & { accepted: AcceptedWarning[] } {
+): Result & { accepted: AcceptedWarning[]; acceptAtBuild?: AcceptAtBuild[] } {
   const platform = project?.all(kinds.platform)[0] as DefinitionDocument<PlatformDoc> | undefined;
   const list = platform?.value.accept;
   if (!platform || !Array.isArray(list) || list.length === 0) return { ...result, accepted: [] };
@@ -140,9 +124,15 @@ export function acceptWarnings<Result extends Resolved>(
   };
   const { valid, wrong } = checkEntries(accepting, list);
   const { kept, accepted } = takeOut(accepting, valid, result.diagnostics);
+  // An entry for a warning of a build is the building tool's to match and judge.
+  const atBuild = valid
+    .filter((item) => fromBuild(item.entry.code))
+    .map((item) => buildEntry(accepting, item));
   // Judged on the result as it was: an entry with an invalid code is not an error elsewhere.
   const unused = result.ok
-    ? valid.filter((item) => !item.used).map((item) => unusedEntry(accepting, item))
+    ? valid
+        .filter((item) => !item.used && !fromBuild(item.entry.code))
+        .map((item) => unusedEntry(accepting, item))
     : [];
   const { model, ...rest } = result;
   return {
@@ -150,7 +140,21 @@ export function acceptWarnings<Result extends Resolved>(
     ...(result.ok && wrong.length === 0 ? { model } : { ok: false }),
     diagnostics: [...kept, ...wrong, ...unused],
     accepted,
-  } as Result & { accepted: AcceptedWarning[] };
+    ...(atBuild.length > 0 && { acceptAtBuild: atBuild }),
+  } as Result & { accepted: AcceptedWarning[]; acceptAtBuild?: AcceptAtBuild[] };
+}
+
+/** An entry for a warning of a build, as the building tool is given it. */
+function buildEntry(accepting: Accepting, item: Valid): AcceptAtBuild {
+  const { file, line } = accepting.platform.locate(`/accept/${item.index}`);
+  const { code, about, reason } = item.entry;
+  return {
+    code,
+    ...(about !== undefined && { about }),
+    reason,
+    entry: { file, line },
+    unused: unusedEntry(accepting, item),
+  };
 }
 
 /** The entries with a code that can be accepted, and `ACCEPT_CODE` for each other. */
@@ -188,10 +192,7 @@ function takeOut(
   const kept: Diagnostic[] = [];
   const accepted: AcceptedWarning[] = [];
   for (const diagnostic of diagnostics) {
-    const matching =
-      diagnostic.severity === "warning"
-        ? valid.filter((item) => accepts(item.entry, diagnostic))
-        : [];
+    const matching = valid.filter((item) => acceptsWarning(item.entry, diagnostic));
     for (const item of matching) item.used = true;
     const first = matching[0];
     if (!first) {
