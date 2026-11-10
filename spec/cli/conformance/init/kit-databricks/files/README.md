@@ -18,11 +18,12 @@ Ingestron cannot know these. `plan` warns about each; `ingestron check` fails un
 
 | Name | File and line | What it is | Where to find it | Environments |
 | --- | --- | --- | --- | --- |
-| `landing` | `project.yaml:9`, `:15` | Where the shop's files land in dev: a volume, such as /Volumes/dev_sales/landing/shop | Catalog Explorer: the volume the files land in; its path is /Volumes/<catalog>/<schema>/<volume>. | dev, prod |
+| `landing` | `project.yaml:14`, `:20` | Where the shop's files land in dev: a volume, such as /Volumes/dev_sales/landing/shop | Catalog Explorer: the volume the files land in; its path is /Volumes/<catalog>/<schema>/<volume>. | dev, prod |
 | `to` | `platform.yaml:12` | The address told when a run fails, such as data-team@example.com | Your team decides it: a shared mailbox or mailing list that the people who look after these pipelines read. | all |
-| `host` | `project.yaml:7`, `:13` | The dev workspace's URL, such as https://adb-<workspace-id>.<n>.azuredatabricks.net | The address bar when you are signed in to the workspace; on Azure, also the workspace's URL field in the Azure portal. | dev, prod |
+| `host` | `project.yaml:12`, `:18` | The dev workspace's URL, such as https://adb-<workspace-id>.<n>.azuredatabricks.net | The address bar when you are signed in to the workspace; on Azure, also the workspace's URL field in the Azure portal. | dev, prod |
 | `service_principal_name` | `platform.yaml:18` | Application ID of the service principal the pipelines and jobs run as | Settings, then Identity and access, then Manage next to Service principals: the service principal's application ID. | all |
-| `group_name` | `platform.yaml:22`, `:25` | Group that manages the pipelines and jobs | Settings, then Identity and access, then Manage next to Groups: the group's name. | all |
+| `engineers` | `project.yaml:5` | Group that manages the pipelines and jobs, such as data-engineers | Settings, then Identity and access, then Manage next to Groups: the group's name. | all |
+| `analysts` | `project.yaml:7` | Group that may view the pipelines and jobs, such as data-analysts | Settings, then Identity and access, then Manage next to Groups: the group's name. | all |
 
 Write each in place, or set it when creating a project with `ingestron init --set <name>=<value>`.
 A value written once is used in every environment; to give one environment its own, write it in

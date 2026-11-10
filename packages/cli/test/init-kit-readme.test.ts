@@ -41,7 +41,9 @@ describe("README.md: where to find each value", () => {
       to: ["alerts", "*", "to", "*"],
       host: ["databricks", "workspace", "host"],
       service_principal_name: ["databricks", "run_as", "service_principal_name"],
-      group_name: ["databricks", "permissions", "*", "group_name"],
+      // Each group is a project.yaml value of its own, read by a permission's group_name.
+      engineers: ["databricks", "permissions", "*", "group_name"],
+      analysts: ["databricks", "permissions", "*", "group_name"],
     };
     for (const [name, path] of Object.entries(expected))
       expect(whereToFind(readme, name), name).toBe(referenceFind(path));

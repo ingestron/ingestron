@@ -83,12 +83,41 @@ describe("init --kit with an installed kit", () => {
     );
   });
 
+  it("sets each permission group of the Databricks kit on its own", () => {
+    const cwd = temp();
+    const { code, output } = ingestron(
+      cwd,
+      "init",
+      "lake",
+      "--kit",
+      "databricks/lakehouse-streaming@2026-11-10",
+      "--set",
+      "engineers=data-engineers",
+    );
+    expect(code, output).toBe(0);
+    const project = readFileSync(join(cwd, "lake/project.yaml"), "utf8");
+    expect(project).toMatch(/^ {2}engineers: data-engineers$/m);
+    expect(project).toMatch(/^ {2}analysts: REPLACE_ME$/m);
+    const platform = readFileSync(join(cwd, "lake/platform.yaml"), "utf8");
+    expect(platform).toContain("group_name: ${values.engineers}");
+    expect(platform).toContain("group_name: ${values.analysts}");
+    const readme = readFileSync(join(cwd, "lake/README.md"), "utf8");
+    expect(readme).toMatch(/^\| `analysts` \| `project\.yaml:7` \| Group that may view/m);
+    expect(readme).not.toMatch(/^\| `engineers` /m);
+  });
+
   it("refuses a folder with the kit's files", () => {
     const cwd = temp();
     mkdirSync(join(cwd, "local/flows"), { recursive: true });
     writeFileSync(join(cwd, "local/standard.yaml"), "mine\n");
     writeFileSync(join(cwd, "local/flows/orders.yaml"), "mine\n");
-    const { code, output } = ingestron(cwd, "init", "local", "--kit", "duckdb/local-medallion");
+    const { code, output } = ingestron(
+      cwd,
+      "init",
+      "local",
+      "--kit",
+      "duckdb/local-medallion@2026-11-10",
+    );
     expect(code).toBe(1);
     expect(output).toBe(
       "Nothing written: these files already exist in local:\n  flows/orders.yaml\n  standard.yaml\n",
@@ -156,7 +185,10 @@ describe("init --kit with connection options", () => {
     expect(project).toContain("      # The dev workspace's URL");
     // The kit writes landing for every environment, so the route's top-level landing is not
     // added: it would be a REPLACE_ME that nothing reads.
-    expect(project).not.toMatch(/^values:/m);
+    // The top-level values are the kit's own two groups only.
+    expect(project).toMatch(
+      /^values:\n {2}# Group that manages[^\n]*\n {2}engineers: REPLACE_ME\n {2}# Group that may view[^\n]*\n {2}analysts: REPLACE_ME\nenvironments:\n/m,
+    );
     expect(project).not.toMatch(/^ {2}landing: REPLACE_ME/m);
     expect(project.match(/landing: REPLACE_ME/g)).toHaveLength(2);
     expect(ingestron(folder, "plan").code).toBe(0);
@@ -169,7 +201,7 @@ describe("init --kit with connection options", () => {
       "init",
       "x",
       "--kit",
-      "duckdb/local-medallion",
+      "duckdb/local-medallion@2026-11-10",
       "--connector",
       "files",
       "--via",
