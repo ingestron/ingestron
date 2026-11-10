@@ -82,6 +82,23 @@ export function judgementOf(
   };
 }
 
+/**
+ * True when the keeping step's method, else its pack, says it applies the value (`used`), and
+ * the table's `does` has the duty the entry asks for, if any.
+ */
+export function appliesValue(
+  context: Context,
+  keeper: JudgingStep,
+  item: Pick<Judged, "path" | "value">,
+  does: ResolvedTable["does"],
+): boolean {
+  const pack = context.packs.find((candidate) => candidate.id === keeper.pack);
+  const use =
+    intentUseOf(keeper.method, item.path, item.value) ??
+    (pack && intentUseOf(pack, item.path, item.value));
+  return use?.use === "used" && whereOutcome(use, does) === undefined;
+}
+
 function packUse(context: Context, keeper: JudgingStep, item: Judged): IntentUse | undefined {
   const pack = context.packs.find((candidate) => candidate.id === keeper.pack);
   return pack && intentUseOf(pack, item.path, item.value);

@@ -1,0 +1,54 @@
+description: "Resolved for deploy, a connection's timezone, a column's from and to, and the standard's cleanse.timestamps.to that hold a deploy-time value are DEPLOY_VALUE, as they decide what is generated."
+environment: dev
+deployTime: true
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [zones@1]
+    layers:
+      - { name: bronze, does: [cleanse] }
+    cleanse:
+      timestamps: { to: "${envvar:WAREHOUSE_ZONE}" }
+  crm.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: crm
+    connector: files
+    connectivity: public
+    timezone: "${envvar:CRM_ZONE}"
+    settings: { path: /data/crm }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: crm
+    tables:
+      customers:
+        object: customers
+        contract: customers
+        cleanse:
+          columns:
+            signed_up: { timezone: { from: UTC, to: "${envvar:COLUMN_ZONE}" } }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: signed_up, logicalType: timestamp }
+expect:
+  diagnostics:
+    - { code: DEPLOY_VALUE, severity: error, file: crm.yaml, line: 6 }
+    - { code: DEPLOY_VALUE, severity: error, file: sales.yaml, line: 11 }
+    - { code: DEPLOY_VALUE, severity: error, file: standard.yaml, line: 8 }

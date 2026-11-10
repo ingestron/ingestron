@@ -1,0 +1,81 @@
+description: "A table is in the zone it converts to only where the step that keeps it applies conversion. Silver is kept by a store method that does not convert time zones yet, so its columns stay in Europe/London, it is NOT_APPLIED, and gold, kept by a method that applies it, converts from Europe/London."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [zones@1]
+    layers:
+      - { name: bronze, does: raw }
+      - { name: silver, does: [cleanse] }
+      - { name: gold, does: [cleanse] }
+    cleanse:
+      timestamps: { to: UTC }
+  crm.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: crm
+    connector: files
+    connectivity: public
+    timezone: Europe/London
+    settings: { path: /data/crm }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: crm
+    tables:
+      customers: { object: customers, contract: customers }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: signed_up, logicalType: timestamp }
+  a_clean.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: customers_clean
+    inputs: [customers]
+    contract: customers
+    store: { uses: zones-plain }
+  b_top.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: customers_top
+    layer: gold
+    inputs: [customers_clean]
+    contract: customers
+expect:
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: standard.yaml
+      line: 10
+      message: 'Cleansing "timezone" of timestamp columns isn''t applied on zones: Converting time zones is not done yet.'
+      subject: { table: customers_clean, feature: cleanse.timezone }
+  tables:
+    - name: customers
+      timezone: Europe/London
+      cleanse: null
+    - name: customers_clean
+      timezone: Europe/London
+      cleanse:
+        columns:
+          signed_up: { timezone: { from: Europe/London, to: UTC } }
+    - name: customers_top
+      timezone: UTC
+      cleanse:
+        columns:
+          signed_up: { timezone: { from: Europe/London, to: UTC } }

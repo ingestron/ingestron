@@ -27,7 +27,7 @@ const platformDeciding = (() => {
 
 /** The values, by document kind, that choose what is generated or name it; `*` is any key. */
 const deciding: Record<string, string[]> = {
-  Connection: ["/connector", "/connectivity"],
+  Connection: ["/connector", "/connectivity", "/timezone"],
   Flow: [
     "/source",
     "/layer",
@@ -35,6 +35,7 @@ const deciding: Record<string, string[]> = {
     "/store/uses",
     "/serve/uses",
     "/tables/*/contract",
+    "/tables/*/cleanse/columns/*/timezone/*",
     ...flowIntent(""),
     ...flowIntent("/tables/*"),
   ],
@@ -42,6 +43,7 @@ const deciding: Record<string, string[]> = {
     "/layer",
     "/contract",
     "/inputs/*",
+    "/cleanse/columns/*/timezone/*",
     "/transform/uses",
     "/store/uses",
     "/serve/uses",
@@ -52,6 +54,7 @@ const deciding: Record<string, string[]> = {
     "/layers/*",
     "/layers/*/name",
     "/naming/*",
+    "/cleanse/timestamps/to",
     "/features",
     "/load/default",
     "/load/deletes",

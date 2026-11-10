@@ -185,7 +185,7 @@ deploy-time value MUST NOT be in these values: it is `DEPLOY_VALUE`, an error
 at the value, for each one that holds a deploy-time value:
 
 - every document's `id`;
-- a Connection's `connector` and `connectivity`;
+- a Connection's `connector`, `connectivity` and `timezone`;
 - a Flow's `source`, `layer`, `ingest.uses`, `store.uses` and `serve.uses`, and
   each table's `contract`;
 - a Transform's `layer`, `contract`, each of its `inputs`, and its
@@ -198,6 +198,8 @@ at the value, for each one that holds a deploy-time value:
   `storage.features`);
 - a Flow's, a flow table's and a Transform's `history`, and a Flow's and a
   flow table's `load.mode` and `load.deletes.mode`;
+- a flow table's and a Transform's column `timezone` (`from` and `to`), and a
+  Standard's `cleanse.timestamps.to`;
 - a Platform's `naming` and `mode`, and `mode` in its `databricks` section
   (section 7);
 - a DataProduct's output ports' `contractId`.
@@ -1056,18 +1058,22 @@ cleanse:
 - A column's `timezone` is `{ to }`, `{ from, to }` or `false`. `false` takes
   the standard's rule away from that column. `from` is the zone the column's
   timestamps are in; without it, the table's input zone below.
-- A zone is `UTC` or a name from the IANA time zone database, written exactly
+- A zone is `UTC` or a name from the IANA time zone database, aliases included
+  (`Asia/Kolkata` and `Asia/Calcutta`, `GMT`, `Etc/GMT+5`), written exactly
   (case matters). A name that is not on the list the implementation ships is
   `TIMEZONE_NAME`, an error at the name: a Connection's `timezone`, the
   standard's `cleanse.timestamps.to`, and a column's `from` and `to`. A value
   that holds an unset reference is not checked. The message is `"<name>" is not
 a time zone name.` and the hint is `Did you mean "<listed name>"?` when a
   listed name differs from it only in case, else `Use a name from the IANA time
-zone database, such as Europe/London, or UTC.` The list is generated from
-  the tz database that the Node.js 22 runtime ships (`Intl.supportedValuesOf`),
-  with `UTC` and `Etc/UTC`, into `packages/definitions/src/data/zones.json`,
-  which records the database's version; every zone this specification, its
-  cases and the published standards use is on it.
+zone database, such as Europe/London, or UTC.` The list is generated, into
+  `packages/definitions/src/data/zones.json`, from the union of the tz database
+  that the Node.js 22 runtime ships (`Intl.supportedValuesOf`), the zone files
+  of the operating system's tz tree (`/usr/share/zoneinfo`) that the runtime
+  accepts as a zone, which adds the aliases the runtime's own list leaves out,
+  and `UTC` and `Etc/UTC`. The file records the versions of both databases;
+  every zone this specification, its cases and the published standards use is
+  on it.
 - `timezone` on a column whose `logicalType` is given and is not `timestamp` is
   `CLEANSE_TYPE` (section 6.1): `"timezone" works on timestamps, and
 "<column>" is <type> in contract "<id>".`, with the hint `Remove "timezone"
@@ -1083,8 +1089,15 @@ timestamp columns are in once the table is built:
   timestamp column that is not converted stays in the input zone;
 - the table's zone is the zone all its timestamp columns are in. When they are
   not all in one zone (columns converted to different zones, or only some
-  converted), the table has no `timezone`. A table with no timestamp column has
-  its input zone; a table that ends at the landed files has the Connection's.
+  converted), the table has no `timezone`. A column is in its `to` zone only
+  when the step that keeps the table applies conversion: its method, else its
+  pack, declares the intent path `cleanse.timezone` as `used` (section 11.5) and
+  the entry's `onlyWhere`, if any, is met (section 11.7). Otherwise the column
+  stays in the zone it was in (its `from`), and a later table that reads it
+  converts it. A pack that says nothing of `cleanse.timezone` does not apply it.
+  A table whose steps cannot be judged yet, because it holds an unset reference,
+  is taken to apply it. A table with no timestamp column has
+  its input zone; a table that ends at the landed files has the Connection's, as nothing converts it.
 
 **What is converted.** A column's conversion is `{ from, to }`: `from` is the
 column's own, else the input zone; `to` is the column's own, else the
@@ -1095,8 +1108,10 @@ reading a converted one does not convert it again. So:
 
 - a table whose inputs are all in `UTC` converts a column `{ to: UTC }` or by
   the standard's `cleanse.timestamps: { to: UTC }` to nothing;
-- a silver table that converts `Europe/London` to `UTC` has the zone `UTC`, and
-  a gold table that reads it with the same rule converts nothing.
+- a silver table that converts `Europe/London` to `UTC`, on a pack that applies
+  conversion, has the zone `UTC`, and a gold table that reads it with the same
+  rule converts nothing. Where silver's pack does not apply it, silver keeps
+  `Europe/London` and gold converts from it.
 
 `TIMEZONE_SOURCE`, an error: the table has no input zone (its inputs are in
 different zones) and a column is converted without `from`. It is reported once
@@ -1115,8 +1130,8 @@ one column, as `Cleansing "timezone" of timestamp columns isn't applied on
 <pack>: <reason>`. A conversion that is not made (`from` and `to` the same) is
 not judged. A table that ends at the landed files is not converted by the
 standard's rule, and the conversions it writes are `NOT_APPLIED` as section 6.1
-says. A table's `timezone` is the zone its conversions give, whether or not a
-pack applies them.
+says. A table's `timezone` is the zone its applied conversions give, as above; a
+conversion that is `NOT_APPLIED` leaves the column in the zone it was in.
 
 ## 7. Platform defaults
 
@@ -1384,7 +1399,8 @@ data-only packs [conformance/pack.yaml](conformance/pack.yaml),
 [conformance/pack-intent.yaml](conformance/pack-intent.yaml) and
 [conformance/pack-ops.yaml](conformance/pack-ops.yaml),
 [conformance/pack-databricks.yaml](conformance/pack-databricks.yaml) and
-[conformance/pack-quality.yaml](conformance/pack-quality.yaml), all
+[conformance/pack-quality.yaml](conformance/pack-quality.yaml) and
+[conformance/pack-zones.yaml](conformance/pack-zones.yaml), all
 available. A
 pack file with `buildEnvironments: true` stands for a pack that builds
 environments together: the runner gives it a `buildEnvironments` member. A

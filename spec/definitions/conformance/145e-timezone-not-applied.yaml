@@ -1,4 +1,4 @@
-description: "A conversion that the pack keeping the table does not apply is NOT_APPLIED where it is written: a column's timezone at its key, and the standard's cleanse.timestamps at its key, once for the table. A conversion that is not made is not judged. The table still has the zone its conversions give."
+description: "A conversion that the pack keeping the table does not apply is NOT_APPLIED where it is written: a column's timezone at its key, and the standard's cleanse.timestamps at its key, once for the table. A conversion that is not made is not judged. The columns stay in the zone they were in, so the table keeps its input zone."
 environment: dev
 files:
   project.yaml: |
@@ -50,7 +50,7 @@ files:
 expect:
   tables:
     - name: customers
-      timezone: null
+      timezone: Europe/London
   diagnostics:
     - code: NOT_APPLIED
       severity: warning

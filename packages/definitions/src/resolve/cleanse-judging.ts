@@ -8,7 +8,7 @@ import { placeOf, type Operation, type OwnCleanse } from "./cleanse-checks.js";
 import { reportJudgement } from "./judge.js";
 import { stepsOf } from "./judgements.js";
 import { judgeOf } from "./judging-step.js";
-import { judgementOf, type Judged } from "./quality-judging.js";
+import { appliesValue, judgementOf, type Judged } from "./quality-judging.js";
 
 /** Which operations a table's cleansing has, and where each came from. */
 export interface UsedOperations {
@@ -16,6 +16,20 @@ export interface UsedOperations {
   fromStandard: Set<"trim" | "empty" | "timezone">;
   /** The operations the table writes, by column, in the contract's order. */
   written: { column: string; operation: Operation }[];
+}
+
+/**
+ * True when the step that keeps the table applies time zone conversion (`cleanse.timezone` is
+ * `used`), so that the table's timestamps are in the zones it converts to. A table that ends at
+ * the landed files is converted by nothing. A table whose steps cannot be judged yet, because
+ * it holds an unset reference, is taken to do what it says.
+ */
+export function appliesTimezone(context: Context, table: ResolvedTable): boolean {
+  if (table.endsAtFiles) return false;
+  if (!context.deployTime && holdsUnsetEnvvar(context.project, table)) return true;
+  const keeper = judgeOf("cleanse.timezone", stepsOf(context, table));
+  const item = { path: "cleanse.timezone", value: "true" };
+  return keeper !== undefined && appliesValue(context, keeper, item, table.does);
 }
 
 /** What to judge: the table's own cleansing, its operations and whether its deduplicate. */

@@ -69,6 +69,7 @@ const packs = [
   "pack-databricks.yaml",
   "pack-rule.yaml",
   "pack-quality.yaml",
+  "pack-zones.yaml",
   "pack-dedupe.yaml",
 ].map((file) =>
   packOf(

@@ -10,6 +10,7 @@ describe("the shipped zone list", () => {
   it("records where it came from, and holds each name once, in order", () => {
     expect(zoneData.tzdb).toMatch(/^\d{4}[a-z]$/);
     expect(zoneData.node).toMatch(/^v22\./);
+    expect(zoneData.osTzdata === null || /^\d{4}[a-z]$/.test(zoneData.osTzdata)).toBe(true);
     expect(zoneData.names).toEqual([...new Set(zoneData.names)].sort());
     expect(zoneData.names.length).toBeGreaterThan(400);
   });
@@ -24,10 +25,28 @@ describe("the shipped zone list", () => {
       expect(isZone(name), name).toBe(false);
   });
 
-  it("is the list the runtime gives, when this runtime ships the same database", () => {
+  it("holds aliases of zones, which the runtime's own list leaves out", () => {
+    for (const name of ["Asia/Kolkata", "Europe/Kyiv", "America/Nuuk", "GMT", "Etc/GMT+5"])
+      expect(isZone(name), name).toBe(true);
+  });
+
+  it("holds every name the runtime lists, when it ships the same database", () => {
     if (process.versions.tz !== zoneData.tzdb) return;
-    const given = new Set([...Intl.supportedValuesOf("timeZone"), "UTC", "Etc/UTC"]);
-    expect(new Set(zoneData.names)).toEqual(given);
+    const names = new Set(zoneData.names);
+    expect(Intl.supportedValuesOf("timeZone").filter((name) => !names.has(name))).toEqual([]);
+  });
+
+  it("holds only names the runtime accepts, when it ships the same database", () => {
+    if (process.versions.tz !== zoneData.tzdb) return;
+    const refused = zoneData.names.filter((name) => {
+      try {
+        new Intl.DateTimeFormat("en", { timeZone: name });
+        return false;
+      } catch {
+        return true;
+      }
+    });
+    expect(refused).toEqual([]);
   });
 });
 

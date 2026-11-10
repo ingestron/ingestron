@@ -220,7 +220,8 @@ export interface ResolvedTable {
   /**
    * The time zone the table's timestamp columns are in once it is built: its connection's for
    * a flow table (`UTC` when the connection gives none), its inputs' when they agree, and the
-   * target after converting. Absent when the columns are not all in one zone (specification
+   * target after converting, where the step that keeps the table applies conversion (the intent
+   * path `cleanse.timezone` is `used`); otherwise the zone it was in. Absent when the columns are not all in one zone (specification
    * section 6.3).
    */
   timezone?: string;

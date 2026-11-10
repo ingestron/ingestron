@@ -13,7 +13,7 @@ import {
   type OwnCleanse,
 } from "./cleanse-checks.js";
 import { isText } from "./cleanse-fit.js";
-import { judgeCleansing, type UsedOperations } from "./cleanse-judging.js";
+import { appliesTimezone, judgeCleansing, type UsedOperations } from "./cleanse-judging.js";
 import { planConversions, type Conversion, type ConversionPlan } from "./cleanse-zones.js";
 import { checkDeduplicate } from "./deduplicate.js";
 import { listsDuty, requireDuty } from "./layer-duties.js";
@@ -39,7 +39,7 @@ export function applyCleansing(context: Context, table: ResolvedTable, own: OwnC
   const defaults = defaultsFor(context, table);
   const zones = planConversions(context, table, own, defaults.to);
   if (!duties || !columns || !dedupe.fine || !zones.fine) return;
-  setZone(table, zones, input);
+  setZone(context, table, zones, input);
   const used: UsedOperations = { fromStandard: new Set(), written: [] };
   const cleanse = resolveCleanse({ table, own, defaults, zones }, used);
   if (!cleanse) return;
@@ -48,11 +48,21 @@ export function applyCleansing(context: Context, table: ResolvedTable, own: OwnC
 }
 
 /**
- * The zone of the table's timestamps once it is built: its input zone when it ends at the landed
- * files, which nothing converts, else the zone all its timestamp columns are in, if one.
+ * The zone of the table's timestamps once it is built: the zone all its timestamp columns are in,
+ * if one. A column is in the zone it converts to only when the step that keeps the table applies
+ * conversion; otherwise it stays in the zone it was in, so a later table converts it.
  */
-function setZone(table: ResolvedTable, zones: ConversionPlan, input: string | undefined): void {
-  const zone = table.endsAtFiles ? input : zoneAfter(table.contract, zones.columns, input);
+function setZone(
+  context: Context,
+  table: ResolvedTable,
+  zones: ConversionPlan,
+  input: string | undefined,
+): void {
+  const applied = appliesTimezone(context, table);
+  const planned = new Map(
+    [...zones.columns].map(([name, { from, to }]) => [name, { to: applied ? to : from }]),
+  );
+  const zone = zoneAfter(table.contract, planned, input);
   if (zone === undefined) delete table.timezone;
   else table.timezone = zone;
 }

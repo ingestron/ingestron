@@ -1,0 +1,55 @@
+# A data-only pack for time zones (section 6.3): its default store method applies time zone
+# conversion, and a second store method does not do it yet. Its connector is files.
+id: zones
+version: 1
+defaults:
+  naming:
+    catalog: "{{ environment }}"
+    schema: "{{ layer }}"
+    table: "{{ table }}"
+    pipeline: "{{ project }}"
+    job: "{{ project }}_refresh"
+  layers: [bronze, silver, gold]
+  types:
+    {
+      string: STRING,
+      integer: BIGINT,
+      number: DOUBLE,
+      boolean: BOOLEAN,
+      date: DATE,
+      timestamp: TIMESTAMP,
+    }
+  quality: { required: warn, default: warn }
+rules:
+  ingest: { default: zones-files }
+  transform: { default: zones-sql }
+  store: { default: zones-table }
+methods:
+  zones-files:
+    action: ingest
+    description: Reads files where they are.
+    connectors: [files]
+    produces: files
+    settings: { type: object }
+  zones-sql:
+    action: transform
+    description: Runs SQL.
+    accepts: [table]
+    produces: query
+    settings: { type: object }
+  zones-table:
+    action: store
+    description: Keeps what it reads as a table, converting time zones.
+    accepts: [files, table, query]
+    produces: table
+    intent:
+      cleanse.timezone: { use: used, does: The table converts timestamps between zones. }
+    settings: { type: object }
+  zones-plain:
+    action: store
+    description: Keeps what it reads as a table, without converting time zones.
+    accepts: [files, table, query]
+    produces: table
+    intent:
+      cleanse.timezone: { use: not-yet, reason: Converting time zones is not done yet. }
+    settings: { type: object }
