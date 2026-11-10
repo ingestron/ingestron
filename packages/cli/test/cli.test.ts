@@ -190,4 +190,13 @@ describe("ingestron schemas, help and mistakes", () => {
     expect(ingestron("deploy").code).toBe(2);
     expect(ingestron("plan", "--environment", "dev").code).toBe(2);
   });
+
+  it("says in help what init and standard start from", () => {
+    const { ingestron } = workspace();
+    const help = ingestron("--help").output;
+    expect(help).toContain(
+      "  init      Create a project from a connection, a starter or a published standard.\n",
+    );
+    expect(help).toContain("  standard  Install or list published standards.\n");
+  });
 });

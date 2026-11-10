@@ -28,10 +28,10 @@ export const commands: readonly [{
     readonly summary: "Write editor schemas for VS Code's YAML extension.";
 }, {
     readonly name: "init";
-    readonly summary: "Create a project from a connection and supported ingestion route.";
+    readonly summary: "Create a project from a connection, a starter or a published standard.";
 }, {
     readonly name: "standard";
-    readonly summary: "install <kit> replaces the project's standard with a published one; list shows them.";
+    readonly summary: "Install or list published standards.";
 }];
 
 // @public

@@ -21,11 +21,11 @@ export const commands = [
     summary: "Print what to ask of whoever runs the data platform, per environment.",
   },
   { name: "schemas", summary: "Write editor schemas for VS Code's YAML extension." },
-  { name: "init", summary: "Create a project from a connection and supported ingestion route." },
   {
-    name: "standard",
-    summary: "install <kit> replaces the project's standard with a published one; list shows them.",
+    name: "init",
+    summary: "Create a project from a connection, a starter or a published standard.",
   },
+  { name: "standard", summary: "Install or list published standards." },
 ] as const;
 
 /**
