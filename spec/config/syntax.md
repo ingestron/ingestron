@@ -382,6 +382,10 @@ editor to offer and a person to choose. A fix has a `title`, such as
 
 Applying a fix changes only the text of the values and keys it edits: every
 other character of the file, comments and layout included, stays as written.
+A fix's edits are all made against the same text, and none changes another:
+text an edit adds where another edit's removed or replaced text begins goes
+before it, so moving a key into the mapping just above it keeps both edits
+whole.
 A value written into a flow collection (`{ }` or `[ ]`) is written in flow
 style; a key added to a block mapping is written in block style at that
 mapping's indentation.
