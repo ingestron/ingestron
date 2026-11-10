@@ -73,6 +73,7 @@ export type DefinitionCode =
   | "ROLE_ACCESS"
   | "MASK_TYPE"
   | "FILTER_MATCH"
+  | "FILTER_MULTIPLE"
   | "MASK_NEEDS_RUN_AS"
   | "MASK_FUNCTIONS"
   | "POLICY_LIMIT"

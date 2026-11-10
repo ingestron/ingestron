@@ -7,6 +7,7 @@ import { movedFieldPointer, movedTo, sectionsOf, withMovedFields } from "../docu
 import { isRecord } from "../internal/index.js";
 import type { JudgedTable } from "./access-judge.js";
 import { maskName } from "./access-judge.js";
+import { checkFilterCount } from "./access-filters.js";
 
 /** What the platform allows: policies on one schema and on one table, principals in one `EXCEPT`. */
 export const policyLimits = { schema: 100, table: 50, principals: 20 } as const;
@@ -69,6 +70,7 @@ function checkPack(context: Context, pack: string, kept: JudgedTable[]): void {
     );
   checkPrincipals(context, pack, section);
   checkLimits(context, pack, kept);
+  checkFilterCount(context, kept);
 }
 
 /** The pack's section; for databricks, with the fields that moved into it read as the model has them. */

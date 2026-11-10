@@ -10,6 +10,7 @@ export const accessCodeHelp: Record<
     | "ROLE_ACCESS"
     | "MASK_TYPE"
     | "FILTER_MATCH"
+    | "FILTER_MULTIPLE"
     | "MASK_NEEDS_RUN_AS"
     | "MASK_FUNCTIONS"
     | "POLICY_LIMIT"
@@ -34,6 +35,13 @@ export const accessCodeHelp: Record<
     meaning:
       "A row filter of the standard matches more than one column of a table; it is given exactly one.",
     fix: "Narrow the filter's match, such as with a tag value, or tag only one of the columns.",
+    severities: ["error"],
+    origin: "resolve",
+  },
+  FILTER_MULTIPLE: {
+    meaning:
+      "Two or more row filters apply to one table, and a table may have one: on Databricks, a query fails when more than one distinct row filter applies to a table.",
+    fix: "Combine their conditions in one filter function, or narrow their matches so each table has one.",
     severities: ["error"],
     origin: "resolve",
   },

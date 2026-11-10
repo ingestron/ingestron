@@ -1,0 +1,76 @@
+description: "Two row filters applied to one table are FILTER_MULTIPLE, an error at the second filter's declaration in the standard, once for the tables they share, naming the tables and the filters: the platform applies one row filter to a table. A table with one filter is fine (section 8.2)."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, databricks@1]
+    governance:
+      filters:
+        region_rows: { function: main.governance.region_filter, match: { tag: region } }
+        restricted_rows:
+          function: main.governance.restricted_rows
+          match: { classification: restricted }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    databricks:
+      run_as: { service_principal_name: etl-runner }
+      manage: { tags: true, filters: true }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    store: { uses: uc-table }
+    tables:
+      customers: { object: customers, contract: customers }
+      prospects: { object: prospects, contract: customers }
+      orders: { object: orders, contract: orders }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: country, logicalType: string, tags: [region] }
+          - { name: card, logicalType: string, classification: restricted }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: country, logicalType: string, tags: [region] }
+expect:
+  diagnostics:
+    - code: FILTER_MULTIPLE
+      severity: error
+      file: standard.yaml
+      line: 9
+      message: 'The filters "region_rows" and "restricted_rows" apply to tables "customers", "prospects"; a table may have one row filter.'
+      hint: "Combine their conditions in one filter function, or narrow their matches so each table has one."
+      subject: null

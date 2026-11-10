@@ -1655,6 +1655,17 @@ Platform writes it:
   `<n> principals would see real values: run_as and governance.unmasked may name 20.`,
   with the hint `Put the principals in fewer groups.` It is an error at the
   pack's `governance.unmasked`.
+- `FILTER_MULTIPLE`: two or more filters applied to one table the pack
+  keeps. A table may have one row filter: on Databricks, a query fails when
+  more than one distinct row filter applies to a table for the user. It is an
+  error at the second filter's declaration in the standard
+  (`/governance/filters/<name>`), in the standard's order, once for each set
+  of filters, naming every table that has them, in the order of the tables:
+  `The filters <filters> apply to <tables>; a table may have one row filter.`,
+  where `<filters>` names each filter in quotes, the last two joined by "and"
+  and the others by commas, and `<tables>` is `table "<name>"` or
+  `tables "<name>", "<name>"…`, with the hint
+  `Combine their conditions in one filter function, or narrow their matches so each table has one.`
 
 ## 9. Conformance
 
