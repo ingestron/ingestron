@@ -46,6 +46,17 @@ function workspace(
   return folder;
 }
 
+/**
+ * The problems, without the checks managed ingestion does not apply: with the source known,
+ * Lakeflow Connect ingests the table, and the starter's required columns are `NOT_APPLIED`
+ * there (pack-databricks, spec section 8.2).
+ */
+function besidesManaged(found: ReturnType<typeof problems>) {
+  return found.filter(
+    ({ message }) => !message.includes("Managed ingestion writes the table as the source gives it"),
+  );
+}
+
 function labels(folder: string, flow: string): string[] {
   const text = readFileSync(join(folder, flow), "utf8");
   return annotationsIn(openProject(folder, new Map()), flow, text, "dev").map(({ label }) => label);
@@ -70,7 +81,7 @@ describe.each(starters)("an unset source on the $template starter", (starter) =>
 
   it("keeps the labels the written source gives when .env sets the variable", () => {
     const folder = workspace(starter, { ".env.dev": `${name}=${starter.source}\n` });
-    const found = problems(openProject(folder, new Map()), "dev");
+    const found = besidesManaged(problems(openProject(folder, new Map()), "dev"));
     expect(found.map(({ code, severity }) => ({ code, severity }))).toEqual([deployValue]);
     const expected = labels(workspace(starter, {}, true), starter.flow);
     expect(expected.length).toBeGreaterThan(0);

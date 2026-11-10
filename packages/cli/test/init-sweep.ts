@@ -47,6 +47,24 @@ function ingestron(cwd: string, args: string[]) {
 
 const diagnosticLine = /^(\S+):(\d+):\d+ +(warning|error) +(\S+)$/gm;
 
+/**
+ * The warnings a starter shows besides those `allowed`, by their heading line. A starter
+ * that Lakeflow Connect ingests also shows `NOT_APPLIED` for its contracts' required
+ * columns: managed ingestion writes the table as the source gives it, so nothing checks
+ * them there (pack-databricks, spec section 8.2).
+ */
+function otherWarnings(output: string, allowed: string[]): string[] {
+  const lines = output.split("\n");
+  return lines.filter((line, index) => {
+    const code = / +warning +(\S+)$/.exec(line)?.[1];
+    if (code === undefined || allowed.includes(code)) return false;
+    const managed = (lines[index + 1] ?? "").includes(
+      "Managed ingestion writes the table as the source gives it",
+    );
+    return !(code === "NOT_APPLIED" && managed);
+  });
+}
+
 /** init --yes: exit 0, nothing asked, only REPLACE_ME and pack notices, README.md matching. */
 export function createsWithPlaceholders({ connector, connectivity, via }: Combination) {
   const cwd = mkdtempSync(join(tmpdir(), "init-sweep-"));
@@ -64,10 +82,8 @@ export function createsWithPlaceholders({ connector, connectivity, via }: Combin
   const { code, output } = ingestron(cwd, args);
   expect(code, output).toBe(0);
   const found = [...output.matchAll(diagnosticLine)];
-  expect(
-    found.filter((match) => !["REPLACE_ME", "PACK_NOTICE"].includes(match[4]!)),
-    output,
-  ).toEqual([]);
+  expect(otherWarnings(output, ["REPLACE_ME", "PACK_NOTICE"]), output).toEqual([]);
+  expect(output).not.toMatch(/ +error +\S+$/m);
   const places = new Set(
     found.filter((match) => match[4] === "REPLACE_ME").map((match) => `${match[1]}:${match[2]}`),
   );
@@ -172,7 +188,7 @@ export function fillsEveryName(
   const { code, output } = ingestron(cwd, [...args, ...given]);
   expect(code, output).toBe(0);
   expect(output, given.join(" ")).not.toContain("REPLACE_ME warning");
-  expect(output).not.toMatch(/warning +(?!PACK_NOTICE)\S+$/m);
+  expect(otherWarnings(output, ["PACK_NOTICE"]), output).toEqual([]);
   expect(output).toContain("Nothing to replace: the project runs as written.");
   // Filled, it applies, and check passes: no REPLACE_ME left, and the output up to date.
   const where = ["--definitions", "p", "--out", "p/build"];
