@@ -4,6 +4,7 @@ import { environmentCodeHelp } from "./environment-codes.js";
 import { intentCodeHelp } from "./intent-codes.js";
 import { layerCodeHelp } from "./layer-codes.js";
 import { platformCodeHelp } from "./platform-codes.js";
+import { transformCodeHelp } from "./transform-codes.js";
 
 /**
  * Help for every code this package reports.
@@ -14,6 +15,7 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
   ...layerCodeHelp,
   ...intentCodeHelp,
   ...platformCodeHelp,
+  ...transformCodeHelp,
   NO_STANDARD: {
     meaning: "The project has no Standard document.",
     fix: "Add a Standard, or import your organisation's standard in project.yaml.",
@@ -72,11 +74,6 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
     meaning:
       "In an environment that runs on a pack, a table whose ingest lands no files is left out, with the transforms that read it.",
     fix: "Nothing, if the table is not needed there; otherwise land its files with a method that does.",
-  },
-  TRANSFORM_COLUMNS: {
-    meaning:
-      "A transform's query returns a column its contract does not name, or does not return one the contract names. A warning; it is checked only when the query's columns can be read from its outermost SELECT.",
-    fix: "Add the column to the contract, or change the query to return the contract's columns.",
   },
   PRODUCT_CONTRACT_UNUSED: {
     meaning: "A data product's output port names a contract that no flow table or transform uses.",

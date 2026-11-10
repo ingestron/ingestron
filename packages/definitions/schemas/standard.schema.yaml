@@ -523,6 +523,26 @@ $defs:
           description: "Whether data that does not fit the contract is kept in a rescued column.",
         }
       retention: { $ref: "#/$defs/retention", description: "Retention for tables in this layer." }
+      does:
+        description: >-
+          What this layer does with its rows: `raw` keeps every row as it arrived and only counts
+          failed checks, or a list of the duties it does. A layer that gives none behaves as it
+          always has.
+        examples:
+          - raw
+          - [cleanse, deduplicate, check]
+        oneOf:
+          - { const: raw }
+          - type: array
+            minItems: 1
+            uniqueItems: true
+            items:
+              enum: [cleanse, deduplicate, check, quarantine]
+              enumDescriptions:
+                - Apply the standard's cleansing rules to the layer's tables.
+                - Keep one row per key.
+                - Check rows; failed rows are dropped or stop the update as the actions say.
+                - Keep rows that fail a dropping check in a table of their own.
       quality:
         type: object
         additionalProperties: false

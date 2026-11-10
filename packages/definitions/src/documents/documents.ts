@@ -118,7 +118,8 @@ export interface TransformDoc extends TableIntentDoc {
   id: string;
   layer?: string;
   inputs: string[];
-  code: string;
+  /** Absent for a transform with one input: it then reads that table as it is. */
+  code?: string;
   contract: string;
   expectations?: ExpectationDoc[];
   transform?: ActionDoc;

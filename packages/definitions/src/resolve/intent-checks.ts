@@ -5,9 +5,13 @@ import type { ResolvedTable } from "../pack/index.js";
 import { checkAuditNames } from "./audit-names.js";
 import type { IntentPlaces } from "./complete.js";
 import { judgeIntent } from "./judge.js";
+import { checkActionDuties } from "./layer-duties.js";
 import { judgeQuality, type OwnExpectations } from "./quality-judging.js";
 
-/** Checks the table's audit column names, then judges its intent, then its checks. */
+/**
+ * Checks the table's audit column names and the duties its own actions ask of its layer,
+ * then judges its intent, then its checks.
+ */
 export function checkTableIntent(
   context: Context,
   table: ResolvedTable,
@@ -15,6 +19,7 @@ export function checkTableIntent(
   own: OwnExpectations,
 ): void {
   checkAuditNames(context, table, places);
+  checkActionDuties(context, table, own);
   judgeIntent(context, table, places);
   judgeQuality(context, table, own);
 }

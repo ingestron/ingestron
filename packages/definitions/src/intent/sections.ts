@@ -1,5 +1,6 @@
 // The intent sections of a standard as written (specification section 11.1):
 // the shapes of its `audit`, `operations` and object layers.
+import type { LayerDuty } from "./coverage.js";
 import type { AuditValue, DeleteMode, History, Intent, LoadMode } from "./vocabulary.js";
 
 /** Audit columns as written: a value, or a value with the column's name. */
@@ -23,6 +24,8 @@ export interface LayerDoc {
   audit?: AuditDoc;
   rescued?: boolean;
   retention?: Intent["retention"];
+  /** What the layer does with its rows: `raw`, or the duties it lists (specification section 5). */
+  does?: "raw" | LayerDuty[];
   quality?: { required?: "warn" | "drop" | "fail"; default?: "warn" | "drop" | "fail" };
 }
 

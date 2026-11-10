@@ -3,7 +3,7 @@ title: Transform
 description: Builds one table from tables that flows or other transforms produce.
 type: object
 additionalProperties: false
-required: [apiVersion, kind, id, inputs, code, contract]
+required: [apiVersion, kind, id, inputs, contract]
 properties:
   apiVersion: { const: ingestron.io/v1, description: Always ingestron.io/v1. }
   kind: { const: Transform, description: The document kind. }
@@ -36,7 +36,8 @@ properties:
     description: >-
       The code, usually `${file:name.sql}` or `${file:name.py}`. In SQL, write an input as `{{
       tables.orders }}`; it becomes the input's full name. The method (`transform.uses`) says which
-      language it is.
+      language it is. Leave it out with one input to read that table as it is, which keeps the
+      contract's columns.
     examples:
       - ${file:daily_sales.sql}
   contract:

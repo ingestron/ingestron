@@ -693,6 +693,40 @@ the flow's `ingest.uses`.
 - A transform's inputs MUST be tables of the project (`UNKNOWN_INPUT`) and
   MUST NOT depend on the transform itself (`INPUT_CYCLE`). Tables are
   listed with every input before its readers, otherwise in path order.
+- A transform with exactly one input MAY leave out `code`. Its code is then
+  `SELECT * FROM {{ tables.<input> }}`, and everything else is as if it had
+  been written, so a pack keeps the contract's columns. A transform without
+  `code` and with any other number of inputs is `TRANSFORM_CODE`, an error at
+  the transform's `inputs`. The message is
+  `"<id>" has no code, which a transform may leave out only with one input; it has <n>.`
+  and the hint is `Write the code, or give the transform one input.`
+
+**Layer duties.** A layer written as an object MAY give `does` (section
+11.1): `raw`, or a list of `cleanse`, `deduplicate`, `check` and
+`quarantine`. A table's `does` is its layer's, `"raw"` or the list as
+written. A table whose layer gives none has no `does`, and resolves exactly
+as it did before layers could say what they do; so do the tables of a
+standard that gives none.
+
+- **Actions.** When a table has `does` and it does not list `check` (`raw`
+  always does not), every action of its checks is `warn`: a required
+  column's, the standard's `quality.default` and `quality.required`, a flow
+  table's or transform's own, and a table check's. The table keeps every
+  row, and its checks count. A default is never an error here; it only
+  becomes `warn`.
+- **`LAYER_RESPONSIBILITY`.** A setting that asks for a duty the table's
+  layer does not do is an error at the setting, whenever the table has
+  `does` and it does not list the duty: `drop` or `fail` written as the
+  action of a flow table's or transform's own expectation needs `check`;
+  cleansing needs `cleanse`, `deduplicate` needs `deduplicate` and
+  `quarantine` needs `quarantine`. The message names the layer, the duty
+  and the setting:
+  `The layer "<layer>" does not list <duty> in its does, so <what> cannot be set here.`
+  Here `<what>` says what was written, such as `a "drop" action`. The hint names
+  the layers whose `does` lists the duty, in the standard's order:
+  ``Layers that do <duty>: <names>. Or add `<duty>` to this layer's `does`.``
+  When no layer does, it is ``Add `<duty>` to the layer's `does`.`` A layer with no
+  `does` asks nothing of its tables.
 
 **Transform columns.** When a transform's code is SQL whose outermost
 `SELECT` names every column it returns (each an identifier, `table.column`, or
@@ -1259,7 +1293,11 @@ specification that reads `layers` (a table's default layer, `UNKNOWN_LAYER`,
 the `layer` naming variable) reads the names. An object may also give, as the
 defaults for the tables in the layer, `history`, `audit`, `rescued`,
 `retention` and `quality` (its `required` and `default`, as in the standard's
-`quality`). An object without a `name` is a load error at the item.
+`quality`), and `does`, what the layer does with its rows (section 5):
+`raw`, which keeps every row as it arrived, or a list of the duties
+`cleanse`, `deduplicate`, `check` and `quarantine`, each at most once. A
+`does` that is neither, or an empty list, is a load error at the value. An
+object without a `name` is a load error at the item.
 
 **Standard.** Beside `layers`, the standard may give:
 

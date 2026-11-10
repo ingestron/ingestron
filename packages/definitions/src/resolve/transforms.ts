@@ -1,16 +1,17 @@
 // Tables built by transforms, in dependency order (specification section 5).
 import type { DefinitionDocument } from "@ingestron/config";
 import { NO_STORE, type Facts } from "../choose/index.js";
-import { codeWithValues } from "../context/index.js";
 import { checkTransformColumns } from "./transform-columns.js";
 import { aboutOne, type Context } from "../context/index.js";
-import { contractFor, expectationsFor } from "../contracts/index.js";
+import { contractFor } from "../contracts/index.js";
 import { kinds, type TransformDoc } from "../documents/index.js";
 import { flowTableNames } from "./flows.js";
 import type { ResolvedTable } from "../pack/index.js";
 import { transformFacts } from "./rule-facts.js";
 import { tableIntent } from "./complete.js";
 import { checkTableIntent } from "./intent-checks.js";
+import { checksIn } from "./layer-duties.js";
+import { codeOf } from "./transform-code.js";
 import { serveStep } from "./serve.js";
 import { resolveStep, stepOf } from "./steps.js";
 import { fullNameText, renderTableName, type TableNamer } from "../tables/index.js";
@@ -114,7 +115,7 @@ function transformTable(
     pointer: "/contract",
   });
   const fullName = renderTableName(context, namer, { layer, table: value.id });
-  const code = codeWithValues(context, doc, value.code);
+  const code = codeOf(context, doc);
   if (!steps || !contract || !fullName || code === undefined) return undefined;
   if (!readsTables(context, doc, resolved)) return undefined;
   checkTransformColumns(context, doc, contract, code);
@@ -127,7 +128,7 @@ function transformTable(
     fullName,
     origin: { kind: "Transform", id: value.id, file: doc.file },
     contract,
-    expectations: expectationsFor(context, contract, value.expectations),
+    ...checksIn(context, layer, contract, value.expectations),
     ...intent,
     transform: { ...stepOf(steps.transform), code, inputs },
     store: stepOf(steps.store),
