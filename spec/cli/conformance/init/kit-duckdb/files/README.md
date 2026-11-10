@@ -1,6 +1,6 @@
 # local
 
-Local medallion on DuckDB. Bronze tables loaded in full from CSV files and a silver table that keeps the latest row per key, all in one DuckDB file on a laptop.
+Local medallion on DuckDB. Bronze tables loaded in full from CSV files, and a silver table cleansed, checked and kept to the latest row per key, all in one DuckDB file on a laptop.
 `ingestron init` wrote this file on 2026-11-10; it is yours, and Ingestron never rewrites it.
 The standard comes from duckdb/local-medallion@2026-11-10; STANDARD.md explains its choices.
 The table `orders` and the contracts `contracts/customer_totals.yaml`, `contracts/orders.yaml` are examples: rename the tables and change the contracts' columns to your source's.

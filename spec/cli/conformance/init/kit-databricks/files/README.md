@@ -1,6 +1,6 @@
 # sales
 
-Streaming lakehouse on Databricks. Streaming tables that read each new file once, silver kept to the latest row per key with checks, and gold materialised views, retried and alerted on failure.
+Streaming lakehouse on Databricks. Streaming tables that read each new file once, silver cleansed, checked and kept to the latest row per key, and gold materialised views, retried and alerted on failure.
 `ingestron init` wrote this file on 2026-11-10; it is yours, and Ingestron never rewrites it.
 The standard comes from databricks/lakehouse-streaming@2026-11-10; STANDARD.md explains its choices.
 The tables `customers`, `orders` and the contracts `contracts/customers.yaml`, `contracts/daily_sales.yaml`, `contracts/orders.yaml` are examples: rename the tables and change the contracts' columns to your source's.
