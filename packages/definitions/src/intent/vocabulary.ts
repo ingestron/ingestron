@@ -61,7 +61,9 @@ export interface Intent {
 }
 
 /**
- * Every intent path and its values, for coverage maps; `*` where any text is a value.
+ * Every intent path and its values, for coverage maps; `*` where any text is a value. The
+ * quality and cleansing paths, from `quality.rules` on, are judged per table check and
+ * column operation (specification section 11.7).
  * @public
  */
 export const intentPaths: Record<string, readonly string[]> = {
@@ -101,6 +103,17 @@ export const intentPaths: Record<string, readonly string[]> = {
   "operations.alerts": ["failure", "slow"],
   "operations.concurrency": ["*"],
   "quality.results": ["true"],
+  "quality.rules": ["notNull", "in", "notIn", "pattern", "length", "range", "multipleOf", "items"],
+  "quality.actions": ["warn", "drop", "fail"],
+  "quality.table-checks": ["true"],
+  "quality.quarantine": ["true"],
+  "cleanse.trim": ["true"],
+  "cleanse.empty": ["true"],
+  "cleanse.map": ["true"],
+  "cleanse.case": ["true"],
+  "cleanse.default": ["true"],
+  "cleanse.timezone": ["true"],
+  deduplicate: ["true"],
 };
 
 /**

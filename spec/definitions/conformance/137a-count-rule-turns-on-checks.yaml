@@ -49,10 +49,11 @@ expect:
       file: platform.yaml
       line: 4
       fixes: [Move to databricks.manage]
-    - code: QUALITY_RULE_NOT_CHECKED
+    - code: CAPABILITY_OFF
       severity: warning
       file: orders.odcs.yaml
       line: 10
+      subject: { table: orders, feature: checks }
       hint: Turn on databricks.manage.checks in platform.yaml to run it after each refresh.
       fixes: [Turn on manage.checks]
   fixed:

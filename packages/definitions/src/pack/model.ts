@@ -2,7 +2,7 @@
 // every name built and every setting merged. Packs only read it.
 
 import type { GovernanceDoc } from "../documents/index.js";
-import type { FeatureStatus, Intent, ResolvedOperations } from "../intent/index.js";
+import type { FeatureStatus, Intent, LayerDuty, ResolvedOperations } from "../intent/index.js";
 import type { StepOutput } from "./pack.js";
 import type { TableCheck } from "./table-checks.js";
 
@@ -143,8 +143,9 @@ export interface Expectation {
   /** The check as Spark SQL text. */
   check: string;
   /**
-   * The same check as data. Set for every check made from a contract; absent for
-   * one written in a flow or a transform.
+   * The same check as data, for a check made from a contract: a required column, a quality
+   * rule or a `logicalTypeOptions` option. Absent for one written in a flow or a transform,
+   * and for an option whose value is not of the type ODCS gives it; a pack then uses `check`.
    */
   rule?: RowRule;
   action: "warn" | "drop" | "fail";
@@ -208,6 +209,12 @@ export interface ResolvedTable {
   endsAtFiles?: ChosenBy;
   /** Makes the table's data available elsewhere, after its last step. Absent unless chosen. */
   serve?: Step;
+  /**
+   * What the table's layer does (its `does`): `raw`, or the duties it lists. Absent when the
+   * layer gives none; a pack's entry with `onlyWhere` is then not applied (specification
+   * section 11.7).
+   */
+  does?: "raw" | LayerDuty[];
   /**
    * A flow table's `source` when it holds an unset `${envvar:…}`, which only an editor's
    * resolution allows (specification section 1). The connection is then a stand-in with no

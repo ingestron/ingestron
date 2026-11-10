@@ -75,6 +75,7 @@ export {
   type IntentCoverage,
   type IntentFragment,
   type IntentUse,
+  type LayerDuty,
   type LoadMode,
   type ResolvedOperations,
   type SettingAlias,
@@ -109,6 +110,8 @@ export {
   codeHelp,
   loadingCodeHelp,
   type DefinitionCode,
+  type Diagnostic,
+  type DiagnosticSubject,
   type LoadingStage,
 } from "./diagnostics/index.js";
 

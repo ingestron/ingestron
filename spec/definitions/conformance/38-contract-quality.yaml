@@ -1,4 +1,4 @@
-description: Contract quality rules that hold for every row become expectations; rules that compare counts over all rows are warnings.
+description: Contract quality rules that hold for every row become expectations; rules that compare counts over all rows are CAPABILITY_OFF while checks are off.
 environment: dev
 files:
   project.yaml: |
@@ -46,5 +46,5 @@ files:
               - { type: text, description: Units as the scale reports them. }
 expect:
   diagnostics:
-    - { code: QUALITY_RULE_NOT_CHECKED, severity: warning, file: orders.odcs.yaml, line: 10 }
-    - { code: QUALITY_RULE_NOT_CHECKED, severity: warning, file: orders.odcs.yaml, line: 18 }
+    - { code: CAPABILITY_OFF, severity: warning, file: orders.odcs.yaml, line: 10 }
+    - { code: CAPABILITY_OFF, severity: warning, file: orders.odcs.yaml, line: 18 }

@@ -1,5 +1,21 @@
 // How a conformance case's expected table is compared with a resolved one.
 import { expect } from "vitest";
+import type { ResolvedModel } from "../src/index.js";
+
+/** Tables with full names as text, as the cases write them. */
+function comparableTables(model: ResolvedModel) {
+  return model.tables.map((table) => ({
+    ...table,
+    fullName: `${table.fullName.catalog}.${table.fullName.schema}.${table.fullName.table}`,
+  }));
+}
+
+/** The model's tables, in order, each holding what the case expects of it. */
+export function checkTables(model: ResolvedModel, expected: Record<string, unknown>[]): void {
+  const tables = comparableTables(model);
+  expect(tables).toHaveLength(expected.length);
+  expected.forEach((wanted, index) => matchTable(tables[index], wanted));
+}
 
 /**
  * The table holds every value the case expects, and nothing where the case writes
@@ -42,4 +58,9 @@ export function checkOperations(
 ): void {
   if (wanted.operations) expect(model.operations).toEqual(wanted.operations);
   if (wanted.qualityResults !== undefined) expect(model.qualityResults).toBe(wanted.qualityResults);
+}
+
+/** A diagnostic's subject as cases write it: `null` for no subject, and for a key it lacks. */
+export function comparableSubject(subject: { table?: string; feature?: string } | undefined) {
+  return subject ? { table: subject.table ?? null, feature: subject.feature ?? null } : null;
 }

@@ -23,10 +23,12 @@ export interface RuleCheck {
   rule?: RowRule;
 }
 
-/** A contract object's rules: checks of each row, and checks over all rows. */
+/** A contract object's rules: checks of each row, and checks over all rows, with their places. */
 export interface ObjectChecks {
-  rows: RuleCheck[];
+  rows: (RuleCheck & { at: Source })[];
   table: TableCheck[];
+  /** Where each of `table` was written, in the same order. */
+  tableAt: Source[];
   /** Rules nothing checks, and why; text rules among them. */
   unchecked: UncheckedRule[];
 }
@@ -34,7 +36,7 @@ export interface ObjectChecks {
 /** The checks of one contract object's rules; warns at each rule it does not check. */
 export function ruleChecks(context: Context, entry: Entry, at: Source): ObjectChecks {
   const names = new Set<string>();
-  const found: ObjectChecks = { rows: [], table: [], unchecked: [] };
+  const found: ObjectChecks = { rows: [], table: [], tableAt: [], unchecked: [] };
   const action = tableAction(context);
   rulesOf(entry.quality).forEach((rule, index) => {
     const name = unique(names, nameOf(entry.name, rule));
@@ -42,13 +44,18 @@ export function ruleChecks(context: Context, entry: Entry, at: Source): ObjectCh
     overTable(context, found, tableCheckOf(rule, name, undefined, action), { rule, name }, where);
   });
   (entry.properties ?? []).forEach((property, column) => {
-    for (const check of optionChecks(property.name, property.logicalTypeOptions))
-      found.rows.push({ ...check, name: unique(names, check.name) });
+    const own = `${at.pointer}/properties/${column}`;
+    for (const { option, ...check } of optionChecks(property.name, property.logicalTypeOptions))
+      found.rows.push({
+        ...check,
+        name: unique(names, check.name),
+        at: { ...at, pointer: `${own}/logicalTypeOptions/${option}` },
+      });
     rulesOf(property.quality).forEach((rule, index) => {
       const name = unique(names, nameOf(property.name, rule));
-      const where = { ...at, pointer: `${at.pointer}/properties/${column}/quality/${index}` };
+      const where = { ...at, pointer: `${own}/quality/${index}` };
       const check = rowCheck(property.name, rule);
-      if (check) found.rows.push({ name, ...check });
+      if (check) found.rows.push({ name, ...check, at: where });
       else
         overTable(
           context,
@@ -58,10 +65,12 @@ export function ruleChecks(context: Context, entry: Entry, at: Source): ObjectCh
           where,
         );
     });
-    if (property.unique === true && isOn(context, "checks"))
+    if (property.unique === true && isOn(context, "checks")) {
       found.table.push(
         uniqueCheck(unique(names, `${property.name}_unique`), property.name, action),
       );
+      found.tableAt.push({ ...at, pointer: `${own}/unique` });
+    }
   });
   return found;
 }
@@ -74,8 +83,10 @@ function overTable(
   named: { rule: Rule; name: string },
   at: Source,
 ): void {
-  if (check && isOn(context, "checks")) found.table.push(check);
-  else found.unchecked.push(notChecked(context, named, at, check !== undefined));
+  if (check && isOn(context, "checks")) {
+    found.table.push(check);
+    found.tableAt.push(at);
+  } else found.unchecked.push(notChecked(context, named, at, check !== undefined));
 }
 
 function uniqueCheck(name: string, column: string, action: TableCheck["action"]): TableCheck {
@@ -103,7 +114,7 @@ function allowsNone(rule: Rule): boolean {
 }
 
 /** The check of one row a column rule becomes, or undefined when it has none. */
-function rowCheck(column: string, rule: Rule): Omit<RuleCheck, "name"> | undefined {
+export function rowCheck(column: string, rule: Rule): Omit<RuleCheck, "name"> | undefined {
   if ((rule.type ?? "library") !== "library" || !allowsNone(rule)) return undefined;
   const args = isRecord(rule.arguments) ? rule.arguments : {};
   return metrics[String(rule.metric)]?.(column, args);
@@ -129,14 +140,14 @@ const metrics: Record<string, Metric> = {
     if (values.length < listed.length) {
       const check = [`${name} IS NOT NULL`, notIn].filter(Boolean).join(" AND ");
       const rule: RowRule = notIn
-        ? { kind: "notIn", column, values, allowNull: false }
+        ? { kind: "notIn", column, values: values.map(asWritten), allowNull: false }
         : { kind: "notNull", column };
       return { check, rule };
     }
     return notIn
       ? {
           check: `${name} IS NULL OR ${notIn}`,
-          rule: { kind: "notIn", column, values, allowNull: true },
+          rule: { kind: "notIn", column, values: values.map(asWritten), allowNull: true },
         }
       : undefined;
   },
@@ -145,7 +156,7 @@ const metrics: Record<string, Metric> = {
     if (Array.isArray(validValues))
       return {
         check: `${name} IS NULL OR ${name} IN (${validValues.map(literal).join(", ")})`,
-        rule: { kind: "in", column, values: validValues, allowNull: true },
+        rule: { kind: "in", column, values: validValues.map(asWritten), allowNull: true },
       };
     return typeof pattern === "string"
       ? {
@@ -155,3 +166,11 @@ const metrics: Record<string, Metric> = {
       : undefined;
   },
 };
+
+/**
+ * A listed value as the check text compares it (`literal`): a number as it is, anything
+ * else, null and booleans among them, as its text. So the rule and the text never differ.
+ */
+function asWritten(value: unknown): unknown {
+  return typeof value === "number" ? value : String(value);
+}

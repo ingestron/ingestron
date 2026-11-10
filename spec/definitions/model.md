@@ -222,6 +222,38 @@ says. As for any unset reference, text is matched as written: text kept with
 `$${envvar:NAME}` for a `NAME` that is also a deploy-time value reads as that
 value.
 
+### 1.2 What a warning is about
+
+A warning that resolving reports MAY carry a `subject`: `{ table, feature }`,
+each optional, saying what it is about, so that a warning can be told apart
+from another with the same code.
+
+- `table` is the name of the table the warning is about. Every warning
+  reported while one table is resolved (from its flow table or transform,
+  its contract and its intent) has it, as does `RUNS_ON_SKIPPED` for a
+  transform left out with its input, and `NOT_APPLIED` for a contract field
+  (section 6).
+- `feature` is set on `NOT_APPLIED` and `CAPABILITY_OFF` only. For
+  `CAPABILITY_OFF` it is the capability's id (`tags`, `schemas`, `comments`,
+  `checks`). For `NOT_APPLIED` it is one of:
+  - an intent value, as coverage keys it (section 11.5): `<path>=<value>`,
+    such as `history=full` or `audit=run_id`, or the path alone for a path
+    whose value is any text, such as `load.cursor`, or for a setting that
+    decides a whole path (section 11.4);
+  - a rule kind (`notNull`, `in`, `notIn`, `pattern`, `length`, `range`,
+    `multipleOf`, `items`), an action (`warn`, `drop`, `fail`),
+    `table-checks`, or `expectations` for a check a flow table writes itself
+    (section 11.7);
+  - a contract field path, such as `schema.*.properties.*.encryptedName`
+    (section 6).
+
+Errors, and warnings from loading (the configuration specification), carry no
+subject. Two warnings that differ only in their `table`, such as one at a
+flow's setting found for each of its tables, are one warning, kept once and
+without `table`, since it is about more than one table. So a warning at a
+place several tables share, such as the standard's `quality.default`, has a
+`table` only when one table reaches it.
+
 ## 2. Packs
 
 A pack provides, as data: `defaults` (naming patterns, layers, types,
@@ -712,17 +744,37 @@ this way, is not compared.
   `rowCount`) or an `sql` rule with a comparison: it compares a count over
   all rows after each refresh. A column's `unique: true` is the table check
   `duplicateValues` must be 0. Table checks run only when the platform turns
-  on `manage.checks` (section 7.1); otherwise each is
-  `QUALITY_RULE_NOT_CHECKED`, a warning at the rule with a fix that turns
-  checks on. A `custom` rule is `QUALITY_RULE_NOT_CHECKED` always: Ingestron
-  does not run other engines. A table check fails with the quality `default`
+  on `manage.checks` (section 7.1); otherwise each is `CAPABILITY_OFF`, a
+  warning at the rule (feature `checks`) with a fix that turns checks on:
+  `<rule> rule compares a count over all rows, which is checked after each
+refresh only when manage.checks is on.`, where `<rule>` is `"<metric>"` or
+  `A <type>`. A `custom` rule is `QUALITY_RULE_NOT_CHECKED` always: Ingestron
+  does not run other engines. So is any other rule that is neither a check
+  of each row nor a table check, such as one with no comparison: it cannot
+  be checked as written. A table check fails with the quality `default`
   action, except that `drop` warns, since no row can be dropped after the
-  refresh.
-- On a table that ends at the landed files, nothing checks rows: each of its
-  contract's quality rules except `text`, and each of the flow table's
-  `expectations`, is `QUALITY_RULE_NOT_CHECKED`, a warning at the rule or
-  expectation, and no other quality problem is reported for it. Required
-  columns are not reported.
+  refresh. Whether the pack that keeps the table applies each rule kind,
+  action and table check is judged as section 11.7 says.
+- On a table that ends at the landed files, nothing checks rows. Each of its
+  contract's quality rules that is a check of each row or a table check, and
+  each of the flow table's `expectations`, is `NOT_APPLIED`, a warning at the
+  rule or expectation, on the pack of the table's ingest step, whatever any
+  pack says, with the hint `Add a store step to have it checked.` The
+  messages are, for a rule (`<type>` in place of `"<metric>"` for a rule with
+  no `metric`) and for an expectation:
+
+  ```text
+  The "<metric>" rule isn't applied on <pack>: the table ends at the landed files, and nothing checks them.
+  Expectation "<name>" isn't applied on <pack>: the table ends at the landed files, and nothing checks them.
+  ```
+
+  Its feature (section 1.2) is the rule's kind for a check of each row,
+  `table-checks` for a table check and `expectations` for the flow table's
+  own. A rule that cannot be checked as written is `QUALITY_RULE_NOT_CHECKED`
+  as above, and a `text` rule is not reported. No other quality problem is
+  reported for the table, and required columns and `logicalTypeOptions` are
+  not reported.
+
 - Each expectation made from a contract (a required column, a row rule or a
   `logicalTypeOptions` option) also carries `rule`, the same check as data a
   pack can write in its own SQL; `check` keeps the Spark SQL text above,
@@ -742,7 +794,12 @@ this way, is not compared.
 
   Each option is its own expectation, so a `length`, `range` or `items` rule
   holds one limit and leaves the other fields out. An option whose value is
-  not of the type ODCS gives it makes an expectation with no `rule`.
+  not of the type ODCS gives it (such as `minLength: "2"`, which the ODCS
+  schema refuses when the contract loads) makes an expectation with no
+  `rule`, and a pack uses its `check`. The `values` of
+  `in` and `notIn` are compared as the `check` text compares them: a number
+  as it is, and any other value, `null` and booleans among them, as its text
+  (`validValues: [true, null]` gives `values: ["true", "null"]`).
   A row passes a rule only when the rule is true for it: a null column value
   fails `notNull`, passes `in` and `notIn` when `allowNull` is true, fails
   them when it is false, and passes every other kind. The `check` text
@@ -773,9 +830,21 @@ that of the nearest path above it that is not `used`, or is `used` with
 `whole: true` (the fields under it are read as part of it). Every ODCS field MUST
 be covered for every pack.
 
-A contract that a table uses and that writes a field that none of the
-standard's packs declares `used`, and at least one declares `not-yet`, is
-`CONTRACT_FIELD_UNUSED`, a warning at that field, with each pack's reason.
+A contract field is judged for each table that uses the contract, against
+the pack that keeps the table: the pack of its store step, else of its
+ingest step when that step produces the table or the table ends at the
+landed files. Only the contract's own fields and those of the schema entry
+the table uses are judged for it. When that pack declares the field's path
+`not-yet` (its own entry, not one above it), the field is `NOT_APPLIED`, a
+warning at the field:
+`<field> of "<name>" in contract "<id>" isn't applied on <pack>: <reason>`,
+where `<field>` is the field's key and `<name>` the `name` of the mapping that
+holds it (` of "<name>"` is left out when it has none), with the subject
+(section 1.2) `{ table, feature: <field path> }`. A field that is `used`,
+`elsewhere` or `documentation` on that pack, or that it does not declare,
+reports nothing, whatever the standard's other packs say. The fields under a
+field reported this way, or under one reported `CAPABILITY_OFF` (section
+7.1), are not judged. `CONTRACT_FIELD_UNUSED` is no longer reported.
 
 ## 7. Platform defaults
 
@@ -880,7 +949,9 @@ When a contract that a table uses writes such a field and the capability is
 off, that is `CAPABILITY_OFF`, a warning at the field naming the capability,
 what it needs, and a fix that sets `manage.<capability>: true` in the
 platform. Grants in the platform with `manage.schemas` off are
-`CAPABILITY_OFF` at `grants`, with the same fix.
+`CAPABILITY_OFF` at `grants`, with the same fix. A contract rule that counts
+over all rows with `manage.checks` off is `CAPABILITY_OFF` at the rule
+(section 6).
 
 `manage` and `grants` are read as the model's `platform` has them (section 7):
 written in the `databricks` section, they count exactly as at the top, and
@@ -1025,7 +1096,8 @@ a value the table does not have, such as `serve: null` for a step or
 in order), `platform`, `names`, `deployValues`, `previewFeatures` and
 `operations` (the model's, exactly) and `qualityResults`, or
 `diagnostics` (matched in order on the fields given; `fixes` lists the fix
-titles, and `fixes: []` means the diagnostic has none), and optionally
+titles, and `fixes: []` means the diagnostic has none; `subject` is matched
+on the keys given, and `subject: null` means the diagnostic has none), and optionally
 `fixed`, as in the config conformance cases. A case that expects
 `diagnostics` also checks `tables`, `previewFeatures`, `operations` and
 `qualityResults` when it gives them.
@@ -1038,8 +1110,9 @@ data-only packs [conformance/pack.yaml](conformance/pack.yaml),
 [conformance/pack-plain.yaml](conformance/pack-plain.yaml),
 [conformance/pack-three.yaml](conformance/pack-three.yaml),
 [conformance/pack-intent.yaml](conformance/pack-intent.yaml) and
-[conformance/pack-ops.yaml](conformance/pack-ops.yaml) and
-[conformance/pack-databricks.yaml](conformance/pack-databricks.yaml), all
+[conformance/pack-ops.yaml](conformance/pack-ops.yaml),
+[conformance/pack-databricks.yaml](conformance/pack-databricks.yaml) and
+[conformance/pack-quality.yaml](conformance/pack-quality.yaml), all
 available. A
 pack file with `buildEnvironments: true` stands for a pack that builds
 environments together: the runner gives it a `buildEnvironments` member. A
@@ -1169,8 +1242,9 @@ optional; a document that leaves them all out behaves as it did before they
 existed. Section 11.1 defines the words, section 11.2 how a value is
 declared for each table, section 11.3 how the chosen methods fill what is left,
 section 11.4 the method settings that are other names for intent, section
-11.5 how each pack says what it does with each value and section 11.6 the
-operations policy and quality results of the whole project. Which pack uses which is
+11.5 how each pack says what it does with each value, section 11.6 the
+operations policy and quality results of the whole project and section 11.7
+how a table's checks are judged. Which pack uses which is
 in each pack's own specification.
 
 ### 11.1 Vocabulary
@@ -1272,8 +1346,14 @@ as `intentPaths`, for coverage maps: `load.mode`, `load.cursor`,
 `rescued`, `retention.time_travel`, `retention.log`, `retention.landed_files`,
 `storage.clustering`, `storage.features`, `operations.schedule`,
 `operations.trigger`, `operations.retries`, `operations.timeout`,
-`operations.alerts`, `operations.concurrency` and `quality.results`. A value of `*` stands for any
-text.
+`operations.alerts`, `operations.concurrency` and `quality.results`, and the
+quality and cleansing paths of section 11.7: `quality.rules` (values
+`notNull`, `in`, `notIn`, `pattern`, `length`, `range`, `multipleOf` and
+`items`, the rule kinds of section 6), `quality.actions` (`warn`, `drop`,
+`fail`), `quality.table-checks`, `quality.quarantine`, `cleanse.trim`,
+`cleanse.empty`, `cleanse.map`, `cleanse.case`, `cleanse.default`,
+`cleanse.timezone` and `deduplicate` (each with the one value `true`). A
+value of `*` stands for any text.
 
 ### 11.2 Precedence
 
@@ -1500,7 +1580,10 @@ entry is one of:
   `status`, optional, is the platform feature's release status:
   `{ level, label, checked, source }`, `level` being `ga` or `preview`,
   `label` for a preview (`Public Preview`, `Beta` or `Private Preview`),
-  `checked` the date it was checked and `source` the page that says so;
+  `checked` the date it was checked and `source` the page that says so.
+  `onlyWhere`, optional, is one of the layer duties `check`, `cleanse`,
+  `deduplicate` and `quarantine`: the pack applies it only in a layer whose
+  `does` lists that duty. It is read only for the paths of section 11.7;
 - `{ use: not-yet, reason }`: the pack does not apply it yet;
 - `{ use: elsewhere, reason }`: another step or pack does it;
 - `{ use: not-applicable, reason }`: it means nothing on the pack's platform.
@@ -1626,6 +1709,50 @@ step is judged by its method's entry, else its pack's, for `quality.results`
 (section 11.5), reported at `/quality/results`: `quality.results: true isn't
 applied on <pack>: <reason>`. It is reported once for each pack and reason. A
 pack with no entry reports nothing.
+
+### 11.7 Quality and cleansing
+
+A table's checks (section 6) are judged by the step that keeps the table: its
+store step, else its ingest step when that step produces the table. The
+entry for each path and value is found as section 11.5 finds it, first in
+that step's method, then in its pack. A table that ends at the landed files
+is not judged this way (section 6 says what it reports), nor is a table whose
+steps are not known, nor one that holds an unset reference, except when
+resolving for deploy (section 1.1). The values judged, in this order, are:
+
+- for each expectation in the table's order, the `kind` of its `rule`
+  (`quality.rules`), at the place the rule was written: a required column's
+  `required`, an option's key in `logicalTypeOptions`, or the rule's item in
+  a `quality` list; then its action (`quality.actions`), at the place the
+  action was written: the expectation's own `action` in a flow table or
+  transform, else the standard's `quality.required` (for a required column)
+  or `quality.default` (for any other), and no place when the action is the
+  pack's default. An expectation with no `rule` is judged on its action only;
+- for each table check, `quality.table-checks` (value `true`) at its rule (a
+  column's `unique` for its `duplicateValues` check), then its action at the
+  standard's `quality.default`, as above.
+
+Each value is reported as follows, with the subject (section 1.2)
+`{ table, feature }`, `feature` being the rule kind, the action or
+`table-checks`:
+
+- when the entry found is `not-yet` or `not-applicable`, `NOT_APPLIED`, a
+  warning at the place: `The <kind> rule isn't applied on <pack>: <reason>`,
+  `The <action> action isn't applied on <pack>: <reason>` or
+  `The table check isn't applied on <pack>: <reason>`, where `<pack>` is the
+  keeping step's pack's id;
+- when the entry found is `used` with `onlyWhere` and the table's `does`
+  (its layer's duties) does not list that duty, `NOT_APPLIED` the same way,
+  with the reason `it is applied only in a layer whose does lists <duty>.`
+  and the hint ``Add `<duty>` to the layer's `does` to apply it here.``
+  A table whose layer gives no duties lists none;
+- when the entry found is `used` with a `status` whose `level` is `preview`,
+  and the standard says `features: ga`, `PREVIEW_FEATURE` as section 11.5
+  says, with `The <kind> rule`, `The <action> action` or `The table check`
+  in place of `<path>: <value>`;
+- an `elsewhere` entry, and a value with no entry, report nothing.
+
+The same warning at the same place is reported once (section 1.2).
 
 ## Connector authoring metadata
 

@@ -48,6 +48,17 @@ describe("intentPaths", () => {
       "operations.alerts",
       "operations.concurrency",
       "quality.results",
+      "quality.rules",
+      "quality.actions",
+      "quality.table-checks",
+      "quality.quarantine",
+      "cleanse.trim",
+      "cleanse.empty",
+      "cleanse.map",
+      "cleanse.case",
+      "cleanse.default",
+      "cleanse.timezone",
+      "deduplicate",
     ]);
   });
 
@@ -59,6 +70,22 @@ describe("intentPaths", () => {
     expect(intentPaths["operations.alerts"]).toEqual(["failure", "slow"]);
     expect(intentPaths["operations.schedule"]).toEqual(["project", "flow"]);
     expect(intentPaths.rescued).toEqual(["true"]);
+  });
+
+  it("gives the rule kinds and actions as the quality paths' values", () => {
+    expect(intentPaths["quality.rules"]).toEqual([
+      "notNull",
+      "in",
+      "notIn",
+      "pattern",
+      "length",
+      "range",
+      "multipleOf",
+      "items",
+    ]);
+    expect(intentPaths["quality.actions"]).toEqual(["warn", "drop", "fail"]);
+    expect(intentPaths["cleanse.timezone"]).toEqual(["true"]);
+    expect(intentPaths.deduplicate).toEqual(["true"]);
   });
 });
 

@@ -180,17 +180,17 @@ export const codeHelp: Record<DefinitionCode, { meaning: string; fix: string }> 
   },
   CONTRACT_FIELD_UNUSED: {
     meaning:
-      "A contract writes a field that the standard's packs do not use yet, so it changes nothing in what is generated. A warning.",
-    fix: "Leave it as documentation, or follow the reason the hint gives for each pack. Each pack's page lists what it does with every contract field.",
+      "No longer reported. A contract field that the pack keeping the table does not use yet is now NOT_APPLIED.",
+    fix: "Follow the help for NOT_APPLIED.",
   },
   QUALITY_RULE_NOT_CHECKED: {
     meaning:
-      "A contract quality rule compares a count over all rows, such as a row count or a share of nulls, which a check of one row cannot. A warning: the rule stays as documentation.",
-    fix: "Write the rule so it allows no failing row (mustBe: 0) on nullValues, missingValues or invalidValues, or check the count another way.",
+      "A contract quality rule cannot be checked as written, such as a custom rule, which another engine runs. A warning: the rule stays as documentation.",
+    fix: "Write it as a library or sql rule with a comparison, such as mustBe: 0, to have it checked.",
   },
   CAPABILITY_OFF: {
     meaning:
-      "The definitions use a feature that changes shared objects on the platform, such as tags or schemas, and the platform has not turned it on, so it is not applied. A warning.",
+      "The definitions use a feature the platform turns on, such as tags, schemas or table checks (a contract rule that counts over all rows), and the platform has not turned it on, so it is not applied. A warning.",
     fix: "Turn it on with manage.<capability> in platform.yaml, and grant what the hint says it needs; each pack's page lists its capabilities.",
   },
   PLACEHOLDER_NOT_REPLACED: {

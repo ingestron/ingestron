@@ -1,0 +1,61 @@
+description: An action the pack that keeps the table does not apply is NOT_APPLIED where the action was written, the standard's quality default, and a flow table's own action at that action.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+    quality: { required: warn, default: fail }
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      orders:
+        object: orders
+        contract: orders
+        expectations:
+          - { name: positive, check: total > 0, action: fail }
+          - { name: small, check: total < 100, action: warn }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - name: total
+            logicalType: number
+            quality:
+              - { metric: nullValues, mustBe: 0 }
+expect:
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: standard.yaml
+      line: 5
+      message: "The fail action isn't applied on quality: A failing row does not stop a load yet."
+      subject: { table: orders, feature: fail }
+    - code: NOT_APPLIED
+      severity: warning
+      file: sales.yaml
+      line: 10
+      message: "The fail action isn't applied on quality: A failing row does not stop a load yet."
+      subject: { table: orders, feature: fail }

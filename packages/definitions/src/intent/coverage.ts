@@ -19,13 +19,31 @@ export interface FeatureStatus {
 }
 
 /**
+ * A layer duty (specification section 11.7): what the tables of a layer whose `does` lists
+ * it have done to them.
+ * @public
+ */
+export type LayerDuty = "check" | "cleanse" | "deduplicate" | "quarantine";
+
+/**
  * What a pack does with one intent path or value: `used` (and how, with the feature's
- * release status), `not-yet` (and why), `elsewhere` (another step or pack does it, and
- * how) or `not-applicable` (it means nothing on the platform, and why).
+ * release status, and for a quality or cleansing path the layer duty it needs),
+ * `not-yet` (and why), `elsewhere` (another step or pack does it, and how) or
+ * `not-applicable` (it means nothing on the platform, and why).
+ * @example { use: "used", does: "The view leaves out failing rows.", onlyWhere: "check" }
  * @public
  */
 export type IntentUse =
-  | { use: "used"; does: string; status?: FeatureStatus }
+  | {
+      use: "used";
+      does: string;
+      status?: FeatureStatus;
+      /**
+       * Applied only in a layer whose `does` lists this duty; in any other layer the value
+       * is `NOT_APPLIED`. Read for the quality and cleansing paths only.
+       */
+      onlyWhere?: LayerDuty;
+    }
   | { use: "not-yet" | "elsewhere" | "not-applicable"; reason: string };
 
 /**
@@ -58,6 +76,15 @@ export function intentUseOf(
     if (entry) return entry;
   }
   return undefined;
+}
+
+/**
+ * A path and value as coverage keys it, `path=value`, or the path alone when the value is
+ * any text or not one the path lists: the feature a `NOT_APPLIED` warning is about.
+ */
+export function coverageKey(path: string, value?: string): string {
+  const listed = intentPaths[path] ?? [];
+  return value !== undefined && listed.includes(value) ? `${path}=${value}` : path;
 }
 
 /**

@@ -64,6 +64,30 @@ export type DefinitionCode =
   | "PACK_NOTICE"
   | "PACK_LOAD";
 
+/**
+ * What a warning is about, so it can be told apart from another with the same code
+ * (specification section 1.2): the table, and for `NOT_APPLIED` and `CAPABILITY_OFF` the
+ * feature, such as a rule kind, an action, a contract field path or a capability's id.
+ * @example { table: "orders", feature: "pattern" }
+ * @public
+ */
+export interface DiagnosticSubject {
+  /** The name of the table the warning is about; absent when it is about several or none. */
+  table?: string;
+  /** The feature that is not applied, or the capability that is off. */
+  feature?: string;
+}
+
+/**
+ * A problem found while loading or resolving, in `@ingestron/config`'s shape, with what a
+ * warning from resolving is about. Errors and loading's warnings have no subject.
+ * @public
+ */
+export type Diagnostic = AnyDiagnostic & {
+  /** What the warning is about (specification section 1.2). */
+  subject?: DiagnosticSubject;
+};
+
 /** Where a value was written: a document and a JSON Pointer into it. */
 export interface Source {
   document: DefinitionDocument;
@@ -72,10 +96,17 @@ export interface Source {
 
 /** Collects problems; resolution continues so that all are found in one run. */
 export interface Reporter {
-  readonly diagnostics: AnyDiagnostic[];
+  readonly diagnostics: Diagnostic[];
   error(code: DefinitionCode, message: string, at?: Source, hint?: string, fixes?: Fix[]): void;
-  /** Worth knowing, but the project still resolves. */
-  warning(code: DefinitionCode, message: string, at?: Source, hint?: string, fixes?: Fix[]): void;
+  /** Worth knowing, but the project still resolves; `subject` says what it is about. */
+  warning(
+    code: DefinitionCode,
+    message: string,
+    at?: Source,
+    hint?: string,
+    fixes?: Fix[],
+    subject?: DiagnosticSubject,
+  ): void;
   /** True once any error, not a warning, was reported. */
   failed(): boolean;
   /** True once a problem was left out because it sits at a value not known yet. */
@@ -86,16 +117,18 @@ export interface Reporter {
 
 /**
  * A new, empty reporter. A problem written once on a flow is found for each
- * of its tables, so an identical diagnostic is kept only once. A problem that
- * `unknown` names, such as one at text holding an unset reference, is left out.
+ * of its tables, so an identical diagnostic is kept only once, and one that
+ * differs only in its subject's table is about several tables: it is kept once,
+ * without the table. A problem that `unknown` names, such as one at text holding
+ * an unset reference, is left out.
  */
 export function createReporter(
   start: readonly AnyDiagnostic[] = [],
   unknown: (at: Source, code: DefinitionCode, severity: "error" | "warning") => boolean = () =>
     false,
 ): Reporter {
-  const diagnostics: AnyDiagnostic[] = [...start];
-  const seen = new Set<string>();
+  const diagnostics: Diagnostic[] = [...start];
+  const seen = new Map<string, Diagnostic>();
   let leftOut = false;
   const report = (
     severity: "error" | "warning",
@@ -104,26 +137,78 @@ export function createReporter(
     at?: Source,
     hint?: string,
     fixes?: Fix[],
+    subject?: DiagnosticSubject,
   ) => {
     if (at && unknown(at, code, severity)) {
       leftOut = true;
       return;
     }
     const diagnostic = diagnosticOf(severity, code, message, at, hint, fixes);
-    const key = JSON.stringify(diagnostic);
-    if (seen.has(key)) return;
-    seen.add(key);
-    diagnostics.push(diagnostic);
+    keepOnce(
+      seen,
+      diagnostics,
+      diagnostic,
+      severity === "warning" ? subjectOf(subject) : undefined,
+    );
   };
   return {
     diagnostics,
-    error: (...args) => report("error", ...args),
-    warning: (code, message, at, hint, fixes) => report("warning", code, message, at, hint, fixes),
+    error: (code, message, at, hint, fixes) => report("error", code, message, at, hint, fixes),
+    warning: (...args) => report("warning", ...args),
     failed: () => diagnostics.some((diagnostic) => diagnostic.severity === "error"),
     leftOut: () => leftOut,
     leaveOut: () => {
       leftOut = true;
     },
+  };
+}
+
+/** Adds the diagnostic with its subject, unless one that differs only in its table is kept. */
+function keepOnce(
+  seen: Map<string, Diagnostic>,
+  diagnostics: Diagnostic[],
+  diagnostic: AnyDiagnostic,
+  about: DiagnosticSubject | undefined,
+): void {
+  const key = JSON.stringify({ ...diagnostic, feature: about?.feature });
+  const kept = seen.get(key);
+  if (kept) return aboutSeveral(kept, about);
+  const reported = about ? { ...diagnostic, subject: about } : diagnostic;
+  seen.set(key, reported);
+  diagnostics.push(reported);
+}
+
+/** The subject with only the keys it gives; undefined when it gives none. */
+function subjectOf(subject: DiagnosticSubject | undefined): DiagnosticSubject | undefined {
+  const table = subject?.table;
+  const feature = subject?.feature;
+  if (table === undefined && feature === undefined) return undefined;
+  return { ...(table !== undefined && { table }), ...(feature !== undefined && { feature }) };
+}
+
+/** A diagnostic found again for another table, or for none, is no longer about one table. */
+function aboutSeveral(kept: Diagnostic, about: DiagnosticSubject | undefined): void {
+  if (kept.subject?.table === undefined || kept.subject.table === about?.table) return;
+  const feature = kept.subject.feature;
+  if (feature === undefined) delete kept.subject;
+  else kept.subject = { feature };
+}
+
+/**
+ * The reporter, with each warning about the table: `table` is added to its subject.
+ * Errors are reported as they are.
+ */
+export function aboutTable(reporter: Reporter, table: string): Reporter {
+  return {
+    get diagnostics() {
+      return reporter.diagnostics;
+    },
+    error: (...args) => reporter.error(...args),
+    warning: (code, message, at, hint, fixes, subject) =>
+      reporter.warning(code, message, at, hint, fixes, { table, ...subject }),
+    failed: () => reporter.failed(),
+    leftOut: () => reporter.leftOut(),
+    leaveOut: () => reporter.leaveOut(),
   };
 }
 

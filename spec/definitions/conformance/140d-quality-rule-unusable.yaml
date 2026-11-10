@@ -1,0 +1,47 @@
+description: On a table that is kept, a custom rule stays QUALITY_RULE_NOT_CHECKED, about the table, with no feature; the pack is not asked about it.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        quality:
+          - { type: custom, engine: soda, implementation: "row_count > 0" }
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+expect:
+  diagnostics:
+    - code: QUALITY_RULE_NOT_CHECKED
+      severity: warning
+      file: orders.odcs.yaml
+      line: 10
+      message: "A custom rule is not checked: Ingestron does not run other engines' checks."
+      subject: { table: orders, feature: null }

@@ -4,7 +4,7 @@
 import type { Context } from "../context/index.js";
 import { holdsUnsetEnvvar } from "../diagnostics/index.js";
 import { sameValue } from "../internal/index.js";
-import type { SettingAlias } from "../intent/index.js";
+import { coverageKey, type SettingAlias } from "../intent/index.js";
 import type { Origin } from "../pack/index.js";
 import { intentOf } from "./aliases.js";
 import { positionOf, type MergedIntent } from "./intent-stages.js";
@@ -103,6 +103,9 @@ function report(
     "NOT_APPLIED",
     `${path}: ${value} isn't applied on ${pack}: ${reason}`,
     completed.sources[path],
+    undefined,
+    undefined,
+    { feature: coverageKey(path, value) },
   );
 }
 

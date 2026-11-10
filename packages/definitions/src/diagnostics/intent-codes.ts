@@ -18,7 +18,7 @@ export const intentCodeHelp: Record<
   },
   NOT_APPLIED: {
     meaning:
-      "A feature the definitions declare isn't applied on the engine that keeps the table. The message gives the pack's reason.",
+      "A feature the definitions declare isn't applied on the engine that keeps the table: an intent value, a quality rule kind or action, a table check, or a contract field. The message gives the pack's reason.",
     fix: "Remove the feature, choose a method or pack that applies it, or accept that the table goes without it.",
   },
   PREVIEW_FEATURE: {

@@ -5,6 +5,7 @@ import type { Fix } from "@ingestron/config";
 import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
 import type { PreviewFeature, ResolvedTable } from "../pack/index.js";
+import { coverageKey } from "../intent/index.js";
 import type { IntentPlaces } from "./complete.js";
 import { judgementsOf, type Judgement } from "./judgements.js";
 
@@ -32,7 +33,8 @@ export function reportJudgement(
   const { outcome } = judgement;
   if (outcome.kind === "not-applied") {
     const message = `${described(judgement)} isn't applied on ${judgement.pack}: ${outcome.reason}`;
-    context.reporter.warning("NOT_APPLIED", message, at);
+    const feature = judgement.feature ?? coverageKey(judgement.path, judgement.value);
+    context.reporter.warning("NOT_APPLIED", message, at, judgement.hint, undefined, { feature });
   } else if (context.standard.value.features === "ga") reportPreview(context, judgement, at);
 }
 
@@ -52,9 +54,9 @@ function reportPreview(context: Context, judgement: Judgement, at: Source | unde
   );
 }
 
-/** A value as messages write it: `<path>: <value>`. */
+/** A value as messages write it: what the judgement calls it, else `<path>: <value>`. */
 function described(judgement: Judgement): string {
-  return `${judgement.path}: ${judgement.text}`;
+  return judgement.what ?? `${judgement.path}: ${judgement.text}`;
 }
 
 /**

@@ -78,11 +78,11 @@ const options: Record<string, Option> = {
   }),
 };
 
-/** The row checks a column's logicalTypeOptions make, in the options' order; a null passes. */
+/** The row checks a column's logicalTypeOptions make, each with its option, in the options' order; a null passes. */
 export function optionChecks(
   column: string,
   value: unknown,
-): { name: string; check: string; rule?: RowRule }[] {
+): { option: string; name: string; check: string; rule?: RowRule }[] {
   if (!isRecord(value)) return [];
   const name = `\`${column}\``;
   return Object.entries(value).flatMap(([option, limit]) => {
@@ -91,6 +91,7 @@ export function optionChecks(
     const suffix = option.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
     return [
       {
+        option,
         name: `${column}_${suffix}`.toLowerCase(),
         check: `${name} IS NULL OR ${made.sql}`,
         ...(made.rule && { rule: made.rule }),

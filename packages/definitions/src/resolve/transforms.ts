@@ -3,7 +3,7 @@ import type { DefinitionDocument } from "@ingestron/config";
 import { NO_STORE, type Facts } from "../choose/index.js";
 import { codeWithValues } from "../context/index.js";
 import { checkTransformColumns } from "./transform-columns.js";
-import type { Context } from "../context/index.js";
+import { aboutOne, type Context } from "../context/index.js";
 import { contractFor, expectationsFor } from "../contracts/index.js";
 import { kinds, type TransformDoc } from "../documents/index.js";
 import { flowTableNames } from "./flows.js";
@@ -41,7 +41,7 @@ export function transformTables(
       break;
     }
     for (const doc of ready) {
-      const table = transformTable(context, namer, doc, resolved);
+      const table = transformTable(aboutOne(context, doc.value.id), namer, doc, resolved);
       if (table) resolved.set(table.name, table);
       else failed.add(doc.value.id);
       if (table) result.push(table);
@@ -133,7 +133,8 @@ function transformTable(
     store: stepOf(steps.store),
     ...(steps.serve && { serve: stepOf(steps.serve) }),
   };
-  checkTableIntent(context, table, places);
+  const at = { document: doc, pointer: "/expectations" };
+  checkTableIntent(context, table, places, { docs: value.expectations, at });
   return table;
 }
 
@@ -191,6 +192,9 @@ function leaveOutReader(context: Context, doc: TransformDocument): void {
     "RUNS_ON_SKIPPED",
     `"${doc.value.id}" reads "${input}", which is left out of ${context.environment}, so it is left out too.`,
     { document: doc, pointer: "/inputs" },
+    undefined,
+    undefined,
+    { table: doc.value.id },
   );
 }
 

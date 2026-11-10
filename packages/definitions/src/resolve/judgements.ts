@@ -27,10 +27,16 @@ export interface Judgement {
   text: string;
   pack: string;
   outcome: Outcome;
+  /** What messages call it, in place of `<path>: <text>`, such as `The pattern rule`. */
+  what?: string;
+  /** What the subject's feature names, in place of the coverage key (specification section 1.2). */
+  feature?: string;
+  /** A hint for `NOT_APPLIED`. */
+  hint?: string;
 }
 
 /** A table's step with its method. */
-interface JudgingStep {
+export interface JudgingStep {
   id: string;
   pack: string;
   method: Method;
@@ -80,7 +86,8 @@ function withoutSource(
   return [{ path, ...item, pack, outcome: { kind: "not-applied", reason } }];
 }
 
-function stepsOf(context: Context, table: ResolvedTable): JudgingStep[] {
+/** The table's steps that have a method, in the order ingest, transform, store, serve. */
+export function stepsOf(context: Context, table: ResolvedTable): JudgingStep[] {
   return [table.ingest, table.transform, table.store, table.serve].flatMap((step) => {
     const method = step && context.pack.methods[step.method];
     return step && method ? [{ id: step.method, pack: step.pack, method }] : [];

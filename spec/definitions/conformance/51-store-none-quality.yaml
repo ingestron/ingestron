@@ -1,4 +1,4 @@
-description: "Quality rules on a table that ends at the landed files are not checked."
+description: "Quality rules on a table that ends at the landed files are NOT_APPLIED on the ingest step's pack, about the table and the rule's kind."
 environment: dev
 files:
   project.yaml: |
@@ -44,4 +44,10 @@ files:
 
 expect:
   diagnostics:
-    - { code: QUALITY_RULE_NOT_CHECKED, severity: warning, file: orders.odcs.yaml, line: 15 }
+    - code: NOT_APPLIED
+      severity: warning
+      file: orders.odcs.yaml
+      line: 15
+      message: 'The "nullValues" rule isn''t applied on test: the table ends at the landed files, and nothing checks them.'
+      hint: Add a store step to have it checked.
+      subject: { table: orders, feature: notNull }

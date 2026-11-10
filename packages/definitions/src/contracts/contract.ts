@@ -1,5 +1,6 @@
 // Reads the parts of a table's ODCS contract that generation uses (section 6).
-import { AT_FILES, notCheckedAtFiles } from "./quality-notes.js";
+import { notAppliedAtFiles, notCheckedAtFiles } from "./at-files.js";
+import { rememberPlaces } from "./check-places.js";
 import { ruleChecks } from "./quality-rules.js";
 import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
@@ -10,15 +11,15 @@ type Entry = NonNullable<ContractDoc["schema"]>[number];
 
 /**
  * The table's contract, or undefined after reporting. `at` is the table's
- * contract field; `atFiles` when the table ends at the landed files, so its
- * rules are not checked.
+ * contract field; `atFiles`, the ingest step's pack, when the table ends at the
+ * landed files, so its rules are not applied.
  */
 export function contractFor(
   context: Context,
   table: string,
   id: string,
   at: Source,
-  atFiles = false,
+  atFiles?: string,
 ): Contract | undefined {
   const document = context.project.get(kinds.contract, id);
   const entries = document?.value.schema ?? [];
@@ -35,15 +36,19 @@ export function contractFor(
     return undefined;
   }
   const columns = (entry.properties ?? []).map((property) => columnOf(context, property));
-  return {
+  const place = { document: document!, pointer: `/schema/${index}` };
+  const { places, ...checks } = checksOf(context, entry, place, atFiles);
+  const contract: Contract = {
     id,
     ...(entry.description && { description: entry.description }),
     columns,
     primaryKey: primaryKeyOf(entry),
-    ...checksOf(context, entry, { document: document!, pointer: `/schema/${index}` }, atFiles),
+    ...checks,
     tags: (entry.tags ?? []).map(String),
     ...accessOf(document!.value),
   };
+  rememberPlaces(contract, { entry: place, ...places });
+  return contract;
 }
 
 /** Who may use the data and what the contract promises (ODCS `roles`, `slaProperties`). */
@@ -75,12 +80,22 @@ function entryIndex(entries: Entry[], table: string): number {
   return named >= 0 ? named : entries.length === 1 ? 0 : -1;
 }
 
-/** Checks of each row, and checks over all rows, from the object's rules. */
-function checksOf(context: Context, entry: Entry, at: Source, atFiles: boolean) {
-  if (atFiles)
-    return { checks: [], tableChecks: [], unchecked: notCheckedAtFiles(context, entry, at) };
-  const { rows, table, unchecked } = ruleChecks(context, entry, at);
-  return { checks: rows, tableChecks: table, unchecked };
+/** Checks of each row, and checks over all rows, from the object's rules, with their places. */
+function checksOf(context: Context, entry: Entry, at: Source, atFiles: string | undefined) {
+  if (atFiles !== undefined)
+    return {
+      checks: [],
+      tableChecks: [],
+      unchecked: notCheckedAtFiles(context, entry, at, atFiles),
+      places: { checks: [], tableChecks: [] },
+    };
+  const { rows, table, tableAt, unchecked } = ruleChecks(context, entry, at);
+  return {
+    checks: rows.map(({ name, check, rule }) => ({ name, check, ...(rule && { rule }) })),
+    tableChecks: table,
+    unchecked,
+    places: { checks: rows.map((row) => row.at), tableChecks: tableAt },
+  };
 }
 
 function columnOf(context: Context, property: NonNullable<Entry["properties"]>[number]): Column {
@@ -106,14 +121,23 @@ function primaryKeyOf(entry: Entry): string[] {
     .map((property) => property.name);
 }
 
-/** On a table that ends at the landed files, each of the flow table's expectations warns. */
-export function expectationsNotChecked(context: Context, own: ExpectationDoc[], at: Source): void {
+/**
+ * On a table that ends at the landed files, each of the flow table's expectations is
+ * `NOT_APPLIED` on `pack`, the ingest step's.
+ */
+export function expectationsNotChecked(
+  context: Context,
+  own: ExpectationDoc[],
+  at: Source,
+  pack: string,
+): void {
   own.forEach((expectation, index) =>
-    context.reporter.warning(
-      "QUALITY_RULE_NOT_CHECKED",
-      `Expectation "${expectation.name}" is not checked: ${AT_FILES}`,
+    notAppliedAtFiles(
+      context,
+      `Expectation "${expectation.name}"`,
+      pack,
       { ...at, pointer: `${at.pointer}/${index}` },
-      "Add a store step to have it checked.",
+      "expectations",
     ),
   );
 }

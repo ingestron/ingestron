@@ -1,8 +1,9 @@
 // Tables brought in by flows: ingest and store steps, contract, quality and names.
 import type { DefinitionDocument } from "@ingestron/config";
 import { allowsWritten, endsAtFiles, NO_STORE, type Facts, type Named } from "../choose/index.js";
-import type { Context } from "../context/index.js";
-import { contractFor, expectationsFor, expectationsNotChecked } from "../contracts/index.js";
+import { aboutOne, type Context } from "../context/index.js";
+import { expectationsFor } from "../contracts/index.js";
+import { flowContract, ownExpectations } from "./flow-contract.js";
 import { kinds, type FlowDoc } from "../documents/index.js";
 import type { ResolvedTable } from "../pack/index.js";
 import type { SettingsLayer } from "./settings.js";
@@ -34,7 +35,7 @@ export function flowTables(context: Context, namer: TableNamer): ResolvedTable[]
         return [];
       }
       seen.add(name);
-      const table = flowTable(context, flow, name, namer);
+      const table = flowTable(aboutOne(context, name), flow, name, namer);
       return table ? [table] : [];
     }),
   );
@@ -72,7 +73,7 @@ function flowTable(
   const steps = stepsOf(context, flow, name, facts);
   if (steps === false) return undefined;
   const { places, ...intent } = tableIntent(context, declared, steps);
-  const contract = flowContract(context, flow, name, steps?.endsAtFiles !== undefined);
+  const contract = flowContract(context, flow, name, steps);
   const fullName = renderTableName(context, namer, {
     layer,
     table: name,
@@ -91,7 +92,7 @@ function flowTable(
     ...tableSteps(steps, connection, doc.object),
     ...sourceNotKnown(context, flow),
   };
-  checkTableIntent(context, table, places);
+  checkTableIntent(context, table, places, ownExpectations(flow, name));
   return table;
 }
 
@@ -109,14 +110,6 @@ function stepsOf(
   const at = { document: flow, pointer: `/tables/${name}` };
   if (leftOut(context, named(flow, "ingest"), facts, name, at)) return false;
   return flowSteps(context, flow, name, facts);
-}
-
-/** The flow table's contract; a table that ends at the landed files checks nothing. */
-function flowContract(context: Context, flow: Flow, name: string, atFiles: boolean) {
-  const doc = flow.value.tables[name]!;
-  const at = (field: string) => ({ document: flow, pointer: `/tables/${name}/${field}` });
-  if (atFiles) expectationsNotChecked(context, doc.expectations ?? [], at("expectations"));
-  return contractFor(context, name, doc.contract, at("contract"), atFiles);
 }
 
 /**

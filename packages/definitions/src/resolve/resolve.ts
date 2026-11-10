@@ -1,17 +1,13 @@
 // The entry point: load a project and resolve it for one environment.
-import {
-  loadProject,
-  nodeFiles,
-  resolveProject,
-  type AnyDiagnostic,
-  type FileSource,
-} from "@ingestron/config";
+import { loadProject, nodeFiles, resolveProject, type FileSource } from "@ingestron/config";
 import { checkRunsOn } from "./runs-on.js";
 import { checkGrants } from "../context/index.js";
-import { checkContractFields } from "../contracts/index.js";
+import { checkContractFields, type ContractUser } from "../contracts/index.js";
+import { stepsOf } from "./judgements.js";
+import { judgeOf } from "./judging-step.js";
 import { checkSettingsKeys } from "../context/index.js";
 import { createContext, type Context } from "../context/index.js";
-import type { Source } from "../diagnostics/index.js";
+import type { Diagnostic, Source } from "../diagnostics/index.js";
 import { checkDeployValues, deployValuesOf, resolutionReporter } from "../context/index.js";
 import { kinds } from "../documents/index.js";
 import { flowTables } from "./flows.js";
@@ -74,7 +70,8 @@ export interface ResolveOptions {
 export interface ResolveResult {
   ok: boolean;
   model?: ResolvedModel;
-  diagnostics: AnyDiagnostic[];
+  /** Every problem, each warning from resolving with what it is about. */
+  diagnostics: Diagnostic[];
 }
 
 const allKinds = Object.values(kinds);
@@ -169,7 +166,7 @@ function resolveLoaded(
   checkServeInputs(context, tables);
   checkRunsOn(context, tables, (table) => originOf(context, table));
   runMethodChecks(context, tables);
-  checkContractFields(context, new Set(tables.map((table) => table.contract.id)));
+  checkContractFields(context, contractUsers(context, tables));
   const products = resolveProducts(context, tables);
   checkGovernance(context, products);
   checkOperations(context, tables);
@@ -182,6 +179,17 @@ function resolveLoaded(
   return model && !reporter.failed()
     ? { ok: true, model, diagnostics: reporter.diagnostics }
     : { ok: false, diagnostics: reporter.diagnostics };
+}
+
+/** Each table's contract and the pack that keeps the table (specification section 6). */
+function contractUsers(context: Context, tables: ResolvedTable[]): ContractUser[] {
+  return tables.map((table) => ({
+    table: table.name,
+    contract: table.contract.id,
+    pack: judgeOf("history", stepsOf(context, table), {
+      endsAtFiles: table.endsAtFiles !== undefined,
+    })?.pack,
+  }));
 }
 
 /** A serve method that reads where the data lands needs a last step that says where (`HANDOVER`). */

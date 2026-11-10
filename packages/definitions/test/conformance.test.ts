@@ -16,7 +16,7 @@ import {
   type ResolvedModel,
 } from "../src/index.js";
 import { checkReference, type ReferenceCase } from "./reference-cases.js";
-import { checkOperations, matchTable } from "./table-expectations.js";
+import { checkOperations, checkTables, comparableSubject } from "./table-expectations.js";
 
 interface Case {
   description: string;
@@ -68,6 +68,7 @@ const packs = [
   "pack-ops.yaml",
   "pack-databricks.yaml",
   "pack-rule.yaml",
+  "pack-quality.yaml",
 ].map((file) =>
   packOf(
     parse(readFileSync(join(folder, file), "utf8")) as PackInfo & { buildEnvironments?: true },
@@ -90,20 +91,6 @@ function packOf(data: DataPack): PackInfo | Pack {
   if (!together) return pack;
   const buildEnvironments = () => ({ files: {}, deployValues: [], problems: [] });
   return { ...pack, build: () => ({}), buildEnvironments };
-}
-
-/** Tables with full names as text, as the cases write them. */
-function comparableTables(model: ResolvedModel) {
-  return model.tables.map((table) => ({
-    ...table,
-    fullName: `${table.fullName.catalog}.${table.fullName.schema}.${table.fullName.table}`,
-  }));
-}
-
-function checkTables(model: ResolvedModel, expected: Record<string, unknown>[]): void {
-  const tables = comparableTables(model);
-  expect(tables).toHaveLength(expected.length);
-  expected.forEach((wanted, index) => matchTable(tables[index], wanted));
 }
 
 function checkProducts(model: ResolvedModel, expected: Record<string, unknown>[]): void {
@@ -210,7 +197,7 @@ describe("conformance", () => {
       if (diagnostics) checkBesideDiagnostics(result.model, testCase.expect);
       if (diagnostics) {
         const actual = result.diagnostics.map(
-          ({ code, severity, message, hint, location, fixes }) => ({
+          ({ code, severity, message, hint, location, fixes, subject }) => ({
             code,
             severity,
             message,
@@ -218,6 +205,7 @@ describe("conformance", () => {
             ...location,
             // A diagnostic without fixes has none, so a case can say `fixes: []`.
             fixes: (fixes ?? []).map((fix) => fix.title),
+            subject: comparableSubject(subject),
           }),
         );
         expect(actual).toHaveLength(diagnostics.length);

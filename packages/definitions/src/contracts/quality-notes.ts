@@ -48,7 +48,8 @@ function labelOf(rule: Rule): string {
     : `A ${String(rule.type ?? "library")}`;
 }
 
-function unchecked(name: string, rule: Rule, reason: string): UncheckedRule {
+/** A rule nothing checks, with its words and the reason. */
+export function unchecked(name: string, rule: Rule, reason: string): UncheckedRule {
   const description = typeof rule.description === "string" ? rule.description : undefined;
   return { name, ...(description !== undefined && { description }), reason };
 }
@@ -86,39 +87,18 @@ export function notChecked(
   );
 }
 
-/** Warns that a count over all rows is checked only with checks on, with the fix. */
+/**
+ * `CAPABILITY_OFF`: a count over all rows is checked only with checks on, with the fix that
+ * turns them on.
+ */
 function warnCount(context: Context, what: string, at: Source): void {
   const { field, fixes } = turnOn(context, "checks");
   context.reporter.warning(
-    "QUALITY_RULE_NOT_CHECKED",
+    "CAPABILITY_OFF",
     `${what} rule compares a count over all rows, which is checked after each refresh only when manage.checks is on.`,
     at,
     `Turn on ${field} in platform.yaml to run it after each refresh.`,
     fixes,
+    { feature: "checks" },
   );
-}
-
-/** On a table that ends at the landed files nothing checks rows: each rule but text warns. */
-export function notCheckedAtFiles(context: Context, entry: Entry, at: Source): UncheckedRule[] {
-  const found: UncheckedRule[] = [];
-  const note = (column: string, rule: Rule, pointer: string) => {
-    const name = nameOf(column, rule);
-    if (rule.type === "text") return found.push(unchecked(name, rule, IN_WORDS));
-    context.reporter.warning(
-      "QUALITY_RULE_NOT_CHECKED",
-      `${labelOf(rule)} rule is not checked: ${AT_FILES}`,
-      { ...at, pointer },
-      "Add a store step to have it checked.",
-    );
-    return found.push(unchecked(name, rule, AT_FILES.replace(/\.$/, "")));
-  };
-  rulesOf(entry.quality).forEach((rule, index) =>
-    note(entry.name, rule, `${at.pointer}/quality/${index}`),
-  );
-  (entry.properties ?? []).forEach((property, column) =>
-    rulesOf(property.quality).forEach((rule, index) =>
-      note(property.name, rule, `${at.pointer}/properties/${column}/quality/${index}`),
-    ),
-  );
-  return found;
 }

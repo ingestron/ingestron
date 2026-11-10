@@ -200,7 +200,18 @@ export interface DeployValue {
     }[];
 }
 
+// @public
+export type Diagnostic = AnyDiagnostic & {
+    subject?: DiagnosticSubject;
+};
+
 export { DiagnosticCode }
+
+// @public
+export interface DiagnosticSubject {
+    feature?: string;
+    table?: string;
+}
 
 // @public
 export function documentReference(kind: keyof typeof referenceKinds): FieldInfo[];
@@ -382,6 +393,7 @@ export type IntentUse = {
     use: "used";
     does: string;
     status?: FeatureStatus;
+    onlyWhere?: LayerDuty;
 } | {
     use: "not-yet" | "elsewhere" | "not-applicable";
     reason: string;
@@ -405,6 +417,9 @@ export const kinds: {
     product: KindDefinition<ProductDoc>;
     productV1: KindDefinition<ProductDoc>;
 };
+
+// @public
+export type LayerDuty = "check" | "cleanse" | "deduplicate" | "quarantine";
 
 // @public
 export function layerNames<Layer extends string | {
@@ -734,6 +749,7 @@ export interface ResolvedProduct {
 export interface ResolvedTable {
     // (undocumented)
     contract: Contract;
+    does?: "raw" | LayerDuty[];
     endsAtFiles?: ChosenBy;
     // (undocumented)
     expectations: Expectation[];
@@ -783,8 +799,7 @@ export interface ResolveOptions {
 
 // @public
 export interface ResolveResult {
-    // (undocumented)
-    diagnostics: AnyDiagnostic[];
+    diagnostics: Diagnostic[];
     // (undocumented)
     model?: ResolvedModel;
     // (undocumented)

@@ -41,6 +41,7 @@ export function warnOff(
     { document, pointer },
     `Turn it on with ${field} in platform.yaml.${needs}`,
     fixes,
+    { feature: id },
   );
 }
 

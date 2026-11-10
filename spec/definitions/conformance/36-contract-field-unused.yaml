@@ -1,4 +1,4 @@
-description: A contract field no pack uses yet is a warning at that field, with the pack's reason, and the project still resolves.
+description: A contract field the pack that keeps the table does not use yet is NOT_APPLIED at that field, with the pack's reason, about the table and the field's path, and the project still resolves.
 environment: dev
 files:
   project.yaml: |
@@ -38,4 +38,9 @@ files:
           - { name: country, logicalType: string, encryptedName: ctry_enc, description: Two letters. }
 expect:
   diagnostics:
-    - { code: CONTRACT_FIELD_UNUSED, severity: warning, file: orders.odcs.yaml, line: 11 }
+    - code: NOT_APPLIED
+      severity: warning
+      file: orders.odcs.yaml
+      line: 11
+      message: 'encryptedName of "country" in contract "orders" isn''t applied on test: Columns are not decrypted yet.'
+      subject: { table: orders, feature: schema.*.properties.*.encryptedName }

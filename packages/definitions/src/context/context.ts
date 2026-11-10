@@ -2,7 +2,7 @@
 // standard names (with one combined view), the one standard and platform,
 // and the reporter.
 import type { DefinitionDocument, FileSource, Project } from "@ingestron/config";
-import type { Reporter } from "../diagnostics/index.js";
+import { aboutTable, type Reporter } from "../diagnostics/index.js";
 import { kinds, type PlatformDoc, type StandardDoc } from "../documents/index.js";
 import type { Action, Pack, PackInfo } from "../pack/index.js";
 
@@ -33,6 +33,11 @@ export interface Context {
   standard: DefinitionDocument<StandardDoc>;
   platform?: DefinitionDocument<PlatformDoc>;
   reporter: Reporter;
+}
+
+/** The context, with each warning about the table `name` (specification section 1.2). */
+export function aboutOne(context: Context, name: string): Context {
+  return { ...context, reporter: aboutTable(context.reporter, name) };
 }
 
 /** Finds the standard, its packs and the platform, reporting what is missing or too many. */
