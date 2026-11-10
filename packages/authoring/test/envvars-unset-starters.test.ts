@@ -47,14 +47,15 @@ function workspace(
 }
 
 /**
- * The problems, without the checks managed ingestion does not apply: with the source known,
- * Lakeflow Connect ingests the table, and the starter's required columns are `NOT_APPLIED`
- * there (pack-databricks, spec section 8.2).
+ * With the source known, Lakeflow Connect ingests the table, and nothing checks the
+ * starter's required columns there: each is this one warning (pack-databricks, spec 8.2).
  */
+const notChecked =
+  "The notNull rule isn't applied on databricks: Managed ingestion writes the table as the source gives it; check it in a transform in the next layer.";
+
+/** The problems, without the required columns' `notChecked` warnings. */
 function besidesManaged(found: ReturnType<typeof problems>) {
-  return found.filter(
-    ({ message }) => !message.includes("Managed ingestion writes the table as the source gives it"),
-  );
+  return found.filter(({ code, message }) => !(code === "NOT_APPLIED" && message === notChecked));
 }
 
 function labels(folder: string, flow: string): string[] {

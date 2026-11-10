@@ -2062,9 +2062,14 @@ resolving for deploy (section 1.1). The values judged, in this order, are:
   `required`, an option's key in `logicalTypeOptions`, or the rule's item in
   a `quality` list; then its action (`quality.actions`), at the place the
   action was written: the expectation's own `action` in a flow table or
-  transform, else the standard's `quality.required` (for a required column)
-  or `quality.default` (for any other), and no place when the action is the
-  pack's default. An expectation with no `rule` is judged on its action only;
+  transform, else the layer's or the standard's `quality.required` (for a
+  required column) or `quality.default` (for any other). When the action is
+  the pack's default, nothing wrote it: it is judged at the place of the
+  expectation's rule, and an expectation with no rule has its action judged
+  only when the action was written. An expectation whose rule kind is
+  `NOT_APPLIED` here is not judged on its action: the rule is not applied, so
+  neither is its action. An expectation with no `rule` is judged on its action
+  only;
 - for each table check, `quality.table-checks` (value `true`) at its rule (a
   column's `unique` for its `duplicateValues` check), then its action at the
   standard's `quality.default`, as above.

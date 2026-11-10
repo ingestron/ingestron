@@ -52,7 +52,7 @@ export function judgeQuality(context: Context, table: ResolvedTable, own: OwnExp
     return;
   const keeper = judgeOf("quality.rules", stepsOf(context, table));
   if (!keeper) return;
-  for (const item of judgedValues(context, table, own)) {
+  for (const item of judgedValues(context, table, own, keeper)) {
     const judgement = judgementOf(context, keeper, item, table.does);
     if (judgement) reportJudgement(context, judgement, item.at);
   }
@@ -105,18 +105,27 @@ function packUse(context: Context, keeper: JudgingStep, item: Judged): IntentUse
   return pack && intentUseOf(pack, item.path, item.value);
 }
 
-/** The values judged, in order: each expectation's kind and action, then each table check and its action. */
-function judgedValues(context: Context, table: ResolvedTable, own: OwnExpectations): Judged[] {
+/**
+ * The values judged, in order: each expectation's kind and action, then each table check and
+ * its action. An expectation's action is left out when its kind is not applied, and when
+ * nothing wrote it and the expectation has no rule; one that nothing wrote is judged at the
+ * rule.
+ */
+function judgedValues(
+  context: Context,
+  table: ResolvedTable,
+  own: OwnExpectations,
+  keeper: JudgingStep,
+): Judged[] {
   const places = expectationPlaces(context, table.contract, own.docs, own.at, table.layer);
   const expectations = table.expectations.flatMap((expectation, index) => {
     const place: ExpectationPlace = places[index] ?? {};
     const kind = expectation.rule?.kind;
-    return [
-      ...(kind
-        ? [{ path: "quality.rules", value: kind, what: `The ${kind} rule`, at: place.rule }]
-        : []),
-      actionOf(expectation.action, place.action),
-    ];
+    if (!kind) return place.action ? [actionOf(expectation.action, place.action)] : [];
+    const rule = { path: "quality.rules", value: kind, what: `The ${kind} rule`, at: place.rule };
+    const unapplied =
+      judgementOf(context, keeper, rule, table.does)?.outcome.kind === "not-applied";
+    return unapplied ? [rule] : [rule, actionOf(expectation.action, place.action ?? place.rule)];
   });
   const tableAt = tableCheckPlaces(table.contract);
   const written =

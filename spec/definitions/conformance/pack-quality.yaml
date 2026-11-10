@@ -2,8 +2,9 @@
 # (section 11.7): no pattern rule, no fail action and no table checks, and on one
 # store method not-null checks only in a layer that checks, and empty-to-null and
 # deduplicate only in a layer that cleanses or deduplicates. No trimming, no
-# replacing of values and no deduplicate otherwise. Its connector is its own, so
-# it offers no fixes in the other cases.
+# replacing of values and no deduplicate otherwise. One more store method does not
+# count failing rows (no warn action). Its connector is its own, so it offers no
+# fixes in the other cases.
 id: quality
 version: 1
 defaults:
@@ -50,6 +51,14 @@ methods:
         { use: used, does: The view leaves out rows with a null., onlyWhere: check }
       cleanse.empty: { use: used, does: The view turns empty text into null., onlyWhere: cleanse }
       deduplicate: { use: used, does: The view keeps the last row per key., onlyWhere: deduplicate }
+    settings: { type: object }
+  quality-uncounted:
+    action: store
+    description: Keeps the landed files as a table, without counting the rows that fail a check.
+    accepts: [files]
+    produces: table
+    intent:
+      quality.actions=warn: { use: not-yet, reason: A failing row is not counted yet. }
     settings: { type: object }
 # What it does with the quality paths (section 11.7). A value it does not list
 # reports nothing.
