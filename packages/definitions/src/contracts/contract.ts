@@ -3,7 +3,7 @@ import { notAppliedAtFiles, notCheckedAtFiles } from "./at-files.js";
 import { rememberPlaces } from "./check-places.js";
 import { qualityActions } from "./layer-quality.js";
 import { ruleChecks } from "./quality-rules.js";
-import type { Context } from "../context/index.js";
+import { checksRun, type Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
 import { kinds, type ContractDoc, type ExpectationDoc } from "../documents/index.js";
 import type { Column, Contract, Expectation } from "../pack/index.js";
@@ -13,14 +13,17 @@ type Entry = NonNullable<ContractDoc["schema"]>[number];
 /**
  * The table's contract, or undefined after reporting. `at` is the table's
  * contract field; `atFiles`, the ingest step's pack, when the table ends at the
- * landed files, so its rules are not applied.
+ * landed files, so its rules are not applied; `keeper`, the pack that keeps the
+ * table, which decides whether table checks run (section 7.1). Each table that
+ * uses a contract resolves it for itself, since tables kept by different packs
+ * get different table checks.
  */
 export function contractFor(
   context: Context,
   table: string,
   id: string,
   at: Source,
-  atFiles?: string,
+  { atFiles, keeper }: { atFiles?: string; keeper?: string } = {},
 ): Contract | undefined {
   const document = context.project.get(kinds.contract, id);
   const entries = document?.value.schema ?? [];
@@ -38,7 +41,7 @@ export function contractFor(
   }
   const columns = (entry.properties ?? []).map((property) => columnOf(context, property));
   const place = { document: document!, pointer: `/schema/${index}` };
-  const { places, ...checks } = checksOf(context, entry, place, atFiles);
+  const { places, ...checks } = checksOf(context, entry, place, { atFiles, keeper });
   const contract: Contract = {
     id,
     ...(entry.description && { description: entry.description }),
@@ -82,7 +85,12 @@ function entryIndex(entries: Entry[], table: string): number {
 }
 
 /** Checks of each row, and checks over all rows, from the object's rules, with their places. */
-function checksOf(context: Context, entry: Entry, at: Source, atFiles: string | undefined) {
+function checksOf(
+  context: Context,
+  entry: Entry,
+  at: Source,
+  { atFiles, keeper }: { atFiles?: string; keeper?: string },
+) {
   if (atFiles !== undefined)
     return {
       checks: [],
@@ -90,7 +98,8 @@ function checksOf(context: Context, entry: Entry, at: Source, atFiles: string | 
       unchecked: notCheckedAtFiles(context, entry, at, atFiles),
       places: { checks: [], tableChecks: [] },
     };
-  const { rows, table, tableAt, unchecked } = ruleChecks(context, entry, at);
+  const where = { at, checksRun: checksRun(context, keeper) };
+  const { rows, table, tableAt, unchecked } = ruleChecks(context, entry, where);
   return {
     checks: rows.map(({ name, check, rule }) => ({ name, check, ...(rule && { rule }) })),
     tableChecks: table,

@@ -24,5 +24,14 @@ export function flowContract(
   const at = (field: string) => ({ document: flow, pointer: `/tables/${name}/${field}` });
   if (atFiles !== undefined)
     expectationsNotChecked(context, doc.expectations ?? [], at("expectations"), atFiles);
-  return contractFor(context, name, doc.contract, at("contract"), atFiles);
+  return contractFor(context, name, doc.contract, at("contract"), {
+    atFiles,
+    keeper: keeperOf(steps),
+  });
+}
+
+/** The pack that keeps the table: its store's, else that of an ingest step that writes a table. */
+function keeperOf(steps: Partial<FlowSteps> | undefined): string | undefined {
+  if (steps?.store) return steps.store.pack;
+  return steps?.ingest?.produces === "table" ? steps.ingest.pack : undefined;
 }

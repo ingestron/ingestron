@@ -23,6 +23,18 @@ export function isOn(context: Context, id: Id): boolean {
 }
 
 /**
+ * True when table checks run for a table that `pack` keeps: a pack that declares no `checks`
+ * capability runs them itself, with nothing shared to turn on; one that declares it runs them
+ * only when the platform turns checks on. Without a known pack, only when checks are on.
+ */
+export function checksRun(context: Context, pack: string | undefined): boolean {
+  const keeper = context.packs.find((candidate) => candidate.id === pack);
+  if (keeper && !(keeper.capabilities ?? []).some((capability) => capability.id === "checks"))
+    return true;
+  return isOn(context, "checks");
+}
+
+/**
  * Warns where something uses a capability that is off, at `pointer` in `document`; `table` is
  * the one table the warning is about, when it is about one.
  */

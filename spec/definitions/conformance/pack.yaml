@@ -149,3 +149,7 @@ intent:
   storage: { use: elsewhere, reason: The platform team lays out storage. }
 capabilities:
   - { id: tags, title: Tags, does: Tags tables and columns., needs: [APPLY TAG on the tables] }
+  - id: checks
+    title: Checks
+    does: Counts over all rows after each refresh.
+    needs: [SELECT on the tables]

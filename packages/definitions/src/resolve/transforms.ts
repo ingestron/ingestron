@@ -110,9 +110,9 @@ function transformTable(
   const { facts, declared } = transformFacts(context, doc, layer);
   const steps = transformSteps(context, doc, facts);
   const { places, ...intent } = tableIntent(context, declared, steps);
-  const contract = contractFor(context, value.id, value.contract, {
-    document: doc,
-    pointer: "/contract",
+  const at = { document: doc, pointer: "/contract" };
+  const contract = contractFor(context, value.id, value.contract, at, {
+    keeper: steps?.store.pack,
   });
   const fullName = renderTableName(context, namer, { layer, table: value.id });
   const code = codeOf(context, doc);

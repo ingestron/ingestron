@@ -3,7 +3,6 @@
 // check of one row cannot, and are warnings (specification section 6).
 import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
-import { isOn } from "../context/index.js";
 import { isRecord } from "../internal/index.js";
 import {
   nameOf,
@@ -31,12 +30,21 @@ export interface ObjectChecks {
   tableAt: Source[];
   /** Rules nothing checks, and why; text rules among them. */
   unchecked: UncheckedRule[];
+  /** Whether table checks run for the table that uses the contract. */
+  checksRun: boolean;
+}
+
+/** Where a contract object is, and whether table checks run for the table that uses it. */
+export interface Where {
+  at: Source;
+  /** `checksRun` in the context module, for the pack that keeps the table. */
+  checksRun: boolean;
 }
 
 /** The checks of one contract object's rules; warns at each rule it does not check. */
-export function ruleChecks(context: Context, entry: Entry, at: Source): ObjectChecks {
+export function ruleChecks(context: Context, entry: Entry, { at, checksRun }: Where): ObjectChecks {
   const names = new Set<string>();
-  const found: ObjectChecks = { rows: [], table: [], tableAt: [], unchecked: [] };
+  const found: ObjectChecks = { rows: [], table: [], tableAt: [], unchecked: [], checksRun };
   const action = tableAction(context);
   rulesOf(entry.quality).forEach((rule, index) => {
     const name = unique(names, nameOf(entry.name, rule));
@@ -65,7 +73,7 @@ export function ruleChecks(context: Context, entry: Entry, at: Source): ObjectCh
           where,
         );
     });
-    if (property.unique === true && isOn(context, "checks")) {
+    if (property.unique === true && found.checksRun) {
       found.table.push(
         uniqueCheck(unique(names, `${property.name}_unique`), property.name, action),
       );
@@ -75,7 +83,7 @@ export function ruleChecks(context: Context, entry: Entry, at: Source): ObjectCh
   return found;
 }
 
-/** A table check runs when checks are on; otherwise, or when it cannot be one, the rule warns. */
+/** A table check runs when checks run; otherwise, or when it cannot be one, the rule warns. */
 function overTable(
   context: Context,
   found: ObjectChecks,
@@ -83,7 +91,7 @@ function overTable(
   named: { rule: Rule; name: string },
   at: Source,
 ): void {
-  if (check && isOn(context, "checks")) {
+  if (check && found.checksRun) {
     found.table.push(check);
     found.tableAt.push(at);
   } else found.unchecked.push(notChecked(context, named, at, check !== undefined));

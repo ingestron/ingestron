@@ -784,8 +784,10 @@ which those of the table's layer apply (section 11.2).
   (`nullValues`, `missingValues`, `invalidValues`, `duplicateValues`,
   `rowCount`) or an `sql` rule with a comparison: it compares a count over
   all rows after each refresh. A column's `unique: true` is the table check
-  `duplicateValues` must be 0. Table checks run only when the platform turns
-  on `manage.checks` (section 7.1); otherwise each is `CAPABILITY_OFF`, a
+  `duplicateValues` must be 0. Table checks run, for each table that uses the
+  contract, as the pack that keeps the table allows (section 7.1): always
+  when that pack declares no `checks` capability, else only when the
+  platform turns on `manage.checks`; otherwise each is `CAPABILITY_OFF`, a
   warning at the rule (feature `checks`) with a fix that turns checks on:
   `<rule> rule compares a count over all rows, which is checked after each
 refresh only when manage.checks is on.`, where `<rule>` is `"<metric>"` or
@@ -1244,7 +1246,14 @@ what it needs, and a fix that sets `manage.<capability>: true` in the
 platform. Grants in the platform with `manage.schemas` off are
 `CAPABILITY_OFF` at `grants`, with the same fix. A contract rule that counts
 over all rows with `manage.checks` off is `CAPABILITY_OFF` at the rule
-(section 6).
+(section 6), for a table kept by a pack that declares a `checks` capability.
+Checks are on per pack: a pack that declares no `checks` capability, such as
+one whose engine runs the counts in its own run with nothing shared to turn
+on, runs its tables' table checks (and `unique`) whatever `manage.checks`
+says, and nothing is reported. The pack that keeps a table is its store
+step's, else that of an ingest step that writes the table itself; a contract
+that two tables use is resolved for each, so one kept by each kind of pack
+gets table checks for one and `CAPABILITY_OFF` for the other.
 
 `manage` and `grants` are read as the model's `platform` has them (section 7):
 written in the `databricks` section, they count exactly as at the top, and
