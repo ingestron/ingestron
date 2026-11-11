@@ -119,7 +119,7 @@ function columnDifferences(
   return found;
 }
 
-/** A different primary key; none when the source's table gives no key. */
+/** A different primary key; none when either the contract or the source's table gives no key. */
 function keyDifference(
   key: string[],
   after: SourceTableDoc,
@@ -129,14 +129,14 @@ function keyDifference(
     .filter((column) => column.primaryKeyPosition !== undefined)
     .sort((a, b) => a.primaryKeyPosition! - b.primaryKeyPosition!)
     .map((column) => column.name);
-  if (theirs.length === 0) return [];
+  if (key.length === 0 || theirs.length === 0) return [];
   if (key.length === theirs.length && key.every((name, index) => same(name, theirs[index]!)))
     return [];
   return [
     {
       code: "SOURCE_KEY_CHANGED",
       kind: "breaking",
-      before: key.length > 0 ? key.join(", ") : "none",
+      before: key.join(", "),
       after: theirs.join(", "),
     },
   ];

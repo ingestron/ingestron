@@ -1036,13 +1036,14 @@ It happens after cleansing and before the row checks. It needs the layer's
 `deduplicating` as the thing written), and:
 
 - `DEDUPLICATE_KEY`, an error at `cleanse.deduplicate`, when the table has
-  no primary key, from its contract or, without one, from its source metadata
-  (section 12.4): `"<table>" has no primary key, so deduplicate cannot tell
-which rows belong together.`, with the hint
-  ``Mark the key columns `primaryKey: true` in contract "<id>", or give them a `primaryKeyPosition` in the source metadata.``
-  When the table has no contract, so that its columns come from source
-  metadata, the hint names the metadata alone, since its contract's `id` is
-  not one a person wrote (section 12.4): ``Give the key columns a `primaryKeyPosition` in the source metadata of "<object>", or name a contract that marks them.``,
+  no primary key, from its contract or, when it names none, from its source
+  metadata (section 12.4): `"<table>" has no primary key, so deduplicate cannot
+tell which rows belong together.` The hint depends on where the table's
+  columns come from. For a table with a contract it is
+  ``Mark the key columns `primaryKey: true` in contract "<id>".``
+  For a table with no contract, so that its columns come from source metadata,
+  it names the metadata alone, since its contract's `id` is not one a person
+  wrote (section 12.4): ``Give the key columns a `primaryKeyPosition` in the source metadata of "<object>", or name a contract that marks them.``,
   with the `object` of its metadata entry.
 - `DEDUPLICATE_MODE`, when the table is stored by a step (a table that ends at
   the landed files, or that an ingest step writes, has none). It is judged first
@@ -2750,7 +2751,8 @@ holds of:
 The rule is evaluated with the rest of resolution, for the environment being
 planned: the same flow table may need a contract in one environment, whose
 platform manages access, and not in another. `CONTRACT_NEEDED` replaces
-`TABLE_NO_COLUMNS` and the columns of section 12.4.
+`TABLE_NO_COLUMNS` and the columns of section 12.4. The hint is
+`Name a contract for the table with `contract`.`, whichever the reason.
 
 ### 12.6 Comparing
 
@@ -2794,8 +2796,9 @@ is `SOURCE_TYPE_FITS`, information; a type that does not fit is
 
 **Keys.** The primary keys are different when the contract's `primaryKey`
 columns, ordered by `primaryKeyPosition`, and the entry's, ordered the same
-way, are not the same list of names. A table whose entry gives no key is not
-compared for its key: a source that does not say has not changed it.
+way, are not the same list of names. A key is compared only when both sides give
+one: a contract with no `primaryKey`, or an entry that gives no key, is not
+compared for its key, since a side that does not say has not changed it.
 
 **What is compared depends on the rung.** `SOURCE_TABLE_GONE` applies to a
 flow table with a contract and no metadata entry, and only when the
@@ -2866,7 +2869,7 @@ the metadata entry and `<connection>` the flow's `source`:
 A type is written `number(<precision>,<scale>)` for a number that gives a
 precision, with a missing scale as 0, `string(<maxLength>)` for a string that
 gives a `maxLength`, and its `logicalType` otherwise. A key is its columns
-joined with `, `, ordered as above, and `none` for a contract with no key.
+joined with `, `, ordered as above.
 `<flow object>` is the flow table's `object`, resolved. Where a message names a
 column, `<column>` is the one the subject has.
 

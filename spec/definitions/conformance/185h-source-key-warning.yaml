@@ -1,4 +1,4 @@
-description: "With sources.breaking warn, a different primary key is a warning whose feature is (primary key), so a column named key is never mistaken for it, and the platform accepts it by that feature."
+description: "With sources.breaking warn, a different primary key is a warning whose feature is (primary key), so a column named key is never mistaken for it, and the platform accepts it by that feature and not the column's own warning."
 environment: dev
 files:
   project.yaml: |
@@ -46,6 +46,7 @@ files:
         logicalType: object
         properties:
           - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: key, logicalType: integer }
   sources/erp.yaml: |
     apiVersion: ingestron.io/v1
     kind: SourceMetadata
@@ -58,8 +59,14 @@ files:
         columns:
           - { name: id, logicalType: integer, required: true, primaryKeyPosition: 1 }
           - { name: region, logicalType: string, required: true, primaryKeyPosition: 2 }
+          - { name: key, logicalType: string, required: false }
 expect:
   diagnostics:
+    - code: SOURCE_TYPE_CHANGED
+      severity: warning
+      file: sales.yaml
+      line: 8
+      subject: { table: orders, feature: key }
     - code: SOURCE_COLUMN_NEW
       severity: information
       file: sales.yaml

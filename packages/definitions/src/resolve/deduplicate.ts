@@ -107,5 +107,5 @@ function checkMode(
 function keyHint(contract: Contract): string {
   if (contract.origin === "metadata")
     return `Give the key columns a \`primaryKeyPosition\` in the source metadata of "${metadataObject(contract)}", or name a contract that marks them.`;
-  return `Mark the key columns \`primaryKey: true\` in contract "${contract.id}", or give them a \`primaryKeyPosition\` in the source metadata.`;
+  return `Mark the key columns \`primaryKey: true\` in contract "${contract.id}".`;
 }

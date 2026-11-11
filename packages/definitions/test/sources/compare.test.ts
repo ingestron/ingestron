@@ -100,6 +100,16 @@ describe("compareSourceColumns columns, nullability and keys", () => {
     ).toEqual([]);
   });
 
+  it("leaves a key the contract does not give, so no SOURCE_KEY_CHANGED", () => {
+    expect(
+      compareSourceColumns(
+        { columns: [{ name: "id" }], primaryKey: [] },
+        table(column("id", "integer", { primaryKeyPosition: 1 })),
+        loose,
+      ),
+    ).toEqual([]);
+  });
+
   it("matches by physicalName before name, and with case only when asked", () => {
     const before = { columns: [{ name: "email", physicalName: "EMAIL_ADDR" }], primaryKey: [] };
     const after = table(column("email_addr", "string"));
