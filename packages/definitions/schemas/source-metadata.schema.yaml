@@ -1,0 +1,140 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+title: SourceMetadata
+description: "What one connection's source holds: its tables, their columns, types and keys, as an observation that a flow table can take its columns from."
+type: object
+additionalProperties: false
+required: [apiVersion, kind, id, connection, tables]
+properties:
+  apiVersion: { const: ingestron.io/v1, description: Always ingestron.io/v1. }
+  kind: { const: SourceMetadata, description: The document kind. }
+  id:
+    type: string
+    pattern: "^[a-z][a-z0-9_]*$"
+    description: "The document's id: lowercase letters, digits and underscores."
+    examples:
+      - shop
+  description:
+    {
+      type: string,
+      description: "What this document is for, in a sentence.",
+      examples: [The tables of the web shop's database.],
+    }
+  connection:
+    type: string
+    description: Id of the Connection whose source this describes, of which a project has at most one document.
+    examples:
+      - shop
+  environment:
+    type: string
+    description: Which environment's source was read.
+    examples:
+      - dev
+  names:
+    type: object
+    additionalProperties: false
+    required: [parts, caseSensitive]
+    description: How the source names its objects, which decides how a flow table's `object` is matched with a table here.
+    properties:
+      parts:
+        type: integer
+        minimum: 1
+        maximum: 4
+        description: How many parts, separated by `.`, each object name has.
+        examples:
+          - 3
+      caseSensitive:
+        type: boolean
+        description: Whether names that differ only by case are different objects.
+        examples:
+          - false
+  tables:
+    type: array
+    description: The tables of the source.
+    items:
+      type: object
+      additionalProperties: false
+      required: [object, captured, columns]
+      description: One table of the source.
+      properties:
+        object:
+          type: string
+          minLength: 1
+          description: "The table's name at the source, in as many parts as `names.parts` says, and it may hold `/` as a file path does."
+          examples:
+            - ERP.dbo.Customers
+        captured:
+          type: object
+          additionalProperties: false
+          required: [at, from, file]
+          description: Where the table came from.
+          properties:
+            at:
+              type: string
+              minLength: 1
+              description: The time the table was captured, as an ISO 8601 timestamp.
+              examples:
+                - 2026-11-12T09:30:00Z
+            from:
+              enum: [catalog, document, sample, columns, assistant]
+              enumDescriptions:
+                - A recipe's query or API read the source's own catalog.
+                - A document format was read without a recipe.
+                - The rows of a data file were sampled.
+                - A columns file was imported.
+                - A columns file prepared by an assistant was imported.
+              description: The rung of the ladder the table was captured from.
+            recipe:
+              type: string
+              description: The recipe that read the table, when there is one.
+              examples:
+                - sqlserver
+            file:
+              type: string
+              minLength: 1
+              description: The file that was imported.
+              examples:
+                - erp.columns.csv
+        columns:
+          type: array
+          description: "The table's columns, in the source's order."
+          items: { $ref: "#/$defs/column" }
+$defs:
+  column:
+    type: object
+    additionalProperties: false
+    required: [name, logicalType, required]
+    description: "One column of a table, with field names and values as ODCS has them."
+    properties:
+      name:
+        type: string
+        minLength: 1
+        description: The column's name at the source.
+        examples:
+          - CustomerID
+      sourceType:
+        type: string
+        description: The type as the source states it, kept for comparing.
+        examples:
+          - nvarchar(200)
+      logicalType:
+        enum: [string, date, timestamp, time, number, integer, object, array, boolean]
+        description: The column's ODCS logical type.
+      logicalTypeOptions:
+        type: object
+        description: "The limits of the logical type as ODCS names them, such as `precision`, `scale` or `maxLength`."
+        examples:
+          - { precision: 18, scale: 2 }
+      required:
+        type: boolean
+        description: "Whether the source says the column cannot be null."
+      primaryKeyPosition:
+        type: integer
+        minimum: 1
+        description: "The column's place in the table's primary key, from 1."
+      properties:
+        type: array
+        description: "The fields of a column whose logical type is `object`."
+        items: { $ref: "#/$defs/column" }
+      items:
+        description: "The element of a column whose logical type is `array`."
+        $ref: "#/$defs/column"

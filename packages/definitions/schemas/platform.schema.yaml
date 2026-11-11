@@ -8,7 +8,7 @@ additionalProperties: false
 required: [apiVersion, kind, id]
 # A section per pack: any lower-case name that is not a field above or one reserved for later.
 patternProperties:
-  "^(?!(apiVersion|kind|id|description|workspace|mode|run_as|compute|settings|naming|tags|permissions|schedule|notifications|manage|grants|alerts|accept|principals)$)[a-z][a-z0-9-]*$":
+  "^(?!(apiVersion|kind|id|description|workspace|mode|run_as|compute|settings|naming|tags|permissions|schedule|notifications|manage|grants|alerts|accept|principals|sources)$)[a-z][a-z0-9-]*$":
     type: object
 properties:
   apiVersion: { const: ingestron.io/v1, description: Always ingestron.io/v1. }
@@ -335,6 +335,17 @@ properties:
       `${values.…}`. A role not listed is its own principal.
     examples:
       - { marketing-analysts: "${values.marketing_group}" }
+  sources:
+    type: object
+    additionalProperties: false
+    description: "The standard's `sources` setting for this platform, which wins over the standard's."
+    properties:
+      breaking:
+        enum: [fail, warn]
+        enumDescriptions:
+          - A breaking difference is an error.
+          - A breaking difference is a warning, which an `accept` entry can accept.
+        description: "What a breaking difference between a contract and its source's metadata is. Default: fail."
   accept:
     type: array
     items:

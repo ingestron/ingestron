@@ -42,3 +42,21 @@ properties:
   settings:
     type: object
     description: Connector settings, such as `path` for files. Write secrets as `${secret:…}`.
+  metadata:
+    type: object
+    additionalProperties: false
+    required: [from]
+    description: Where this source's metadata comes from, which changes nothing that is built.
+    properties:
+      from:
+        type: string
+        minLength: 1
+        description: The recipe that reads the source's metadata.
+        examples:
+          - sqlserver
+      with:
+        type: object
+        additionalProperties: { type: string }
+        description: "The recipe's inputs, such as a schema owner."
+        examples:
+          - { owner: dbo }

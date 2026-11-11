@@ -2536,6 +2536,7 @@ tables of one connection. Its schema is `source-metadata.schema.yaml`.
 ```yaml
 apiVersion: ingestron.io/v1
 kind: SourceMetadata
+id: erp
 connection: erp
 environment: dev
 names: { parts: 3, caseSensitive: false }
@@ -2560,6 +2561,7 @@ tables:
         }
 ```
 
+- `id` (required, as for every document, section 1) names the document, in the same form as a Connection's.
 - `connection` (required) is the id of a Connection of the project. A
   document whose `connection` is not one is `BROKEN_LINK`, an error at the
   `connection`, as for any link (section 1).

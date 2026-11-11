@@ -42,6 +42,7 @@ const reserved = new Set([
   "alerts",
   "accept",
   "principals",
+  "sources",
 ]);
 
 /** Each pack section the Platform writes, by pack id (a mapping under a key that is not a field). */

@@ -16,6 +16,8 @@ import type {
 import type { CleanseDoc, ColumnCleanseDoc } from "./cleanse-docs.js";
 import type { GovernanceDoc } from "./governance-docs.js";
 import type { RulesDoc } from "./rules.js";
+import type { ContractDoc, ProductDoc } from "./exchange-docs.js";
+import type { SourceMetadataDoc } from "./source-docs.js";
 
 /** An action's method choice and settings, as written in a flow or transform. */
 export interface ActionDoc {
@@ -47,6 +49,14 @@ export interface StandardDoc extends StandardIntentDoc {
   store?: RulesDoc;
   serve?: RulesDoc;
   governance?: GovernanceDoc;
+  /** How source metadata is compared with contracts (specification section 12.6). */
+  sources?: SourcesDoc;
+}
+
+/** The `sources` setting of the Standard and of the Platform. */
+export interface SourcesDoc {
+  /** What a breaking difference between a contract and its source's metadata is. */
+  breaking?: "fail" | "warn";
 }
 
 /** An alert as the Platform writes it: `on` is `[failure]` when left out. */
@@ -80,6 +90,8 @@ export interface PlatformDoc {
   accept?: AcceptDoc[];
   /** The principal each contract role is on this platform, by role (section 8.2). */
   principals?: Record<string, string>;
+  /** How source metadata is compared with contracts; wins over the standard's (section 12.6). */
+  sources?: SourcesDoc;
 }
 
 /** One entry of the Platform's `accept` list. */
@@ -97,6 +109,8 @@ export interface ConnectionDoc {
   /** The zone the source writes its timestamps in (specification section 6.3). */
   timezone?: string;
   settings?: Record<string, unknown>;
+  /** Where the connection's metadata comes from (specification section 12.2). */
+  metadata?: { from: string; with?: Record<string, string> };
 }
 
 /** One table of a flow. */
@@ -136,52 +150,6 @@ export interface TransformDoc extends TableIntentDoc {
   transform?: ActionDoc;
   store?: ActionDoc;
   serve?: ActionDoc;
-}
-
-/** The parts of an ODCS v3.1.0 contract that are used. */
-export interface ContractDoc {
-  id: string;
-  schema?: {
-    name: string;
-    description?: string;
-    properties?: {
-      name: string;
-      logicalType?: string;
-      physicalType?: string;
-      required?: boolean;
-      primaryKey?: boolean;
-      primaryKeyPosition?: number;
-      physicalName?: string;
-      description?: string;
-      /** ODCS quality rules on the column. */
-      quality?: unknown;
-      unique?: boolean;
-      /** Limits for the logical type, such as maxLength, checked on every row. */
-      logicalTypeOptions?: unknown;
-      tags?: unknown[];
-      classification?: string;
-    }[];
-    /** ODCS quality rules on the whole object. */
-    quality?: unknown;
-    tags?: unknown[];
-  }[];
-  roles?: { role: string; access?: string; description?: string; firstLevelApprovers?: string }[];
-  slaProperties?: { property: string; value: unknown; unit?: string }[];
-}
-
-/** An ODPS data product: the fields Ingestron reads. */
-export interface ProductDoc {
-  id: string;
-  name?: string;
-  version?: string;
-  domain?: string;
-  type?: string;
-  status?: string;
-  deprecated?: boolean;
-  description?: { purpose?: string; usage?: string; limitations?: string };
-  team?: { members?: { username: string; name?: string; role?: string }[] };
-  support?: { channel: string; url: string; tool?: string }[];
-  outputPorts?: { name: string; contractId?: string; description?: string }[];
 }
 
 const productKind = (apiVersion: string) =>
@@ -234,6 +202,12 @@ export const kinds = {
     kind: "Transform",
     schema: packageSchema("transform.schema.yaml"),
     links: { "/contract": "DataContract" },
+  }),
+  sourceMetadata: defineKind<SourceMetadataDoc>({
+    apiVersion,
+    kind: "SourceMetadata",
+    schema: packageSchema("source-metadata.schema.yaml"),
+    links: { "/connection": "Connection" },
   }),
   contract: defineKind<ContractDoc>({
     apiVersion: "v3.1.0",
