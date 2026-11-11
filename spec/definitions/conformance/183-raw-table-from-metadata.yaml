@@ -1,0 +1,81 @@
+description: "A flow table with no contract takes its columns and key from the source metadata: nullable columns with the type of each logical type, the primary key by primaryKeyPosition, and a contract that says it came from metadata, with no checks."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml", "sources/*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    layers:
+      - { name: bronze, does: raw }
+  erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: erp
+    connector: files
+    connectivity: public
+    settings: { path: /data/erp }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: erp
+    tables:
+      orders: { object: ERP.dbo.Orders }
+  sources/erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: SourceMetadata
+    id: erp
+    connection: erp
+    names: { parts: 3, caseSensitive: false }
+    tables:
+      - object: ERP.dbo.Orders
+        captured: { at: 2026-11-12T09:30:00Z, from: catalog, recipe: sqlserver, file: erp.csv }
+        columns:
+          - { name: id, sourceType: int, logicalType: integer, required: true, primaryKeyPosition: 1 }
+          - name: total
+            sourceType: "decimal(18,2)"
+            logicalType: number
+            logicalTypeOptions: { precision: 18, scale: 2 }
+            required: false
+expect:
+  diagnostics: []
+  tables:
+    - name: orders
+      does: raw
+      contract:
+        id: "erp:ERP.dbo.Orders"
+        origin: metadata
+        description: null
+        columns:
+          - {
+              name: id,
+              logicalType: integer,
+              type: BIGINT,
+              nullable: true,
+              physicalName: null,
+              description: null,
+              classification: null,
+              tags: null,
+            }
+          - {
+              name: total,
+              logicalType: number,
+              type: DOUBLE,
+              nullable: true,
+              physicalName: null,
+              description: null,
+              classification: null,
+              tags: null,
+            }
+        primaryKey: [id]
+        checks: []
+        tableChecks: []
+        unchecked: []
+        tags: []
+        roles: []
+        sla: []

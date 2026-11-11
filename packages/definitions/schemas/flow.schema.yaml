@@ -58,7 +58,7 @@ properties:
     additionalProperties:
       type: object
       additionalProperties: false
-      required: [object, contract]
+      required: [object]
       properties:
         object:
           { type: string, description: The table or file path at the source., examples: [orders] }

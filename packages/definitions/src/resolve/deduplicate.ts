@@ -43,7 +43,7 @@ export function checkDeduplicate(
       "DEDUPLICATE_KEY",
       `"${table.name}" has no primary key, so deduplicate cannot tell which rows belong together.`,
       at,
-      `Mark the key columns \`primaryKey: true\` in contract "${table.contract.id}".`,
+      `Mark the key columns \`primaryKey: true\` in contract "${table.contract.id}", or give them a \`primaryKeyPosition\` in the source metadata.`,
     );
     return { fine: false, judge: false };
   }

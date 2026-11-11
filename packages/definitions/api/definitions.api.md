@@ -203,8 +203,8 @@ export interface Contract {
     columns: Column[];
     // (undocumented)
     description?: string;
-    // (undocumented)
     id: string;
+    origin?: "metadata";
     primaryKey: string[];
     roles: ContractRole[];
     sla: {
@@ -263,7 +263,7 @@ export function contractUseOf(pack: PackInfo, path: string): ContractUse | undef
 export const defaultClassificationTag = "classification";
 
 // @public
-export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "PACK_VERSION" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "SETTING_MOVED" | "PLATFORM_FIELD_MOVED" | "INTENT_CONFLICT" | "NOT_APPLIED" | "PREVIEW_FEATURE" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "DUPLICATE_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "REPLACE_ME" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "TRANSFORM_CODE" | "LAYER_RESPONSIBILITY" | "QUARANTINE_UNUSED" | "CLEANSE_COLUMN" | "CLEANSE_TYPE" | "DEDUPLICATE_KEY" | "DEDUPLICATE_MODE" | "TIMEZONE_NAME" | "TIMEZONE_SOURCE" | "ACCEPT_CODE" | "ACCEPT_UNUSED" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS" | "ROLE_ACCESS" | "MASK_TYPE" | "FILTER_MATCH" | "FILTER_MULTIPLE" | "MASK_NEEDS_RUN_AS" | "MASK_FUNCTIONS" | "POLICY_LIMIT" | "POLICY_PRINCIPALS" | "DEPLOY_VALUE" | "ENVIRONMENTS_DIFFER" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS" | "PACK_NOTICE" | "PACK_LOAD" | "SOURCE_METADATA_DUPLICATE" | "SOURCE_OBJECT_AMBIGUOUS";
+export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "PACK_VERSION" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "SETTING_MOVED" | "PLATFORM_FIELD_MOVED" | "INTENT_CONFLICT" | "NOT_APPLIED" | "PREVIEW_FEATURE" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "DUPLICATE_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "REPLACE_ME" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "TRANSFORM_CODE" | "LAYER_RESPONSIBILITY" | "QUARANTINE_UNUSED" | "CLEANSE_COLUMN" | "CLEANSE_TYPE" | "DEDUPLICATE_KEY" | "DEDUPLICATE_MODE" | "TIMEZONE_NAME" | "TIMEZONE_SOURCE" | "ACCEPT_CODE" | "ACCEPT_UNUSED" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS" | "ROLE_ACCESS" | "MASK_TYPE" | "FILTER_MATCH" | "FILTER_MULTIPLE" | "MASK_NEEDS_RUN_AS" | "MASK_FUNCTIONS" | "POLICY_LIMIT" | "POLICY_PRINCIPALS" | "DEPLOY_VALUE" | "ENVIRONMENTS_DIFFER" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS" | "PACK_NOTICE" | "PACK_LOAD" | "SOURCE_METADATA_DUPLICATE" | "SOURCE_OBJECT_AMBIGUOUS" | "TABLE_NO_COLUMNS";
 
 // @public
 export type DeleteMode = "soft" | "hard" | "keep";
@@ -1083,14 +1083,14 @@ export interface TargetDifference {
 
 // Warnings were encountered during analysis:
 //
-// dist/documents/documents.d.ts:183:5 - (ae-forgotten-export) The symbol "StandardDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:184:5 - (ae-forgotten-export) The symbol "PlatformDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:185:5 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:186:5 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:187:5 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:188:5 - (ae-forgotten-export) The symbol "SourceMetadataDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:189:5 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:191:5 - (ae-forgotten-export) The symbol "ProductDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:184:5 - (ae-forgotten-export) The symbol "StandardDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:185:5 - (ae-forgotten-export) The symbol "PlatformDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:186:5 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:187:5 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:188:5 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:189:5 - (ae-forgotten-export) The symbol "SourceMetadataDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:190:5 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:192:5 - (ae-forgotten-export) The symbol "ProductDoc" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

@@ -2,3 +2,4 @@
 export { checkSourceMetadata, metadataTables } from "./metadata.js";
 export { matchObject } from "./match.js";
 export { matchTable } from "./table.js";
+export { metadataContract } from "./metadata-contract.js";

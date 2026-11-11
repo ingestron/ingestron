@@ -64,7 +64,7 @@ expect:
       file: sales.yaml
       line: 10
       message: '"orders" has no primary key, so deduplicate cannot tell which rows belong together.'
-      hint: 'Mark the key columns `primaryKey: true` in contract "orders".'
+      hint: 'Mark the key columns `primaryKey: true` in contract "orders", or give them a `primaryKeyPosition` in the source metadata.'
     - code: CLEANSE_COLUMN
       severity: error
       file: sales.yaml

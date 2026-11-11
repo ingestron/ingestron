@@ -1025,10 +1025,12 @@ It happens after cleansing and before the row checks. It needs the layer's
 `does` to list `deduplicate`, or no `does` (`LAYER_RESPONSIBILITY`, with
 `deduplicating` as the thing written), and:
 
-- `DEDUPLICATE_KEY`, an error at `cleanse.deduplicate`, when the contract has
-  no primary key: `"<table>" has no primary key, so deduplicate cannot tell
+- `DEDUPLICATE_KEY`, an error at `cleanse.deduplicate`, when the table has
+  no primary key, from its contract or, without one, from its source metadata
+  (section 12.4): `"<table>" has no primary key, so deduplicate cannot tell
 which rows belong together.`, with the hint `Mark the key columns
-`primaryKey: true` in contract "<id>".`
+`primaryKey: true`in contract "<id>", or give them a`primaryKeyPosition` in
+the source metadata.`
 - `DEDUPLICATE_MODE`, when the table is stored by a step (a table that ends at
   the landed files, or that an ingest step writes, has none). It is judged first
   by how the store step keeps rows, then by the table's resolved `history`
@@ -1698,8 +1700,8 @@ optional `environmentsTogether: true` (section 7), an optional
 `replaceMe: error` (section 1), and
 `expect`: `tables` (partial objects, in order,
 with `fullName` written as `catalog.schema.table`, and `null` at any key for
-a value the table does not have, such as `serve: null` for a step or
-`settings: { mode: null }` for a setting), `products` (partial objects,
+a value the table does not have, such as `serve: null` for a step,
+`settings: { mode: null }` for a setting or `type: null` in a listed column), `products` (partial objects,
 in order), `standard` (a partial object), `platform`, `names`, `deployValues`, `previewFeatures` and
 `operations` (the model's, exactly) and `qualityResults`, or
 `diagnostics` (matched in order on the fields given; `fixes` lists the fix

@@ -116,7 +116,8 @@ export interface ConnectionDoc {
 /** One table of a flow. */
 export interface FlowTableDoc extends FlowIntentDoc {
   object: string;
-  contract: string;
+  /** Absent when the table takes its columns and key from source metadata (section 12.4). */
+  contract?: string;
   expectations?: ExpectationDoc[];
   quality?: QuarantineDoc;
   cleanse?: CleanseDoc;

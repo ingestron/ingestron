@@ -4,7 +4,7 @@ import { allowsWritten, endsAtFiles, NO_STORE, type Facts, type Named } from "..
 import { aboutOne, type Context } from "../context/index.js";
 import { flowContract } from "./flow-contract.js";
 import { checkSourceMetadata, matchTable } from "../sources/index.js";
-import { kinds, type FlowDoc } from "../documents/index.js";
+import { kinds, type FlowDoc, type SourceTableDoc } from "../documents/index.js";
 import type { ResolvedTable } from "../pack/index.js";
 import type { SettingsLayer } from "./settings.js";
 import { landedIngest, leftOut } from "./runs-on.js";
@@ -40,8 +40,8 @@ export function flowTables(context: Context, namer: TableNamer): ResolvedTable[]
         return [];
       }
       seen.add(name);
-      matchTable(aboutOne(context, name), flow, name, flow.value.source);
-      const table = flowTable(aboutOne(context, name), flow, name, namer);
+      const entry = matchTable(aboutOne(context, name), flow, name, flow.value.source);
+      const table = flowTable(aboutOne(context, name), flow, name, namer, entry);
       return table ? [table] : [];
     }),
   );
@@ -66,6 +66,7 @@ function flowTable(
   flow: Flow,
   name: string,
   namer: TableNamer,
+  entry: SourceTableDoc | undefined,
 ): ResolvedTable | undefined {
   const doc = flow.value.tables[name];
   const layer = namer.layerOf(flow.value.layer, 0, { document: flow, pointer: "/layer" });
@@ -79,13 +80,9 @@ function flowTable(
   const steps = stepsOf(context, flow, name, facts);
   if (steps === false) return undefined;
   const { places, ...intent } = tableIntent(context, declared, steps);
-  const contract = flowContract(context, flow, name, steps);
-  const fullName = renderTableName(context, namer, {
-    layer,
-    table: name,
-    flow: flow.value.id,
-    source: flow.value.source,
-  });
+  const contract = flowContract(context, flow, name, steps, entry);
+  const { id, source } = flow.value;
+  const fullName = renderTableName(context, namer, { layer, table: name, flow: id, source });
   if (!steps || !contract || !fullName) return undefined;
   const table: ResolvedTable = {
     name,

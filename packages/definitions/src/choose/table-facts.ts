@@ -14,8 +14,15 @@ export type GovernanceFacts = Pick<Facts, "classification" | "tags" | "product" 
  * contract object the table uses (by the order of the standard's
  * `governance.classification.values`; none without that list), that object's tags, and
  * the id and domain of the first data product, in path order, that publishes the contract.
+ * A table with no contract (its columns come from source metadata) has no tags and nothing
+ * else.
  */
-export function tableFacts(context: Context, contractId: string, table: string): GovernanceFacts {
+export function tableFacts(
+  context: Context,
+  contractId: string | undefined,
+  table: string,
+): GovernanceFacts {
+  if (contractId === undefined) return { tags: [] };
   const entry = contractEntry(context, contractId, table);
   const classification = highest(
     context.standard.value.governance?.classification?.values ?? [],

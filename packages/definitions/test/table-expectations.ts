@@ -30,13 +30,14 @@ export function matchTable(table: unknown, wanted: Record<string, unknown>): voi
 /** The key paths of a case's expectation whose value is `null`. */
 function nullPaths(wanted: unknown, path: string[] = []): string[][] {
   if (wanted === null) return [path];
-  if (typeof wanted !== "object" || Array.isArray(wanted)) return [];
+  if (typeof wanted !== "object") return [];
   return Object.entries(wanted).flatMap(([key, child]) => nullPaths(child, [...path, key]));
 }
 
 /** The expectation without its `null` keys, which `nullPaths` checks. */
 function withoutNulls(wanted: unknown): unknown {
-  if (typeof wanted !== "object" || wanted === null || Array.isArray(wanted)) return wanted;
+  if (Array.isArray(wanted)) return wanted.map(withoutNulls);
+  if (typeof wanted !== "object" || wanted === null) return wanted;
   const kept = Object.entries(wanted).filter(([, child]) => child !== null);
   return Object.fromEntries(kept.map(([key, child]) => [key, withoutNulls(child)]));
 }
