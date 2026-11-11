@@ -16,6 +16,19 @@ describe("passport claims", () => {
     expect(elsewhere).not.toContain("Unity Catalog");
   });
 
+  it("asks the model whether the pack that keeps the table has tags on", () => {
+    const resolved = model(project());
+    const customers = resolved.tables.find((item) => item.name === "customers")!;
+    customers.store = { ...customers.store!, pack: "duckdb" };
+    resolved.platform.manage.tags = true;
+    resolved.platform.sections.duckdb = { manage: { tags: true } };
+    expect(passports(resolved)["customers.md"]).toMatch(
+      /\| email \|.*confidential \(sensitive\), tagged on DuckDB \|/,
+    );
+    customers.endsAtFiles = { by: "standard-default" };
+    expect(passports(resolved)["customers.md"]).not.toContain("tagged");
+  });
+
   it("says in every section that an output is not built here, beside one that is", () => {
     const resolved = model(project());
     const product = resolved.products.find((item) => item.id === "sales")!;

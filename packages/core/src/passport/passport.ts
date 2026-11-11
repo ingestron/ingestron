@@ -8,7 +8,8 @@ import {
 } from "@ingestron/definitions";
 import { lineage } from "./passport-lineage.js";
 import { supplied } from "./passport-supplied.js";
-import { access, columns, freshness, provides, table } from "./passport-sections.js";
+import { access } from "./passport-access.js";
+import { columns, freshness, provides, table } from "./passport-sections.js";
 import { quality } from "./passport-quality.js";
 
 /**

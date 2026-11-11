@@ -46,7 +46,7 @@ function tableQuality(model: ResolvedModel, table: ResolvedTable): string {
 }
 
 /** The table by its full name, or where its files land when it ends at them. */
-function titleOf(table: ResolvedTable): string {
+export function titleOf(table: ResolvedTable): string {
   if (!table.endsAtFiles) return `\`${fullNameText(table.fullName)}\``;
   const location = table.ingest?.output?.location;
   return location ? `Landed files at \`${location}\`` : "Landed files";

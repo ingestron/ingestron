@@ -35,6 +35,8 @@ export function standIns(notices: readonly Notice[] = []): Pack[] {
     "pack-plain.yaml",
     "pack-three.yaml",
     "pack-quality.yaml",
+    "pack-databricks.yaml",
+    "pack-views.yaml",
   ].map((file) => standIn(parse(readFileSync(join(folder, file), "utf8")) as DataPack, notices));
 }
 

@@ -1,5 +1,5 @@
 // The passport's sections about what a product provides (spec/cli/passport.md,
-// sections 3 to 7): its tables, columns, quality, freshness and access.
+// sections 3, 4 and 6): its tables, columns and freshness, and the helpers the others share.
 import {
   fullNameText,
   type Column,
@@ -8,6 +8,8 @@ import {
   type ResolvedProduct,
   type ResolvedTable,
 } from "@ingestron/definitions";
+import { keeperOf } from "./passport-not-applied.js";
+import { capabilityOn, engineName } from "./passport-platform.js";
 
 /** Text for a Markdown table cell: one line, with `|` escaped. */
 export function cell(text: string | undefined): string {
@@ -25,18 +27,12 @@ export function table(header: string[], rows: string[][]): string {
   return [line(header), `| ${header.map(() => "---").join(" | ")} |`, ...rows.map(line)].join("\n");
 }
 
-const homes: Record<string, string> = {
-  databricks: "Databricks",
-  synapse: "Synapse serverless SQL",
-  duckdb: "DuckDB",
-};
-
 /** Where a table's data lives after its last step. */
 function home(built: ResolvedTable): string {
   if (built.endsAtFiles)
     return `Landed files at ${built.ingest?.output?.location ?? "the landing storage"}`;
   const last = built.serve ?? built.store ?? built.transform ?? built.ingest;
-  return last ? (homes[last.pack] ?? last.pack) : "";
+  return last ? engineName(last.pack) : "";
 }
 
 /** Each output with its table in this environment, as pairs of the output and its tables. */
@@ -78,9 +74,14 @@ export function provides(model: ResolvedModel, product: ResolvedProduct): string
   return `## What it provides in ${environment}\n\n${table(["Output", "What it is", `Table in ${environment}`, "Where it lives"], rows)}`;
 }
 
-/** Whether Databricks tags this table's classified columns: it stores the table and tags are on. */
-function taggedInUnityCatalog(model: ResolvedModel, built: ResolvedTable | undefined): boolean {
-  return model.platform.manage.tags && built?.store?.pack === "databricks";
+/**
+ * Where a classified column of this table is tagged: by the pack that keeps the table, when
+ * the platform turns tags on for it; none for a table that ends at the landed files.
+ */
+function taggedWords(model: ResolvedModel, built: ResolvedTable | undefined): string {
+  const pack = built && !built.endsAtFiles ? keeperOf(built) : undefined;
+  if (pack === undefined || !capabilityOn(model, "tags", pack)) return "";
+  return pack === "databricks" ? ", tagged in Unity Catalog" : `, tagged on ${engineName(pack)}`;
 }
 
 /** The contract's logical type, so landed and contract columns read alike; else the physical one. */
@@ -93,7 +94,7 @@ export function columns(model: ResolvedModel, product: ResolvedProduct): string 
   const sensitive = model.standard.governance?.classification?.sensitive ?? [];
   const parts = outputTables(model, product).map(({ output, tables }) => {
     const contract = tables[0]?.contract;
-    const tagged = taggedInUnityCatalog(model, tables[0]) ? ", tagged in Unity Catalog" : "";
+    const tagged = taggedWords(model, tables[0]);
     if (!contract) return `### ${output.name}\n\n${notBuilt}`;
     const landed = landedColumns(tables[0]!).map((column) => [
       column.name,
@@ -135,28 +136,6 @@ export function freshness(model: ResolvedModel, product: ResolvedProduct): strin
     ? `- Refreshed on the schedule \`${schedule.cron}\` (${schedule.timezone})${schedule.paused ? ", paused" : ""}.`
     : "- Refreshed when its pipelines run.";
   return ["## Freshness", [...promises, refresh].join("\n")].join("\n\n");
-}
-
-/** Section 7: who may use the data, as the contracts declare. */
-export function access(model: ResolvedModel, product: ResolvedProduct): string {
-  const rows = contracts(model, product).flatMap((contract) =>
-    contract.roles.map((role) => [
-      role.role,
-      role.access ?? "",
-      role.description ?? "",
-      role.firstLevelApprovers ?? "",
-    ]),
-  );
-  const unbuilt = notBuiltLines(model, product);
-  const note = "As declared in the contracts; Ingestron does not grant access.";
-  const body =
-    rows.length > 0
-      ? [table(["Role", "Access", "Purpose", "Approvers"], rows), ...unbuilt, note]
-      : [
-          ...(unbuilt.length < product.outputs.length ? ["The contracts name no roles."] : []),
-          ...unbuilt,
-        ];
-  return `## Who may use it\n\n${body.join("\n\n")}`;
 }
 
 /** The contract of each output built here, once each. */

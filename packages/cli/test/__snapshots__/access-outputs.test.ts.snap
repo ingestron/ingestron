@@ -1,0 +1,99 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`a project with access on databricks > plans, with what is not applied under its own heading 1`] = `
+"databricks → build/databricks (dev, prod)
+create    databricks.yml
+create    prerequisites/dev.sql
+create    prerequisites/prod.sql
+create    resources/crm.pipeline.yml
+create    resources/crm_refresh.job.yml
+create    src/crm/bronze/customers.sql
+create    tasks/crm/apply_contract.py
+
+7 files: 7 create. Ready to apply.
+products → build/products (dev, prod)
+create    dev/README.md
+create    dev/crm.md
+create    prod/README.md
+create    prod/crm.md
+
+4 files: 4 create. Ready to apply.
+"
+`;
+
+exports[`a project with access on databricks > says in its passport who may use it, and what is enforced where 1`] = `
+"## Who may use it
+
+### customers
+
+#### \`dev.bronze.customers\`
+
+| Role | Principal in dev | Access | Purpose | Approvers | Granted |
+| --- | --- | --- | --- | --- | --- |
+| marketing-analysts | marketing-analysts-dev | read | Campaign reporting | mia@example.com | Granted on Databricks. |
+| crm-loaders | crm-loaders | write |  |  | Granted on Databricks. |
+| data-engineers | data-engineers | write |  |  | Granted on Databricks. |
+
+Grant mode: exact. On Databricks, any other access granted directly on the table is taken away.
+
+Masked columns:
+
+- \`email\` (confidential): hashed, on Databricks.
+
+Row filters:
+
+- \`region_rows\`: \`region_filter\` decides which rows each reader sees, from \`country\`, on Databricks.
+"
+`;
+
+exports[`a project with access on duckdb > plans, with what is not applied under its own heading 1`] = `
+"Not applied on this platform
+dev:
+contracts/customers.yaml:15:5  warning  NOT_APPLIED
+  Access for the role "marketing-analysts" in table "customers" isn't applied on duckdb: DuckDB has no access control.
+contracts/customers.yaml:16:5  warning  NOT_APPLIED
+  Access for the role "crm-loaders" in table "customers" isn't applied on duckdb: DuckDB has no access control.
+standard.yaml:9:15  warning  NOT_APPLIED
+  Access for the role "data-engineers" in table "customers" isn't applied on duckdb: DuckDB has no access control.
+contracts/customers.yaml:12:77  warning  NOT_APPLIED
+  The "hash" mask on "email" in table "customers" isn't applied on duckdb: DuckDB has no access control.
+standard.yaml:16:18  warning  NOT_APPLIED
+  The filter "region_rows" in table "customers" isn't applied on duckdb: DuckDB has no access control.
+duckdb → build/duckdb (dev)
+create    dev/README.md
+create    dev/run.sql
+create    dev/tables/bronze.customers.sql
+
+3 files: 3 create. Ready to apply.
+products → build/products (dev)
+create    dev/README.md
+create    dev/crm.md
+
+2 files: 2 create. Ready to apply.
+"
+`;
+
+exports[`a project with access on duckdb > says in its passport who may use it, and what is enforced where 1`] = `
+"## Who may use it
+
+### customers
+
+#### \`crm.bronze.customers\`
+
+| Role | Principal in dev | Access | Purpose | Approvers | Granted |
+| --- | --- | --- | --- | --- | --- |
+| marketing-analysts | marketing-analysts-dev | read | Campaign reporting | mia@example.com | Not enforced on DuckDB: DuckDB has no access control. |
+| crm-loaders | crm-loaders | write |  |  | Not enforced on DuckDB: DuckDB has no access control. |
+| data-engineers | data-engineers | write |  |  | Not enforced on DuckDB: DuckDB has no access control. |
+
+Grant mode: exact. Not enforced on DuckDB: DuckDB has no access control.
+
+Masked columns:
+
+- \`email\` (confidential): hashed. Not enforced on DuckDB: DuckDB has no access control.
+
+Row filters:
+
+- \`region_rows\`: \`region_filter\` decides which rows each reader sees, from \`country\`. Not enforced on DuckDB: DuckDB has no access control.
+"
+`;
