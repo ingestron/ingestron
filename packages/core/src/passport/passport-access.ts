@@ -89,7 +89,13 @@ function tableAccess(model: ResolvedModel, built: ResolvedTable): string {
     title,
     roles,
     ...(granted.grants.length > 0 || granted.exact
-      ? [modeLine(granted.exact, verdicts, judges.map((judge) => judge.pack))]
+      ? [
+          modeLine(
+            granted.exact,
+            verdicts,
+            judges.map((judge) => judge.pack),
+          ),
+        ]
       : []),
     ...(masks.length > 0 ? [`Masked columns:\n\n${masks.join("\n")}`] : []),
     ...(filters.length > 0 ? [`Row filters:\n\n${filters.join("\n")}`] : []),
@@ -122,7 +128,10 @@ function verdictOf(
     return { engine, reason: `the platform has ${switchWords[item.capability]} off` };
   const tagged = tagFinds[item.capability];
   if (tagged !== undefined && !capabilityOn(model, "tags", judge.pack))
-    return { engine, reason: `the platform has tags off, and ${tagged} find columns by their tags` };
+    return {
+      engine,
+      reason: `the platform has tags off, and ${tagged} find columns by their tags`,
+    };
   return { engine };
 }
 
