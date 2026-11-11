@@ -18,7 +18,7 @@ const keyFeature = "(primary key)";
  * reports each difference at the table's `contract`: a table that no entry matches is
  * `SOURCE_TABLE_GONE`, but only when the connection's document has a table captured from a
  * catalog. Nothing is compared when the object matched more than one table (reported
- * already). The context reports as about the table.
+ * already) or is one reference that is unset, so that its name is not known. The context reports as about the table.
  */
 export function compareWithContract(
   context: Context,
@@ -27,7 +27,7 @@ export function compareWithContract(
   id: string,
   match: TableMatch | undefined,
 ): void {
-  if (!match || match.ambiguous) return;
+  if (!match || match.ambiguous || match.notKnown) return;
   const at = { document: flow, pointer: `/tables/${name}/contract` };
   const { entry } = match;
   if (!entry)

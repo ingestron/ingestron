@@ -55,4 +55,6 @@ expect:
       severity: error
       file: sales.yaml
       line: 8
+      message: 'Column "email" of contract "orders" is not in the source metadata for "ERP.dbo.Orders".'
+      hint: "Remove the column from the contract, or import the source's metadata again if the column is still there."
       subject: null

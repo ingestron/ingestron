@@ -58,18 +58,24 @@ expect:
       severity: error
       file: sales.yaml
       line: 8
+      message: 'Column "id" is required in contract "orders", but the source metadata for "ERP.dbo.Orders" says it can be null.'
+      hint: "Make the column not required in the contract, or ask the source's owner whether it can be null."
     - code: SOURCE_TYPE_CHANGED
       severity: error
       file: sales.yaml
       line: 8
+      hint: "Change the column's type in the contract to one the source's type fits, or ask the source's owner about the change."
       message: 'Column "total" is number in the source metadata for "ERP.dbo.Orders", but integer in contract "orders".'
     - code: SOURCE_TYPE_FITS
       severity: information
       file: sales.yaml
       line: 8
+      hint: "Nothing breaks. Change the contract to the source's type if you want it exact."
       message: 'Column "note" is string(50) in the source metadata for "ERP.dbo.Orders", which fits string(200) in contract "orders".'
       subject: { table: orders, feature: note }
     - code: SOURCE_KEY_CHANGED
       severity: error
       file: sales.yaml
       line: 8
+      message: 'The primary key of contract "orders" is (id), but the source metadata for "ERP.dbo.Orders" has (id, note).'
+      hint: "Change the contract's primary key to the source's, or ask the source's owner about the change."

@@ -3,7 +3,8 @@ import type { DefinitionDocument } from "@ingestron/config";
 import type { Context } from "../context/index.js";
 import type { FlowDoc, SourceMetadataDoc, SourceTableDoc } from "../documents/index.js";
 import { writtenValue } from "../internal/index.js";
-import { matchObject } from "./match.js";
+import { holdsUnsetEnvvar } from "../diagnostics/index.js";
+import { isReference, matchObject } from "./match.js";
 import { metadataTables } from "./metadata.js";
 
 /** What a flow table found in its connection's source metadata (specification section 12.3). */
@@ -12,6 +13,11 @@ export interface TableMatch {
   document: SourceMetadataDoc;
   /** The one table the object matches; none for no match, or for more than one. */
   entry?: SourceTableDoc;
+  /**
+   * True when the object is written as one reference that is unset at planning: its name is
+   * not known, so it is never `SOURCE_TABLE_GONE` (specification section 12.6).
+   */
+  notKnown: boolean;
   /** True when more than one table matched, which `SOURCE_OBJECT_AMBIGUOUS` has reported. */
   ambiguous: boolean;
 }
@@ -49,7 +55,9 @@ export function matchTable(
       { document: flow, pointer },
       "Write more of the object's name, such as its schema, so that it matches one table.",
     );
-    return { document, ambiguous: true };
+    return { document, ambiguous: true, notKnown: false };
   }
-  return { document, ambiguous: false, ...(matches[0] && { entry: matches[0] }) };
+  const text = typeof written === "string" ? written : object;
+  const notKnown = isReference(text) && holdsUnsetEnvvar(context.project, object);
+  return { document, ambiguous: false, notKnown, ...(matches[0] && { entry: matches[0] }) };
 }

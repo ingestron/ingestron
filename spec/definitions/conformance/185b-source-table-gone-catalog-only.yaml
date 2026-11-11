@@ -58,4 +58,6 @@ expect:
       severity: error
       file: sales.yaml
       line: 8
+      message: 'The source metadata for "erp" was read from a catalog and does not list "ERP.dbo.Orders".'
+      hint: "Check the object's name, or import the source's metadata again if the table was added since."
       subject: null

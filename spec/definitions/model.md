@@ -2653,7 +2653,8 @@ matched with the `object` of each table of its connection's metadata:
   is one reference, such as `${values.table}`, or only references), none is a
   wildcard: the parts are taken from the resolved text instead, so a variable
   that holds the whole object matches its value and not every table, and a
-  reference that is unset at planning then matches nothing. Case is compared
+  reference that is unset at planning then matches nothing, and is not
+  `SOURCE_TABLE_GONE` either, since its name is not known (section 12.6). Case is compared
   when `names.caseSensitive` is `true`, and ignored otherwise. A flow's `object` with more parts than `names.parts` matches
   nothing, deliberately, so the table then has no entry (`TABLE_NO_COLUMNS`
   in section 12.4, or `SOURCE_TABLE_GONE` in section 12.6 where catalog tables
@@ -2824,6 +2825,50 @@ name for the column, and the metadata's for `SOURCE_COLUMN_NEW`),
 for `SOURCE_TABLE_GONE`, so that a team accepts one column of one table and not
 another. The feature is `(primary key)` so that a column named `key` is not
 mistaken for the key.
+
+**Not known.** A flow table whose `object` is written as one reference that is
+unset at planning, such as `${envvar:TABLE}`, is not compared and is never
+`SOURCE_TABLE_GONE`: its name is not known, so that it is gone would be false.
+Unset is reported as for any reference (section 1).
+
+**Messages.** Each code's message and hint are, with `<column>` the column as
+the subject says it, `<contract>` the contract's id, `<object>` the `object` of
+the metadata entry and `<connection>` the flow's `source`:
+
+- `SOURCE_COLUMN_GONE`:
+  `Column "<column>" of contract "<contract>" is not in the source metadata for "<object>".`
+  The hint is
+  `Remove the column from the contract, or import the source's metadata again if the column is still there.`
+- `SOURCE_COLUMN_NEW`:
+  `The source metadata for "<object>" has a column "<column>" that contract "<contract>" does not have.`
+  The hint is `Add the column to the contract to use it, or leave it out.`
+- `SOURCE_TYPE_CHANGED`:
+  `Column "<column>" is <metadata type> in the source metadata for "<object>", but <contract type> in contract "<contract>".`
+  The hint is
+  `Change the column's type in the contract to one the source's type fits, or ask the source's owner about the change.`
+- `SOURCE_TYPE_FITS`:
+  `Column "<column>" is <metadata type> in the source metadata for "<object>", which fits <contract type> in contract "<contract>".`
+  The hint is
+  `Nothing breaks. Change the contract to the source's type if you want it exact.`
+- `SOURCE_NULLABLE`:
+  `Column "<column>" is required in contract "<contract>", but the source metadata for "<object>" says it can be null.`
+  The hint is
+  `Make the column not required in the contract, or ask the source's owner whether it can be null.`
+- `SOURCE_KEY_CHANGED`:
+  `The primary key of contract "<contract>" is (<contract key>), but the source metadata for "<object>" has (<metadata key>).`
+  The hint is
+  `Change the contract's primary key to the source's, or ask the source's owner about the change.`
+- `SOURCE_TABLE_GONE`:
+  `The source metadata for "<connection>" was read from a catalog and does not list "<flow object>".`
+  The hint is
+  `Check the object's name, or import the source's metadata again if the table was added since.`
+
+A type is written `number(<precision>,<scale>)` for a number that gives a
+precision, with a missing scale as 0, `string(<maxLength>)` for a string that
+gives a `maxLength`, and its `logicalType` otherwise. A key is its columns
+joined with `, `, ordered as above, and `none` for a contract with no key.
+`<flow object>` is the flow table's `object`, resolved. Where a message names a
+column, `<column>` is the one the subject has.
 
 ## Accepted warnings
 

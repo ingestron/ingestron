@@ -57,4 +57,6 @@ expect:
       severity: information
       file: sales.yaml
       line: 8
+      message: 'The source metadata for "ERP.dbo.Orders" has a column "region" that contract "orders" does not have.'
+      hint: "Add the column to the contract to use it, or leave it out."
       subject: { table: orders, feature: region }

@@ -5,6 +5,11 @@ import type { SourceMetadataDoc, SourceTableDoc } from "../documents/index.js";
 /** A part that is exactly one `${…}` reference: it matches anything. */
 const onlyReference = /^\$\{[^}]*\}$/;
 
+/** True for text that is exactly one `${…}` reference. */
+export function isReference(text: string): boolean {
+  return onlyReference.test(text);
+}
+
 /**
  * Every table whose `object` the flow's object matches, in the order given. `object` is the
  * resolved text and `written` the same text as written, before any reference was replaced,
