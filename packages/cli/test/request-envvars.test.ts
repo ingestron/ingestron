@@ -53,7 +53,7 @@ describe("ingestron request with environment variables", () => {
     expect(output).toContain(`\`\${envvar:INGT_REQ_LANDING}/${folderValue}\``);
   });
 
-  it("still gives the short note, and exits 1, when the definitions have a real error", () => {
+  it("lists the errors after the note, and exits 1, when the definitions have a real error", () => {
     const folder = withVariables();
     writeFileSync(
       join(folder, "flows/orders.yaml"),
@@ -62,9 +62,15 @@ describe("ingestron request with environment variables", () => {
     );
     const { code, output } = ingestron(folder, "request", "--env", "dev");
     expect(code).toBe(1);
-    expect(output).toBe(
-      "# Platform request (dev)\n\nThe definitions have problems; fix them first.\n",
-    );
+    expect(
+      output.startsWith(
+        "# Platform request (dev)\n\nThe definitions have problems; fix them first:\n\n```text\nflows/orders.yaml:",
+      ),
+    ).toBe(true);
+    expect(output).toContain("  error  BROKEN_LINK\n");
+    expect(output).toContain('"shop.missing"');
+    expect(output).not.toContain("  warning  ");
+    expect(output.endsWith("\n```\n")).toBe(true);
   });
 
   it("has no such section when the definitions read no environment variable", () => {

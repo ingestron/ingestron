@@ -26,10 +26,14 @@ section 1):
 - each pack's `check` of the whole project, when the model holds an unset
   reference or any problem was left out.
 
-When an error stops the request, the request is only the title
-`# Platform request (<environment>)` and the note "The definitions have
-problems; fix them first.", and no problem is listed; `ingestron plan`
-lists them. The command's exit code is 1 when any environment's definitions
+When an error stops the request, the request is the title
+`# Platform request (<environment>)`, the note "The definitions have
+problems; fix them first:", and each error in a `text` code block, written as
+`ingestron plan` writes a problem (place, severity, code, message, hint and
+fix). Warnings and information are left out. The request lists its own errors
+because it resolves the definitions with each variable's value where one is
+set, so a value supplied when deploying is checked here and may not be in
+`ingestron plan`. The command's exit code is 1 when any environment's definitions
 have errors, and 0 otherwise, including when the only problems are unset
 variables. The exit code comes from whether each environment resolved, not
 from the text. A pack that cannot be loaded gives the `PACK_LOAD` error and
