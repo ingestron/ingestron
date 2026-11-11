@@ -17,7 +17,10 @@ export interface Step {
   chosenBy: ChosenBy;
   /** Where the step's data lands, when its method says (specification section 2). */
   output?: StepOutput;
-  /** On a serve step of another pack than the keeping step's: the access it does not apply (section 8.2). */
+  /**
+   * On a serve step of another pack than the keeping step's, or of a table no step keeps: the
+   * access it does not apply (specification section 8.2). Absent when it has none.
+   */
   notApplied?: NotApplied[];
 }
 

@@ -1505,7 +1505,9 @@ principals:
 ```
 
 **Which tables.** Access is resolved for every table that does not end at the
-landed files. A table that ends there keeps no table, so it has none.
+landed files. A table that ends there keeps no table, so it has none, unless a
+serve step serves it from the landed files: readers use that step, so the
+table has access as any table, judged by the serve step (below).
 
 **Grants.** A table's grants are, in order:
 
@@ -1522,8 +1524,8 @@ is written, so one principal may appear more than once.
 `ROLE_ACCESS`: a contract role whose `access` is neither `read` nor `write` is
 an error at the `access`, once for each contract, where the role would be
 granted: on a table whose layer grants the contract's roles and whose keeping
-pack, or serving pack (below), applies grants. Anywhere else the value is not used, and it is not
-reported, so a project that does not grant gains no error:
+pack, or serving pack (below), applies grants. Anywhere else the value is not
+used, and it is not reported, so a project that does not grant gains no error:
 `The role "<role>" of contract "<id>" has access "<access>"; it must be read or write.`
 with the hint `Write read, or write for read and write. Leave it out to read.`
 A layer role's `access` is checked by the Standard schema.
@@ -1571,15 +1573,16 @@ error at the filter, once for each contract:
 with the columns in the contract's order, joined with `, `, and the hint
 `Narrow its match, such as with a tag value, or tag only one of the columns.`
 
-**In the model.** `ResolvedTable.access` is `{ grants, exact, masks, filters }`
-when any of `grants`, `masks` and `filters` is not empty. With exact grants, a
-table that has none of them but whose grants are applied by the pack that
-keeps it, or by the pack that serves it (judged below, as for a role: that
-step's entry for `access.grants=read` is `used` and the platform turns
-`grants` on for that pack) has `{ grants: [], exact: true, masks: [], filters: [] }`, and its exact
-grants are judged as any table's. Otherwise the table has no `access`, as
-before access was resolved; additive grants, the default, give no table an
-`access` it did not have.
+**In the model.** `ResolvedTable.access` is
+`{ grants, exact, masks, filters }` when any of `grants`, `masks` and
+`filters` is not empty. With exact grants, a table that has none of them but
+whose grants are applied by the pack that keeps it, or by the pack that serves
+it (judged below, as for a role: that step's entry for `access.grants=read` is
+`used` and the platform turns `grants` on for that pack) has
+`{ grants: [], exact: true, masks: [], filters: [] }`, and its exact grants
+are judged as any table's. Otherwise the table has no `access`, as before
+access was resolved; additive grants, the default, give no table an `access`
+it did not have.
 
 **Judging access.** A table's access is judged by the step that keeps the
 table, as checks are (section 11.7): its store step, else its ingest step when
@@ -1621,13 +1624,13 @@ known; its subject (section 1.2) has the feature, and
 the `table` only when it names one table. Each table it names has the feature in
 its `notApplied` (section 11.7), with the `column` for a mask.
 
-**A served table.** A table whose serve step's pack is not the keeping
-step's, such as a view in one engine over a table another engine stores, is
-used through that step too. It is judged a second time, by the serve step, on
-the same items, paths and capabilities, the entry found on the serve step's
-method, then its pack. Its warnings name that pack, and are reported and
-grouped as above, so a role or mask that two packs cannot apply gives one
-warning for each pack. What the serve step does not apply is recorded in that
+**A served table.** A table whose serve step's pack is not the keeping step's,
+such as a view in one engine over a table another engine stores, or that has
+no keeping step, such as one served from the landed files, is used through
+that step too. It is judged by the serve step, a second time when a step keeps
+it, on the same items, paths and capabilities, the entry found on the serve
+step's method, then its pack. Its warnings name that pack, and are reported
+and grouped as above. What the serve step does not apply is recorded in that
 step's `notApplied` (`ResolvedTable.serve.notApplied`), with the same items as
 a table's (section 11.7), and not in the table's `notApplied`, which is the
 keeping pack's: each pack reads the judgement of its own step. The serve step
@@ -2440,14 +2443,13 @@ table reports (this section, sections 6, 6.1 to 6.3, 11.4 and 11.5), with the
 warning's `feature` (section 1.2), its `reason` as the pack or the
 specification gives it, and, for a time zone conversion (section 6.3) and a
 mask (section 8.2), the `column` it is not applied to, one item for each such
-column. It is recorded
-as each warning is reported for the table, before warnings about several
-tables lose their `table` (section 1.2), so it says exactly which tables a
-feature is not applied on. The same feature, reason and column is listed once.
-`notApplied` is absent when the table has none. What a serve step of another
-pack does not apply is in that step's `notApplied` (section 8.2). It does not depend on the
-Platform's `accept` list: an accepted warning is still listed. The passport
-reads it to say what is not enforced.
+column. It is recorded as each warning is reported for the table, before
+warnings about several tables lose their `table` (section 1.2), so it says
+exactly which tables a feature is not applied on. The same feature, reason and
+column is listed once. `notApplied` is absent when the table has none. What a
+serve step of another pack does not apply is in that step's `notApplied`
+(section 8.2). It does not depend on the Platform's `accept` list: an accepted
+warning is still listed. The passport reads it to say what is not enforced.
 
 **Quarantine.** `quality.quarantine: true` (section 11.2) keeps the rows that
 fail a check whose action is `drop` in a table of their own, with the names of

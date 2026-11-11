@@ -43,14 +43,14 @@ export function isGrantable(access: string | undefined): boolean {
 }
 
 /**
- * Gives each table that does not end at the landed files its access, when it has any
- * grant, mask or filter, and reports each mask and filter that cannot be resolved. A role
+ * Gives each table that does not end at the landed files, or that a serve step serves from
+ * them, its access, when it has any grant, mask or filter, and reports each mask and filter that cannot be resolved. A role
  * whose access cannot be granted is judged where it would be granted (`judgeAccess`).
  */
 export function resolveAccess(context: Context, tables: ResolvedTable[]): void {
   const exact = context.standard.value.governance?.access?.grants === "exact";
   for (const table of tables) {
-    if (table.endsAtFiles) continue;
+    if (table.endsAtFiles && !table.serve) continue;
     const grants = grantsOf(context, table);
     const masks = masksOf(context, table);
     const filters = filtersOf(context, table);

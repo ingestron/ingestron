@@ -35,26 +35,27 @@ export function judgeAccess(context: Context, tables: ResolvedTable[]): JudgedTa
   const findings: Finding[] = [];
   const judged = tables.flatMap((table) => {
     const keeper = table.endsAtFiles ? undefined : keeperOf(context, table);
-    if (!keeper) return [];
-    const kept = judgeTable(context, table, keeper, findings);
     const server = serverOf(context, table, keeper);
     // The serving pack applies access on its own step; its errors stay the keeping pack's.
     if (server) judgeTable(context, table, server, findings, true);
-    return [kept];
+    return keeper ? [judgeTable(context, table, keeper, findings)] : [];
   });
   reportFindings(context, findings);
   servedNotApplied(findings, tables);
   return judged;
 }
 
-/** The table's serve step, when its pack is not the keeping step's (specification section 8.2). */
+/**
+ * The table's serve step, when its pack is not the keeping step's or no step keeps the table,
+ * as when it is served from the landed files (specification section 8.2).
+ */
 function serverOf(
   context: Context,
   table: ResolvedTable,
-  keeper: JudgingStep,
+  keeper: JudgingStep | undefined,
 ): JudgingStep | undefined {
   const serve = table.serve;
-  if (!serve || serve.pack === keeper.pack) return undefined;
+  if (!serve || serve.pack === keeper?.pack) return undefined;
   const method = context.pack.methods[serve.method];
   return method && { id: serve.method, pack: serve.pack, method };
 }

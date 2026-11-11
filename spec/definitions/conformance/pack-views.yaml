@@ -1,6 +1,7 @@
 # A data-only pack that keeps tables as views over files, and serves tables another pack
-# stores, for the cases about judging access (section 8.2): it grants read access, and has no write access, masks or row
-# filters. Its grants are turned on in its own section of the Platform (section 7.1).
+# stores, for the cases about judging access (section 8.2): it grants read access, and has
+# no write access, masks or row filters. Its grants are turned on in its own section of the
+# Platform (section 7.1).
 id: views
 version: 1
 defaults:

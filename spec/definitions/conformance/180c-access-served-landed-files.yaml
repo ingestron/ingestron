@@ -1,0 +1,96 @@
+description: "A table served from the landed files has access, judged by its serve step: its roles are granted by the serving pack, and the write access and mask it cannot apply are NOT_APPLIED, recorded in the serve step's notApplied. A kept table of the same pack and contract shares each warning, which names both tables (section 8.2)."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, databricks@1, views@1]
+    governance:
+      masks: { confidential: hash }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    views:
+      manage: { grants: true }
+  landed.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: landed
+    source: shop
+    store: { uses: none }
+    serve: { uses: file-serve }
+    tables:
+      customers: { object: customers, contract: customers }
+  kept.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: kept
+    source: shop
+    store: { uses: file-view }
+    tables:
+      customers_kept: { object: customers, contract: customers }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: email, logicalType: string, classification: confidential }
+    roles:
+      - { role: marketing-analysts, access: read }
+      - { role: etl-writers, access: write }
+expect:
+  tables:
+    - name: customers_kept
+      notApplied:
+        - { feature: write, reason: Views are read-only. }
+        - { feature: masks, reason: It has no data masking., column: email }
+    - name: customers
+      access:
+        grants:
+          - {
+              role: marketing-analysts,
+              principal: marketing-analysts,
+              privileges: [read],
+              from: contract,
+            }
+          - { role: etl-writers, principal: etl-writers, privileges: [read, write], from: contract }
+        exact: false
+        masks: [{ column: email, classification: confidential, mask: hash }]
+      notApplied: null
+      serve:
+        method: file-serve
+        notApplied:
+          - { feature: write, reason: Views are read-only. }
+          - { feature: masks, reason: It has no data masking., column: email }
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: customers.odcs.yaml
+      line: 14
+      message: 'Write access for the role "etl-writers" in tables "customers_kept", "customers" isn''t applied on views: Views are read-only.'
+      subject: { feature: write }
+    - code: NOT_APPLIED
+      severity: warning
+      file: customers.odcs.yaml
+      line: 11
+      message: 'The "hash" mask on "email" in tables "customers_kept", "customers" isn''t applied on views: It has no data masking.'
+      subject: { feature: masks }

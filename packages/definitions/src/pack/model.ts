@@ -222,7 +222,7 @@ export interface ResolvedTable {
    * Who may use the table, and which of its columns and rows are hidden (specification
    * section 8.2). Absent when the table has no grants, masks or filters, unless exact grants
    * reach it (its grants applied, with none to give), and on a table that ends at the landed
-   * files.
+   * files, unless a serve step serves it from them.
    */
   access?: TableAccess;
   /**

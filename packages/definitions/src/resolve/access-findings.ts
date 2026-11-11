@@ -40,7 +40,6 @@ export function reportFindings(context: Context, findings: Finding[]): void {
       finding.pack,
       finding.reason,
       finding.what,
-      finding.served === true,
     ]);
     groups.set(key, [...(groups.get(key) ?? []), finding]);
   }
@@ -55,9 +54,9 @@ function reportGroup(context: Context, group: Finding[]): void {
   if (first.code === "CAPABILITY_OFF") return reportOff(context, first, named, table);
   const reason = first.reason ?? "";
   // What a serve step does not apply is its own, not the table's (servedNotApplied).
-  const detail = first.served ? undefined : tableDetail(first, reason);
-  if (detail)
-    for (const name of tables) context.reporter.noteNotApplied(name, first.feature, detail);
+  const kept = [...new Set(group.filter((item) => !item.served).map((item) => item.table))];
+  const detail = tableDetail(first, reason);
+  for (const name of kept) context.reporter.noteNotApplied(name, first.feature, detail);
   context.reporter.warning(
     "NOT_APPLIED",
     `${first.what} in ${named} isn't applied on ${first.pack}: ${reason}`,
@@ -65,7 +64,7 @@ function reportGroup(context: Context, group: Finding[]): void {
     undefined,
     undefined,
     { ...(table !== undefined && { table }), feature: first.feature },
-    detail,
+    table === undefined || kept.includes(table) ? detail : undefined,
   );
 }
 
