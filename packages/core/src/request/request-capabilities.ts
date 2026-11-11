@@ -2,6 +2,7 @@
 // definitions use while they are off (spec/cli/request.md, "Switched on").
 import type { AnyDiagnostic } from "@ingestron/config";
 import type { Capability, Pack, ResolvedModel } from "@ingestron/definitions";
+import { capabilityOn } from "../passport/index.js";
 
 /** A pack's capability, with the pack that declares it. */
 export interface PackCapability {
@@ -24,19 +25,9 @@ function switchName({ pack, capability }: PackCapability): string {
   return pack === "databricks" ? `manage.${capability.id}` : `${pack}.manage.${capability.id}`;
 }
 
-/**
- * True when the platform turns the capability on for its pack (specification section 7.1): the
- * same rule as the definitions' `isOn`, read from the resolved model, whose `manage` holds
- * the databricks fields wherever they were written.
- */
+/** True when the platform turns the capability on for its pack (specification section 7.1). */
 function isOn(model: ResolvedModel, { pack, capability }: PackCapability): boolean {
-  if (pack === "databricks") return model.platform.manage[capability.id] === true;
-  const manage = model.platform.sections[pack]?.manage;
-  return (
-    typeof manage === "object" &&
-    manage !== null &&
-    (manage as Record<string, unknown>)[capability.id] === true
-  );
+  return capabilityOn(model, capability.id, pack);
 }
 
 /**

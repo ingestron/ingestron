@@ -16,7 +16,7 @@ export function engineName(pack: string): string {
 /**
  * True when the platform turns the capability on for the pack: for `databricks`, as the
  * model's `platform.manage` has it (its section, else the top of the Platform); for any other
- * pack, in its own section.
+ * pack, in its own section. The same rule as the definitions' `isOn`; the request reads it too.
  */
 export function capabilityOn(model: ResolvedModel, id: Capability["id"], pack: string): boolean {
   if (pack === "databricks") return model.platform.manage[id] === true;
