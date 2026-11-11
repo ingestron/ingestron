@@ -1,6 +1,9 @@
 // What a project with access shows, one route per engine: plan's and check's warnings, with
 // what is not applied under its own heading (spec/cli/outputs.md, section 1), and the
 // passport's "Who may use it" (spec/cli/passport.md, "Access").
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { nodeFiles } from "@ingestron/config";
 import { generatedOutputs } from "@ingestron/core";
 import { describe, expect, it } from "vitest";
@@ -18,11 +21,11 @@ function ingestron(folder: string, ...args: string[]): { code: number; output: s
 }
 
 /** One section of the product's passport in dev, as plan writes it. */
-function section(folder: string, heading: string): string {
+function section(folder: string, heading: string, product = "crm"): string {
   const products = generatedOutputs(nodeFiles(folder)).outputs.find(
     (output) => output.name === "products",
   );
-  const page = products!.files["dev/crm.md"]!;
+  const page = products!.files[`dev/${product}.md`]!;
   const start = page.indexOf(`## ${heading}\n`);
   const end = page.indexOf("\n## ", start + 1);
   return page.slice(start, end === -1 ? undefined : end);
@@ -103,6 +106,69 @@ describe("access that is not applied", () => {
     );
     expect(access).toContain(
       "from `country`. Not enforced on Databricks: the platform has row filters off.",
+    );
+  });
+
+  it("masks and filters nothing where the platform has tags off, which they find columns by", () => {
+    const folder = accessProject("databricks", (files) => {
+      files["platform.yaml"] = files["platform.yaml"]!.replace(
+        "manage: { tags: true, grants: true, masks: true, filters: true }",
+        "manage: { grants: true, masks: true, filters: true }",
+      );
+    });
+    const { code, output } = ingestron(folder, "plan", "--no-diff");
+    expect(code, output).toBe(0);
+    expect(output).toContain("Masks are not applied: the platform has");
+    const access = section(folder, "Who may use it");
+    expect(access).toContain("| Granted on Databricks. |");
+    expect(access).toContain(
+      "- `email` (confidential): hashed. Not enforced on Databricks: the platform has tags off, and masks find columns by their tags.",
+    );
+    expect(access).toContain(
+      "from `country`. Not enforced on Databricks: the platform has tags off, and row filters find columns by their tags.",
+    );
+    expect(access).toMatchSnapshot();
+  });
+});
+
+/** The Synapse views fixture with exact grants on, a role, and a product over its customers. */
+function synapseExact(): string {
+  const folder = mkdtempSync(join(tmpdir(), "ingestron-access-synapse-"));
+  cpSync(join(import.meta.dirname, "fixtures/synapse-views"), folder, { recursive: true });
+  const append = (file: string, text: string) =>
+    writeFileSync(join(folder, file), `${readFileSync(join(folder, file), "utf8")}${text}`);
+  append("contracts/customers.yaml", "roles:\n  - { role: analysts, access: read }\n");
+  append("platform.yaml", "synapse:\n  manage: { grants: true }\n");
+  append("standard.yaml", "governance:\n  access: { grants: exact }\n");
+  append("project.yaml", "  - products/*.yaml\n");
+  mkdirSync(join(folder, "products"));
+  writeFileSync(
+    join(folder, "products/erp.yaml"),
+    `apiVersion: v1.1.0
+kind: DataProduct
+id: erp
+status: active
+team:
+  members:
+    - { username: mia@example.com, role: owner }
+outputPorts:
+  - { name: customers, contractId: erp.customers }
+`,
+  );
+  return folder;
+}
+
+describe("the exact grant mode, in the passport", () => {
+  it("says what Synapse keeps when it takes other direct access away", () => {
+    const access = section(synapseExact(), "Who may use it", "erp");
+    expect(access).toContain(
+      "Grant mode: exact. On Synapse serverless SQL, any other access granted directly on the table is taken away, except ownership and grants made WITH GRANT OPTION; grants on its schema or database stay.",
+    );
+  });
+
+  it("says what Databricks keeps when it takes other direct access away", () => {
+    expect(section(accessProject("databricks"), "Who may use it")).toContain(
+      "Grant mode: exact. On Databricks, any other access granted directly on the table is taken away, except the owner's, the run_as principal's and the unmasked principals'; grants on its schema or catalog stay.",
     );
   });
 });

@@ -34,7 +34,7 @@ exports[`a project with access on databricks > says in its passport who may use 
 | crm-loaders | crm-loaders | write |  |  | Granted on Databricks. |
 | data-engineers | data-engineers | write |  |  | Granted on Databricks. |
 
-Grant mode: exact. On Databricks, any other access granted directly on the table is taken away.
+Grant mode: exact. On Databricks, any other access granted directly on the table is taken away, except the owner's, the run_as principal's and the unmasked principals'; grants on its schema or catalog stay.
 
 Masked columns:
 
@@ -95,5 +95,30 @@ Masked columns:
 Row filters:
 
 - \`region_rows\`: \`region_filter\` decides which rows each reader sees, from \`country\`. Not enforced on DuckDB: DuckDB has no access control.
+"
+`;
+
+exports[`access that is not applied > masks and filters nothing where the platform has tags off, which they find columns by 1`] = `
+"## Who may use it
+
+### customers
+
+#### \`dev.bronze.customers\`
+
+| Role | Principal in dev | Access | Purpose | Approvers | Granted |
+| --- | --- | --- | --- | --- | --- |
+| marketing-analysts | marketing-analysts-dev | read | Campaign reporting | mia@example.com | Granted on Databricks. |
+| crm-loaders | crm-loaders | write |  |  | Granted on Databricks. |
+| data-engineers | data-engineers | write |  |  | Granted on Databricks. |
+
+Grant mode: exact. On Databricks, any other access granted directly on the table is taken away, except the owner's, the run_as principal's and the unmasked principals'; grants on its schema or catalog stay.
+
+Masked columns:
+
+- \`email\` (confidential): hashed. Not enforced on Databricks: the platform has tags off, and masks find columns by their tags.
+
+Row filters:
+
+- \`region_rows\`: \`region_filter\` decides which rows each reader sees, from \`country\`. Not enforced on Databricks: the platform has tags off, and row filters find columns by their tags.
 "
 `;

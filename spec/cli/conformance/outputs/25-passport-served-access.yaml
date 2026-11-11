@@ -140,7 +140,7 @@ expect:
       | marketing-analysts | marketing-dev | read | Campaign reporting |  | Granted on Databricks. Granted on views. |
       | etl-writers | etl-writers | write |  |  | Granted on Databricks. Read granted on views, write not enforced: Views are read-only. |
 
-      Grant mode: exact. On Databricks, any other access granted directly on the table is taken away. Not enforced on views: Exact grants are not applied to views yet.
+      Grant mode: exact. On Databricks, any other access granted directly on the table is taken away, except the owner's, the run_as principal's and the unmasked principals'; grants on its schema or catalog stay. Not enforced on views: Exact grants are not applied to views yet.
 
       Masked columns:
 

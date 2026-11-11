@@ -175,7 +175,21 @@ engine is named as section 3 names where a table lives: `Databricks`,
   `platform.manage`; for any other pack, `manage` in its section of the model's
   `platform.sections`. The reason is `the platform has <words> off`, the words
   being `grants`, `column masks` or `row filters`.
+- **not enforced, because the platform has tags off**, for a mask or a filter
+  whose own capability is on but whose engine's pack has `tags` off, read the
+  same way: the policies find columns by their tags, and nothing sets them
+  (definitions specification, section 7.1). The reason is `the platform has
+tags off, and masks find columns by their tags` for a mask, and `the
+platform has tags off, and row filters find columns by their tags` for a
+  filter.
 - **enforced** otherwise.
+
+The passport cannot tell an item that the engine's pack applies from one its
+coverage says nothing about: the model records only what a pack does not
+apply. An item that a pack's coverage leaves out, or says is applied
+`elsewhere`, therefore reads as enforced when the pack's switch is on. Every
+pack Ingestron ships covers each access item, so this happens only with a
+pack that leaves an access item out of its coverage.
 
 A role's `write` and the grant mode are judged only where its grant is
 enforced: where the grant is not, they share its reason.
@@ -199,10 +213,17 @@ write not enforced: <reason>.` A table with `access` but no grants says `No role
 this table.` in its place.
 - The grant mode, when the table has grants or `exact` is true, one line.
   With `exact` false: `Grant mode: additive: access given in other ways
-stays.` With `exact` true: `Grant mode: exact.`, then, per engine,
-  `On <engine>, any other access granted directly on the table is taken
-away.` where it is enforced, and `Not enforced on <engine>: <reason>.`
-  where it is not.
+stays.` With `exact` true: `Grant mode: exact.`, then, per engine, a
+  sentence that says what the engine keeps where it is enforced, and `Not
+enforced on <engine>: <reason>.` where it is not:
+  - Databricks: `On Databricks, any other access granted directly on the
+table is taken away, except the owner's, the run_as principal's and the
+unmasked principals'; grants on its schema or catalog stay.`
+  - Synapse serverless SQL: `On Synapse serverless SQL, any other access
+granted directly on the table is taken away, except ownership and grants
+made WITH GRANT OPTION; grants on its schema or database stay.`
+  - Any other engine: `On <engine>, any other access granted directly on the
+table is taken away, except what its pack's reference says it keeps.`
 - `Masked columns:`, then a list, one line for each mask in the contract's
   order: ``- `<column>` (<classification>): <mask words>``, the words
   being `shown as no value` (`null`), `hashed` (`hash`), `redacted` (`redact`) or

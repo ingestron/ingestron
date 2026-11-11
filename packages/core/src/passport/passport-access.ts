@@ -29,6 +29,20 @@ const switchWords: Partial<Record<Capability["id"], string>> = {
   filters: "row filters",
 };
 
+/** What finds columns by their tags, so is not enforced while tags are off (section 7.1). */
+const tagFinds: Partial<Record<Capability["id"], string>> = {
+  masks: "masks",
+  filters: "row filters",
+};
+
+/** What exact grants keep, per pack; any other pack's reference says. */
+const kept: Record<string, string> = {
+  databricks:
+    "except the owner's, the run_as principal's and the unmasked principals'; grants on its schema or catalog stay",
+  synapse:
+    "except ownership and grants made WITH GRANT OPTION; grants on its schema or database stay",
+};
+
 /** Section 7: per output, each table's access; the old sentence when nothing is declared. */
 export function access(model: ResolvedModel, product: ResolvedProduct): string {
   const outputs = outputTables(model, product);
@@ -74,7 +88,9 @@ function tableAccess(model: ResolvedModel, built: ResolvedTable): string {
   return [
     title,
     roles,
-    ...(granted.grants.length > 0 || granted.exact ? [modeLine(granted.exact, verdicts)] : []),
+    ...(granted.grants.length > 0 || granted.exact
+      ? [modeLine(granted.exact, verdicts, judges.map((judge) => judge.pack))]
+      : []),
     ...(masks.length > 0 ? [`Masked columns:\n\n${masks.join("\n")}`] : []),
     ...(filters.length > 0 ? [`Row filters:\n\n${filters.join("\n")}`] : []),
   ].join("\n\n");
@@ -104,6 +120,9 @@ function verdictOf(
   if (found) return { engine, reason: found.reason.trim().replace(/\.$/, "") };
   if (!capabilityOn(model, item.capability, judge.pack))
     return { engine, reason: `the platform has ${switchWords[item.capability]} off` };
+  const tagged = tagFinds[item.capability];
+  if (tagged !== undefined && !capabilityOn(model, "tags", judge.pack))
+    return { engine, reason: `the platform has tags off, and ${tagged} find columns by their tags` };
   return { engine };
 }
 
@@ -155,15 +174,18 @@ function grantedCell(verdicts: Verdicts, write: boolean): string {
     .join(" ");
 }
 
-/** The grant mode; exact grants per engine, sharing the grants' reason where they are not. */
-function modeLine(exact: boolean, verdicts: Verdicts): string {
+/**
+ * The grant mode; exact grants per engine, with what the engine keeps, sharing the grants'
+ * reason where they are not enforced.
+ */
+function modeLine(exact: boolean, verdicts: Verdicts, packs: readonly string[]): string {
   if (!exact) return "Grant mode: additive: access given in other ways stays.";
   const exacts = verdicts("exact", "grants");
   const engines = verdicts("grants", "grants").map((grant, index) => {
     const reason = grant.reason ?? exacts[index]?.reason;
-    return reason === undefined
-      ? `On ${grant.engine}, any other access granted directly on the table is taken away.`
-      : `Not enforced on ${grant.engine}: ${reason}.`;
+    if (reason !== undefined) return `Not enforced on ${grant.engine}: ${reason}.`;
+    const keeps = kept[packs[index] ?? ""] ?? "except what its pack's reference says it keeps";
+    return `On ${grant.engine}, any other access granted directly on the table is taken away, ${keeps}.`;
   });
   return ["Grant mode: exact.", ...engines].join(" ");
 }
