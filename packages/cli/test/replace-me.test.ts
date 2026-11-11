@@ -21,7 +21,7 @@ describe("REPLACE_ME", () => {
       "settings.server is still REPLACE_ME: write the real value before deploying.",
     );
     expect(output).toContain(
-      "2 values are still REPLACE_ME; ingestron check fails until each is written.\n",
+      "2 places are still REPLACE_ME; ingestron check fails until each is written.\n",
     );
   });
 

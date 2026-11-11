@@ -48,7 +48,7 @@ expect:
     - "prod: warnings"
     - "fold → build/fold (dev, prod)"
     - Applied.
-    - "3 values are still REPLACE_ME; ingestron check fails until each is written."
+    - "3 places are still REPLACE_ME; ingestron check fails until each is written."
   diagnostics:
     - { code: REPLACE_ME, severity: warning, file: sales.yaml, line: 6 }
     - { code: REPLACE_ME, severity: warning, file: project.yaml, line: 4 }
