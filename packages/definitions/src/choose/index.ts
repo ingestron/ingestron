@@ -12,3 +12,5 @@ export {
   type Named,
 } from "./choose.js";
 export { methodFixes } from "./method-fixes.js";
+export { matches } from "./rule-facts.js";
+export { intentFacts, tableFacts, type GovernanceFacts } from "./table-facts.js";

@@ -3,11 +3,12 @@ import { withoutUnsetEnvvars } from "@ingestron/config";
 import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
 import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
-import { isRecord, merge, sameValue } from "../internal/index.js";
+import { isRecord, merge } from "../internal/index.js";
 import type { Origin } from "../pack/index.js";
 import { reportMissing, type MethodUse, type SettingsUser } from "../context/index.js";
 import type { Action, Method } from "../pack/index.js";
 import { holdsUnsetEnvvar } from "../diagnostics/index.js";
+import { changedFixed, placed, reportFixed } from "./fixed-values.js";
 import { replaceMe } from "./replace-me.js";
 
 /** Settings from one layer, with where they were written (none for pack defaults). */
@@ -18,11 +19,20 @@ export interface SettingsLayer {
   definition?: boolean;
   /** Which layer this is, recorded in each setting's origin. */
   origin: Origin["layer"];
+  /** For a pack's own rule's `with`, the rule's facts as messages write them (`connector kafka`). */
+  packRule?: string;
 }
 
 // Verbose, so each failure carries the failing value: for messages and unset references.
 const ajv = new Ajv2020({ allErrors: true, strict: false, verbose: true });
 const validators = new WeakMap<Method, ValidateFunction>();
+
+/** Merged settings, where each came from, and every layer they were merged from. */
+export interface MergedSettings {
+  settings: Record<string, unknown>;
+  origins: Record<string, Origin>;
+  layers: SettingsLayer[];
+}
 
 /** The merged settings and where each came from, or undefined after reporting why they are not valid. */
 export function mergeSettings(
@@ -32,7 +42,7 @@ export function mergeSettings(
   method: Method,
   layers: SettingsLayer[],
   user: SettingsUser,
-): { settings: Record<string, unknown>; origins: Record<string, Origin> } | undefined {
+): MergedSettings | undefined {
   const { standard, platform, fixed } = organisationLayers(context, action, id);
   const all: SettingsLayer[] = [
     { value: method.defaults ?? {}, origin: "pack" },
@@ -47,7 +57,7 @@ export function mergeSettings(
     {},
   );
   if (!checkSchema(context, { action, id, method, user }, settings, all)) return undefined;
-  return { settings, origins: originsOf(all) };
+  return { settings, origins: originsOf(all), layers: all };
 }
 
 /** The standard's settings and fixed values, and the platform's settings, for one method. */
@@ -102,23 +112,8 @@ function fixedRespected(
     // A deploy-time value differs from any fixed value (specification section 1.1).
     const unknown = (value: unknown) =>
       !context.deployTime && holdsUnsetEnvvar(context.project, value);
-    for (const { path, value } of changedFixed(fixed, layer.value, [], unknown)) {
-      const pointer = path.map((key) => `/${key.replaceAll("~", "~0").replaceAll("/", "~1")}`);
-      const at = layer.at && {
-        document: layer.at.document,
-        pointer: layer.at.pointer + pointer.join(""),
-      };
-      const remove = at && {
-        title: "Remove this setting",
-        edits: [{ file: at.document.file, pointer: at.pointer, remove: true as const }],
-      };
-      context.reporter.error(
-        "FIXED_SETTING",
-        `The standard fixes "${path.join(".")}" to ${JSON.stringify(value)}.`,
-        at,
-        "Remove this setting, or change the standard.",
-        remove ? [remove] : [],
-      );
+    for (const change of changedFixed(fixed, layer.value, [], unknown)) {
+      reportFixed(context, change, layer.at && placed(layer.at, change.path));
       respected = false;
     }
   }
@@ -126,24 +121,33 @@ function fixedRespected(
 }
 
 /**
- * The fixed values that `value` changes, with their key paths. Mappings in
- * both are compared key by key, so keys beside the fixed ones are allowed. A
- * value that is `unknown`, such as one holding an unset reference, changes nothing.
+ * True when the method's schema refuses the value of one top-level setting; failures of
+ * other settings, such as one that holds an unset reference, do not count. Nothing is reported.
  */
-function changedFixed(
-  fixed: Record<string, unknown>,
-  value: Record<string, unknown>,
-  path: string[],
-  unknown: (value: unknown) => boolean,
-): { path: string[]; value: unknown }[] {
-  return Object.entries(value).flatMap(([key, given]) => {
-    if (!(key in fixed)) return [];
-    const wanted = fixed[key];
-    if (isRecord(wanted) && isRecord(given))
-      return changedFixed(wanted, given, [...path, key], unknown);
-    if (unknown(given)) return [];
-    return sameValue(wanted, given) ? [] : [{ path: [...path, key], value: wanted }];
-  });
+export function refusesSetting(
+  method: Method,
+  settings: Record<string, unknown>,
+  setting: string,
+): boolean {
+  const validate = validatorOf(method);
+  if (validate(settings)) return false;
+  const pointer = `/${setting.replaceAll("~", "~0").replaceAll("/", "~1")}`;
+  return (validate.errors ?? []).some(
+    ({ instancePath, params }) =>
+      instancePath === pointer ||
+      instancePath.startsWith(`${pointer}/`) ||
+      (instancePath === "" &&
+        (params as { additionalProperty?: string }).additionalProperty === setting),
+  );
+}
+
+function validatorOf(method: Method): ValidateFunction {
+  let validate = validators.get(method);
+  if (!validate) {
+    validate = ajv.compile(method.settings);
+    validators.set(method, validate);
+  }
+  return validate;
 }
 
 /**
@@ -157,11 +161,7 @@ function checkSchema(
   layers: SettingsLayer[],
 ): boolean {
   const { id, method } = use;
-  let validate = validators.get(method);
-  if (!validate) {
-    validate = ajv.compile(method.settings);
-    validators.set(method, validate);
-  }
+  const validate = validatorOf(method);
   if (validate(settings)) return true;
   // Text that holds an unset reference is not known yet, so it fails nothing but `type`;
   // nor does text that holds REPLACE_ME, which its own diagnostic reports (specification section 1).

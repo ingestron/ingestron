@@ -2,10 +2,11 @@ apiVersion: ingestron.io/v1
 kind: Flow
 id: events
 source: events
+# Keep every message as it arrives, whichever ingestion method the route chooses.
+history: none
 ingest:
-  # Keep append explicit when this flow is composed with a chosen ingestion method.
   # One bundle covers every environment, so how the pipeline runs is the same in each.
-  with: { starting_offset: earliest, mode: append, continuous: false }
+  with: { starting_offset: earliest, continuous: false }
 tables:
   page_views:
     # The topic

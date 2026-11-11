@@ -1,0 +1,58 @@
+description: "An accept entry for a warning only a pack's build reports is judged once every pack has built: one that matched none of the warnings of its environment's packs is ACCEPT_UNUSED, shown with that environment's warnings."
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [fold@2]
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    accept:
+      - code: PACK_NOTICE
+        reason: The platform team keeps the runtime's settings.
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: fold
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        description: One row per order.
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+command: apply
+expect:
+  exit: 0
+  lines:
+    - "dev, prod: warnings"
+    - "fold → build/fold (dev, prod)"
+  diagnostics:
+    - code: ACCEPT_UNUSED
+      severity: warning
+      file: platform.yaml
+      line: 5
+      message: The accept entry for PACK_NOTICE matches no warning in this run.
+  folders:
+    build/fold: [tables.txt, targets.txt]

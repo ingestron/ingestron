@@ -2,7 +2,11 @@
 // one per pack, in the standard's order, then the passports.
 import type { FileSource } from "@ingestron/config";
 import {
+  acceptsWarning,
   environmentsDiagnostics,
+  type AcceptAtBuild,
+  type AcceptedWarning,
+  type Diagnostic,
   type Pack,
   type ResolvedModel,
   type SuppliedValue,
@@ -43,6 +47,8 @@ export interface Built {
   outputs: Output[];
   reports: Report[];
   ok: boolean;
+  /** The Platform's entries for a build's warnings that accepted, or matched, one. */
+  used: Set<AcceptAtBuild>;
 }
 
 /**
@@ -84,7 +90,38 @@ export function generateAll(
   if (!resolution.ok) return { ...found, resolved: false, ok: false, outputs: [], packReports: [] };
   const built = buildOutputs(environments, available);
   const outputs = built.ok ? built.outputs : [];
-  return { ...found, resolved: true, ok: built.ok, outputs, packReports: built.reports };
+  const environmentReports = built.ok
+    ? withUnused(resolution.reports, environments, built.used)
+    : resolution.reports;
+  return {
+    ...found,
+    environmentReports,
+    resolved: true,
+    ok: built.ok,
+    outputs,
+    packReports: built.reports,
+  };
+}
+
+/**
+ * Each environment's report with `ACCEPT_UNUSED` for each of its entries for a build's
+ * warnings that matched none of the warnings its packs reported (spec/cli/outputs.md,
+ * section 3). Judged once every pack built without an error.
+ */
+function withUnused(
+  reports: readonly Report[],
+  environments: readonly ResolvedEnvironment[],
+  used: ReadonlySet<AcceptAtBuild>,
+): Report[] {
+  return reports.map((report) => {
+    const environment = environments.find((item) => item.name === report.name);
+    const unused = (environment?.acceptAtBuild ?? [])
+      .filter((entry) => !used.has(entry))
+      .map((entry) => entry.unused);
+    return unused.length > 0
+      ? { ...report, diagnostics: [...report.diagnostics, ...unused] }
+      : report;
+  });
 }
 
 /** Builds every output folder from the environments, each resolved. */
@@ -93,14 +130,15 @@ export function buildOutputs(
   available: readonly Pack[],
 ): Built {
   const standard = environments[0]?.model.standard.packs ?? [];
-  const used = standard.flatMap((ref) => available.filter((pack) => packRef(pack) === ref));
-  const built = used.flatMap((pack) => {
+  const named = standard.flatMap((ref) => available.filter((pack) => packRef(pack) === ref));
+  const used = new Set<AcceptAtBuild>();
+  const built = named.flatMap((pack) => {
     // Only an environment resolved for deploy is a target of a pack that builds environments together.
     const targets = environments.filter((item) =>
       folds(pack) ? item.deploy && isTarget(item.deploy, pack) : isTarget(item.model, pack),
     );
     if (targets.length === 0) return [];
-    return [folds(pack) ? together(pack, targets) : apart(pack, targets)];
+    return [folds(pack) ? together(pack, targets, used) : apart(pack, targets)];
   });
   const outputs = built.flatMap(({ output }) => (output ? [output] : []));
   const products = environments.some((item) => item.model.products.length > 0)
@@ -111,18 +149,26 @@ export function buildOutputs(
     outputs: [...outputs, ...products],
     reports,
     ok: reports.every((report) => !report.failed),
+    used,
   };
 }
 
 type Result = { output?: Output; report?: Report };
 
 /** A pack that builds environments together: one artefact from the targets' models, resolved for deploy. */
-function together(pack: Pack, targets: readonly ResolvedEnvironment[]): Result {
+function together(
+  pack: Pack,
+  targets: readonly ResolvedEnvironment[],
+  used: Set<AcceptAtBuild>,
+): Result {
   const models = Object.fromEntries(targets.map((item) => [item.name, item.deploy!]));
   const { files, deployValues, problems } = pack.buildEnvironments!(models);
-  const diagnostics = environmentsDiagnostics(problems);
+  const { diagnostics, accepted } = acceptBuilt(environmentsDiagnostics(problems), targets, used);
   const failed = diagnostics.some((diagnostic) => diagnostic.severity === "error");
-  const report = diagnostics.length > 0 ? { name: pack.id, failed, diagnostics } : undefined;
+  const report =
+    diagnostics.length > 0 || accepted.length > 0
+      ? { name: pack.id, failed, diagnostics, ...(accepted.length > 0 && { accepted }) }
+      : undefined;
   if (failed) return { ...(report && { report }) };
   const names = targets.map((item) => item.name);
   return {
@@ -136,6 +182,31 @@ function together(pack: Pack, targets: readonly ResolvedEnvironment[]): Result {
     },
     ...(report && { report }),
   };
+}
+
+/**
+ * A pack's warnings without those that an entry of every target's list accepts, and those
+ * accepted, each with the first target's first entry that accepts it. Every entry that
+ * matches a warning is used, whether or not the warning is accepted.
+ */
+function acceptBuilt(
+  diagnostics: Diagnostic[],
+  targets: readonly ResolvedEnvironment[],
+  used: Set<AcceptAtBuild>,
+): { diagnostics: Diagnostic[]; accepted: AcceptedWarning[] } {
+  const kept: Diagnostic[] = [];
+  const accepted: AcceptedWarning[] = [];
+  for (const diagnostic of diagnostics) {
+    const matching = targets.map((item) =>
+      item.acceptAtBuild.filter((entry) => acceptsWarning(entry, diagnostic)),
+    );
+    for (const entry of matching.flat()) used.add(entry);
+    const first = matching[0]?.[0];
+    if (first && matching.every((entries) => entries.length > 0))
+      accepted.push({ diagnostic, reason: first.reason, entry: first.entry });
+    else kept.push(diagnostic);
+  }
+  return { diagnostics: kept, accepted };
 }
 
 /** Any other pack: each target's files from its model resolved with the host's values, in a folder of its own. */

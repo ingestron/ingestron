@@ -16,6 +16,8 @@ import {
   type ResolvedModel,
 } from "../src/index.js";
 import { checkReference, type ReferenceCase } from "./reference-cases.js";
+import { checkAccepted, checkSeverities, flattened } from "./accepted-expectations.js";
+import { checkOperations, checkTables } from "./table-expectations.js";
 
 interface Case {
   description: string;
@@ -42,8 +44,14 @@ interface Case {
     products?: Record<string, unknown>[];
     names?: Record<string, unknown>;
     platform?: Record<string, unknown>;
+    standard?: Record<string, unknown>;
     deployValues?: Record<string, unknown>[];
+    previewFeatures?: Record<string, unknown>[];
+    operations?: Record<string, unknown>;
+    qualityResults?: boolean;
     diagnostics?: Record<string, unknown>[];
+    /** The accepted warnings, each like a diagnostic with the entry's `reason` and `entry`. */
+    accepted?: Record<string, unknown>[];
     fixed?: { diagnostic: number; title: string; files: Record<string, string> }[];
   };
 }
@@ -60,6 +68,14 @@ const packs = [
   "pack-checked.yaml",
   "pack-plain.yaml",
   "pack-three.yaml",
+  "pack-intent.yaml",
+  "pack-ops.yaml",
+  "pack-databricks.yaml",
+  "pack-rule.yaml",
+  "pack-quality.yaml",
+  "pack-zones.yaml",
+  "pack-dedupe.yaml",
+  "pack-views.yaml",
 ].map((file) =>
   packOf(
     parse(readFileSync(join(folder, file), "utf8")) as PackInfo & { buildEnvironments?: true },
@@ -84,29 +100,6 @@ function packOf(data: DataPack): PackInfo | Pack {
   return { ...pack, build: () => ({}), buildEnvironments };
 }
 
-/** Tables with full names as text, as the cases write them. */
-function comparableTables(model: ResolvedModel) {
-  return model.tables.map((table) => ({
-    ...table,
-    fullName: `${table.fullName.catalog}.${table.fullName.schema}.${table.fullName.table}`,
-  }));
-}
-
-function checkTables(model: ResolvedModel, expected: Record<string, unknown>[]): void {
-  const tables = comparableTables(model);
-  expect(tables).toHaveLength(expected.length);
-  expected.forEach((wanted, index) => {
-    // `null` for a step means the table has no such step.
-    const absent = (["ingest", "store", "serve"] as const).filter((step) => wanted[step] === null);
-    for (const step of absent)
-      expect((tables[index] as Record<string, unknown> | undefined)?.[step]).toBeUndefined();
-    const present = Object.fromEntries(
-      Object.entries(wanted).filter(([key]) => !(absent as string[]).includes(key)),
-    );
-    expect(tables[index]).toMatchObject(present);
-  });
-}
-
 function checkProducts(model: ResolvedModel, expected: Record<string, unknown>[]): void {
   expect(model.products).toHaveLength(expected.length);
   expected.forEach((wanted, index) => expect(model.products[index]).toMatchObject(wanted));
@@ -118,7 +111,25 @@ function checkModel(model: ResolvedModel, wanted: Case["expect"]): void {
   if (wanted.products) checkProducts(model, wanted.products);
   if (wanted.names) expect(model.names).toMatchObject(wanted.names);
   if (wanted.platform) expect(model.platform).toMatchObject(wanted.platform);
+  if (wanted.standard) expect(model.standard).toMatchObject(wanted.standard);
   if (wanted.deployValues) expect(model.deployValues).toEqual(wanted.deployValues);
+  if (wanted.previewFeatures) expect(model.previewFeatures).toEqual(wanted.previewFeatures);
+  checkOperations(model, wanted);
+}
+
+/** What a case that expects diagnostics also expects of the model: tables, preview features, operations. */
+function checkBesideDiagnostics(model: ResolvedModel | undefined, wanted: Case["expect"]): void {
+  if (
+    !wanted.tables &&
+    !wanted.previewFeatures &&
+    !wanted.operations &&
+    wanted.qualityResults === undefined
+  )
+    return;
+  expect(model, "the project resolves").toBeDefined();
+  if (wanted.tables) checkTables(model!, wanted.tables);
+  if (wanted.previewFeatures) expect(model!.previewFeatures).toEqual(wanted.previewFeatures);
+  checkOperations(model!, wanted);
 }
 
 /** Each named fix, applied to the case's files, gives the files expected. */
@@ -189,24 +200,13 @@ describe("conformance", () => {
         return;
       }
       const result = resolveCase(testCase);
-      const { diagnostics } = testCase.expect;
-      // A case that expects only information still resolves, so its tables can be checked too.
-      if (diagnostics && testCase.expect.tables) {
-        expect(result.model, "the project resolves").toBeDefined();
-        checkTables(result.model!, testCase.expect.tables);
-      }
+      checkSeverities([...result.diagnostics, ...result.accepted.map((item) => item.diagnostic)]);
+      const { diagnostics, accepted } = testCase.expect;
+      if (accepted) checkAccepted(result.accepted, accepted);
+      // A case that expects only information still resolves, so its model can be checked too.
+      if (diagnostics) checkBesideDiagnostics(result.model, testCase.expect);
       if (diagnostics) {
-        const actual = result.diagnostics.map(
-          ({ code, severity, message, hint, location, fixes }) => ({
-            code,
-            severity,
-            message,
-            hint,
-            ...location,
-            // A diagnostic without fixes has none, so a case can say `fixes: []`.
-            fixes: (fixes ?? []).map((fix) => fix.title),
-          }),
-        );
+        const actual = result.diagnostics.map(flattened);
         expect(actual).toHaveLength(diagnostics.length);
         diagnostics.forEach((wanted, index) => expect(actual[index]).toMatchObject(wanted));
         checkFixed(result.diagnostics, testCase);

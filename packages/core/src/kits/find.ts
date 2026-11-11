@@ -1,0 +1,133 @@
+// Finding kits: the ones installed with Ingestron, and the names the commands accept.
+import { existsSync, readdirSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
+import { bundledKitsFolder } from "../folders.js";
+import { isId } from "./fields.js";
+import type { Kit } from "./kit.js";
+import { readKit } from "./read.js";
+import { compareVersions, versionProblem } from "./version.js";
+
+/** The `kits` folder of the `@ingestron/standards` package, or undefined when it does not resolve. */
+function packageKitsFolder(): string | undefined {
+  try {
+    const manifest = createRequire(import.meta.url).resolve("@ingestron/standards/package.json");
+    return join(dirname(manifest), "kits");
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Where the installed kits are looked for, in order: the `kits` folder a bundled release copies
+ * beside its code, then the `@ingestron/standards` package's `kits` folder, so the kits shipped
+ * with the running code win over any other copy of the package that resolves.
+ * @internal
+ */
+export function kitsFolderCandidates(): (string | undefined)[] {
+  return [bundledKitsFolder, packageKitsFolder()];
+}
+
+/**
+ * The installed kits' folder: the first of `candidates` that exists, by default
+ * `kitsFolderCandidates()`. Undefined when none exists.
+ * @internal
+ */
+export function standardsKitsFolder(
+  candidates: (string | undefined)[] = kitsFolderCandidates(),
+): string | undefined {
+  return candidates.find((folder) => folder !== undefined && existsSync(folder));
+}
+
+function folders(parent: string): string[] {
+  return readdirSync(parent, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
+    .map((entry) => entry.name)
+    .sort();
+}
+
+/**
+ * Every kit below `root`, which holds `<platform>/<name>/<version>/` folders, sorted by id and
+ * then version (a preview before its general version). `root` defaults to the `kits` folder a
+ * bundled release copies beside its code, else the `kits` folder of `@ingestron/standards`.
+ * There are none when no such folder is there. A kit
+ * that breaks a rule of kit.yaml throws the error `readKit` gives.
+ * @public
+ */
+export function installedKits(root?: string): Kit[] {
+  root ??= standardsKitsFolder();
+  if (root === undefined || !existsSync(root)) return [];
+  const kits: Kit[] = [];
+  for (const platform of folders(root))
+    for (const name of folders(join(root, platform)))
+      for (const version of folders(join(root, platform, name)))
+        kits.push(readKit(join(root, platform, name, version), root));
+  return kits.sort((a, b) => a.id.localeCompare(b.id) || compareVersions(a.version, b.version));
+}
+
+const forms = "A kit is named <id>, <id>@<version> or <git-url>#<path>@<tag>.";
+
+/**
+ * The text with any `user:password@` after `//` taken out, for messages: a URL is never shown
+ * with the user name and password it may hold. The password may itself hold `@`.
+ * @internal
+ */
+export function withoutCredentials(text: string): string {
+  return text.replace(/(\/\/)[^/?#\s]*@/g, "$1");
+}
+
+/** A git URL rather than a kit id: it has `://`, starts `<user>@<host>:`, or ends `.git`. */
+function looksLikeGitUrl(spec: string): boolean {
+  return spec.includes("://") || /^[\w.-]+@[\w.-]+:/.test(spec) || spec.endsWith(".git");
+}
+
+function gitSpec(spec: string, hash: number): { url: string; path: string; tag: string } {
+  const url = spec.slice(0, hash);
+  const rest = spec.slice(hash + 1);
+  const at = rest.indexOf("@");
+  const shown = withoutCredentials(spec);
+  if (url === "")
+    throw new Error(`The kit "${shown}" needs a git URL before the "#": <git-url>#<path>@<tag>.`);
+  if (at < 0 || at === rest.length - 1)
+    throw new Error(`The kit "${shown}" needs a tag after the folder: <git-url>#<path>@<tag>.`);
+  if (at === 0)
+    throw new Error(
+      `The kit "${shown}" needs the kit's folder before the tag: <git-url>#<path>@<tag>.`,
+    );
+  return { url, path: rest.slice(0, at), tag: rest.slice(at + 1) };
+}
+
+/**
+ * Reads what a command is given to name a kit: `<id>@<version>`, `<id>` alone (the newest
+ * version that is not a preview), or `<git-url>#<path>@<tag>`. The path ends at the first `@`
+ * after the `#`, so a tag may itself contain `@`. Throws an Error that shows the forms; a spec
+ * is shown without the user name and password a URL may hold.
+ * @public
+ */
+export function parseKitSpec(
+  spec: string,
+): { id: string; version?: string } | { url: string; path: string; tag: string } {
+  if (spec.trim() === "")
+    throw new Error(
+      `A kit is named <id>, <id>@<version> or <git-url>#<path>@<tag>, such as "duckdb/local-medallion@2026-11-01". Nothing was given.`,
+    );
+  const hash = spec.indexOf("#");
+  if (hash >= 0) return gitSpec(spec, hash);
+  if (looksLikeGitUrl(spec))
+    throw new Error(
+      `The kit "${withoutCredentials(spec)}" is a git URL; add the kit's folder and tag: <git-url>#<path>@<tag>.`,
+    );
+  const at = spec.indexOf("@");
+  const id = at < 0 ? spec : spec.slice(0, at);
+  if (!isId(id))
+    throw new Error(
+      `The kit "${id}" is not <platform>/<name>, such as "duckdb/local-medallion". ${forms}`,
+    );
+  if (at < 0) return { id };
+  const version = spec.slice(at + 1);
+  if (versionProblem(version) !== undefined)
+    throw new Error(
+      `The version "${version}" in "${withoutCredentials(spec)}" is not a date. Use YYYY-MM-DD, or YYYY-MM-DD-preview.`,
+    );
+  return { id, version };
+}

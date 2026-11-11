@@ -10,8 +10,8 @@ import type { SettingsUser } from "../context/index.js";
 import { mergeSettings, type SettingsLayer } from "./settings.js";
 import { holdsUnsetEnvvar } from "../diagnostics/index.js";
 
-/** A resolved step and what it hands to the next action. */
-export type StepResult = Step & { produces: Handover; renames: boolean };
+/** A resolved step, what it hands to the next action, and the settings layers it merged. */
+export type StepResult = Step & { produces: Handover; renames: boolean; layers: SettingsLayer[] };
 
 /** Resolves one step, or returns undefined after reporting. */
 export function resolveStep(
@@ -30,7 +30,7 @@ export function resolveStep(
     definition: true,
     origin: "definition" as const,
   };
-  const rule = choice.ruleWith && { ...choice.ruleWith, origin: "rule" as const };
+  const rule = choice.ruleWith && ruleLayer(choice.ruleWith);
   const layers = [rule, own, ...tableLayers].filter(
     (layer): layer is SettingsLayer => layer !== undefined,
   );
@@ -47,6 +47,11 @@ export function resolveStep(
       renames: choice.method.renames === true,
     }
   );
+}
+
+/** A rule's settings: the standard's, where they are written, or the pack's own, by its facts. */
+function ruleLayer({ value, at, facts }: NonNullable<Choice["ruleWith"]>): SettingsLayer {
+  return at ? { value, at, origin: "rule" } : { value, origin: "rule", packRule: facts };
 }
 
 type Previous = { method: string; produces: Handover } | undefined;

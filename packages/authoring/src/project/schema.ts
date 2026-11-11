@@ -9,6 +9,7 @@ export interface Schema {
   type?: string | string[];
   description?: string;
   enum?: unknown[];
+  enumDescriptions?: (string | undefined)[];
   examples?: unknown[];
   const?: unknown;
   default?: unknown;

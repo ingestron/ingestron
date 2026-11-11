@@ -1,0 +1,56 @@
+description: "Warnings the Platform accepts are not shown: one line counts them, each once whatever environments have it, and names the file the entries are in."
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    accept:
+      - code: NOT_APPLIED
+        about: { feature: pattern }
+        reason: The on-call team checks this rule from CI.
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - name: code
+            logicalType: string
+            quality:
+              - { metric: invalidValues, arguments: { pattern: "^[A-Z]+$" }, mustBe: 0 }
+command: check
+expect:
+  exit: 1
+  lines:
+    - "1 accepted warning (platform.yaml)"
+    - "quality: not up to date"
+  diagnostics: []
+  folders: {}

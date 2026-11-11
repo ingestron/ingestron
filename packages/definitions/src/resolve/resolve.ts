@@ -1,17 +1,14 @@
 // The entry point: load a project and resolve it for one environment.
-import {
-  loadProject,
-  nodeFiles,
-  resolveProject,
-  type AnyDiagnostic,
-  type FileSource,
-} from "@ingestron/config";
+import { loadProject, nodeFiles, resolveProject, type FileSource } from "@ingestron/config";
+import { acceptWarnings, type AcceptAtBuild, type AcceptedWarning } from "../accept/index.js";
 import { checkRunsOn } from "./runs-on.js";
 import { checkGrants } from "../context/index.js";
-import { checkContractFields } from "../contracts/index.js";
+import { checkContractFields, type ContractUser } from "../contracts/index.js";
+import { stepsOf } from "./judgements.js";
+import { judgeOf } from "./judging-step.js";
 import { checkSettingsKeys } from "../context/index.js";
 import { createContext, type Context } from "../context/index.js";
-import type { Source } from "../diagnostics/index.js";
+import type { Diagnostic, Reporter, Source } from "../diagnostics/index.js";
 import { checkDeployValues, deployValuesOf, resolutionReporter } from "../context/index.js";
 import { kinds } from "../documents/index.js";
 import { flowTables } from "./flows.js";
@@ -20,12 +17,17 @@ import { withReplaceMe } from "./replace-me.js";
 import { checkGovernance } from "../platform/index.js";
 import { resolveProducts } from "../platform/index.js";
 import { runsOnProblems } from "../pack/index.js";
-import type { ResolvedModel, ResolvedProduct, ResolvedTable } from "../pack/index.js";
-import { renderName } from "../tables/index.js";
+import type { ResolvedModel, ResolvedTable } from "../pack/index.js";
 import type { PackInfo } from "../pack/index.js";
-import { resolvePlatform } from "../platform/index.js";
-import { checkDuplicateNames, createNamer, type TableNamer } from "../tables/index.js";
+import { checkDuplicateNames, createNamer } from "../tables/index.js";
 import { transformTables } from "./transforms.js";
+import { buildModel } from "./build-model.js";
+import { resolveAccess } from "./access.js";
+import { judgeAccess } from "./access-judge.js";
+import { checkPolicies } from "./access-policies.js";
+import { checkOperations } from "./operations.js";
+import { checkPlatform } from "./platform-sections.js";
+import { checkZoneNames } from "./timezones.js";
 import { holdsUnsetEnvvar } from "../diagnostics/index.js";
 import { recordOutputs, runPackCheck } from "../context/index.js";
 import { checkPlatformFields } from "../reference/index.js";
@@ -73,8 +75,27 @@ export interface ResolveOptions {
 export interface ResolveResult {
   ok: boolean;
   model?: ResolvedModel;
-  diagnostics: AnyDiagnostic[];
+  /**
+   * Every problem that remains, each warning from resolving with what it is about: the
+   * warnings the Platform's `accept` list accepted are not here, but in `accepted`.
+   */
+  diagnostics: Diagnostic[];
+  /**
+   * The warnings the Platform's `accept` list accepted, in the order they were reported, each
+   * with the entry's reason and where the entry is written (specification, Accepted warnings).
+   * Empty when nothing is accepted.
+   */
+  accepted: AcceptedWarning[];
+  /**
+   * The Platform's `accept` entries whose code only a pack's building of the files reports,
+   * such as `PACK_NOTICE`, for the tool that builds the files to match and judge (specification,
+   * Accepted warnings). Absent when there are none.
+   */
+  acceptAtBuild?: AcceptAtBuild[];
 }
+
+/** A result before the accepted warnings are taken out of it. */
+export type Resolution = Omit<ResolveResult, "accepted" | "acceptAtBuild">;
 
 const allKinds = Object.values(kinds);
 
@@ -99,14 +120,14 @@ function loadOptions(options: ResolveOptions) {
 export function resolveDefinitions(files: FileSource, options: ResolveOptions): ResolveResult {
   checkPlatformFields(options.packs);
   const loaded = resolveProject(files, { ...loadOptions(options), envvars: options.envvars ?? {} });
-  return withPlaceholders(
+  const resolution = withPlaceholders(
     files,
     loaded.ok
       ? withReplaceMe(
           files,
           loaded.project,
           options,
-          resolveLoaded(loaded.project, options, [
+          resolveLoaded(loaded.project, options, files, [
             ...loaded.diagnostics,
             ...runsOnProblems(files, loaded.project, options.packs),
           ]),
@@ -114,6 +135,7 @@ export function resolveDefinitions(files: FileSource, options: ResolveOptions): 
       : { ok: false, diagnostics: loaded.diagnostics },
     documentFiles(files, loaded.project?.documents),
   );
+  return acceptWarnings(files, loaded.ok ? loaded.project : undefined, resolution);
 }
 
 /**
@@ -126,38 +148,43 @@ export function resolveDefinitions(files: FileSource, options: ResolveOptions): 
 export function loadDefinitions(folder: string, options: ResolveOptions): ResolveResult {
   checkPlatformFields(options.packs);
   const loaded = loadProject(folder, loadOptions(options));
-  return withPlaceholders(
-    nodeFiles(folder),
+  const files = nodeFiles(folder);
+  const resolution = withPlaceholders(
+    files,
     loaded.ok
       ? withReplaceMe(
-          nodeFiles(folder),
+          files,
           loaded.project,
           options,
-          resolveLoaded(loaded.project, options, [
+          resolveLoaded(loaded.project, options, files, [
             ...loaded.diagnostics,
-            ...runsOnProblems(nodeFiles(folder), loaded.project, options.packs),
+            ...runsOnProblems(files, loaded.project, options.packs),
           ]),
         )
       : { ok: false, diagnostics: loaded.diagnostics },
-    documentFiles(nodeFiles(folder), loaded.project?.documents),
+    documentFiles(files, loaded.project?.documents),
   );
+  return acceptWarnings(files, loaded.ok ? loaded.project : undefined, resolution);
 }
 
 function resolveLoaded(
   project: Parameters<typeof createContext>[0],
   options: ResolveOptions,
+  files: FileSource,
   warnings: ResolveResult["diagnostics"],
-): ResolveResult {
+): Resolution {
   // Loading succeeded, so what it reported are warnings, kept with the result.
   // A value that holds an unset reference is not known yet, so no problem is reported at
   // it, except a settings failure: the settings check has already left out what it causes.
   const deployTime = options.deployTime === true;
   const reporter = resolutionReporter(project, warnings, deployTime);
-  const context = createContext(project, options.packs, reporter, deployTime);
+  const context = createContext(project, options.packs, reporter, files, deployTime);
   if (!context) return { ok: false, diagnostics: reporter.diagnostics };
   if (deployTime) checkDeployValues(context);
   checkSettingsKeys(context);
+  checkPlatform(context);
   checkGrants(context);
+  checkZoneNames(context);
   const namer = createNamer(context);
   const flows = flowTables(context, namer);
   const tables = [...flows, ...transformTables(context, namer, flows)];
@@ -166,10 +193,14 @@ function resolveLoaded(
   checkServeInputs(context, tables);
   checkRunsOn(context, tables, (table) => originOf(context, table));
   runMethodChecks(context, tables);
-  checkContractFields(context, new Set(tables.map((table) => table.contract.id)));
+  checkContractFields(context, contractUsers(context, tables));
   const products = resolveProducts(context, tables);
   checkGovernance(context, products);
+  checkOperations(context, tables);
+  resolveAccess(context, tables);
+  checkPolicies(context, judgeAccess(context, tables));
   // Project-wide checks only make sense once every table resolved.
+  withNotApplied(reporter, tables);
   const together = options.environmentsTogether === true;
   const built = !reporter.failed() && buildModel(context, namer, together, tables, products);
   // The pack checks see the model the packs get, before the deploy-time values are listed.
@@ -180,36 +211,23 @@ function resolveLoaded(
     : { ok: false, diagnostics: reporter.diagnostics };
 }
 
-/** The model, once the project-wide names render; undefined after reporting. */
-function buildModel(
-  context: Context,
-  namer: TableNamer,
-  together: boolean,
-  tables: ResolvedTable[],
-  products: ResolvedProduct[],
-): ResolvedModel | undefined {
-  const { project } = context;
-  const base = { project: project.id, environment: context.environment };
-  const pipeline = renderName(context, namer.patterns.pipeline, base);
-  const job = renderName(context, namer.patterns.job, base);
-  if (!pipeline || !job) return undefined;
-  return {
-    project: {
-      id: project.id,
-      ...(project.name && { name: project.name }),
-      environment: context.environment,
-    },
-    standard: {
-      id: context.standard.value.id,
-      packs: context.standard.value.packs,
-      ...(context.standard.value.governance && { governance: context.standard.value.governance }),
-    },
-    platform: resolvePlatform(context, together),
-    layers: namer.layers,
-    names: { pipeline, job },
-    tables,
-    products,
-  };
+/** Each table's contract and the pack that keeps the table (specification section 6). */
+function contractUsers(context: Context, tables: ResolvedTable[]): ContractUser[] {
+  return tables.map((table) => ({
+    table: table.name,
+    contract: table.contract.id,
+    pack: judgeOf("history", stepsOf(context, table), {
+      endsAtFiles: table.endsAtFiles !== undefined,
+    })?.pack,
+  }));
+}
+
+/** Gives each table what was reported not applied about it, if anything (section 11.7). */
+function withNotApplied(reporter: Reporter, tables: ResolvedTable[]): void {
+  for (const table of tables) {
+    const unapplied = reporter.notAppliedOf(table.name);
+    if (unapplied.length > 0) table.notApplied = unapplied;
+  }
 }
 
 /** A serve method that reads where the data lands needs a last step that says where (`HANDOVER`). */

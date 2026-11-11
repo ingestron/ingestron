@@ -1,0 +1,164 @@
+description: "A table one engine keeps and another serves: the passport says, per engine, whether each role, the grant mode, each mask and each filter is enforced, with the serving pack's reason where it is not and the platform's switch where it is off."
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, databricks@1, views@1]
+    governance:
+      access: { grants: exact }
+      masks: { confidential: hash }
+      filters:
+        region_rows: { function: region_filter, match: { tag: region } }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    principals:
+      marketing-analysts: marketing-dev
+    databricks:
+      run_as: { service_principal_name: etl-runner }
+      manage: { tags: true, grants: true, masks: true }
+      governance: { functions: main.governance }
+    views:
+      manage: { grants: true }
+  lake.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: lake
+    source: shop
+    store: { uses: uc-table }
+    serve: { uses: file-serve }
+    tables:
+      customers: { object: customers, contract: customers }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: email, logicalType: string, classification: confidential }
+          - { name: country, logicalType: string, tags: [region] }
+    roles:
+      - { role: marketing-analysts, access: read, description: Campaign reporting }
+      - { role: etl-writers, access: write }
+  customers-product.yaml: |
+    apiVersion: v1.1.0
+    kind: DataProduct
+    id: customers
+    name: Customers
+    status: active
+    description:
+      purpose: Everyone who has bought from the shop.
+    team:
+      members:
+        - { username: ana@example.com, role: owner }
+    outputPorts:
+      - { name: customers, contractId: customers }
+command: apply
+expect:
+  exit: 0
+  lines:
+    - "dev: warnings"
+    - "Not applied on this platform"
+    - "dev:"
+    - "products → build/products (dev)"
+  diagnostics:
+    - { code: CAPABILITY_OFF, severity: warning, file: standard.yaml, line: 9 }
+    - { code: NOT_APPLIED, severity: warning, file: customers.odcs.yaml, line: 15 }
+    - { code: NOT_APPLIED, severity: warning, file: standard.yaml, line: 6 }
+    - { code: NOT_APPLIED, severity: warning, file: customers.odcs.yaml, line: 11 }
+    - { code: NOT_APPLIED, severity: warning, file: standard.yaml, line: 9 }
+  texts:
+    build/products/dev/customers.md: |
+      # Customers
+
+      Everyone who has bought from the shop.
+
+      - Status: active
+
+      ## Owners and support
+
+      - Owner: ana@example.com
+
+      ## What it provides in dev
+
+      | Output | What it is | Table in dev | Where it lives |
+      | --- | --- | --- | --- |
+      | customers |  | `dev.bronze.customers` | views |
+
+      ## Columns
+
+      ### customers
+
+      | Column | Description | Type | Required | Key | Classification |
+      | --- | --- | --- | --- | --- | --- |
+      | id |  | integer |  | yes |  |
+      | email |  | string |  |  | confidential, tagged in Unity Catalog |
+      | country |  | string |  |  |  |
+
+      ## Quality
+
+      ### customers
+
+      #### `dev.bronze.customers`
+
+      No quality rules.
+
+      Cleansing:
+
+      - Nothing is cleansed.
+
+      ## Freshness
+
+      - Refreshed when its pipelines run.
+
+      ## Who may use it
+
+      ### customers
+
+      #### `dev.bronze.customers`
+
+      | Role | Principal in dev | Access | Purpose | Approvers | Granted |
+      | --- | --- | --- | --- | --- | --- |
+      | marketing-analysts | marketing-dev | read | Campaign reporting |  | Granted on Databricks. Granted on views. |
+      | etl-writers | etl-writers | write |  |  | Granted on Databricks. Read granted on views, write not enforced: Views are read-only. |
+
+      Grant mode: exact. On Databricks, any other access granted directly on the table is taken away, except the owner's, the run_as principal's and the unmasked principals'; grants on its schema or catalog stay. Not enforced on views: Exact grants are not applied to views yet.
+
+      Masked columns:
+
+      - `email` (confidential): hashed, on Databricks. Not enforced on views: It has no data masking.
+
+      Row filters:
+
+      - `region_rows`: `region_filter` decides which rows each reader sees, from `country`. Not enforced on Databricks: the platform has row filters off. Not enforced on views: It has no row filters.
+
+      ## Lineage
+
+      ```mermaid
+      flowchart LR
+        n0["shop (files)"] --> n1["customers"]
+      ```
+
+      ## Governance
+
+      This product meets every governance rule of the standard:
+
+      - (none set)

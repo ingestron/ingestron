@@ -1,8 +1,8 @@
 // Tables brought in by flows: ingest and store steps, contract, quality and names.
 import type { DefinitionDocument } from "@ingestron/config";
 import { allowsWritten, endsAtFiles, NO_STORE, type Facts, type Named } from "../choose/index.js";
-import type { Context } from "../context/index.js";
-import { contractFor, expectationsFor, expectationsNotChecked } from "../contracts/index.js";
+import { aboutOne, type Context } from "../context/index.js";
+import { flowContract } from "./flow-contract.js";
 import { kinds, type FlowDoc } from "../documents/index.js";
 import type { ResolvedTable } from "../pack/index.js";
 import type { SettingsLayer } from "./settings.js";
@@ -11,6 +11,10 @@ import { serveStep } from "./serve.js";
 import { unusedStoreSettings } from "../context/index.js";
 import { resolveStep, type StepResult } from "./steps.js";
 import { renderTableName, type TableNamer } from "../tables/index.js";
+import { flowFacts } from "./rule-facts.js";
+import { tableIntent } from "./complete.js";
+import { checkTableIntent, flowChecks } from "./intent-checks.js";
+import { checksIn } from "./layer-duties.js";
 import {
   connectionOf,
   sourceNotKnown,
@@ -31,7 +35,7 @@ export function flowTables(context: Context, namer: TableNamer): ResolvedTable[]
         return [];
       }
       seen.add(name);
-      const table = flowTable(context, flow, name, namer);
+      const table = flowTable(aboutOne(context, name), flow, name, namer);
       return table ? [table] : [];
     }),
   );
@@ -61,10 +65,15 @@ function flowTable(
   const layer = namer.layerOf(flow.value.layer, 0, { document: flow, pointer: "/layer" });
   const connection = connectionOf(context, flow.value.source);
   if (!doc || !layer || !connection) return undefined;
-  const facts = { connectivity: connection.connectivity, connector: connection.connector, layer };
+  const { facts, declared } = flowFacts(context, flow, name, {
+    connectivity: connection.connectivity,
+    connector: connection.connector,
+    layer,
+  });
   const steps = stepsOf(context, flow, name, facts);
   if (steps === false) return undefined;
-  const contract = flowContract(context, flow, name, steps?.endsAtFiles !== undefined);
+  const { places, ...intent } = tableIntent(context, declared, steps);
+  const contract = flowContract(context, flow, name, steps);
   const fullName = renderTableName(context, namer, {
     layer,
     table: name,
@@ -72,16 +81,19 @@ function flowTable(
     source: flow.value.source,
   });
   if (!steps || !contract || !fullName) return undefined;
-  return {
+  const table: ResolvedTable = {
     name,
     layer,
     fullName,
     origin: { kind: "Flow", id: flow.value.id, file: flow.file },
     contract,
-    expectations: expectationsFor(context, contract, doc.expectations),
+    ...checksIn(context, layer, contract, doc.expectations),
+    ...intent,
     ...tableSteps(steps, connection, doc.object),
     ...sourceNotKnown(context, flow),
   };
+  checkTableIntent(context, table, places, flowChecks(flow, name, connection));
+  return table;
 }
 
 /**
@@ -98,14 +110,6 @@ function stepsOf(
   const at = { document: flow, pointer: `/tables/${name}` };
   if (leftOut(context, named(flow, "ingest"), facts, name, at)) return false;
   return flowSteps(context, flow, name, facts);
-}
-
-/** The flow table's contract; a table that ends at the landed files checks nothing. */
-function flowContract(context: Context, flow: Flow, name: string, atFiles: boolean) {
-  const doc = flow.value.tables[name]!;
-  const at = (field: string) => ({ document: flow, pointer: `/tables/${name}/${field}` });
-  if (atFiles) expectationsNotChecked(context, doc.expectations ?? [], at("expectations"));
-  return contractFor(context, name, doc.contract, at("contract"), atFiles);
 }
 
 /**

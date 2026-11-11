@@ -22,6 +22,8 @@ export interface ReadmeFacts {
   today: string;
   files: Record<string, Content>;
   generated: Generated;
+  /** The kit the project started from, `<id>@<version>`. */
+  kit?: string;
 }
 
 /**
@@ -30,13 +32,14 @@ export interface ReadmeFacts {
  */
 export function projectReadme(facts: ReadmeFacts): string {
   const { files, generated } = facts;
+  const kit = facts.kit !== undefined;
   const factory = throughDataFactory(files);
   return [
     `# ${facts.project}`,
     introduction(facts),
     "## Run it\n\n```sh\ningestron plan     # what would be generated, and what is still REPLACE_ME\ningestron apply    # writes the files under build/\n```",
-    valuesSection(replaceRows(files, generated), local(generated), factory),
-    checkSection(checkRows(files, generated)),
+    valuesSection(replaceRows(files, generated, kit), local(generated), factory),
+    checkSection(checkRows(files, generated, kit)),
     secretsSection(secretRows(files), files),
     deploySection(generated.outputs),
     askSection(generated),
@@ -59,6 +62,9 @@ function introduction(facts: ReadmeFacts): string {
   return [
     `${facts.title}. ${facts.summary}`.replace(/\.\. /, ". "),
     `\`ingestron init\` wrote this file on ${facts.today}; it is yours, and Ingestron never rewrites it.`,
+    ...(facts.kit
+      ? [`The standard comes from ${facts.kit}; STANDARD.md explains its choices.`]
+      : []),
     ...(examples ? [examples] : []),
   ].join("\n");
 }

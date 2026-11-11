@@ -1,3 +1,18 @@
 // The contracts module: what the rest of the package uses.
-export { checkContractFields, contractCommon, contractUseOf } from "./contract-use.js";
-export { contractFor, expectationsFor, expectationsNotChecked } from "./contract.js";
+export {
+  checkContractFields,
+  contractCommon,
+  contractUseOf,
+  type ContractUser,
+} from "./contract-use.js";
+export {
+  actionPlace,
+  contractEntryAt,
+  expectationPlaces,
+  standardQualityAt,
+  tableCheckPlaces,
+  type ExpectationPlace,
+} from "./check-places.js";
+export { notAppliedAtFiles } from "./at-files.js";
+export { layerObject, layerTableChecks } from "./layer-quality.js";
+export { contractEntry, contractFor, expectationsFor, expectationsNotChecked } from "./contract.js";

@@ -1,0 +1,93 @@
+description: "A column's timezone is { to }, { from, to } or false. The standard's cleanse.timestamps gives a conversion to each timestamp column that does not say; false takes it away. A conversion whose from and to are the same zone is not made. The table has a zone only when all its timestamp columns are in one."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [zones@1]
+    layers:
+      - { name: bronze, does: [cleanse] }
+    cleanse:
+      timestamps: { to: UTC }
+  crm.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: crm
+    connector: files
+    connectivity: public
+    timezone: Europe/London
+    settings: { path: /data/crm }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: crm
+    tables:
+      mixed:
+        object: events
+        contract: events
+        cleanse:
+          columns:
+            b: { timezone: false }
+            c: { timezone: { to: UTC } }
+            d: { timezone: { from: UTC, to: Europe/London } }
+            e: { timezone: { to: Europe/London } }
+      plain:
+        object: events
+        contract: events
+        cleanse:
+          columns:
+            a: { timezone: false }
+            b: { timezone: false }
+            c: { timezone: false }
+            d: { timezone: false }
+            e: { timezone: false }
+      uniform: { object: events, contract: events }
+  events.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: events
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: events
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: a, logicalType: timestamp }
+          - { name: b, logicalType: timestamp }
+          - { name: c, logicalType: timestamp }
+          - { name: d, logicalType: timestamp }
+          - { name: e, logicalType: timestamp }
+          - { name: day, logicalType: date }
+expect:
+  tables:
+    - name: mixed
+      timezone: null
+      cleanse:
+        columns:
+          id: null
+          a: { timezone: { from: Europe/London, to: UTC } }
+          b: null
+          c: { timezone: { from: Europe/London, to: UTC } }
+          d: { timezone: { from: UTC, to: Europe/London } }
+          e: null
+          day: null
+    - name: plain
+      timezone: Europe/London
+      cleanse: null
+    - name: uniform
+      timezone: UTC
+      cleanse:
+        columns:
+          a: { timezone: { from: Europe/London, to: UTC } }
+          b: { timezone: { from: Europe/London, to: UTC } }
+          c: { timezone: { from: Europe/London, to: UTC } }
+          d: { timezone: { from: Europe/London, to: UTC } }
+          e: { timezone: { from: Europe/London, to: UTC } }
+          day: null

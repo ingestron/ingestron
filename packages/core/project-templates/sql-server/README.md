@@ -7,7 +7,7 @@ The ERP database is reachable from the workspace over private networking
   changes continuously, with the cluster policy from the standard;
 - [an ingestion pipeline](build/databricks/resources/erp_erp_ingestion.pipeline.yml)
   that writes `customers` (SCD type 1) and `invoices` (SCD type 2, from
-  `mode: history`), each with only its contract's columns;
+  `history: full`), each with only its contract's columns;
 - [our pipeline](build/databricks/src/erp/silver/customer_balances.sql), whose
   transform reads both, using the current invoice versions;
 - [a job](build/databricks/resources/erp_refresh.job.yml) that refreshes ingestion

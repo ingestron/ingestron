@@ -64,9 +64,32 @@ its diagnostics formatted as the configuration package formats them.
 `<environments>` are the environments that have each diagnostic of the group,
 in project.yaml's order, joined with `, `. The groups are in the order of
 their first diagnostic, taking the environments in project.yaml's order and
-each environment's diagnostics in their order. For example, a standard that
+each environment's diagnostics in their order. Within a group, its errors come
+first, then its warnings, each in that order. For example, a standard that
 names `databricks@1` in a project with `dev` and `prod` gives one
 `PACK_VERSION`, under `dev, prod: the definitions have problems`.
+
+`NOT_APPLIED` warnings, a feature the engine that keeps a table does not
+apply (definitions specification, section 11.7), are not in those groups. They
+come after them, and after the packs' warnings (section 3), under the line
+`Not applied on this platform`, grouped the same way, each group starting with
+the line `<environments>:`. Last, when any warning was accepted (definitions
+specification, "Accepted warnings"), one line:
+
+```text
+<n> accepted warnings (<file>)
+```
+
+where `<n>` counts the accepted warnings, each once whatever environments have
+it (the same as above), and `<file>` is the file the accepting entries are
+written in, the Platform's, such as `platform.yaml`, with several joined by
+`, `. For one warning it reads `1 accepted warning (<file>)`. Accepted warnings
+are not shown. So the output is: the environments' groups, in the order of
+their first diagnostic, each with its errors before its other warnings; then
+the packs' groups; then the warnings not applied on this platform; then the
+accepted count. A group of warnings can therefore come before a group with an
+error, as when every environment has a warning and only one has an error. None
+of it changes an exit code: a warning never fails a run.
 
 When any environment has problems, nothing is planned or written, no output
 folder is checked, and the exit code is 1: a bundle cannot be written with one
@@ -120,6 +143,21 @@ diagnostics formatted; nothing is planned or written; and the exit code is 1.
 Otherwise, when there are diagnostics, such as a `PACK_NOTICE`, the output is
 the line `<pack id>: warnings`, then the diagnostics formatted, and the pack's
 files are planned and written as usual.
+
+**Accepting a pack's warnings.** A pack's warnings are matched against the
+Platform's `accept` list by the rules of the definitions specification
+("Accepted warnings"), with the matching the definitions package gives
+(`acceptsWarning`), before they are shown. The entries are those the
+resolution of each target gives in `acceptAtBuild`: the entries whose code
+only a pack's build reports, such as `PACK_NOTICE`. A warning is accepted when
+an entry of every target's list accepts it, the first such entry giving the
+reason; it is then counted in the accepted line (section 1) and not shown. A
+pack whose only diagnostics were accepted shows no `<pack id>: warnings` line.
+Once every pack has built its files without an error, each such entry of an
+environment's list that matched no warning of a pack the environment is a
+target of is the entry's `unused` warning, `ACCEPT_UNUSED`, shown with that
+environment's diagnostics (section 1). When a pack reports an error, no entry
+is judged unused.
 
 Each other pack's `build` is given the model of each of its targets, resolved
 with the host's values.

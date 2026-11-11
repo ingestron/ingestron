@@ -9,5 +9,10 @@ export {
   type GeneratedOutputs,
   type GeneratedOutputsOptions,
 } from "./generated-outputs.js";
-export { environmentReportsText, packReportsText } from "./report-text.js";
+export {
+  environmentReportsText,
+  notAppliedHeading,
+  packReportsText,
+  reportsText,
+} from "./report-text.js";
 export type { Report, ResolvedEnvironment } from "./resolve-environments.js";

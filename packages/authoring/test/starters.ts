@@ -68,3 +68,18 @@ function fill(): string {
 
 /** The folder holding every starter, each with its values written. */
 export const filledTemplates = fill();
+
+/** `text` with `from` replaced, failing when the starter no longer has `from`. */
+export function replaced(text: string, from: string, to: string): string {
+  if (!text.includes(from)) throw new Error(`The starter no longer has: ${from}`);
+  return text.replace(from, to);
+}
+
+/** The retail flow with its orders table written with its store method's settings, no intent. */
+export function ordersWithSettings(flow: string): string {
+  return replaced(
+    flow,
+    "    history: latest\n    sequence: updated_at\n    load: { deletes: { when: \"op = 'D'\" } }\n    store:\n      with: { except_columns: [op] }\n",
+    "    store:\n      with: { mode: upsert, sequence_by: updated_at, delete_when: \"op = 'D'\", except_columns: [op] }\n",
+  );
+}

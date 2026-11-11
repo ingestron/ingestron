@@ -1,0 +1,77 @@
+description: "A column that is text in a flow table and an integer in the transform that reads it is judged by the type of the table being cleansed: trim on the transform's column is CLEANSE_TYPE at the setting, not an error at run time, and the standard's text defaults skip it without an error."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    layers:
+      - bronze
+      - { name: silver, does: [cleanse] }
+    cleanse:
+      text: { trim: true, empty: null }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  readings.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: readings
+    source: shop
+    tables:
+      raw_readings:
+        object: readings
+        contract: raw_readings
+        cleanse:
+          columns:
+            qty: { trim: true }
+  raw_readings.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: raw_readings
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: raw_readings
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: qty, logicalType: string }
+  clean_readings.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: clean_readings
+    inputs: [raw_readings]
+    contract: clean_readings
+    cleanse:
+      columns:
+        qty: { trim: true }
+  clean_readings.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: clean_readings
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: clean_readings
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: qty, logicalType: integer }
+expect:
+  diagnostics:
+    - code: CLEANSE_TYPE
+      severity: error
+      file: clean_readings.yaml
+      line: 8
+      message: '"trim" works on text, and "qty" is integer in contract "clean_readings".'
+      hint: 'Remove "trim" from "qty", or cleanse it where it is still text.'

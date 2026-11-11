@@ -185,9 +185,18 @@ describe("ingestron schemas, help and mistakes", () => {
   it("explains usage, and refuses unknown commands and options", () => {
     const { ingestron } = workspace();
     expect(ingestron("--help").output).toContain(
-      "Usage: ingestron <plan|apply|check|compare|contract|request|schemas|init>",
+      "Usage: ingestron <plan|apply|check|compare|contract|request|schemas|init|standard>",
     );
     expect(ingestron("deploy").code).toBe(2);
     expect(ingestron("plan", "--environment", "dev").code).toBe(2);
+  });
+
+  it("says in help what init and standard start from", () => {
+    const { ingestron } = workspace();
+    const help = ingestron("--help").output;
+    expect(help).toContain(
+      "  init      Create a project from a connection, a starter or a published standard.\n",
+    );
+    expect(help).toContain("  standard  Install or list published standards.\n");
   });
 });

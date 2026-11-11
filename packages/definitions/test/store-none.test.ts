@@ -159,7 +159,7 @@ describe("store: none", () => {
 });
 
 describe("quality on landed files", () => {
-  it("says a flow table's expectations are not checked when it ends at the landed files", () => {
+  it("says a flow table's expectations are not applied when it ends at the landed files", () => {
     const flow = base["sales.yaml"]!.replace(
       "orders: { object: orders, contract: orders }",
       "orders:\n    object: orders\n    contract: orders\n    expectations:\n      - { name: positive_total, check: total >= 0 }",
@@ -169,10 +169,10 @@ describe("quality on landed files", () => {
       result.diagnostics.map(({ code, severity, message }) => ({ code, severity, message })),
     ).toEqual([
       {
-        code: "QUALITY_RULE_NOT_CHECKED",
+        code: "NOT_APPLIED",
         severity: "warning",
         message:
-          'Expectation "positive_total" is not checked: the table ends at the landed files, and nothing checks them.',
+          'Expectation "positive_total" isn\'t applied on test: the table ends at the landed files, and nothing checks them.',
       },
     ]);
   });

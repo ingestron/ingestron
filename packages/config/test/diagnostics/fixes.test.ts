@@ -108,4 +108,29 @@ describe("fixEdits", () => {
       "t: { e: [3] } # kept\n",
     );
   });
+
+  it("moves a key into the block mapping just above it, keeping both edits whole", () => {
+    const text = "s:\n  w: 1\nm: { a: true }\nz: 2\n";
+    const fix = {
+      title: "Move",
+      edits: [
+        { file: "a.yaml", pointer: "/s/m", set: { a: true } },
+        { file: "a.yaml", pointer: "/m", remove: true as const },
+      ],
+    };
+    expect(
+      applyEdits(
+        text,
+        fixEdits(fix, () => text),
+      ),
+    ).toBe("s:\n  w: 1\n  m:\n    a: true\nz: 2\n");
+  });
+
+  it("puts an insertion before a removal that starts where it is added, in any order", () => {
+    const text = "abcdef";
+    const insert = { start: 2, end: 2, text: "XY" };
+    const remove = { start: 2, end: 4, text: "" };
+    expect(applyEdits(text, [insert, remove])).toBe("abXYef");
+    expect(applyEdits(text, [remove, insert])).toBe("abXYef");
+  });
 });

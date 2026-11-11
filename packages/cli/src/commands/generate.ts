@@ -17,7 +17,7 @@ import { generateAll, type Generated } from "@ingestron/core";
 import type { Io } from "../terminal/index.js";
 import { extraFiles, generatedFolders } from "./outputs.js";
 import { packs } from "@ingestron/core";
-import { printEnvironmentReports, printPackReports } from "../terminal/index.js";
+import { printReports } from "../terminal/index.js";
 
 interface Planned {
   name: string;
@@ -40,9 +40,7 @@ export function generate(
   prepared?: Generated,
 ): number {
   const generated = prepared ?? generation(options, io, available);
-  printEnvironmentReports(io, generated.environmentReports);
-  if (!generated.resolved) return 1;
-  printPackReports(io, generated.packReports);
+  printReports(io, generated);
   if (!generated.ok) return 1;
   const out = resolve(io.cwd, options.out);
   const planned = generated.outputs.map(({ name, folder, targets, files }): Planned => {

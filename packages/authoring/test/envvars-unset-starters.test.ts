@@ -46,6 +46,18 @@ function workspace(
   return folder;
 }
 
+/**
+ * With the source known, Lakeflow Connect ingests the table, and nothing checks the
+ * starter's required columns there: each is this one warning (pack-databricks, spec 8.2).
+ */
+const notChecked =
+  "The notNull rule isn't applied on databricks: Managed ingestion writes the table as the source gives it; check it in a transform in the next layer.";
+
+/** The problems, without the required columns' `notChecked` warnings. */
+function besidesManaged(found: ReturnType<typeof problems>) {
+  return found.filter(({ code, message }) => !(code === "NOT_APPLIED" && message === notChecked));
+}
+
 function labels(folder: string, flow: string): string[] {
   const text = readFileSync(join(folder, flow), "utf8");
   return annotationsIn(openProject(folder, new Map()), flow, text, "dev").map(({ label }) => label);
@@ -70,7 +82,7 @@ describe.each(starters)("an unset source on the $template starter", (starter) =>
 
   it("keeps the labels the written source gives when .env sets the variable", () => {
     const folder = workspace(starter, { ".env.dev": `${name}=${starter.source}\n` });
-    const found = problems(openProject(folder, new Map()), "dev");
+    const found = besidesManaged(problems(openProject(folder, new Map()), "dev"));
     expect(found.map(({ code, severity }) => ({ code, severity }))).toEqual([deployValue]);
     const expected = labels(workspace(starter, {}, true), starter.flow);
     expect(expected.length).toBeGreaterThan(0);

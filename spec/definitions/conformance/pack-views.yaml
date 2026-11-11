@@ -1,0 +1,41 @@
+# A data-only pack that keeps tables as views over files, and serves tables another pack
+# stores, for the cases about judging access (section 8.2): it grants read access, and has
+# no write access, masks or row filters. Its grants are turned on in its own section of the
+# Platform (section 7.1).
+id: views
+version: 1
+defaults:
+  naming: { catalog: unused, schema: unused, table: unused, pipeline: unused, job: unused }
+  layers: [unused]
+  types: {}
+  quality: { required: warn, default: warn }
+rules: {}
+methods:
+  file-view:
+    action: store
+    description: A view over the landed files.
+    accepts: [files]
+    produces: table
+    settings: { type: object }
+  file-serve:
+    action: serve
+    description: A view over the files of a table another pack stores.
+    accepts: [table, files]
+    produces: table
+    settings: { type: object }
+platformSection:
+  type: object
+  additionalProperties: false
+  properties:
+    manage:
+      type: object
+      additionalProperties: false
+      properties: { grants: { type: boolean } }
+intent:
+  access.grants=read: { use: used, does: Grants SELECT on each view. }
+  access.grants=write: { use: not-applicable, reason: Views are read-only. }
+  access.exact: { use: not-yet, reason: Exact grants are not applied to views yet. }
+  access.masks: { use: not-applicable, reason: It has no data masking. }
+  access.filters: { use: not-applicable, reason: It has no row filters. }
+capabilities:
+  - { id: grants, title: Grants, does: Grants SELECT on the views., needs: [] }

@@ -1,7 +1,8 @@
 // The Platform document with smart defaults (specification section 7).
 import type { Context } from "../context/index.js";
-import type { PlatformDoc } from "../documents/index.js";
+import { sectionsOf, withMovedFields, type PlatformDoc } from "../documents/index.js";
 import type { ResolvedPlatform, Schedule } from "../pack/index.js";
+import { alertsOf } from "./sections.js";
 
 /** Environments that are personal copies, when every environment is generated together. */
 const developmentNames = new Set(["dev"]);
@@ -13,7 +14,8 @@ const productionNames = new Set(["prod", "production"]);
  * document. `together`: every environment is generated together (`environmentsTogether`).
  */
 export function resolvePlatform(context: Context, together: boolean): ResolvedPlatform {
-  const doc: PlatformDoc = context.platform?.value ?? { id: "default" };
+  const written: PlatformDoc = context.platform?.value ?? { id: "default" };
+  const doc = withMovedFields(written);
   const mode = doc.mode ?? defaultMode(context.environment, together);
   const runs = doc.mode === "production" || (!doc.mode && productionNames.has(context.environment));
   const schedule = scheduleOf(doc, runs);
@@ -24,6 +26,8 @@ export function resolvePlatform(context: Context, together: boolean): ResolvedPl
     compute: { serverless: true, ...doc.compute },
     ...(schedule && { schedule }),
     ...collectionsOf(doc),
+    alerts: alertsOf(doc),
+    sections: sectionsOf(written),
   };
 }
 
@@ -39,13 +43,17 @@ function defaultMode(environment: string, together: boolean): ResolvedPlatform["
 /** Settings that are empty when not given. */
 function collectionsOf(
   doc: PlatformDoc,
-): Pick<ResolvedPlatform, "tags" | "permissions" | "notifications" | "manage" | "grants"> {
+): Pick<
+  ResolvedPlatform,
+  "tags" | "permissions" | "notifications" | "manage" | "grants" | "principals"
+> {
   return {
     tags: { ...doc.tags },
     permissions: [...(doc.permissions ?? [])],
     notifications: { on_failure: [...(doc.notifications?.on_failure ?? [])] },
     manage: { schemas: false, tags: false, comments: false, checks: false, ...doc.manage },
     grants: { ...doc.grants },
+    principals: { ...doc.principals },
   };
 }
 

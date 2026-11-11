@@ -1,0 +1,63 @@
+description: An aliased setting in the standard's settings is intent at the standard's place. SETTING_MOVED offers no fix there, as intent written for the whole standard would reach other methods and steps, so the hint says to write it by hand where it should apply.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    layers:
+      - bronze
+      - { name: silver, history: full }
+      - { name: gold, rescued: true }
+    store:
+      settings:
+        stream: { mode: upsert }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  tables:
+    - name: orders
+      intent: { history: latest }
+      intentOrigins:
+        history: { layer: standard, file: standard.yaml, line: 11 }
+      store:
+        method: stream
+        settings: { mode: upsert }
+        origins:
+          mode: { layer: standard, file: standard.yaml, line: 11 }
+  diagnostics:
+    - code: SETTING_MOVED
+      severity: warning
+      file: standard.yaml
+      line: 11
+      message: '"mode" is now written as intent: history: latest.'
+      hint: Write the intent by hand where it should apply, and remove this setting.
+      fixes: []

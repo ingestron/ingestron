@@ -54,7 +54,13 @@ imports: # required; one or more glob patterns
   (`UNKNOWN_ENVIRONMENT`).
 - An environment MAY name `runs-on`, a pack id; the loaded project records it
   for the selected environment, and the definitions say what it changes.
-- Import patterns are relative to the manifest's folder. `*` matches any
+- Import patterns are relative to the manifest's folder. A pattern is first
+  normalised: `.` and empty parts are dropped and `..` is resolved, so
+  `./flows//*.yaml` is `flows/*.yaml` and `a/../b/*.yaml` is `b/*.yaml`. A
+  pattern that is absolute, has a backslash or a scheme such as `https:`, or
+  leaves the project folder is refused (`PATH_OUTSIDE_PROJECT`) and matches
+  nothing. Other settings that take file patterns, such as the definitions'
+  accepted warnings, follow this one rule. `*` matches any
   characters except `/`, `**` matches any number of folders, and `?` matches
   one character except `/`. A pattern that matches no file is a warning
   (`NO_MATCH`). The manifest itself is never imported. Documents are processed
@@ -376,6 +382,10 @@ editor to offer and a person to choose. A fix has a `title`, such as
 
 Applying a fix changes only the text of the values and keys it edits: every
 other character of the file, comments and layout included, stays as written.
+A fix's edits are all made against the same text, and none changes another:
+text an edit adds where another edit's removed or replaced text begins goes
+before it, so moving a key into the mapping just above it keeps both edits
+whole.
 A value written into a flow collection (`{ }` or `[ ]`) is written in flow
 style; a key added to a block mapping is written in block style at that
 mapping's indentation.

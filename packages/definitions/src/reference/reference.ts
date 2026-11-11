@@ -28,6 +28,17 @@ export interface FieldInfo {
   /** The greatest number allowed, from the schema's `maximum`. */
   maximum?: number;
   example?: unknown;
+  /**
+   * What a new value could look like, with `<placeholders>` for the parts the author fills in,
+   * from the schema's `suggest`; for a connection setting, the `suggest` of the connector's
+   * setting. Unlike `example`, it is not meant to be taken as it stands.
+   */
+  suggest?: string;
+  /**
+   * One sentence on where the owner finds the value, from the schema's `find`; for a
+   * connection setting, the `find` of the connector's setting.
+   */
+  find?: string;
   /** For a method setting: the file it belongs in. */
   placement?: "platform" | "standard" | "definition";
   /** The documentation page and anchor, such as `/docs/reference/documents#flow-source`. */
@@ -113,6 +124,22 @@ export function methodReference(pack: PackInfo, id: string): FieldInfo[] {
 }
 
 /**
+ * Every field of a pack's section of the Platform, depth first, each path prefixed with the
+ * pack's id (specification section 7.2); none when the pack has no `platformSection`.
+ * @public
+ */
+export function platformSectionReference(pack: PackInfo): FieldInfo[] {
+  if (!pack.platformSection) return [];
+  const schema = pack.platformSection as Schema;
+  const anchor = (path: string[]) =>
+    `/docs/reference/packs/${pack.id}#${anchorOf(["platform", ...path])}`;
+  return walk(schema, schema, [], anchor).map((field) => ({
+    ...field,
+    path: [pack.id, ...field.path],
+  }));
+}
+
+/**
  * `flow-tables-item-ingest-uses`: lower case, `*` as `item`, joined with `-`.
  * @public
  */
@@ -121,6 +148,8 @@ export function anchorOf(parts: string[]): string {
     .map((part) => (part === "*" ? "item" : part.toLowerCase().replace(/[^a-z0-9]+/g, "-")))
     .join("-");
 }
+
+const mappingSays = ["description", "values", "minimum", "maximum", "default", "example"] as const;
 
 function walk(
   root: Schema,
@@ -134,17 +163,16 @@ function walk(
   if (reference && seen.has(reference)) return [];
   const inside = reference ? new Set([...seen, reference]) : seen;
   const parts = branches(root, schema);
-  const properties = Object.assign({}, ...parts.map((part) => part.properties ?? {})) as Record<
-    string,
-    Schema
-  >;
+  const declared = parts.map((part) => part.properties ?? {});
+  const properties: Record<string, Schema> = Object.assign({}, ...declared);
   const required = requiredOf(root, schema);
   const own = Object.entries(properties).flatMap(([name, child]) => {
     const field = describe(root, child, [...path, name], required.includes(name), anchor);
     return [field, ...walk(root, child, [...path, name], anchor, inside)];
   });
   const nested = parts.flatMap((part) => [
-    ...mappingValues(root, part.additionalProperties, [...path, "*"], anchor),
+    ...starField(root, part.additionalProperties, [...path, "*"], anchor, mappingSays),
+    ...starField(root, part.items, [...path, "*"], anchor, ["find", "suggest"]),
     ...[part.items, part.additionalProperties]
       .filter(isRecord)
       .flatMap((child) => walk(root, child, [...path, "*"], anchor, inside)),
@@ -153,20 +181,21 @@ function walk(
 }
 
 /**
- * The values of a mapping, its `additionalProperties`, as the field `*`, when they say
- * something of their own: a description, allowed values, a range, a default or an example.
- * Otherwise the mapping's own field says all there is.
+ * The values of a mapping (`additionalProperties`) or the items of a list as the field `*`,
+ * when they say one of `says` of their own. A mapping's values do with a description, allowed
+ * values, a range, a default or an example; a list's items only with where to find the value or
+ * what it could look like, such as an alert's address. Otherwise the field above says all.
  */
-function mappingValues(
+function starField(
   root: Schema,
-  values: unknown,
+  schema: unknown,
   path: string[],
   anchor: (path: string[]) => string,
+  says: readonly (keyof FieldInfo)[],
 ): FieldInfo[] {
-  if (!isRecord(values)) return [];
-  const field = describe(root, values, path, false, anchor);
-  const own = ["description", "values", "minimum", "maximum", "default", "example"] as const;
-  return own.some((key) => field[key] !== undefined) ? [field] : [];
+  if (!isRecord(schema)) return [];
+  const field = describe(root, schema, path, false, anchor);
+  return says.some((key) => field[key] !== undefined) ? [field] : [];
 }
 
 /** What every form requires: the schema's own `required` and its `allOf` parts', not one alternative's. */
@@ -206,6 +235,7 @@ function describe(
   const fallback = pick<unknown>("default");
   const minimum = pick<number>("minimum");
   const maximum = pick<number>("maximum");
+  const notes = textNotes({ suggest: pick<unknown>("suggest"), find: pick<unknown>("find") });
   return {
     path,
     name: path.at(-1) ?? "",
@@ -218,7 +248,15 @@ function describe(
     ...(typeof minimum === "number" && { minimum }),
     ...(typeof maximum === "number" && { maximum }),
     ...(examples?.length && { example: examples[0] }),
+    ...notes,
   };
+}
+
+/** The annotations that are text, such as `suggest` and `find`. */
+function textNotes(notes: Record<string, unknown>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(notes).filter(([, note]) => typeof note === "string"),
+  ) as Record<string, string>;
 }
 
 function valuesOf(node: Schema): FieldInfo["values"] {

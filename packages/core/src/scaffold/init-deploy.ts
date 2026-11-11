@@ -57,7 +57,8 @@ const deploys: Record<string, Deploy> = {
     ]),
     "",
     "The Databricks CLI deploys to the workspace it is signed in to, unless the platform's",
-    "`workspace.host` names one: sign in to each environment's workspace, or set it per environment.",
+    "`databricks.workspace.host` names one: sign in to each environment's workspace, or set it per",
+    "environment.",
   ],
   synapse: (_output, folder) => [
     "One `views.sql` for every environment, and a script for each that sets its values. For each",

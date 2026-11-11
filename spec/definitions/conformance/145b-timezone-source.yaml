@@ -1,0 +1,87 @@
+description: "A transform whose inputs are in different zones has no input zone. A column converted without from is TIMEZONE_SOURCE, an error: at the column's timezone when it writes one, else, for the standard's rule, at the transform's inputs. A column that names its from, or that says false, is fine."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [zones@1]
+    layers:
+      - { name: bronze, does: raw }
+      - { name: silver, does: [cleanse] }
+    cleanse:
+      timestamps: { to: UTC }
+  crm.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: crm
+    connector: files
+    connectivity: public
+    timezone: Europe/London
+    settings: { path: /data/crm }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: crm
+    tables:
+      customers: { object: customers, contract: customers }
+  orders.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: orders
+    source: shop
+    tables:
+      orders: { object: orders, contract: customers }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: signed_up, logicalType: timestamp }
+          - { name: updated_at, logicalType: timestamp }
+          - { name: seen_at, logicalType: timestamp }
+          - { name: exported_at, logicalType: timestamp }
+  clean.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: everything
+    inputs: [customers, orders]
+    code: "SELECT * FROM {{ tables.customers }} UNION ALL SELECT * FROM {{ tables.orders }}"
+    contract: customers
+    cleanse:
+      columns:
+        signed_up: { timezone: { to: UTC } }
+        updated_at: { timezone: { from: Europe/London, to: UTC } }
+        exported_at: { timezone: false }
+expect:
+  diagnostics:
+    - code: TIMEZONE_SOURCE
+      severity: error
+      file: clean.yaml
+      line: 9
+      message: 'The inputs of "everything" are in different time zones (Europe/London, UTC), so "signed_up" needs a "from" zone.'
+      hint: 'Write timezone: { from: <zone>, to: <zone> } for "signed_up".'
+    - code: TIMEZONE_SOURCE
+      severity: error
+      file: clean.yaml
+      line: 4
+      message: 'The inputs of "everything" are in different time zones (Europe/London, UTC), so "seen_at" needs a "from" zone.'
+      hint: 'Write timezone: { from: <zone>, to: <zone> } for "seen_at".'

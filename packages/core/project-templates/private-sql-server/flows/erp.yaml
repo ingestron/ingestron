@@ -2,6 +2,10 @@ apiVersion: ingestron.io/v1
 kind: Flow
 id: erp
 source: erp
+# When a row last changed: each copy reads the rows past it,
+# and the tables keep the latest row of each key by it
+load: { cursor: modified_at }
+sequence: modified_at
 tables:
   customers:
     # The source table: its database and schema, database.schema.Customers
@@ -11,7 +15,5 @@ tables:
     # The source table: its database and schema, database.schema.Invoices
     object: REPLACE_ME.REPLACE_ME.Invoices
     contract: erp.invoices
-    ingest:
-      with: { watermark_column: updated_at }
-    store:
-      with: { sequence_by: updated_at }
+    load: { cursor: updated_at }
+    sequence: updated_at

@@ -1,0 +1,84 @@
+description: Capabilities and grants written in the databricks section count exactly as at the top. Checks and tags turned on there make table checks and need no capability; grants there with schemas off are CAPABILITY_OFF at the section's grants, and the fix turns schemas on in the section.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, databricks@1]
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    databricks:
+      manage: { checks: true, tags: true }
+      grants:
+        bronze: [{ principal: analysts, privileges: [SELECT] }]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true, unique: true }
+          - { name: email, logicalType: string, tags: [pii] }
+expect:
+  platform:
+    manage: { schemas: false, tags: true, comments: false, checks: true }
+  tables:
+    - contract:
+        columns:
+          - { name: id }
+          - { name: email, tags: [pii] }
+        tableChecks:
+          - {
+              name: id_unique,
+              metric: duplicateValues,
+              columns: [id],
+              operator: mustBe,
+              value: 0,
+              unit: rows,
+              action: warn,
+            }
+  diagnostics:
+    - code: CAPABILITY_OFF
+      severity: warning
+      file: platform.yaml
+      line: 7
+      message: "The grants are not applied: the platform has schemas off."
+      hint: Turn it on with databricks.manage.schemas in platform.yaml.
+      fixes: [Turn on manage.schemas]
+  fixed:
+    - diagnostic: 0
+      title: Turn on manage.schemas
+      files:
+        platform.yaml: |
+          apiVersion: ingestron.io/v1
+          kind: Platform
+          id: lake
+          databricks:
+            manage: { checks: true, tags: true, schemas: true }
+            grants:
+              bronze: [{ principal: analysts, privileges: [SELECT] }]

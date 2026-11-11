@@ -1,0 +1,76 @@
+description: "A warning from loading has no subject, so it is accepted by code and file only: an entry with about.table cannot match it and is ACCEPT_UNUSED."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml", "extra/*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    accept:
+      - code: NO_MATCH
+        about: { table: orders }
+        reason: The extra folder is added later.
+      - code: NO_MATCH
+        about: { file: project.yaml }
+        reason: The extra folder is added later.
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - name: code
+            logicalType: string
+            logicalTypeOptions: { maxLength: 8 }
+            quality:
+              - { metric: invalidValues, arguments: { pattern: "^[A-Z]+$" }, mustBe: 0 }
+expect:
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: orders.odcs.yaml
+      line: 15
+      subject: { table: orders, feature: pattern }
+    - code: ACCEPT_UNUSED
+      severity: warning
+      file: platform.yaml
+      line: 5
+      message: 'The accept entry for NO_MATCH (table "orders") matches no warning in this run.'
+      hint: "Remove the entry, or correct its code or about. To accept different warnings in each environment, write the list as a value: accept: ${values.accept}."
+      fixes: [Remove the entry]
+  accepted:
+    - code: NO_MATCH
+      severity: warning
+      file: project.yaml
+      line: 3
+      message: No files match the import "extra/*.yaml".
+      subject: null
+      reason: The extra folder is added later.
+      entry: { file: platform.yaml, line: 8 }

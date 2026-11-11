@@ -1,0 +1,47 @@
+description: "Within a group, its errors come before its warnings, whatever order they were found in: the import that matches nothing is found first, while loading, and is shown after the error."
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, prod: {} }
+    imports: ["*.yaml", "transforms/*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [fold@2]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: fold
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    layer: platinum
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        description: One row per order.
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+command: plan
+expect:
+  exit: 1
+  lines:
+    - "dev, prod: the definitions have problems"
+  diagnostics:
+    - { code: UNKNOWN_LAYER, severity: error, file: sales.yaml, line: 5 }
+    - { code: NO_MATCH, severity: warning, file: project.yaml }
+  folders: {}

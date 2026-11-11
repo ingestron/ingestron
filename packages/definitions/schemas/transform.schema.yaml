@@ -3,7 +3,7 @@ title: Transform
 description: Builds one table from tables that flows or other transforms produce.
 type: object
 additionalProperties: false
-required: [apiVersion, kind, id, inputs, code, contract]
+required: [apiVersion, kind, id, inputs, contract]
 properties:
   apiVersion: { const: ingestron.io/v1, description: Always ingestron.io/v1. }
   kind: { const: Transform, description: The document kind. }
@@ -36,7 +36,8 @@ properties:
     description: >-
       The code, usually `${file:name.sql}` or `${file:name.py}`. In SQL, write an input as `{{
       tables.orders }}`; it becomes the input's full name. The method (`transform.uses`) says which
-      language it is.
+      language it is. Leave it out with one input to read that table as it is, which keeps the
+      contract's columns.
     examples:
       - ${file:daily_sales.sql}
   contract:
@@ -77,11 +78,162 @@ properties:
               ],
           }
     description: Your own checks on the table's rows.
+  quality:
+    type: object
+    additionalProperties: false
+    description: "Quarantine and results for the result table only."
+    properties:
+      quarantine:
+        type: boolean
+        description: "Whether rows that fail a check with the action `drop` are kept in a table of their own, `<table>_quarantine`. The table's layer must list `quarantine` in its `does`."
+      results:
+        type: boolean
+        description: "Whether the results of this table's checks are kept as a table that can be queried."
+  cleanse:
+    { $ref: "#/$defs/cleanse", description: "Cleansing for the result's columns, and deduplicate." }
+  history:
+    {
+      $ref: "#/$defs/history",
+      description: "What is kept per key in the result. Default: the layer's.",
+    }
+  sequence:
+    {
+      type: string,
+      description: "The column that orders changes to a key.",
+      examples: [updated_at],
+    }
+  audit:
+    {
+      $ref: "#/$defs/audit",
+      description: "Audit columns for the result, after the contract's columns.",
+    }
   transform: { $ref: "#/$defs/transform", description: How the code runs. }
   store: { $ref: "#/$defs/store", description: How the result is kept. }
   serve:
     { $ref: "#/$defs/serve", description: Where the result is made available after it is kept. }
 $defs:
+  cleanse:
+    type: object
+    additionalProperties: false
+    properties:
+      columns:
+        type: object
+        description: "Cleansing for named columns of the contract, applied in this order after the cast: timezone, trim, empty, map, case, default."
+        additionalProperties:
+          type: object
+          additionalProperties: false
+          properties:
+            timezone:
+              description: "Converts a timestamp column to another time zone, before the other operations. `false` takes away the standard's rule for this column."
+              oneOf:
+                - { const: false }
+                - type: object
+                  additionalProperties: false
+                  required: [to]
+                  properties:
+                    from:
+                      type: string
+                      description: "The zone the column is in. Default: the zone of the table's inputs."
+                      examples: [Europe/London]
+                    to:
+                      type: string
+                      description: The zone to convert to, such as `UTC`.
+                      examples: [UTC]
+              examples:
+                - { to: UTC }
+                - { from: Europe/London, to: UTC }
+            trim:
+              type: boolean
+              description: "`true` removes leading and trailing whitespace; `false` takes away the standard's trim for this column."
+            empty:
+              enum: [null, false]
+              description: "`null` turns an empty string into null; `false` takes away the standard's rule for this column."
+              enumDescriptions:
+                - Turn an empty string into null.
+                - Leave empty strings as they are.
+            map:
+              type: object
+              description: "Replaces each key with its value where the column holds exactly the key. Keys and values must fit the column's type."
+              additionalProperties: { type: [string, number, boolean, "null"] }
+              examples:
+                - { GBR: GB, United Kingdom: GB }
+            case:
+              enum: [upper, lower]
+              description: Change text to upper or lower case.
+              enumDescriptions:
+                - Upper case.
+                - Lower case.
+            default:
+              type: [string, number, boolean]
+              description: "Replaces null with this value, which must fit the column's type."
+              examples: [unknown]
+        examples:
+          - email: { case: lower }
+            status: { default: unknown }
+      deduplicate:
+        type: object
+        additionalProperties: false
+        required: [order_by]
+        description: "Keeps one row for each primary key of the contract: the last by `order_by`. The table's layer must do `deduplicate`, and its store must not append."
+        properties:
+          order_by:
+            type: array
+            minItems: 1
+            uniqueItems: true
+            items: { type: string }
+            description: Contract columns that order the rows of a key; the row that comes last is kept.
+            examples:
+              - [updated_at]
+  history:
+    enum: [none, latest, full, bitemporal]
+    enumDescriptions:
+      - Every row as it arrived.
+      - Only the latest row per key.
+      - Every version of each key, with when it applied.
+      - Every version with both valid time and recorded time. Preview on some platforms.
+  audit:
+    type: array
+    uniqueItems: true
+    items:
+      oneOf:
+        - { $ref: "#/$defs/auditValue" }
+        - type: object
+          additionalProperties: false
+          required: [value, as]
+          properties:
+            value: { $ref: "#/$defs/auditValue", description: "The audit value this column holds." }
+            as:
+              {
+                type: string,
+                pattern: "^[a-z_][a-z0-9_]*$",
+                description: "The column's name. Default: the value's name with a leading underscore.",
+                examples: [_ingested_at],
+              }
+    examples:
+      - - loaded_at
+        - value: source_file
+          as: _file
+  auditValue:
+    enum:
+      - loaded_at
+      - run_id
+      - source_file
+      - source_modified_at
+      - source_object
+      - source_connection
+      - window_start
+      - window_end
+      - row_hash
+    enumDescriptions:
+      - When the row was written to the table.
+      - The id of the run that wrote the row.
+      - The file the row was read from.
+      - When the file the row was read from was last changed.
+      - The object at the source the row came from.
+      - The connection the row came from.
+      - The start of the window of source data the run read.
+      - The end of the window of source data the run read.
+      - A hash of the row's values.
   transform:
     type: object
     additionalProperties: false

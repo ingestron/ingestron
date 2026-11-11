@@ -1,0 +1,83 @@
+description: A pack's own rule's aliased setting is intent with the origin pack, naming the setting, and wins over the method's default, so a table that declares no history has the history the rule's mode stands for. Intent never changes the rule's setting; a layer's history that differs is NOT_APPLIED where the layer wrote it, naming the rule.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [ruled@1]
+    layers:
+      - { name: bronze, history: latest }
+      - silver
+      - gold
+  events.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: events
+    connector: stream
+    connectivity: public
+  clicks.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: clicks
+    source: events
+    tables:
+      clicks: { object: clicks, contract: clicks }
+  views.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: views
+    source: events
+    layer: silver
+    tables:
+      views: { object: views, contract: views }
+  clicks.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: clicks
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: clicks
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  views.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: views
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: views
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  tables:
+    - name: clicks
+      intent: { history: latest }
+      intentOrigins:
+        history: { layer: layer, file: standard.yaml, line: 6, alias: null }
+      ingest:
+        method: stream-read
+        settings: { mode: append }
+        origins:
+          mode: { layer: rule }
+    - name: views
+      intent: { history: none }
+      intentOrigins:
+        history: { layer: pack, alias: mode, file: null, line: null }
+      ingest:
+        method: stream-read
+        settings: { mode: append }
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: standard.yaml
+      line: 6
+      message: 'history: latest isn''t applied on ruled: the pack''s rule for connector stream writes "mode: append".'

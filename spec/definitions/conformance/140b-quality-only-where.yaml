@@ -1,0 +1,47 @@
+description: A rule kind a method applies only in a layer that checks is NOT_APPLIED in a layer whose duties do not list check, with a hint that names the duty.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    store: { uses: quality-view }
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: orders.odcs.yaml
+      line: 10
+      message: "The notNull rule isn't applied on quality: it is applied only in a layer whose does lists check."
+      hint: Add `check` to the layer's `does` to apply it here.
+      subject: { table: orders, feature: notNull }

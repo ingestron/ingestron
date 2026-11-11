@@ -8,25 +8,70 @@ import { createReporter, type Reporter, type Source } from "../diagnostics/index
 import { deployValueHint } from "../pack/index.js";
 import type { DeployValue } from "../pack/index.js";
 import { unsetEnvvarAt, valueAt } from "../diagnostics/index.js";
+import { movedFields, movedTo } from "../documents/index.js";
 
 const actions = ["ingest", "transform", "store", "serve"];
 
+/** The values of a flow or flow table that decide how its data is loaded and kept (section 11.2). */
+const flowIntent = (base: string) =>
+  ["/history", "/load/mode", "/load/deletes/mode"].map((path) => base + path);
+
+/** The Platform's deciding values, and those of its moved fields again in the databricks section. */
+const platformDeciding = (() => {
+  const top = ["/naming/*", "/mode"];
+  const moved = top.filter((pattern) =>
+    movedFields.some((field) => pattern.split("/")[1] === field),
+  );
+  return [...top, ...moved.map((pattern) => `/${movedTo}${pattern}`)];
+})();
+
 /** The values, by document kind, that choose what is generated or name it; `*` is any key. */
 const deciding: Record<string, string[]> = {
-  Connection: ["/connector", "/connectivity"],
-  Flow: ["/source", "/layer", "/ingest/uses", "/store/uses", "/serve/uses", "/tables/*/contract"],
-  Transform: ["/layer", "/contract", "/inputs/*", "/transform/uses", "/store/uses", "/serve/uses"],
+  Connection: ["/connector", "/connectivity", "/timezone"],
+  Flow: [
+    "/source",
+    "/layer",
+    "/ingest/uses",
+    "/store/uses",
+    "/serve/uses",
+    "/tables/*/contract",
+    "/tables/*/cleanse/columns/*/timezone/*",
+    ...flowIntent(""),
+    ...flowIntent("/tables/*"),
+  ],
+  Transform: [
+    "/layer",
+    "/contract",
+    "/inputs/*",
+    "/cleanse/columns/*/timezone/*",
+    "/transform/uses",
+    "/store/uses",
+    "/serve/uses",
+    "/history",
+  ],
   Standard: [
     "/packs/*",
     "/layers/*",
+    "/layers/*/name",
     "/naming/*",
+    "/cleanse/timestamps/to",
+    "/features",
+    "/load/default",
+    "/load/deletes",
+    "/load/when/*/*",
+    "/layers/*/history",
+    "/storage/features/*",
+    "/fixed/history",
+    "/fixed/load/mode",
+    "/fixed/load/deletes/mode",
+    "/fixed/storage/features/*",
     ...actions.flatMap((action) => [
       `/${action}/default`,
       `/${action}/allowed/*`,
       `/${action}/when/*/*`,
     ]),
   ],
-  Platform: ["/naming/*", "/mode"],
+  Platform: platformDeciding,
   DataProduct: ["/outputPorts/*/contractId"],
 };
 

@@ -60,8 +60,8 @@ describe("moveSetting", () => {
 
   it("moves a standard setting to the standard, saying it replaces the value there", () => {
     const flow = disk("flows/erp.yaml").replace(
-      "with: { watermark_column: updated_at }",
-      "with: { watermark_column: updated_at, ret|ries: 5 }",
+      "    load: { cursor: updated_at }\n",
+      "    load: { cursor: updated_at }\n    ingest: { with: { ret|ries: 5 } }\n",
     );
     const { project, moves } = moveAt("flows/erp.yaml", flow);
     expect(moves[0]?.title).toBe(
@@ -70,8 +70,8 @@ describe("moveSetting", () => {
     expect(applied(project, moves[0]!)["standard.yaml"]).toContain("      retries: 5\n");
 
     const every = disk("flows/erp.yaml").replace(
-      "with: { watermark_column: updated_at }",
-      "with: { watermark_column: updated_at, ev|ery: { frequency: Day, interval: 1 } }",
+      "    load: { cursor: updated_at }\n",
+      "    load: { cursor: updated_at }\n    ingest: { with: { ev|ery: { frequency: Day, interval: 1 } } }\n",
     );
     expect(moveAt("flows/erp.yaml", every).moves[0]?.title).toBe(
       "Move every to standard.yaml, replacing the value there; it applies to every adf-copy table: customers, invoices",
@@ -80,8 +80,8 @@ describe("moveSetting", () => {
 
   it("is offered with the cursor on the setting's value too", () => {
     const flow = disk("flows/erp.yaml").replace(
-      "with: { watermark_column: updated_at }",
-      "with: { watermark_column: updated_at, every: { frequency: D|ay } }",
+      "    load: { cursor: updated_at }\n",
+      "    load: { cursor: updated_at }\n    ingest: { with: { every: { frequency: D|ay } } }\n",
     );
     expect(moveAt("flows/erp.yaml", flow).moves[0]?.title).toMatch(/^Move every to standard.yaml/);
   });

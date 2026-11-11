@@ -1,0 +1,79 @@
+description: The first load.when rule whose facts all match chooses the load mode; without one the standard's default applies.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    load:
+      default: files
+      when:
+        - { connector: sqlserver, layer: silver, use: full }
+        - { connector: sqlserver, use: incremental }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: sqlserver
+    connectivity: public
+    settings: { path: /data/shop }
+  drops.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: drops
+    connector: files
+    connectivity: public
+    settings: { path: /data/drops }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  dropped.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: dropped
+    source: drops
+    tables:
+      parcels: { object: parcels, contract: parcels }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  parcels.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: parcels
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: parcels
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  tables:
+    - name: parcels
+      intent:
+        load: { mode: files }
+      intentOrigins:
+        load.mode: { layer: standard, file: standard.yaml, line: 6 }
+    - name: orders
+      intent:
+        load: { mode: incremental }
+      intentOrigins:
+        load.mode: { layer: rule, file: standard.yaml, line: 9 }

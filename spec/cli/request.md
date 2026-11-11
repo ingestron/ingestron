@@ -45,16 +45,31 @@ has something to say:
 1. **Values to replace** (below).
 2. **Values to provide** (below).
 3. Who the generated pipelines and jobs run as.
-4. **Switched on:** each capability the platform turns on with `manage`,
-   what it does and what it needs.
+4. **Switched on:** each capability the platform turns on, what it does and
+   what it needs (below).
 5. **Used by the definitions, but switched off:** each capability the
-   definitions use while the platform has it off.
+   definitions use while the platform has it off, named as in item 4.
 6. **Shared infrastructure:** the platform's settings of the methods the
    environment uses, with their values. A secret is never shown; it reads
    "a secret".
 7. Each pack's own sections, such as what must exist before deploying and
    the schedules. Sections of the same title from several packs are joined.
 8. **SQL to run once (review first):** the generated `prerequisites.sql`.
+
+## Switched on
+
+Capabilities are per pack (definitions specification, section 7.1). They are
+listed in the packs' order, each pack's in its own order. A capability of the
+pack `databricks` is on as the model's `manage` has it (written at the top of
+the Platform or in its `databricks` section), whether or not the environment
+has a table that pack runs. A capability of any other pack is on when its own
+section has `<pack>.manage.<id>: true`, and is listed only when that pack runs
+a step (ingest, transform, store or serve) of a table of the environment;
+`manage` at the top turns nothing on for another pack. Each is a `###`
+heading, ``<title> (`<name>`)``, then what it does and a bullet for each need.
+The name is `manage.<id>` for `databricks` and `<pack>.manage.<id>` for any
+other pack. Item 5 names a capability the same way, from the pack the
+warning's fix turns it on for.
 
 ## Values to replace
 

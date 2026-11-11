@@ -80,3 +80,27 @@ describe("platformFields", () => {
     );
   });
 });
+
+describe("platformFields of a pack's own section", () => {
+  const bridge = read("pack-bridge.yaml") as PackInfo;
+  const withFields = (platformFields: string[]): PackInfo => ({ ...bridge, platformFields });
+  const resolveBridge = (pack: PackInfo) =>
+    resolveDefinitions(memoryFiles(files), { packs: [test, pack], environment: "dev" });
+
+  it("accepts <id>.<path> for a field of the pack's platformSection, beside Platform fields", () => {
+    expect(resolveBridge(withFields(["mode", "bridge.warehouse_id"])).ok).toBe(true);
+  });
+
+  it("refuses a field the section does not have", () => {
+    expect(() => resolveBridge(withFields(["bridge.nope"]))).toThrow(
+      new Error(
+        'The pack "bridge" lists the platform field "bridge.nope", which the Platform document does not have.',
+      ),
+    );
+  });
+
+  it("refuses a section path in a pack without a platformSection", () => {
+    const plain: PackInfo = { ...bridge, platformSection: undefined, platformFields: ["bridge.x"] };
+    expect(packLoadProblem([plain])?.message).toContain('"bridge.x"');
+  });
+});

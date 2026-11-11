@@ -1,0 +1,55 @@
+description: "An entry without a reason is an ordinary schema error at the entry, from the Platform's schema; the project does not load, so nothing is accepted."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    accept:
+      - code: NOT_APPLIED
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - name: code
+            logicalType: string
+            logicalTypeOptions: { maxLength: 8 }
+            quality:
+              - { metric: invalidValues, arguments: { pattern: "^[A-Z]+$" }, mustBe: 0 }
+expect:
+  diagnostics:
+    - code: SCHEMA
+      severity: error
+      file: platform.yaml
+      line: 5
+      message: accept[0] needs "reason".

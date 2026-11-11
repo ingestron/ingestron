@@ -11,7 +11,7 @@ export { inProject, positionAt, projectFolderOf, type Position } from "./project
 // What the snapshot's methods give.
 export { type Problem } from "./diagnostics/index.js";
 export { type QuickFix, type Suggestion } from "./assist/index.js";
-export { type HoverOptions } from "./hover/index.js";
+export { type HoverOptions, type ReplaceMeHelp } from "./hover/index.js";
 export { type ProjectSymbol } from "./navigation/index.js";
 export { type Annotation, type GeneratedLens } from "./annotations/index.js";
 export { type ProblemEntry, type ReferenceEntry } from "./reference/index.js";

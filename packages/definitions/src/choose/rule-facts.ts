@@ -19,13 +19,22 @@ export function fromRule(rule: Rule | RuleDoc, at?: Source): Omit<Choice, "metho
   const ruleWith = rule.with && {
     value: rule.with,
     at: at && { document: at.document, pointer: `${at.pointer}/with` },
+    facts: Object.entries(factsOf(rule))
+      .map(([fact, value]) => `${fact} ${String(value)}`)
+      .join(" and "),
   };
   return { id: rule.use, ...(origin && { origin }), ...(ruleWith && { ruleWith }) };
 }
 
-/** A rule matches when every fact it names equals the table's. */
+/**
+ * A rule matches when every fact it names equals the table's; `tag` matches
+ * when the table's contract has that tag. A fact the table does not have
+ * does not match.
+ */
 export function matches(rule: Rule | RuleDoc, facts: Facts): boolean {
-  return Object.entries(rule).every(
-    ([key, value]) => key === "use" || key === "with" || facts[key as keyof Facts] === value,
-  );
+  return Object.entries(rule).every(([key, value]) => {
+    if (key === "use" || key === "with") return true;
+    if (key === "tag") return facts.tags?.includes(value as string) === true;
+    return facts[key as keyof Facts] === value;
+  });
 }

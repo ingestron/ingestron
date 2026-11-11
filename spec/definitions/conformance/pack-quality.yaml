@@ -1,0 +1,86 @@
+# A data-only pack that applies some checks and some cleansing and not others
+# (section 11.7): no pattern rule, no fail action and no table checks, and on one
+# store method not-null checks only in a layer that checks, and empty-to-null and
+# deduplicate only in a layer that cleanses or deduplicates. No trimming, no
+# replacing of values and no deduplicate otherwise. One more store method does not
+# count failing rows (no warn action), and another checks no row but runs table
+# checks. Its connector is its own, so it offers no fixes in the other cases.
+id: quality
+version: 1
+defaults:
+  naming:
+    catalog: "{{ environment }}"
+    schema: "{{ layer }}"
+    table: "{{ table }}"
+    pipeline: "{{ project }}"
+    job: "{{ project }}_refresh"
+  layers: [bronze, silver, gold]
+  types:
+    {
+      string: STRING,
+      integer: BIGINT,
+      number: DOUBLE,
+      boolean: BOOLEAN,
+      date: DATE,
+      timestamp: TIMESTAMP,
+    }
+  quality: { required: warn, default: warn }
+rules:
+  ingest: { default: quality-copy }
+  store: { default: quality-table }
+methods:
+  quality-copy:
+    action: ingest
+    description: Copies a source's files to a landing folder.
+    connectors: [quality]
+    produces: files
+    settings: { type: object }
+  quality-table:
+    action: store
+    description: Keeps the landed files as a table.
+    accepts: [files]
+    produces: table
+    settings: { type: object }
+  quality-view:
+    action: store
+    description: Reads the landed files through a view, which checks only in a layer that checks.
+    accepts: [files]
+    produces: table
+    intent:
+      quality.rules=notNull:
+        { use: used, does: The view leaves out rows with a null., onlyWhere: check }
+      cleanse.empty: { use: used, does: The view turns empty text into null., onlyWhere: cleanse }
+      deduplicate: { use: used, does: The view keeps the last row per key., onlyWhere: deduplicate }
+    settings: { type: object }
+  quality-uncounted:
+    action: store
+    description: Keeps the landed files as a table, without counting the rows that fail a check.
+    accepts: [files]
+    produces: table
+    intent:
+      quality.actions=warn: { use: not-yet, reason: A failing row is not counted yet. }
+    settings: { type: object }
+  quality-counts:
+    action: store
+    description: Keeps the landed files as a table, and counts over all rows after each load.
+    accepts: [files]
+    produces: table
+    intent:
+      quality.actions: { use: not-applicable, reason: Rows are not checked one by one. }
+      quality.table-checks: { use: used, does: Counts over all rows after each load. }
+    settings: { type: object }
+# A column's unique is a table check it runs with nothing to turn on (section 7.1).
+contract:
+  schema.*.properties.*.unique: { use: used, does: Counted over all rows after each load. }
+# What it does with the quality paths (section 11.7). A value it does not list
+# reports nothing.
+intent:
+  quality.rules=pattern: { use: not-applicable, reason: Its engine has no regular expressions. }
+  quality.actions=fail: { use: not-yet, reason: A failing row does not stop a load yet. }
+  quality.table-checks: { use: not-yet, reason: Checks over all rows are not run yet. }
+  cleanse.trim: { use: not-yet, reason: Trimming is not done yet. }
+  cleanse.map: { use: not-applicable, reason: Its engine cannot replace listed values. }
+  cleanse.timezone: { use: not-yet, reason: Converting time zones is not done yet. }
+  deduplicate: { use: not-yet, reason: Keeping one row per key is not done yet. }
+  quality.quarantine: { use: not-yet, reason: Rows that fail a check are not kept apart yet. }
+  quality.results: { use: not-yet, reason: The results of checks are not kept yet. }

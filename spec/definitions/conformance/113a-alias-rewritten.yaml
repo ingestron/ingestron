@@ -1,0 +1,83 @@
+description: Each aliased setting is written from the completed intent, with the origin of the intent (intent from a setting names it as alias; intent written as intent, later, has none), so a table's history overrides the standard's mode and a table's sequence gives sequence_by. The standard's setting has SETTING_MOVED without a fix.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    store:
+      settings:
+        stream: { mode: append }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders, history: latest }
+      refunds: { object: refunds, contract: refunds, sequence: updated_at }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  refunds.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: refunds
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: refunds
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: updated_at, logicalType: timestamp }
+expect:
+  tables:
+    - name: orders
+      intent: { history: latest }
+      intentOrigins:
+        history: { layer: table, file: sales.yaml, line: 6, alias: null }
+      store:
+        method: stream
+        settings: { mode: upsert, sequence_by: null }
+        origins:
+          mode: { layer: table, file: sales.yaml, line: 6 }
+    - name: refunds
+      intent: { history: none, sequence: updated_at }
+      intentOrigins:
+        history: { layer: standard, file: standard.yaml, line: 7, alias: mode }
+        sequence: { layer: table, file: sales.yaml, line: 7, alias: null }
+      store:
+        method: stream
+        settings: { mode: append, sequence_by: updated_at }
+        origins:
+          mode: { layer: standard, file: standard.yaml, line: 7 }
+          sequence_by: { layer: table, file: sales.yaml, line: 7 }
+  diagnostics:
+    - code: SETTING_MOVED
+      severity: warning
+      file: standard.yaml
+      line: 7
+      message: '"mode" is now written as intent: history: none.'
+      hint: Write the intent by hand where it should apply, and remove this setting.
+      fixes: []

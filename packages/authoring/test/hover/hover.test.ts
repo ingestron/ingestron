@@ -4,11 +4,12 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { hoverAt } from "../../src/hover/hover.js";
 import { openProject } from "../../src/project/project.js";
-import { filledTemplates } from "../starters.js";
+import { filledTemplates, ordersWithSettings, replaced } from "../starters.js";
 
 const retail = join(filledTemplates, "retail");
-const project = openProject(retail, new Map());
-const text = readFileSync(join(retail, "flows/shop.yaml"), "utf8");
+// The orders table written with its store method's settings, as before intent existed.
+const text = ordersWithSettings(readFileSync(join(retail, "flows/shop.yaml"), "utf8"));
+const project = openProject(retail, new Map([[join(retail, "flows/shop.yaml"), text]]));
 const hover = (needle: string, plus = 1) =>
   hoverAt(project, "flows/shop.yaml", text, text.indexOf(needle) + plus, "dev");
 
@@ -40,11 +41,16 @@ describe("hover", () => {
 
 describe("hover on a described field", () => {
   const erp = join(filledTemplates, "private-sql-server");
-  const standard = readFileSync(join(erp, "standard.yaml"), "utf8");
+  // adf-copy's mode, written in the standard's settings.
+  const standard = replaced(
+    readFileSync(join(erp, "standard.yaml"), "utf8"),
+    "    adf-copy: # the schedule; where it lands is the platform's\n",
+    "$&      mode: incremental\n",
+  );
   const docs = (link: string) => `https://docs.example.com${link}`;
   const at = (needle: string, plus: number) =>
     hoverAt(
-      openProject(erp, new Map()),
+      openProject(erp, new Map([[join(erp, "standard.yaml"), standard]])),
       "standard.yaml",
       standard,
       standard.indexOf(needle) + plus,

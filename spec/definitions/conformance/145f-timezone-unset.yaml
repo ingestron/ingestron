@@ -1,0 +1,63 @@
+description: "A zone that holds an unset reference is not known yet, so it is not checked as a name. It is carried as it is written, so a transform that reads the table has the same zone."
+environment: dev
+envvars: {}
+missingEnvvars: information
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [zones@1]
+    layers:
+      - { name: bronze, does: raw }
+      - { name: silver, does: [cleanse] }
+    cleanse:
+      timestamps: { to: UTC }
+  crm.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: crm
+    connector: files
+    connectivity: public
+    timezone: "${envvar:CRM_ZONE}"
+    settings: { path: /data/crm }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: crm
+    tables:
+      customers: { object: customers, contract: customers }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: signed_up, logicalType: timestamp }
+  clean.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: customers_clean
+    inputs: [customers]
+    contract: customers
+expect:
+  diagnostics:
+    - { code: ENVVAR_MISSING, severity: information, file: crm.yaml, line: 6 }
+  tables:
+    - name: customers
+      timezone: "${envvar:CRM_ZONE}"
+    - name: customers_clean
+      timezone: UTC
+      cleanse:
+        columns:
+          signed_up: { timezone: { from: "${envvar:CRM_ZONE}", to: UTC } }

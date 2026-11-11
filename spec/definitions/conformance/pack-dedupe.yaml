@@ -1,0 +1,64 @@
+# A data-only pack with two store methods for deduplicate (section 6.2): a table that
+# keeps history latest and full, and whose mode setting has append as a value that no
+# alias lists (as DuckDB's does), and a view that keeps no history. Its connector is
+# its own, so it offers no fixes in the other cases.
+id: dedupe
+version: 1
+defaults:
+  naming:
+    catalog: "{{ environment }}"
+    schema: "{{ layer }}"
+    table: "{{ table }}"
+    pipeline: "{{ project }}"
+    job: "{{ project }}_refresh"
+  layers: [bronze, silver, gold]
+  types:
+    {
+      string: STRING,
+      integer: BIGINT,
+      number: DOUBLE,
+      boolean: BOOLEAN,
+      date: DATE,
+      timestamp: TIMESTAMP,
+    }
+  quality: { required: warn, default: warn }
+rules:
+  ingest: { default: dedupe-copy }
+  store: { default: dedupe-table }
+methods:
+  dedupe-copy:
+    action: ingest
+    description: Copies a source's files to a landing folder.
+    connectors: [dedupe]
+    produces: files
+    settings: { type: object }
+  dedupe-table:
+    action: store
+    description: Keeps the landed files as a table, replacing, appending or upserting.
+    accepts: [files]
+    produces: table
+    defaults: { mode: replace }
+    intentDefaults: { history: none }
+    aliases:
+      mode:
+        values:
+          replace: { history: none }
+          upsert: { history: latest }
+    settings:
+      type: object
+      additionalProperties: false
+      properties: { mode: { enum: [replace, append, upsert] } }
+  dedupe-view:
+    action: store
+    description: Reads the landed files through a view, which keeps no history.
+    accepts: [files]
+    produces: table
+    intent:
+      history=latest: { use: not-applicable, reason: A view keeps no history. }
+      history=full: { use: not-applicable, reason: A view keeps no history. }
+    settings: { type: object }
+# What it does with history (section 11.5).
+intent:
+  history=none: { use: used, does: Every row as it arrived. }
+  history=latest: { use: used, does: The latest row per key. }
+  history=full: { use: used, does: Every version of a key. }

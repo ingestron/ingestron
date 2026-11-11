@@ -31,7 +31,7 @@ export interface TargetComparison {
 export type Models = Readonly<Record<string, ResolvedModel>>;
 const steps = ["ingest", "transform", "store", "serve"] as const;
 /** Where a value was written or how a method was chosen: not values that reach files. */
-const metadata = new Set(["origins", "chosenBy"]);
+const metadata = new Set(["origins", "chosenBy", "intentOrigins", "qualityOrigins"]);
 
 /**
  * Compares the targets' models, keyed by target name in project.yaml's order.
@@ -56,12 +56,19 @@ export function compareTargets(models: Readonly<Record<string, ResolvedModel>>):
   return { structural: once(structural), differing };
 }
 
-/** The parts of a model compared as values, apart from its tables, compared by name. */
-function rest(model: ResolvedModel): Omit<ResolvedModel, "tables" | "deployValues"> {
+/** What `rest` leaves out: the tables, compared by name, and lists that are not values in files. */
+type Compared = Omit<ResolvedModel, "tables" | "deployValues" | "previewFeatures">;
+
+/**
+ * The parts of a model compared as values. Preview features follow from the tables'
+ * intent, which is compared with the tables.
+ */
+function rest(model: ResolvedModel): Compared {
   const others: Partial<ResolvedModel> = { ...model };
   delete others.tables;
   delete others.deployValues;
-  return others as Omit<ResolvedModel, "tables" | "deployValues">;
+  delete others.previewFeatures;
+  return others as Compared;
 }
 
 /** Every table name, in the order the targets first have it. */

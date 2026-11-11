@@ -1,6 +1,6 @@
 // A contract's quality rules that nothing checks, and why (specification
 // section 6): warned where they are written, and kept for the passport.
-import type { Context } from "../context/index.js";
+import { turnOn, warnOff, type Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
 import { isRecord } from "../internal/index.js";
 
@@ -24,6 +24,8 @@ export interface UncheckedRule {
   name: string;
   description?: string;
   reason: string;
+  /** The warning that says an engine or the platform could check it, but does not here. */
+  notEnforced?: "NOT_APPLIED" | "CAPABILITY_OFF";
 }
 
 /** Why nothing checks a table that ends at the landed files. */
@@ -48,9 +50,20 @@ function labelOf(rule: Rule): string {
     : `A ${String(rule.type ?? "library")}`;
 }
 
-function unchecked(name: string, rule: Rule, reason: string): UncheckedRule {
+/** A rule nothing checks, with its words, the reason and, if any, the warning that says so. */
+export function unchecked(
+  name: string,
+  rule: Rule,
+  reason: string,
+  notEnforced?: UncheckedRule["notEnforced"],
+): UncheckedRule {
   const description = typeof rule.description === "string" ? rule.description : undefined;
-  return { name, ...(description !== undefined && { description }), reason };
+  return {
+    name,
+    ...(description !== undefined && { description }),
+    reason,
+    ...(notEnforced !== undefined && { notEnforced }),
+  };
 }
 
 /**
@@ -79,53 +92,35 @@ export function notChecked(
     return unchecked(name, rule, why);
   }
   warnCount(context, what, at);
-  return unchecked(
-    name,
-    rule,
-    "it counts all rows, which is checked only when the platform turns on checks",
-  );
+  return unchecked(name, rule, CHECKS_OFF, "CAPABILITY_OFF");
 }
 
-/** Warns that a count over all rows is checked only with checks on, with the fix. */
+/** Why a count over all rows is not checked: checks are off for the pack that keeps the table. */
+const CHECKS_OFF = "it counts all rows, which is checked only when the platform turns on checks";
+
+/**
+ * A column's `unique: true` that does not run because checks are off: `CAPABILITY_OFF` at
+ * `unique`, about the table being resolved, in the words of a contract field that needs
+ * checks (specification sections 6 and 7.1).
+ */
+export function uniqueOff(context: Context, name: string, at: Source): UncheckedRule {
+  const message = `unique in contract "${at.document.id}" is not applied`;
+  warnOff(context, "checks", message, at.document, at.pointer);
+  return unchecked(name, {}, CHECKS_OFF, "CAPABILITY_OFF");
+}
+
+/**
+ * `CAPABILITY_OFF`: a count over all rows is checked only with checks on, with the fix that
+ * turns them on.
+ */
 function warnCount(context: Context, what: string, at: Source): void {
-  const platform = context.platform;
+  const { field, fixes } = turnOn(context, "checks");
   context.reporter.warning(
-    "QUALITY_RULE_NOT_CHECKED",
+    "CAPABILITY_OFF",
     `${what} rule compares a count over all rows, which is checked after each refresh only when manage.checks is on.`,
     at,
-    "Turn on manage.checks in platform.yaml to run it after each refresh.",
-    platform
-      ? [
-          {
-            title: "Turn on manage.checks",
-            edits: [{ file: platform.file, pointer: "/manage/checks", set: true }],
-          },
-        ]
-      : [],
+    `Turn on ${field} in platform.yaml to run it after each refresh.`,
+    fixes,
+    { feature: "checks" },
   );
-}
-
-/** On a table that ends at the landed files nothing checks rows: each rule but text warns. */
-export function notCheckedAtFiles(context: Context, entry: Entry, at: Source): UncheckedRule[] {
-  const found: UncheckedRule[] = [];
-  const note = (column: string, rule: Rule, pointer: string) => {
-    const name = nameOf(column, rule);
-    if (rule.type === "text") return found.push(unchecked(name, rule, IN_WORDS));
-    context.reporter.warning(
-      "QUALITY_RULE_NOT_CHECKED",
-      `${labelOf(rule)} rule is not checked: ${AT_FILES}`,
-      { ...at, pointer },
-      "Add a store step to have it checked.",
-    );
-    return found.push(unchecked(name, rule, AT_FILES.replace(/\.$/, "")));
-  };
-  rulesOf(entry.quality).forEach((rule, index) =>
-    note(entry.name, rule, `${at.pointer}/quality/${index}`),
-  );
-  (entry.properties ?? []).forEach((property, column) =>
-    rulesOf(property.quality).forEach((rule, index) =>
-      note(property.name, rule, `${at.pointer}/properties/${column}/quality/${index}`),
-    ),
-  );
-  return found;
 }

@@ -1,0 +1,52 @@
+description: When the ingest and store methods both give an intent default for a path, the step that judges the path gives it, and the later step gives any other path.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [intent@1]
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: intent
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  tables:
+    - name: orders
+      intent:
+        load: { mode: files }
+        history: latest
+        audit: [{ value: loaded_at, as: _loaded_at }]
+      intentOrigins:
+        load.mode: { layer: pack }
+        history: { layer: pack }
+        audit: { layer: pack }
+      ingest: { method: intent-copy }
+      store:
+        method: intent-table
+        settings: { mode: null }

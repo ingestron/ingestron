@@ -1,0 +1,64 @@
+description: "An entry whose code only a pack's build reports (PACK_NOTICE, SECRET_NAME_DIFFERS) is valid and is not judged unused when resolving: the tool that builds the files judges it."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    accept:
+      - code: NOT_APPLIED
+        reason: The on-call team checks this rule from CI.
+      - code: PACK_NOTICE
+        reason: The platform team keeps the runtime's settings.
+      - code: SECRET_NAME_DIFFERS
+        about: { file: "connections/**" }
+        reason: Each environment's vault names its secrets its own way.
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - name: code
+            logicalType: string
+            logicalTypeOptions: { maxLength: 8 }
+            quality:
+              - { metric: invalidValues, arguments: { pattern: "^[A-Z]+$" }, mustBe: 0 }
+expect:
+  diagnostics: []
+  accepted:
+    - code: NOT_APPLIED
+      severity: warning
+      file: orders.odcs.yaml
+      line: 15
+      subject: { table: orders, feature: pattern }
+      reason: The on-call team checks this rule from CI.
+      entry: { file: platform.yaml, line: 5 }

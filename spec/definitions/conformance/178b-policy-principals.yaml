@@ -1,0 +1,59 @@
+description: "run_as and governance.unmasked, each counted once, are the principals every policy lets see real values: more than 20 is POLICY_PRINCIPALS, an error at governance.unmasked (section 8.2)."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, databricks@1]
+    governance:
+      masks: { confidential: hash }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    databricks:
+      run_as: { service_principal_name: etl-runner }
+      manage: { tags: true, masks: true }
+      governance:
+        functions: main.governance
+        unmasked: [steward-01, steward-02, steward-03, steward-04, steward-05, steward-06, steward-07, steward-08, steward-09, steward-10, steward-11, steward-12, steward-13, steward-14, steward-15, steward-16, steward-17, steward-18, steward-19, steward-20, steward-01]
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    store: { uses: uc-table }
+    tables:
+      customers: { object: customers, contract: customers }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: email, logicalType: string, classification: confidential }
+expect:
+  diagnostics:
+    - code: POLICY_PRINCIPALS
+      severity: error
+      file: platform.yaml
+      line: 9
+      message: "21 principals would see real values: run_as and governance.unmasked may name 20."
+      hint: Put the principals in fewer groups.

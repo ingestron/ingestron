@@ -1,0 +1,81 @@
+description: "A zone is UTC or a name from the IANA list, written exactly. A name that is not on it is TIMEZONE_NAME, an error at the name: a connection's timezone, the standard's cleanse.timestamps.to, and a column's from and to. A name that differs from a listed one only in case is offered back."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [zones@1]
+    layers:
+      - { name: bronze, does: raw }
+      - { name: silver, does: [cleanse] }
+    cleanse:
+      timestamps: { to: UTC+1 }
+  crm.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: crm
+    connector: files
+    connectivity: public
+    timezone: Mars/Olympus
+    settings: { path: /data/crm }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: crm
+    tables:
+      customers: { object: customers, contract: customers }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: signed_up, logicalType: timestamp }
+          - { name: updated_at, logicalType: timestamp }
+  clean.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: customers_clean
+    inputs: [customers]
+    contract: customers
+    cleanse:
+      columns:
+        signed_up: { timezone: { from: europe/london, to: UTC } }
+        updated_at: { timezone: { to: Europe/Londn } }
+expect:
+  diagnostics:
+    - code: TIMEZONE_NAME
+      severity: error
+      file: crm.yaml
+      line: 6
+      message: '"Mars/Olympus" is not a time zone name.'
+      hint: "Use a name from the IANA time zone database, such as Europe/London, or UTC."
+    - code: TIMEZONE_NAME
+      severity: error
+      file: standard.yaml
+      line: 9
+      message: '"UTC+1" is not a time zone name.'
+      hint: "Use a name from the IANA time zone database, such as Europe/London, or UTC."
+    - code: TIMEZONE_NAME
+      severity: error
+      file: clean.yaml
+      line: 8
+      message: '"europe/london" is not a time zone name.'
+      hint: 'Did you mean "Europe/London"?'
+    - code: TIMEZONE_NAME
+      severity: error
+      file: clean.yaml
+      line: 9
+      message: '"Europe/Londn" is not a time zone name.'
+      hint: "Use a name from the IANA time zone database, such as Europe/London, or UTC."

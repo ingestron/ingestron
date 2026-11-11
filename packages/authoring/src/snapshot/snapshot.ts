@@ -23,7 +23,7 @@ import {
   platformRequest,
   type Files,
 } from "../generation/index.js";
-import { hoverAt, type HoverOptions } from "../hover/index.js";
+import { hoverAt, replaceMeHelp, type HoverOptions, type ReplaceMeHelp } from "../hover/index.js";
 import {
   definitionAt,
   fileMoveEdits,
@@ -118,6 +118,18 @@ export class ProjectSnapshot {
     options: HoverOptions = {},
   ): string | undefined {
     return hoverAt(this, file, text, offset, environment, options);
+  }
+
+  /**
+   * What the `REPLACE_ME` at `pointer` (a JSON Pointer) in `file` stands for: the field it fills,
+   * where to find the value and a suggestion; undefined when no field describes it.
+   */
+  replaceMeHelp(
+    file: string,
+    pointer: string,
+    environment: string | undefined,
+  ): ReplaceMeHelp | undefined {
+    return replaceMeHelp(this, file, pointer, environment);
   }
 
   /** Where the id or reference at the offset is defined. */

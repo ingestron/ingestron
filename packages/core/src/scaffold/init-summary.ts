@@ -6,15 +6,16 @@ import { checkRows, replaceRows, secretRows } from "./init-rows.js";
 import type { Content } from "./scaffold.js";
 
 /**
- * The lines after the plan.
+ * The lines after the plan; `kit` when the project starts from a kit, as for README.md.
  * @internal
  */
 export function stillToReplace(
   files: Record<string, Content>,
   generated: Generated,
   kept: boolean,
+  kit = false,
 ): string {
-  const rows = replaceRows(files, generated);
+  const rows = replaceRows(files, generated, kit);
   if (rows.length === 0 && !kept) return "Nothing to replace: the project runs as written.\n";
   const values = rows.length === 1 ? "1 value is" : `${rows.length} values are`;
   if (!kept) return `${values} still REPLACE_ME: README.md lists each one and where to find it.\n`;
@@ -29,7 +30,7 @@ export function stillToReplace(
     ),
     ...section(
       "Values to check, the example's own:",
-      checkRows(files, generated).map(
+      checkRows(files, generated, kit).map(
         (row) =>
           `  ${row.name}  ${place(row.place)}  ${row.what}\n    Where to find it: ${row.find}`,
       ),

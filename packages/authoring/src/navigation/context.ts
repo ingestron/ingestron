@@ -81,6 +81,16 @@ export function writtenKeys(place: Place): Set<string> {
   return new Set(node && typeof node === "object" && !Array.isArray(node) ? Object.keys(node) : []);
 }
 
+/** The items written so far in the list at the place's path; none when it is not a list. */
+export function listAt(place: Place): unknown[] {
+  const value = place.path.reduce<unknown>(
+    (node, key) =>
+      node && typeof node === "object" ? (node as Record<string, unknown>)[key] : undefined,
+    place.data,
+  );
+  return Array.isArray(value) ? value : [];
+}
+
 /** A document's `kind`, also while the text does not parse. */
 export function kindOf(text: string, data = dataOf(text)): string | undefined {
   return typeof data.kind === "string" ? data.kind : /^kind:\s*(\S+)/m.exec(text)?.[1];

@@ -11,7 +11,7 @@ export {
 } from "./environments.js";
 export { checkFold, splitDeployText, type FoldView } from "./fold.js";
 export type {
-  ChosenBy,
+  Alert,
   Column,
   Contract,
   ContractRole,
@@ -19,15 +19,16 @@ export type {
   Expectation,
   FullName,
   Grant,
-  Origin,
+  RowRule,
   Permission,
+  PreviewFeature,
   ResolvedModel,
   ResolvedPlatform,
   ResolvedProduct,
   ResolvedTable,
   Schedule,
-  Step,
 } from "./model.js";
+export type { ChosenBy, Origin, Step } from "./step.js";
 export type {
   Action,
   Capability,
@@ -42,5 +43,14 @@ export type {
   Rule,
   StepOutput,
 } from "./pack.js";
+export {
+  classificationTag,
+  defaultClassificationTag,
+  type AccessGrant,
+  type ColumnMask,
+  type RowFilter,
+  type TableAccess,
+} from "./access.js";
+export type { ColumnCleanse, TableCleanse } from "./cleanse.js";
 export { runsOnProblems } from "./runs-on-pack.js";
 export { tableCheckOf, type TableCheck } from "./table-checks.js";

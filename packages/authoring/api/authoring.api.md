@@ -139,6 +139,7 @@ export class ProjectSnapshot {
         text: string;
     }[]> | undefined;
     renameProblem(file: string, offset: number, name: string): string | undefined;
+    replaceMeHelp(file: string, pointer: string, environment: string | undefined): ReplaceMeHelp | undefined;
     request(environment: string | undefined): string;
     symbols(): ProjectSymbol[];
 }
@@ -212,6 +213,16 @@ export interface ReferenceEntry {
         text?: string;
         current?: boolean;
     }[];
+}
+
+// @public
+export interface ReplaceMeHelp {
+    // (undocumented)
+    description?: string;
+    docs: string;
+    field: string;
+    find?: string;
+    suggest?: string;
 }
 
 // @public

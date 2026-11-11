@@ -1,6 +1,12 @@
 // Where the owner finds a value still REPLACE_ME: the setting's `find` metadata, else the
-// connector's documentation (definitions specification, "Connector authoring metadata").
-import type { Connector } from "@ingestron/definitions";
+// connector's documentation (definitions specification, "Connector authoring metadata"). For a
+// kit, a Platform field's `find` from the field reference too, as the editor's hover shows it
+// (spec/cli/projects.md, "README.md").
+import {
+  documentReference,
+  platformSectionReference,
+  type Connector,
+} from "@ingestron/definitions";
 import { parse } from "yaml";
 import type { Generated } from "../generation/index.js";
 import { methodSettings } from "./init-platform.js";
@@ -22,17 +28,17 @@ interface Written {
   source?: string;
 }
 
-/** One sentence on where to find the value. */
+/** One sentence on where to find the value; `kit` when the project starts from a kit. */
 export function findFor(
   value: ProjectValue,
   files: Record<string, Content>,
   generated: Generated,
+  kit = false,
 ): string {
   if (value.file === "project.yaml")
-    return composed[value.name] ?? readerFind(value.name, files, generated) ?? fallback;
+    return composed[value.name] ?? readerFind(value.name, files, generated, kit) ?? fallback;
   const document = (parse(String(files[value.file] ?? "")) ?? {}) as Written;
-  if (document.kind === "Platform" && value.keys[0] === "settings")
-    return found(methodSettings(value.keys[1]!)[value.keys[2]!]) ?? fallback;
+  if (document.kind === "Platform") return platformValueFind(value.keys, kit) ?? fallback;
   return sourceFind(value, document, generated) ?? fallback;
 }
 
@@ -51,14 +57,19 @@ function sourceFind(value: ProjectValue, document: Written, generated: Generated
 }
 
 /** The `find` of the setting that reads a project.yaml value as its whole value. */
-function readerFind(name: string, files: Record<string, Content>, generated: Generated) {
+function readerFind(
+  name: string,
+  files: Record<string, Content>,
+  generated: Generated,
+  kit: boolean,
+) {
   const whole = `\${values.${name}}`;
   for (const [file, text] of Object.entries(files)) {
     if (file === "project.yaml" || !/\.ya?ml$/.test(file)) continue;
     const keys = keysOf(parse(String(text)), whole, []);
     if (!keys) continue;
     const reader: ProjectValue = { name, file, keys, line: 0, kind: "setting", value: whole };
-    const find = findFor(reader, files, generated);
+    const find = findFor(reader, files, generated, kit);
     if (find !== fallback) return find;
   }
   return undefined;
@@ -88,4 +99,25 @@ function connectorOf(connection: string, generated: Generated): Connector | unde
   return packs
     .flatMap((pack) => pack.connectors ?? [])
     .find((item) => item.id === ingest.connection.connector && item.method === ingest.method);
+}
+
+/** A Platform value's `find`: a method setting's; for a kit, any other field's too. */
+function platformValueFind(keys: string[], kit: boolean): string | undefined {
+  if (keys[0] === "settings") return found(methodSettings(keys[1]!)[keys[2]!]);
+  return kit ? platformFind(keys) : undefined;
+}
+
+/** A Platform field's `find`: a pack's section under the pack's id, else the document's own. */
+function platformFind(keys: string[]): string | undefined {
+  const pack = packs.find((item) => item.id === keys[0] && item.platformSection);
+  const fields = pack ? platformSectionReference(pack) : documentReference("Platform");
+  return fields.find((field) => same(field.path, keys))?.find;
+}
+
+/** Described keys match when each is the same or the description says `*`. */
+function same(described: string[], path: string[]): boolean {
+  return (
+    described.length === path.length &&
+    described.every((key, index) => key === "*" || key === path[index])
+  );
 }

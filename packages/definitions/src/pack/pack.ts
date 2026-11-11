@@ -1,5 +1,6 @@
 // What a pack declares: its methods, its smart defaults and how it builds files.
 import type { JsonSchema } from "@ingestron/config";
+import type { Intent, IntentUse, SettingAlias } from "../intent/index.js";
 import type { EnvironmentsBuild } from "./environments.js";
 import type { Column, ResolvedModel, ResolvedTable } from "./model.js";
 
@@ -16,7 +17,9 @@ export type Action = "ingest" | "transform" | "store" | "serve";
 export type Handover = "files" | "table" | "query";
 
 /**
- * Facts a `when` rule can match, plus the method it chooses and settings for that case.
+ * Facts a pack's `when` rule can match, plus the method it chooses and settings for that
+ * case. A standard's rules may also match the table's declared load mode and history,
+ * classification, tag, product and domain; a pack's rules match only these.
  * @public
  */
 export interface Rule {
@@ -48,6 +51,23 @@ export interface Method {
   defaults?: Record<string, unknown>;
   /** JSON Schema for the merged settings. */
   settings: JsonSchema;
+  /**
+   * The intent this method applies when nothing declares it, filled in after methods are
+   * chosen (specification section 11.3).
+   * @example intentDefaults: { history: "none" }
+   */
+  intentDefaults?: Intent;
+  /**
+   * Settings that are other names for intent, by setting (specification section 11.4).
+   * @example aliases: { mode: { values: { append: { history: "none" } } }, sequence_by: { path: "sequence" } }
+   */
+  aliases?: Record<string, SettingAlias>;
+  /**
+   * What differs on this method from its pack's `intent`: found first when the method's
+   * step judges a value (specification section 11.5).
+   * @example intent: { history: { use: "not-applicable", reason: "A view keeps no history." } }
+   */
+  intent?: Record<string, IntentUse>;
   /**
    * Where settings usually belong: `platform` (such as shared infrastructure)
    * or `standard` (such as a schedule). The others belong in the definitions.
@@ -144,6 +164,12 @@ export interface Connector {
      * @example "Your database administrator; SSMS shows it as the server name."
      */
     find?: string;
+    /**
+     * What the value could look like, with `<placeholders>` for the parts the owner fills in;
+     * shown beside a `REPLACE_ME`, never written by `ingestron init`.
+     * @example "/Volumes/<catalog>/<schema>/<volume>"
+     */
+    suggest?: string;
   }[];
   /** What the pack generates for it, in a short phrase. */
   generates: string;
@@ -168,11 +194,12 @@ export type ContractUse =
 
 /**
  * A feature that changes shared objects on the platform, turned on with
- * `manage.<id>` in the platform, with what it needs there, in words.
+ * `manage.<id>` in the platform, with what it needs there, in words. `grants`, `masks`
+ * and `filters` are turned on in the pack's own section, `<pack>.manage.<id>`.
  * @public
  */
 export interface Capability {
-  id: "schemas" | "tags" | "comments" | "checks";
+  id: "schemas" | "tags" | "comments" | "checks" | "grants" | "masks" | "filters";
   title: string;
   does: string;
   needs: string[];
@@ -203,8 +230,21 @@ export interface PackInfo {
    * @example ["mode", "schedule.paused", "manage.checks"]
    */
   platformFields?: string[];
+  /**
+   * The schema of the pack's section of the Platform, the mapping under the key named for
+   * the pack's id (specification section 7.2). Without it the section may only be empty.
+   * `platformFields` may then list its fields as `<id>.<path>`.
+   * @example { type: "object", additionalProperties: false, properties: { warehouse_id: { type: "string" } } }
+   */
+  platformSection?: JsonSchema;
   /** What the pack does with each ODCS contract field, by field path (`*` for any item). */
   contract?: Record<string, ContractUse>;
+  /**
+   * What the pack does with each intent path and value, by `path` or `path=value`; a path
+   * takes its own entry, else the nearest above it (specification section 11.5).
+   * @example intent: { "history=full": { use: "not-yet", reason: "History is not kept yet." } }
+   */
+  intent?: Record<string, IntentUse>;
   /** The connectors this pack's ingest methods read, for the documentation. */
   connectors?: Connector[];
   /** Checks on the whole resolved model, such as platform settings the pack cannot build yet. */

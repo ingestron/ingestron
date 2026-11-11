@@ -11,9 +11,13 @@ import { editYaml } from "./init-yaml.js";
 import { packs } from "../packs/index.js";
 import { scaffoldFiles, type Answers, type Content } from "./scaffold.js";
 import type { Template } from "./templates.js";
+import type { Kit } from "../kits/index.js";
+import { kitFiles, withKit } from "./init-kit.js";
 
 /**
- * Where the project comes from: a template, or a recipe with what composing it needs.
+ * Where the project comes from: a template, a recipe with what composing it needs, or a kit.
+ * With a kit and a recipe, the kit gives the standard, project.yaml and platform.yaml, and the
+ * recipe the source (spec/cli/projects.md, "Kits").
  * @internal
  */
 export interface Source {
@@ -21,6 +25,7 @@ export interface Source {
   done(): void;
   files?: Record<string, Content>;
   facts?: RecipeFacts;
+  kit?: Kit;
 }
 
 /** What `init` writes, and how: the day, whether README.md is kept, the options to keep. */
@@ -37,7 +42,7 @@ function projectFiles(
   set: Record<string, string>,
   writing: Writing,
 ) {
-  const files = scaffoldFiles(source.template, answers, source.files);
+  let files = scaffoldFiles(source.template, answers, source.files);
   let leftOut: string[] = [];
   if (source.facts) {
     const { today, keep, kept } = writing;
@@ -47,13 +52,18 @@ function projectFiles(
       today,
       keep,
     });
-    const title = `${source.template.title}.${kept ? "" : " README.md lists what to fill in."}`;
-    editYaml(files, "project.yaml", (document) => {
-      const first = isMap(document.contents) ? document.contents.items[0]?.key : undefined;
-      if (isScalar(first)) first.commentBefore = ` ${title}`;
-    });
+    // The kit's project.yaml keeps its own first comment.
+    if (source.kit)
+      files = withKit(files, scaffoldFiles(source.template, answers, kitFiles(source.kit)));
+    else {
+      const title = `${source.template.title}.${kept ? "" : " README.md lists what to fill in."}`;
+      editYaml(files, "project.yaml", (document) => {
+        const first = isMap(document.contents) ? document.contents.items[0]?.key : undefined;
+        if (isScalar(first)) first.commentBefore = ` ${title}`;
+      });
+    }
   }
-  startToday(files, writing.today);
+  startToday(files, writing.today, source.kit !== undefined);
   ignoreExport(files);
   const asked = source.template.questions.map((question) => question.value);
   applySet(files, set, answers.environments, asked);

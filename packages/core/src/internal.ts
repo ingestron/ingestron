@@ -5,7 +5,9 @@ export {
   environmentOutputs,
   environmentReportsText,
   environmentsToGenerate,
+  notAppliedHeading,
   packReportsText,
+  reportsText,
 } from "./generation/index.js";
 export { tableFacts } from "./compare/index.js";
 export { requestFor } from "./request/index.js";
@@ -14,6 +16,8 @@ export {
   applySet,
   composableRecipe,
   ignoredText,
+  kitFiles,
+  kitTemplate,
   methodSettings,
   objectName,
   projectReadme,
@@ -26,3 +30,12 @@ export {
   type Answers,
   type Source,
 } from "./scaffold/index.js";
+export {
+  compareVersions,
+  isId,
+  isRange,
+  satisfies,
+  standardsKitsFolder,
+  versionProblem,
+  withoutCredentials,
+} from "./kits/index.js";

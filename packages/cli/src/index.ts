@@ -2,7 +2,15 @@
 import { formatDiagnostics } from "@ingestron/config";
 import * as core from "@ingestron/core";
 import { packLoadProblem } from "@ingestron/definitions";
-import { compare, draftContract, generate, init, request, writeSchemas } from "./commands/index.js";
+import {
+  compare,
+  draftContract,
+  generate,
+  init,
+  request,
+  standard,
+  writeSchemas,
+} from "./commands/index.js";
 import { readArgs, usage, type Io } from "./terminal/index.js";
 
 // The command's arguments and options, as help lists them.
@@ -33,6 +41,7 @@ export function run(args: string[], io: Io): number {
     return 2;
   }
   if (options.command === "init") return init(options, io);
+  if (options.command === "standard") return standard(options, io);
   if (options.command === "request") return request(options, io);
   if (options.command === "compare") return compare(options, io);
   if (options.command === "contract") return draftContract(options, io);

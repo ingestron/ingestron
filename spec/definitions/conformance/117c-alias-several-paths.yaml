@@ -1,0 +1,72 @@
+description: A setting whose value stands for intent on several paths is written only when one of that value's paths is declared, and takes the origin of the latest of them; a value that only a pack default matches is not written.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [intent@1]
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: intent
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      orders: { object: orders, contract: orders, load: { mode: incremental } }
+  ledger.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: ledger
+    source: source
+    history: none
+    tables:
+      refunds: { object: refunds, contract: refunds, load: { mode: full } }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  refunds.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: refunds
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: refunds
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  tables:
+    - name: refunds
+      intent: { load: { mode: full }, history: none }
+      store:
+        method: intent-table
+        settings: { mode: replace }
+        origins:
+          mode: { layer: table, file: ledger.yaml, line: 7 }
+    - name: orders
+      intent: { load: { mode: incremental }, history: latest }
+      intentOrigins:
+        history: { layer: pack }
+      store:
+        method: intent-table
+        settings: { mode: null }

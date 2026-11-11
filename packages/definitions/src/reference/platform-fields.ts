@@ -3,7 +3,7 @@
 // pack is refused.
 import type { AnyDiagnostic } from "@ingestron/config";
 import type { PackInfo } from "../pack/index.js";
-import { documentReference } from "./reference.js";
+import { documentReference, platformSectionReference } from "./reference.js";
 
 let known: ReadonlySet<string> | undefined;
 
@@ -13,10 +13,27 @@ function platformPaths(): ReadonlySet<string> {
   return known;
 }
 
-/** Why the packs are refused: the first path a pack lists that the Platform does not have. */
+/** The paths of a pack's own section, as `<id>.<path>`; empty for a pack without one. */
+function sectionPaths(pack: PackInfo): ReadonlySet<string> {
+  return new Set(platformSectionReference(pack).map((field) => field.path.join(".")));
+}
+
+/** True when the pack lists a path of its own section (`<id>.…`) that its section has, else of the Platform. */
+function listed(pack: PackInfo, path: string, own: () => ReadonlySet<string>): boolean {
+  return path.startsWith(`${pack.id}.`) && !platformPaths().has(path)
+    ? own().has(path)
+    : platformPaths().has(path);
+}
+
+/**
+ * Why the packs are refused: the first path a pack lists that the Platform does not have,
+ * nor, for a path that starts with the pack's own id, its own section.
+ */
 function refusal(packs: readonly PackInfo[]): string | undefined {
   for (const pack of packs) {
-    const unknown = (pack.platformFields ?? []).find((path) => !platformPaths().has(path));
+    let own: ReadonlySet<string> | undefined;
+    const section = () => (own ??= sectionPaths(pack));
+    const unknown = (pack.platformFields ?? []).find((path) => !listed(pack, path, section));
     if (unknown !== undefined)
       return `The pack "${pack.id}" lists the platform field "${unknown}", which the Platform document does not have.`;
   }

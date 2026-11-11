@@ -1,6 +1,6 @@
 {
   "name": "@ingestron/definitions",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "description": "Ingestron definitions: schemas, loading, and resolving standards into a model packs can build from.",
   "license": "Apache-2.0",
   "author": "Ingestron <hello@ingestron.io>",
@@ -36,6 +36,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "check:docs": "tsx scripts/check-docs.ts",
+    "zones": "tsx scripts/zones.ts",
     "validate": "pnpm lint && pnpm typecheck && pnpm test && pnpm check:docs && pnpm check:api",
     "api": "api-extractor run --local",
     "check:api": "api-extractor run",

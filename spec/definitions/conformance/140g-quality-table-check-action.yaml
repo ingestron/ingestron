@@ -1,0 +1,48 @@
+description: "With checks on, a table check's action is judged with the table check, not with the actions of row checks: a pack that runs table checks, but checks no row one by one, reports nothing for a table check, nor for its action written as the standard's quality default."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+    quality: { default: fail }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    manage: { checks: true }
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    store: { uses: quality-counts }
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        quality:
+          - { metric: rowCount, mustBeGreaterThan: 0 }
+        properties:
+          - { name: id, logicalType: integer, unique: true }
+expect:
+  diagnostics: []

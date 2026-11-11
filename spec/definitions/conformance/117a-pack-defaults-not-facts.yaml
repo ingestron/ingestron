@@ -1,0 +1,68 @@
+description: A pack's intent defaults are not rule facts, so a rule on history matches only a table that declares it.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    store:
+      when:
+        - { history: none, use: view }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+      refunds: { object: refunds, contract: refunds, history: none }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  refunds.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: refunds
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: refunds
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  tables:
+    - name: orders
+      intent: { history: none }
+      intentOrigins:
+        history: { layer: pack }
+      store:
+        method: stream
+        chosenBy: { by: pack-default }
+    - name: refunds
+      intent: { history: none }
+      intentOrigins:
+        history: { layer: table, file: sales.yaml, line: 7 }
+      store:
+        method: view
+        chosenBy: { by: standard-rule, when: { history: none }, file: standard.yaml, line: 7 }

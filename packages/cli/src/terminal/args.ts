@@ -1,9 +1,21 @@
 // Command-line arguments.
 import { parseArgs } from "node:util";
+import { commands } from "./help.js";
 
 /** What the user asked for. */
 export interface Options {
-  command: "plan" | "apply" | "check" | "compare" | "request" | "contract" | "schemas" | "init";
+  command:
+    | "plan"
+    | "apply"
+    | "check"
+    | "compare"
+    | "request"
+    | "contract"
+    | "schemas"
+    | "init"
+    | "standard";
+  /** standard: install a kit's standard, or list the kits, for one platform when given. */
+  standard?: StandardAction;
   /** contract: the sample file to draft a contract from. */
   sample?: string;
   /** compare and request: the environments; empty means every environment in project.yaml. */
@@ -20,6 +32,7 @@ export interface Options {
   init: {
     folder: string;
     template?: string;
+    kit?: string;
     connector?: string;
     via?: string;
     connectivity?: string;
@@ -30,95 +43,9 @@ export interface Options {
   };
 }
 
-/**
- * The commands, in the order help shows them.
- * @public
- */
-export const commands = [
-  { name: "plan", summary: "Show what would change in each pack's output folder." },
-  { name: "apply", summary: "Write the changes. Files edited by hand are never overwritten." },
-  { name: "check", summary: "Fail when the output is not up to date (for CI). Writes nothing." },
-  {
-    name: "compare",
-    summary: "Show what differs between two environments, after resolving.",
-  },
-  {
-    name: "contract",
-    summary: "Draft a contract from a sample CSV or JSON file: column names and types.",
-  },
-  {
-    name: "request",
-    summary: "Print what to ask of whoever runs the data platform, per environment.",
-  },
-  { name: "schemas", summary: "Write editor schemas for VS Code's YAML extension." },
-  { name: "init", summary: "Create a project from a connection and supported ingestion route." },
-] as const;
-
-/**
- * The options, in the order help shows them.
- * @public
- */
-export const flags = [
-  {
-    flag: "--connector <id>",
-    summary: "init: the source connector; otherwise choose by category.",
-  },
-  {
-    flag: "--connectivity <kind>",
-    summary: "init: private, workspace or public source reachability.",
-  },
-  {
-    flag: "--via <databricks|adf-databricks|adf-synapse|adf-duckdb|adf-landing>",
-    summary:
-      "init: the route: Databricks directly, or ADF into Databricks, Synapse views, DuckDB tables or the landed files alone.",
-  },
-  {
-    flag: "--env <name>",
-    summary:
-      "compare and request: only this environment (repeatable). Default: all in project.yaml. init: the environments.",
-  },
-  { flag: "--definitions <dir>", summary: "Folder with project.yaml. Default: ." },
-  { flag: "--out <dir>", summary: "Output folder. Default: build" },
-  { flag: "--no-diff", summary: "Plans without line diffs." },
-  {
-    flag: "--allow-extra",
-    summary: "check: allow files in the output folder that were not generated.",
-  },
-  {
-    flag: "--template <name|path|url>",
-    summary: "init: a built-in template, a folder or a Git URL.",
-  },
-  {
-    flag: "--name <id>",
-    summary:
-      "init: the project's id; contract: the contract's. Default: the folder's or file's name.",
-  },
-  {
-    flag: "--standard <path|url>",
-    summary: "init: use this standard instead of the supplied default.",
-  },
-  {
-    flag: "--set <name>=<text>",
-    summary:
-      "init: write a value in place of REPLACE_ME, by its name, such as source_server or prod.storage_account (repeatable).",
-  },
-  { flag: "--yes", summary: "init: take the default of each choice not given as a flag." },
-  { flag: "--help", summary: "Show this text." },
-] as const;
-
-/** The width of the options column: the longest flag and two spaces. */
-const flagWidth = Math.max(...flags.map(({ flag }) => flag.length)) + 2;
-
-/** Usage text for --help and mistakes. */
-export const usage = [
-  "Usage: ingestron <plan|apply|check|compare|contract|request|schemas|init> [options]",
-  "",
-  ...commands.map(({ name, summary }) => `  ${name.padEnd(10)}${summary}`),
-  "",
-  "Options:",
-  ...flags.map(({ flag, summary }) => `  ${flag.padEnd(flagWidth)}${summary}`),
-  "",
-].join("\n");
+/** What `standard` was asked to do. */
+export type StandardAction =
+  { action: "install"; kit: string } | { action: "list"; platform?: string };
 
 const commandNames = new Set<string>(commands.map((command) => command.name));
 
@@ -133,6 +60,7 @@ const spec = {
   "allow-extra": { type: "boolean", default: false },
   help: { type: "boolean", default: false },
   template: { type: "string" },
+  kit: { type: "string" },
   connector: { type: "string" },
   via: { type: "string" },
   connectivity: { type: "string" },
@@ -140,6 +68,7 @@ const spec = {
   standard: { type: "string" },
   set: { type: "string", multiple: true },
   yes: { type: "boolean", default: false },
+  platform: { type: "string" },
 } as const;
 
 type Values = ReturnType<
@@ -156,8 +85,9 @@ export function readArgs(args: string[]): Options | "help" | { mistake: string }
   }
   const { values, positionals } = parsed;
   if (values.help) return "help";
-  const [command, ...extra] = positionals;
-  if (!known(command, extra)) return { mistake: `Unknown command "${positionals.join(" ")}".` };
+  const chosen = commandOf(positionals, values.platform);
+  if ("mistake" in chosen) return chosen;
+  const { command, extra, standard } = chosen;
   if (values.env !== undefined && generates.has(command))
     return {
       mistake: `Every environment is generated together, so ${command} does not take --env. Use compare for two environments, or request for one.`,
@@ -172,14 +102,46 @@ export function readArgs(args: string[]): Options | "help" | { mistake: string }
     diffs: !values["no-diff"],
     allowExtra: values["allow-extra"],
     ...sampleOf(command, extra[0]),
+    ...(standard && { standard }),
     init,
   };
 }
 
+/** standard's sub-command: `install <kit>` or `list`, or a mistake. */
+function standardAction(
+  extra: string[],
+  platform: string | undefined,
+): StandardAction | { mistake: string } {
+  const [action, kit, ...rest] = extra;
+  if (action === undefined) return { mistake: "standard needs install <kit> or list." };
+  if (action === "install" && kit === undefined)
+    return { mistake: "standard install needs a kit, such as duckdb/local-medallion." };
+  if (action === "install" && kit !== undefined && rest.length === 0)
+    return { action: "install", kit };
+  if (action === "list" && kit === undefined)
+    return { action: "list", ...(platform !== undefined && { platform }) };
+  return { mistake: `Unknown command "standard ${extra.join(" ")}".` };
+}
+
+/** The command and the arguments after it, with standard's sub-command, or a mistake. */
+function commandOf(
+  positionals: string[],
+  platform: string | undefined,
+): { command: string; extra: string[]; standard?: StandardAction } | { mistake: string } {
+  const [command = "", ...extra] = positionals;
+  if (command === "standard") {
+    const standard = standardAction(extra, platform);
+    return "mistake" in standard ? standard : { command, extra: [], standard };
+  }
+  return known(command, extra)
+    ? { command, extra }
+    : { mistake: `Unknown command "${positionals.join(" ")}".` };
+}
+
 /** A command we have, with no more positional arguments than it takes (init and contract take one). */
-function known(command: string | undefined, extra: string[]): command is string {
+function known(command: string, extra: string[]): boolean {
   const most = command === "init" || command === "contract" ? 1 : 0;
-  return command !== undefined && commandNames.has(command) && extra.length <= most;
+  return commandNames.has(command) && extra.length <= most;
 }
 
 /** contract's sample file, the one positional argument it takes. */
@@ -187,20 +149,24 @@ function sampleOf(command: string, file: string | undefined): { sample?: string 
   return command === "contract" && file !== undefined ? { sample: file } : {};
 }
 
+/** The init options that are text, each kept only when it is given. */
+const initTexts = [
+  "template",
+  "kit",
+  "connector",
+  "via",
+  "connectivity",
+  "name",
+  "standard",
+] as const;
+
 function initOptions(values: Values, folder = "."): Options["init"] | { mistake: string } {
   const set = answersOf(values.set ?? []);
   if (typeof set === "string") return { mistake: set };
-  return {
-    folder,
-    ...(values.template !== undefined && { template: values.template }),
-    ...(values.connector !== undefined && { connector: values.connector }),
-    ...(values.via !== undefined && { via: values.via }),
-    ...(values.connectivity !== undefined && { connectivity: values.connectivity }),
-    ...(values.name !== undefined && { name: values.name }),
-    ...(values.standard !== undefined && { standard: values.standard }),
-    set,
-    yes: values.yes,
-  };
+  const given = initTexts.flatMap((key) =>
+    values[key] === undefined ? [] : [[key, values[key]] as const],
+  );
+  return { folder, ...Object.fromEntries(given), set, yes: values.yes };
 }
 
 /** `--set key=value` pairs, or a mistake naming the one without `=`. */

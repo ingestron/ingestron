@@ -2,7 +2,14 @@
 import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
 import type { FullName, ResolvedTable } from "../pack/index.js";
-import { namePatterns, renderName, type NameVariables, type Pattern } from "./naming.js";
+import { layerNames } from "../intent/index.js";
+import {
+  checkDuplicateLayers,
+  namePatterns,
+  renderName,
+  type NameVariables,
+  type Pattern,
+} from "./naming.js";
 import type { Naming } from "../pack/index.js";
 import { holdsUnsetEnvvar } from "../diagnostics/index.js";
 
@@ -16,7 +23,9 @@ export interface TableNamer {
 
 /** Prepares layers and patterns. */
 export function createNamer(context: Context): TableNamer {
-  const layers = context.standard.value.layers ?? context.pack.defaults.layers;
+  const written = layerNames(context.standard.value.layers);
+  const layers = written ?? context.pack.defaults.layers;
+  checkDuplicateLayers(context, written ?? []);
   return {
     layers,
     patterns: namePatterns(context),

@@ -1,0 +1,55 @@
+{
+  "description": "standard install and standard list (spec/cli/kits.md, \"Commands\"). Each case runs in a new project made with the project's args and committed to git, with the catalogue unreachable. A case with change appends that text to the file, uncommitted, first. The output is exact, or, with outputStarts, begins so: the rest is git's reason.",
+  "project": {
+    "args": ["init", "p", "--kit", "duckdb/local-medallion@2026-11-10"],
+    "folder": "p"
+  },
+  "cases": [
+    {
+      "name": "list without the catalogue",
+      "args": ["standard", "list"],
+      "exit": 0,
+      "output": "Could not reach the catalogue; showing the kits installed with ingestron.\ndatabricks/lakehouse-streaming@2026-11-10  Streaming lakehouse on Databricks  (ga)\nduckdb/local-medallion@2026-11-10  Local medallion on DuckDB  (ga)\n"
+    },
+    {
+      "name": "list for one platform",
+      "args": ["standard", "list", "--platform", "duckdb"],
+      "exit": 0,
+      "output": "Could not reach the catalogue; showing the kits installed with ingestron.\nduckdb/local-medallion@2026-11-10  Local medallion on DuckDB  (ga)\n"
+    },
+    {
+      "name": "list for a platform with no kits",
+      "args": ["standard", "list", "--platform", "fabric"],
+      "exit": 0,
+      "output": "Could not reach the catalogue; showing the kits installed with ingestron.\nNo kits found for fabric.\n"
+    },
+    {
+      "name": "install the version the project has",
+      "args": ["standard", "install", "duckdb/local-medallion@2026-11-10"],
+      "exit": 0,
+      "output": "Replaced standard.yaml with duckdb/local-medallion@2026-11-10 (was 2026-11-10).\n\nFirst version.\n\nNot applied: no other kit file changed since 2026-11-10.\n\nNext: run ingestron plan, then review git diff.\n"
+    },
+    {
+      "name": "install the kit's id alone without the catalogue",
+      "args": ["standard", "install", "duckdb/local-medallion"],
+      "exit": 0,
+      "output": "Could not reach the catalogue; using the newest installed version, duckdb/local-medallion@2026-11-10.\n\nReplaced standard.yaml with duckdb/local-medallion@2026-11-10 (was 2026-11-10).\n\nFirst version.\n\nNot applied: no other kit file changed since 2026-11-10.\n\nNext: run ingestron plan, then review git diff.\n"
+    },
+    {
+      "name": "install refuses a standard with changes not committed",
+      "args": ["standard", "install", "duckdb/local-medallion@2026-11-10"],
+      "change": {
+        "file": "standard.yaml",
+        "append": "# a change\n"
+      },
+      "exit": 1,
+      "output": "standard.yaml has changes that are not committed; commit them first so git diff shows only the new standard.\n"
+    },
+    {
+      "name": "install names the kit spec in a kit error",
+      "args": ["standard", "install", "duckdb/local-medallion@2025-01-01"],
+      "exit": 1,
+      "outputStarts": "The kit duckdb/local-medallion@2025-01-01 is not installed, and the catalogue could not be read: "
+    }
+  ]
+}

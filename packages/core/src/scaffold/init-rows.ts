@@ -17,9 +17,14 @@ export interface ReplaceRow {
 
 /**
  * A row for each name still REPLACE_ME, from the project's REPLACE_ME diagnostics, so the
- * rows match `plan`; in the order the diagnostics first name each.
+ * rows match `plan`; in the order the diagnostics first name each. `kit` when the project
+ * starts from a kit, whose Platform values say where to find them from the field reference.
  */
-export function replaceRows(files: Record<string, Content>, generated: Generated): ReplaceRow[] {
+export function replaceRows(
+  files: Record<string, Content>,
+  generated: Generated,
+  kit = false,
+): ReplaceRow[] {
   const values = projectValues(files);
   const rows = new Map<string, ReplaceRow>();
   const places = generated.environmentReports
@@ -29,7 +34,7 @@ export function replaceRows(files: Record<string, Content>, generated: Generated
   for (const { file, line } of places) {
     const value = values.find((item) => item.file === file && item.line === line);
     const name = value?.name ?? file;
-    const row = rows.get(name) ?? newRow(name, value, files, generated);
+    const row = rows.get(name) ?? newRow(name, value, files, generated, kit);
     rows.set(name, row);
     if (!row.places.some((place) => place.file === file && place.line === line))
       row.places.push({ file, line });
@@ -45,12 +50,13 @@ function newRow(
   value: ProjectValue | undefined,
   files: Record<string, Content>,
   generated: Generated,
+  kit: boolean,
 ): ReplaceRow {
   return {
     name,
     places: [],
     what: value?.comment ?? "",
-    find: value ? findFor(value, files, generated) : "",
+    find: value ? findFor(value, files, generated, kit) : "",
     environments: [],
   };
 }
@@ -64,14 +70,18 @@ export interface CheckRow {
 }
 
 /** Each value kept from the example, which its comment says to check. */
-export function checkRows(files: Record<string, Content>, generated: Generated): CheckRow[] {
+export function checkRows(
+  files: Record<string, Content>,
+  generated: Generated,
+  kit = false,
+): CheckRow[] {
   return projectValues(files)
     .filter((value) => value.kind === "setting" && value.comment?.endsWith(exampleValue))
     .map((value) => ({
       name: value.name,
       place: { file: value.file, line: value.line },
       what: value.comment!.slice(0, -exampleValue.length).replace(/[;,]\s*$/, ""),
-      find: findFor(value, files, generated),
+      find: findFor(value, files, generated, kit),
     }));
 }
 

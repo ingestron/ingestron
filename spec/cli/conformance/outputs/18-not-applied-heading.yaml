@@ -1,0 +1,60 @@
+description: "The features the engine does not apply are taken out of the groups and shown after them, under their own heading, grouped by the environments that have them; the other warnings stay in their groups, and none of them fails a run."
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - name: code
+            logicalType: string
+            quality:
+              - { metric: invalidValues, arguments: { pattern: "^[A-Z]+$" }, mustBe: 0 }
+          - name: note
+            logicalType: string
+            quality:
+              - { type: custom, engine: soda, implementation: "note is not null" }
+command: plan
+expect:
+  exit: 0
+  lines:
+    - "dev, prod: warnings"
+    - "Not applied on this platform"
+    - "dev, prod:"
+    - "quality → build/quality (dev, prod)"
+  diagnostics:
+    - { code: QUALITY_RULE_NOT_CHECKED, severity: warning, file: orders.odcs.yaml, line: 18 }
+    - code: NOT_APPLIED
+      severity: warning
+      file: orders.odcs.yaml
+      line: 14
+      message: "The pattern rule isn't applied on quality: Its engine has no regular expressions."
+  folders: {}

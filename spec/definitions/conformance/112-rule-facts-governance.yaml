@@ -1,0 +1,195 @@
+description: A rule matches the highest classification of the contract's columns, a contract tag, and the product and domain of the data product that publishes the table.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    governance:
+      classification:
+        values: [public, internal, restricted]
+    store:
+      when:
+        - { classification: restricted, use: view }
+        - { tag: finance, layer: silver, use: view }
+        - { product: sales, use: view }
+        - { domain: retail, use: view }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  bronze_sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: bronze_sales
+    source: shop
+    tables:
+      accounts: { object: accounts, contract: accounts }
+      memo: { object: memo, contract: memo }
+      ledger_raw: { object: ledger_raw, contract: ledger_raw }
+      sold: { object: sold, contract: sold }
+      parcels: { object: parcels, contract: parcels }
+      plain: { object: plain, contract: plain }
+  silver_sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: silver_sales
+    source: shop
+    layer: silver
+    tables:
+      ledger: { object: ledger, contract: ledger }
+  accounts.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: accounts
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: accounts
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: tier, logicalType: string, classification: public }
+          - { name: balance, logicalType: number, classification: restricted }
+          - { name: region, logicalType: string, classification: internal }
+  memo.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: memo
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: memo
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: note, logicalType: string, classification: public }
+          - { name: owner, logicalType: string, classification: internal }
+  ledger_raw.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: ledger_raw
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: ledger_raw
+        logicalType: object
+        tags: [finance]
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  ledger.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: ledger
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: ledger
+        logicalType: object
+        tags: [finance]
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  sold.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: sold
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: sold
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  parcels.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: parcels
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: parcels
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  plain.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: plain
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: plain
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  sales-product.yaml: |
+    apiVersion: v1.1.0
+    kind: DataProduct
+    id: sales
+    name: sales
+    status: active
+    domain: retail
+    outputPorts:
+      - { name: sold, contractId: sold }
+  ops-product.yaml: |
+    apiVersion: v1.1.0
+    kind: DataProduct
+    id: ops
+    name: ops
+    status: active
+    domain: retail
+    outputPorts:
+      - { name: parcels, contractId: parcels }
+  billing-product.yaml: |
+    apiVersion: v1.1.0
+    kind: DataProduct
+    id: billing
+    name: billing
+    status: active
+    outputPorts:
+      - { name: plain, contractId: plain }
+expect:
+  tables:
+    - name: accounts
+      store:
+        method: view
+        chosenBy:
+          { by: standard-rule, when: { classification: restricted }, file: standard.yaml, line: 10 }
+    - name: memo
+      store:
+        method: stream
+        chosenBy: { by: pack-default }
+    - name: ledger_raw
+      store:
+        method: stream
+        chosenBy: { by: pack-default }
+    - name: sold
+      store:
+        method: view
+        chosenBy: { by: standard-rule, when: { product: sales }, file: standard.yaml, line: 12 }
+    - name: parcels
+      store:
+        method: view
+        chosenBy: { by: standard-rule, when: { domain: retail }, file: standard.yaml, line: 13 }
+    - name: plain
+      store:
+        method: stream
+        chosenBy: { by: pack-default }
+    - name: ledger
+      store:
+        method: view
+        chosenBy:
+          {
+            by: standard-rule,
+            when: { tag: finance, layer: silver },
+            file: standard.yaml,
+            line: 11,
+          }

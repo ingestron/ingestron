@@ -1,0 +1,29 @@
+description: "A field's suggest annotation is carried to its entry from its schema, or from the first branch that gives one; a field with only examples has no suggest, and keeps its example."
+reference:
+  method: copy
+  settings:
+    type: object
+    properties:
+      landing:
+        type: string
+        description: Where the files land.
+        suggest: "/Volumes/<catalog>/landing/<source>"
+      folder:
+        anyOf:
+          - { type: string, suggest: "/Volumes/<catalog>/landing/<folder>" }
+          - { type: string }
+        description: A folder, in a volume.
+      path:
+        type: string
+        description: A path with an example.
+        examples: ["/data/orders"]
+expect:
+  fields:
+    - path: landing
+      suggest: "/Volumes/<catalog>/landing/<source>"
+      example: null
+    - path: folder
+      suggest: "/Volumes/<catalog>/landing/<folder>"
+    - path: path
+      suggest: null
+      example: /data/orders

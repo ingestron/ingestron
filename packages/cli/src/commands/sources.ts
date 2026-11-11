@@ -1,21 +1,17 @@
-// Where templates and standards come from: a built-in name, a folder, or a
-// Git URL cloned with the user's own git. Nothing from a source is run.
-import { execFileSync } from "node:child_process";
-import { existsSync, lstatSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { basename, join, relative, resolve } from "node:path";
+// Where templates and standards come from: a built-in name, a folder, or a Git URL cloned with
+// the user's own git (kits are in kit-source.ts). Nothing from a source is run.
+import { existsSync } from "node:fs";
+import { basename, resolve } from "node:path";
 import { builtInTemplates, type Template } from "@ingestron/core";
 import { readTemplate } from "@ingestron/core/internal";
+import { clonedEntry, withoutCredentials } from "./clone.js";
 
-/** The URL without `user:password@`, for messages and the standard's "From" line. */
-export function withoutCredentials(text: string): string {
-  return text.replace(/(\/\/)[^/@\s]+@/g, "$1");
-}
+export { withoutCredentials } from "./clone.js";
 
 /** Sources come from the user's command line; one starting with "-" could pass for a git option. */
-function refuseOption(spec: string): void {
+export function refuseOption(spec: string, what = "A template or standard"): void {
   if (spec.startsWith("-"))
-    throw new Error(`A template or standard cannot start with "-": ${spec}.`);
+    throw new Error(`${what} cannot start with "-": ${withoutCredentials(spec)}.`);
 }
 
 /** A Git URL rather than a path or a name. */
@@ -74,39 +70,5 @@ export function standardSource(
  */
 function cloned(spec: string, kind: "file" | "folder"): { path: string; done(): void } {
   const [url = "", inside = ""] = spec.split("#");
-  if (inside.split("/").includes("..") || inside.startsWith("/"))
-    throw new Error(`The part after "#" must stay inside the repository: ${inside}.`);
-  const folder = mkdtempSync(join(tmpdir(), "ingestron-template-"));
-  const done = () => rmSync(folder, { recursive: true, force: true });
-  try {
-    clone(url, folder);
-    return { path: checkedEntry(folder, inside, kind), done };
-  } catch (error) {
-    done();
-    throw error;
-  }
-}
-
-function clone(url: string, folder: string): void {
-  // No hooks, no submodules; "--" so the URL can never be read as an option.
-  const args = ["-c", "core.hooksPath=/dev/null", "clone", "--depth", "1", "--quiet"];
-  try {
-    execFileSync("git", [...args, "--no-recurse-submodules", "--", url, folder], { stdio: "pipe" });
-  } catch (error) {
-    const reason = (error as { stderr?: Buffer }).stderr?.toString().trim() ?? String(error);
-    throw new Error(withoutCredentials(`Could not clone ${url}: ${reason}`));
-  }
-}
-
-function checkedEntry(folder: string, inside: string, kind: "file" | "folder"): string {
-  const path = join(folder, inside);
-  const stat = lstatSync(path, { throwIfNoEntry: false });
-  if (!stat) throw new Error(`The repository has no "${inside}".`);
-  const real = relative(realpathSync(folder), realpathSync(path));
-  const isKind = kind === "file" ? stat.isFile() : stat.isDirectory();
-  if (!isKind || real.startsWith(".."))
-    throw new Error(
-      `"${inside || "."}" in the repository is not a ${kind === "file" ? "regular file" : "folder"}.`,
-    );
-  return path;
+  return clonedEntry({ url, inside, kind });
 }

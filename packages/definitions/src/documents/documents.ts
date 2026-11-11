@@ -5,6 +5,17 @@ import { join } from "node:path";
 import { defineKind, type JsonSchema } from "@ingestron/config";
 import { parse } from "yaml";
 import { schemasFolder } from "../folders.js";
+import type {
+  FlowIntentDoc,
+  LayerDoc,
+  QualityDoc,
+  QuarantineDoc,
+  StandardIntentDoc,
+  TableIntentDoc,
+} from "../intent/index.js";
+import type { CleanseDoc, ColumnCleanseDoc } from "./cleanse-docs.js";
+import type { GovernanceDoc } from "./governance-docs.js";
+import type { RulesDoc } from "./rules.js";
 
 /** An action's method choice and settings, as written in a flow or transform. */
 export interface ActionDoc {
@@ -19,33 +30,18 @@ export interface ExpectationDoc {
   action?: "warn" | "drop" | "fail";
 }
 
-/** A `when` rule as written in a standard. */
-export interface RuleDoc {
-  connectivity?: string;
-  connector?: string;
-  input?: string;
-  layer?: string;
-  use: string;
-  with?: Record<string, unknown>;
-}
-
-/** Per-action rules as written in a standard. */
-export interface RulesDoc {
-  default?: string;
-  allowed?: string[];
-  when?: RuleDoc[];
-  settings?: Record<string, Record<string, unknown>>;
-  fixed?: Record<string, Record<string, unknown>>;
-}
-
 /** A `Standard` document. */
-export interface StandardDoc {
+export interface StandardDoc extends StandardIntentDoc {
   id: string;
   packs: string[];
+  features?: "ga" | "preview";
+  origin?: { standard: string; version: string };
   naming?: Record<string, string>;
-  layers?: string[];
+  layers?: (string | LayerDoc)[];
   types?: Record<string, string>;
-  quality?: { required?: "warn" | "drop" | "fail"; default?: "warn" | "drop" | "fail" };
+  /** Defaults for the tables' columns (specification section 6.1). */
+  cleanse?: { text?: Pick<ColumnCleanseDoc, "trim" | "empty">; timestamps?: { to: string } };
+  quality?: QualityDoc;
   ingest?: RulesDoc;
   transform?: RulesDoc;
   store?: RulesDoc;
@@ -53,17 +49,15 @@ export interface StandardDoc {
   governance?: GovernanceDoc;
 }
 
-/**
- * The standard's governance section (specification section 8.1).
- * @public
- */
-export interface GovernanceDoc {
-  products?: { require?: ("owner" | "purpose" | "support" | "domain")[] };
-  classification?: { values?: string[]; columns?: "required" | "optional"; sensitive?: string[] };
-  access?: { sensitive?: { require?: ("access" | "description" | "firstLevelApprovers")[] } };
-}
+/** An alert as the Platform writes it: `on` is `[failure]` when left out. */
+export type AlertDoc =
+  | { kind: "email"; to: string[]; on?: ("failure" | "slow")[] }
+  | { kind: "destination"; id: string; on?: ("failure" | "slow")[] };
 
-/** A `Platform` document; see platform.schema.yaml for every field. */
+/**
+ * A `Platform` document; see platform.schema.yaml for every field. The section of each pack
+ * is a further key named for the pack: read them with `sectionsOf`.
+ */
 export interface PlatformDoc {
   id: string;
   workspace?: { host?: string; root_path?: string };
@@ -77,8 +71,22 @@ export interface PlatformDoc {
   permissions?: ({ level: string } & Record<string, string>)[];
   schedule?: { cron: string; timezone?: string; paused?: boolean };
   notifications?: { on_failure?: string[] };
-  manage?: { schemas?: boolean; tags?: boolean; comments?: boolean; checks?: boolean };
+  alerts?: AlertDoc[];
+  manage?: Partial<
+    Record<"schemas" | "tags" | "comments" | "checks" | "grants" | "masks" | "filters", boolean>
+  >;
   grants?: Record<string, { principal: string; privileges: string[] }[]>;
+  /** Warnings the platform team accepts, each with a reason (specification, Accepted warnings). */
+  accept?: AcceptDoc[];
+  /** The principal each contract role is on this platform, by role (section 8.2). */
+  principals?: Record<string, string>;
+}
+
+/** One entry of the Platform's `accept` list. */
+export interface AcceptDoc {
+  code: string;
+  about?: { file?: string; table?: string; feature?: string };
+  reason: string;
 }
 
 /** A `Connection` document. */
@@ -86,21 +94,25 @@ export interface ConnectionDoc {
   id: string;
   connector: string;
   connectivity: string;
+  /** The zone the source writes its timestamps in (specification section 6.3). */
+  timezone?: string;
   settings?: Record<string, unknown>;
 }
 
 /** One table of a flow. */
-export interface FlowTableDoc {
+export interface FlowTableDoc extends FlowIntentDoc {
   object: string;
   contract: string;
   expectations?: ExpectationDoc[];
+  quality?: QuarantineDoc;
+  cleanse?: CleanseDoc;
   ingest?: { with?: Record<string, unknown> };
   store?: { with?: Record<string, unknown> };
   serve?: { with?: Record<string, unknown> };
 }
 
 /** A `Flow` document. */
-export interface FlowDoc {
+export interface FlowDoc extends FlowIntentDoc {
   id: string;
   source: string;
   layer?: string;
@@ -111,13 +123,16 @@ export interface FlowDoc {
 }
 
 /** A `Transform` document. */
-export interface TransformDoc {
+export interface TransformDoc extends TableIntentDoc {
   id: string;
   layer?: string;
   inputs: string[];
-  code: string;
+  /** Absent for a transform with one input: it then reads that table as it is. */
+  code?: string;
   contract: string;
   expectations?: ExpectationDoc[];
+  quality?: QuarantineDoc;
+  cleanse?: CleanseDoc;
   transform?: ActionDoc;
   store?: ActionDoc;
   serve?: ActionDoc;

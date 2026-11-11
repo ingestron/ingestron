@@ -1,53 +1,13 @@
 // The resolved model: everything a pack needs, with every choice made,
 // every name built and every setting merged. Packs only read it.
 
+import type { NotApplied } from "../diagnostics/index.js";
 import type { GovernanceDoc } from "../documents/index.js";
-import type { StepOutput } from "./pack.js";
+import type { FeatureStatus, Intent, LayerDuty, ResolvedOperations } from "../intent/index.js";
+import type { ChosenBy, Origin, Step } from "./step.js";
+import type { TableAccess } from "./access.js";
+import type { TableCleanse } from "./cleanse.js";
 import type { TableCheck } from "./table-checks.js";
-
-/**
- * A step's chosen method, the pack it belongs to, and its final settings.
- * @public
- */
-export interface Step {
-  method: string;
-  pack: string;
-  settings: Record<string, unknown>;
-  /** For each top-level setting, the layer that last set it (specification section 3). */
-  origins: Record<string, Origin>;
-  /** How the method was chosen (specification section 4). */
-  chosenBy: ChosenBy;
-  /** Where the step's data lands, when its method says (specification section 2). */
-  output?: StepOutput;
-}
-
-/**
- * How a step's method was chosen, and where that was written.
- * @public
- */
-export interface ChosenBy {
-  by:
-    "definition" | "standard-rule" | "standard-default" | "pack-rule" | "pack-default" | "runs-on";
-  /** A rule's facts, such as `{ connectivity: private }`. */
-  when?: Record<string, unknown>;
-  /** The pack whose rule or default chose it, or that runs-on names. */
-  pack?: string;
-  /** Under runs-on, the method of another pack that this one replaced. */
-  replaced?: string;
-  file?: string;
-  line?: number;
-}
-
-/**
- * Where a setting's value came from.
- * @public
- */
-export interface Origin {
-  layer: "pack" | "standard" | "platform" | "rule" | "definition" | "table" | "fixed";
-  /** Where it was written; absent for the pack's defaults. */
-  file?: string;
-  line?: number;
-}
 
 /**
  * A column from the table's contract, with its platform type.
@@ -79,11 +39,21 @@ export interface Contract {
   /** Columns marked `primaryKey`, in `primaryKeyPosition` order. */
   primaryKey: string[];
   /** Row checks made from the contract's quality rules (specification section 6). */
-  checks: { name: string; check: string }[];
+  checks: { name: string; check: string; rule?: RowRule }[];
   /** Checks over all rows, run after each refresh when checks are on. */
   tableChecks: TableCheck[];
-  /** Quality rules nothing checks, and why; text rules among them. */
-  unchecked: { name: string; description?: string; reason: string }[];
+  /**
+   * Quality rules nothing checks, and why; text rules among them. `notEnforced` is the warning
+   * reported for a rule an engine or the platform could check but does not here:
+   * `NOT_APPLIED` on a table that ends at the landed files, `CAPABILITY_OFF` for a count over
+   * all rows with checks off. A rule nobody could check as written has none.
+   */
+  unchecked: {
+    name: string;
+    description?: string;
+    reason: string;
+    notEnforced?: "NOT_APPLIED" | "CAPABILITY_OFF";
+  }[];
   /** The contract object's tags. */
   tags: string[];
   /** Who may use the data, as the contract declares it (ODCS `roles`). */
@@ -104,12 +74,43 @@ export interface ContractRole {
 }
 
 /**
+ * One row check of a contract as data, so a pack can write it in its own SQL
+ * (specification section 6). `column` is the column's name, without quotes.
+ * A row passes only when the rule is true for it: a null value fails `notNull`,
+ * passes `in` and `notIn` only when `allowNull` is true, and passes every other kind.
+ * @public
+ */
+export type RowRule =
+  | { kind: "notNull"; column: string }
+  | { kind: "in" | "notIn"; column: string; values: unknown[]; allowNull: boolean }
+  | { kind: "pattern"; column: string; pattern: string }
+  | { kind: "length"; column: string; min?: number; max?: number }
+  | {
+      kind: "range";
+      column: string;
+      /** A number, or a date's text. */
+      min?: number | string;
+      max?: number | string;
+      /** The limit itself is not allowed. */
+      exclusive?: boolean;
+    }
+  | { kind: "multipleOf"; column: string; value: number }
+  | { kind: "items"; column: string; min?: number; max?: number; unique?: boolean };
+
+/**
  * A row check; `action` decides what happens to a row that fails.
  * @public
  */
 export interface Expectation {
   name: string;
+  /** The check as Spark SQL text. */
   check: string;
+  /**
+   * The same check as data, for a check made from a contract: a required column, a quality
+   * rule or a `logicalTypeOptions` option. Absent for one written in a flow or a transform,
+   * and for an option whose value is not of the type ODCS gives it; a pack then uses `check`.
+   */
+  rule?: RowRule;
   action: "warn" | "drop" | "fail";
   /** `contract`: a required column; `definition`: written in the flow or transform. */
   from: "contract" | "definition";
@@ -139,6 +140,31 @@ export interface ResolvedTable {
   origin: { kind: "Flow" | "Transform"; id: string; file: string };
   contract: Contract;
   expectations: Expectation[];
+  /**
+   * What is done to the table's values and rows before its checks; absent when the table has
+   * no cleansing (specification sections 6.1 and 6.2).
+   */
+  cleanse?: TableCleanse;
+  /**
+   * The time zone the table's timestamp columns are in once it is built: its connection's for
+   * a flow table (`UTC` when the connection gives none), its inputs' when they agree, and the
+   * target after converting, where the step that keeps the table applies conversion (the intent
+   * path `cleanse.timezone` is `used`); otherwise the zone it was in. Absent when the columns are not all in one zone (specification
+   * section 6.3).
+   */
+  timezone?: string;
+  /**
+   * What the standard, the table's layer, its flow or transform and the table itself say
+   * about how it is loaded, kept and audited, with the method settings that are other names
+   * for intent, completed by the chosen methods' intent defaults (specification sections
+   * 11.2 to 11.4). `{}` when nothing is declared and no method gives a default.
+   */
+  intent: Intent;
+  /**
+   * For each intent path in `intent`, such as `load.mode` or `audit`, the layer that last
+   * set it and where it was written; `pack`, with no file, for a method's intent default.
+   */
+  intentOrigins: Record<string, Origin>;
   /** Flow tables: how data leaves the source. Missing when `sourceNotKnown` is set and no `uses` names the method. */
   ingest?: Step & {
     connection: {
@@ -159,6 +185,46 @@ export interface ResolvedTable {
   endsAtFiles?: ChosenBy;
   /** Makes the table's data available elsewhere, after its last step. Absent unless chosen. */
   serve?: Step;
+  /**
+   * What the table's layer does (its `does`): `raw`, or the duties it lists. Absent when the
+   * layer gives none; a pack's entry with `onlyWhere` is then not applied (specification
+   * section 11.7).
+   */
+  does?: "raw" | LayerDuty[];
+  /**
+   * What the standard, the table's layer and the table itself say about keeping rows that
+   * fail a check (`quarantine`) and the results of its checks (`results`), the last winning
+   * (specification section 11.2). Absent when none of them wrote either. A standard's
+   * `quarantine` appears only on the tables it reaches (section 11.7).
+   */
+  quality?: { quarantine?: boolean; results?: boolean };
+  /**
+   * For each of `required`, `default`, `quarantine` and `results` that the standard, the
+   * table's layer or the table wrote, where it was last written. Absent when none were.
+   */
+  qualityOrigins?: Partial<Record<"required" | "default" | "quarantine" | "results", Origin>>;
+  /**
+   * Set when rows that fail a check with the action `drop` are kept, instead of dropped, in a
+   * table of their own: its full name (`<table>_quarantine`, in the table's own catalog and
+   * schema) and the column that holds the names of the checks a row failed
+   * (`_failed_checks`). Absent when `quality.quarantine` is not `true`, and when no check of
+   * the table drops rows (specification section 11.7).
+   */
+  quarantine?: { fullName: FullName; column: string };
+  /**
+   * Each feature of the table that the step that keeps it does not apply, as `NOT_APPLIED`
+   * reports it about this table (specification section 11.7): the feature, the reason and, for
+   * a time zone conversion, the column. Absent when there are none. Accepting the warning
+   * does not change it.
+   */
+  notApplied?: NotApplied[];
+  /**
+   * Who may use the table, and which of its columns and rows are hidden (specification
+   * section 8.2). Absent when the table has no grants, masks or filters, unless exact grants
+   * reach it (its grants applied, with none to give), and on a table that ends at the landed
+   * files, unless a serve step serves it from them.
+   */
+  access?: TableAccess;
   /**
    * A flow table's `source` when it holds an unset `${envvar:…}`, which only an editor's
    * resolution allows (specification section 1). The connection is then a stand-in with no
@@ -194,7 +260,19 @@ export interface Grant {
 }
 
 /**
- * The Platform document after smart defaults.
+ * Who is told when a pipeline or job fails or runs slowly: an email address list, or a
+ * destination the platform holds (specification section 7).
+ * @example { kind: "email", to: ["data-team@example.com"], on: ["failure"] }
+ * @public
+ */
+export type Alert =
+  | { kind: "email"; to: string[]; on: ("failure" | "slow")[] }
+  | { kind: "destination"; id: string; on: ("failure" | "slow")[] };
+
+/**
+ * The Platform document after smart defaults. The Databricks fields (`mode`, `workspace`,
+ * `run_as`, `compute`, `permissions`, `manage`, `grants`) are here as they always were,
+ * whether the Platform writes them at the top or in its `databricks` section.
  * @public
  */
 export interface ResolvedPlatform {
@@ -206,8 +284,26 @@ export interface ResolvedPlatform {
   permissions: Permission[];
   schedule?: Schedule;
   notifications: { on_failure: string[] };
-  manage: { schemas: boolean; tags: boolean; comments: boolean; checks: boolean };
+  /** Every alert: the Platform's `alerts`, and `notifications.on_failure` as an email alert. */
+  alerts: Alert[];
+  /** Each pack's section of the Platform as written, by pack id, after it was checked (section 7.2). */
+  sections: Record<string, Record<string, unknown>>;
+  /**
+   * The capabilities turned on. `grants`, `masks` and `filters` are here only as Databricks
+   * writes them, in its section or at the top, and only when written (specification section 7.1).
+   */
+  manage: {
+    schemas: boolean;
+    tags: boolean;
+    comments: boolean;
+    checks: boolean;
+    grants?: boolean;
+    masks?: boolean;
+    filters?: boolean;
+  };
   grants: Record<string, Grant[]>;
+  /** The principal each contract role is on this platform, by role; `{}` when not given (section 8.2). */
+  principals: Record<string, string>;
 }
 
 /**
@@ -218,7 +314,10 @@ export interface ResolvedPlatform {
  */
 export interface ResolvedModel {
   project: { id: string; name?: string; environment: string };
-  /** The standard: its id, packs and governance section as written, when it has one. */
+  /**
+   * The standard: its id, packs and governance section as written, when it has one, with
+   * `classification.tag` filled in (`classification` by default; specification section 8.1).
+   */
   standard: { id: string; packs: string[]; governance?: GovernanceDoc };
   platform: ResolvedPlatform;
   layers: string[];
@@ -232,6 +331,36 @@ export interface ResolvedModel {
    * files supplies, once per name, in the order first resolved (specification section 1.1).
    */
   deployValues?: DeployValue[];
+  /**
+   * Each intent value a table uses through a platform feature in preview, whatever the
+   * standard's `features` says (specification section 11.5); empty when there are none.
+   */
+  previewFeatures: PreviewFeature[];
+  /**
+   * The standard's operations policy, with defaults filled and `fixed.operations` over it
+   * (specification section 11.6).
+   */
+  operations: ResolvedOperations;
+  /** True when the standard keeps quality results (`quality.results`). */
+  qualityResults: boolean;
+}
+
+/**
+ * An intent value a table uses through a platform feature in preview.
+ * @example { table: "orders", path: "load.mode", value: "changes", pack: "databricks", status }
+ * @public
+ */
+export interface PreviewFeature {
+  /** The table's name. */
+  table: string;
+  /** The intent path, such as `load.mode`. */
+  path: string;
+  /** The value, such as `changes`; absent for a path whose value is any text. */
+  value?: string;
+  /** The pack of the step that applies it. */
+  pack: string;
+  /** The feature's release status, as the pack declares it. */
+  status: FeatureStatus;
 }
 
 /**

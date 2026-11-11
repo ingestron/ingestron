@@ -164,6 +164,9 @@ export interface Location {
 export const manifestSchema: JsonSchema;
 
 // @public
+export function matchesImport(pattern: string, path: string): boolean;
+
+// @public
 export function memoryFiles(files: Readonly<Record<string, string>>): FileSource;
 
 // @public

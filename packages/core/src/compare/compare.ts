@@ -2,7 +2,12 @@
 // definitions are resolved: the platform, the names, and each table's methods
 // and settings. Secrets are never shown. The editor's command shows the same.
 import { formatDiagnostics, type FileSource } from "@ingestron/config";
-import { resolveDefinitions, type ResolvedModel, type ResolvedTable } from "@ingestron/definitions";
+import {
+  fullNameText,
+  resolveDefinitions,
+  type ResolvedModel,
+  type ResolvedTable,
+} from "@ingestron/definitions";
 import type { ProjectOptions } from "../generation/index.js";
 import { packs } from "../packs/index.js";
 
@@ -57,7 +62,8 @@ function sectionsOf(model: ResolvedModel): Record<string, Facts> {
 }
 
 /**
- * One table's facts, flattened to dotted keys, for comparing environments.
+ * One table's facts, flattened to dotted keys, for comparing environments: its names, steps
+ * and checks, what it cleanses, its time zone, its layer's duties and its quarantine.
  * @internal
  */
 export function tableFacts(table: ResolvedTable): Facts {
@@ -81,6 +87,10 @@ export function tableFacts(table: ResolvedTable): Facts {
       serve: step(table.serve),
     }),
     expectations: table.expectations.map((item) => `${item.name}: ${item.action}`),
+    ...flat({ cleanse: table.cleanse }),
+    ...(table.timezone !== undefined && { timezone: table.timezone }),
+    ...(table.does !== undefined && { does: table.does }),
+    ...(table.quarantine && { quarantine: fullNameText(table.quarantine.fullName) }),
   };
 }
 

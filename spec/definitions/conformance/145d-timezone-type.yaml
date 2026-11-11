@@ -1,0 +1,66 @@
+description: "timezone on a column that is not a timestamp is CLEANSE_TYPE, an error at the key; timezone false on it is not. The standard's rule skips a column that is not a timestamp without an error. A table with no timestamp column has its input zone."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [zones@1]
+    layers:
+      - { name: bronze, does: [cleanse] }
+    cleanse:
+      timestamps: { to: UTC }
+  crm.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: crm
+    connector: files
+    connectivity: public
+    timezone: Europe/London
+    settings: { path: /data/crm }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: crm
+    tables:
+      items:
+        object: items
+        contract: items
+        cleanse:
+          columns:
+            qty: { timezone: { to: UTC } }
+            day: { timezone: { from: Europe/London, to: UTC } }
+            label: { timezone: false }
+  items.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: items
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: items
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: qty, logicalType: integer }
+          - { name: day, logicalType: date }
+          - { name: label, logicalType: string }
+expect:
+  diagnostics:
+    - code: CLEANSE_TYPE
+      severity: error
+      file: sales.yaml
+      line: 11
+      message: '"timezone" works on timestamps, and "qty" is integer in contract "items".'
+      hint: 'Remove "timezone" from "qty", or convert it where it is still a timestamp.'
+    - code: CLEANSE_TYPE
+      severity: error
+      file: sales.yaml
+      line: 12
+      message: '"timezone" works on timestamps, and "day" is date in contract "items".'
+      hint: 'Remove "timezone" from "day", or convert it where it is still a timestamp.'

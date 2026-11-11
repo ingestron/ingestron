@@ -47,6 +47,50 @@ function ingestron(cwd: string, args: string[]) {
 
 const diagnosticLine = /^(\S+):(\d+):\d+ +(warning|error) +(\S+)$/gm;
 
+/**
+ * The one NOT_APPLIED a starter shows: Lakeflow Connect writes the table as the source gives
+ * it, so nothing checks a contract's required column there (pack-databricks, spec 8.2).
+ */
+const notChecked =
+  "  The notNull rule isn't applied on databricks: Managed ingestion writes the table as the source gives it; check it in a transform in the next layer.";
+
+/** Each `required: true` in the project's contracts, as `contracts/<file>:<line>`. */
+function requiredPlaces(folder: string): string[] {
+  const contracts = join(folder, "contracts");
+  if (!existsSync(contracts)) return [];
+  return readdirSync(contracts)
+    .sort()
+    .flatMap((file) =>
+      readFileSync(join(contracts, file), "utf8")
+        .split("\n")
+        .flatMap((line, index) =>
+          line.includes("required: true") ? [`contracts/${file}:${index + 1}`] : [],
+        ),
+    );
+}
+
+/**
+ * The heading lines of the warnings a starter shows besides those `allowed`. It fails unless
+ * each NOT_APPLIED is `notChecked`, once at each required column of the contracts of the
+ * tables Lakeflow Connect ingests: none for a contract whose table a store step keeps.
+ */
+function otherWarnings(output: string, allowed: string[], folder: string): string[] {
+  const lines = output.split("\n");
+  const notApplied: string[] = [];
+  const others = lines.filter((line, index) => {
+    const code = / +warning +(\S+)$/.exec(line)?.[1];
+    if (code === undefined || allowed.includes(code)) return false;
+    const at = /^(\S+):(\d+):\d+ +warning +NOT_APPLIED$/.exec(line);
+    if (!at || lines[index + 1] !== notChecked) return true;
+    notApplied.push(`${at[1]}:${at[2]}`);
+    return false;
+  });
+  const contracts = new Set(notApplied.map((place) => place.split(":")[0]));
+  const required = requiredPlaces(folder).filter((place) => contracts.has(place.split(":")[0]));
+  expect(notApplied.sort(), output).toEqual(required);
+  return others;
+}
+
 /** init --yes: exit 0, nothing asked, only REPLACE_ME and pack notices, README.md matching. */
 export function createsWithPlaceholders({ connector, connectivity, via }: Combination) {
   const cwd = mkdtempSync(join(tmpdir(), "init-sweep-"));
@@ -64,14 +108,12 @@ export function createsWithPlaceholders({ connector, connectivity, via }: Combin
   const { code, output } = ingestron(cwd, args);
   expect(code, output).toBe(0);
   const found = [...output.matchAll(diagnosticLine)];
-  expect(
-    found.filter((match) => !["REPLACE_ME", "PACK_NOTICE"].includes(match[4]!)),
-    output,
-  ).toEqual([]);
+  const folder = join(cwd, "p");
+  expect(otherWarnings(output, ["REPLACE_ME", "PACK_NOTICE"], folder), output).toEqual([]);
+  expect(output).not.toMatch(/ +error +\S+$/m);
   const places = new Set(
     found.filter((match) => match[4] === "REPLACE_ME").map((match) => `${match[1]}:${match[2]}`),
   );
-  const folder = join(cwd, "p");
   const files = projectFiles(folder);
   // Every REPLACE_ME written is warned, and there is at least one.
   const written = projectValues(files)
@@ -172,7 +214,7 @@ export function fillsEveryName(
   const { code, output } = ingestron(cwd, [...args, ...given]);
   expect(code, output).toBe(0);
   expect(output, given.join(" ")).not.toContain("REPLACE_ME warning");
-  expect(output).not.toMatch(/warning +(?!PACK_NOTICE)\S+$/m);
+  expect(otherWarnings(output, ["PACK_NOTICE"], join(cwd, "p")), output).toEqual([]);
   expect(output).toContain("Nothing to replace: the project runs as written.");
   // Filled, it applies, and check passes: no REPLACE_ME left, and the output up to date.
   const where = ["--definitions", "p", "--out", "p/build"];

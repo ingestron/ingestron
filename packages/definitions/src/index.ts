@@ -9,17 +9,26 @@ export {
   type ResolveResult,
 } from "./resolve/index.js";
 
+// Accepted warnings: what the Platform's `accept` list took out of the problems.
+export { acceptsWarning, type AcceptAtBuild, type AcceptedWarning } from "./accept/index.js";
+
 // The pack contract: what a pack declares, the resolved model it receives,
 // and the helpers packs use to compare and fold environments.
 export {
   checkFold,
+  classificationTag,
   compareTargets,
+  defaultClassificationTag,
   environmentsDiagnostics,
   splitDeployText,
+  type AccessGrant,
   type Action,
+  type Alert,
   type Capability,
   type ChosenBy,
   type Column,
+  type ColumnCleanse,
+  type ColumnMask,
   type Connector,
   type Contract,
   type ContractRole,
@@ -36,10 +45,13 @@ export {
   type Method,
   type Naming,
   type Origin,
+  type RowFilter,
+  type RowRule,
   type Pack,
   type PackInfo,
   type PackNotice,
   type Permission,
+  type PreviewFeature,
   type RequestSection,
   type ResolvedModel,
   type ResolvedPlatform,
@@ -50,13 +62,42 @@ export {
   type Step,
   type StepOutput,
   type SuppliedValue,
+  type TableAccess,
   type TableCheck,
+  type TableCleanse,
   type TargetComparison,
   type TargetDifference,
 } from "./pack/index.js";
 
 // Documents: the kinds a project holds and the schemas the package ships.
-export { contractReads, kinds, packageSchema, type GovernanceDoc } from "./documents/index.js";
+export {
+  contractReads,
+  kinds,
+  packageSchema,
+  type FilterMatch,
+  type GovernanceDoc,
+} from "./documents/index.js";
+
+// Intent: the words a standard, flow or transform uses for how data is loaded and kept.
+export {
+  intentCoverageGaps,
+  intentPaths,
+  intentUseOf,
+  layerNames,
+  type AuditValue,
+  type DeleteMode,
+  type FeatureStatus,
+  type History,
+  type Intent,
+  type IntentCoverage,
+  type IntentFragment,
+  type IntentUse,
+  type LayerDuty,
+  type LoadMode,
+  type ResolvedOperations,
+  type SettingAlias,
+  type StorageFeature,
+} from "./intent/index.js";
 
 // Choosing methods: the store choice that keeps landed files as they are.
 export { NO_STORE } from "./choose/index.js";
@@ -76,6 +117,7 @@ export {
   documentReference,
   methodReference,
   packLoadProblem,
+  platformSectionReference,
   referenceKinds,
   type FieldInfo,
 } from "./reference/index.js";
@@ -84,8 +126,12 @@ export {
 export {
   codeHelp,
   loadingCodeHelp,
+  type CodeHelp,
   type DefinitionCode,
+  type Diagnostic,
+  type DiagnosticSubject,
   type LoadingStage,
+  type NotApplied,
 } from "./diagnostics/index.js";
 
 // Types from @ingestron/config that appear in this package's API, so a pack

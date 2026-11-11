@@ -1,0 +1,62 @@
+description: "A table one pack both keeps and serves is judged once, by the keeping step: the mask is NOT_APPLIED once, in the table's notApplied, and the serve step has none (section 8.2)."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, databricks@1, views@1]
+    governance:
+      masks: { confidential: hash }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    views:
+      manage: { grants: true }
+  lake.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: lake
+    source: shop
+    store: { uses: file-view }
+    serve: { uses: file-serve }
+    tables:
+      customers: { object: customers, contract: customers }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: email, logicalType: string, classification: confidential }
+    roles:
+      - { role: marketing-analysts, access: read }
+expect:
+  tables:
+    - name: customers
+      notApplied: [{ feature: masks, reason: It has no data masking., column: email }]
+      serve: { method: file-serve, notApplied: null }
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: customers.odcs.yaml
+      line: 11
+      message: 'The "hash" mask on "email" in table "customers" isn''t applied on views: It has no data masking.'
+      subject: { table: customers, feature: masks }

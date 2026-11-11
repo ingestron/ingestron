@@ -9,9 +9,65 @@ import { DiagnosticCode } from '@ingestron/config';
 import { FileSource } from '@ingestron/config';
 import { JsonSchema } from '@ingestron/config';
 import { KindDefinition } from '@ingestron/config';
+import type { Severity } from '@ingestron/config';
+
+// @public
+export interface AcceptAtBuild {
+    about?: {
+        file?: string;
+        table?: string;
+        feature?: string;
+    };
+    code: string;
+    entry: {
+        file: string;
+        line: number;
+    };
+    reason: string;
+    unused: Diagnostic;
+}
+
+// @public
+export interface AcceptedWarning {
+    diagnostic: Diagnostic;
+    entry: {
+        file: string;
+        line: number;
+    };
+    reason: string;
+}
+
+// @public
+export function acceptsWarning(entry: {
+    code: string;
+    about?: {
+        file?: string;
+        table?: string;
+        feature?: string;
+    };
+}, warning: Diagnostic): boolean;
+
+// @public
+export interface AccessGrant {
+    from: "contract" | "layer";
+    principal: string;
+    privileges: ("read" | "write")[];
+    role: string;
+}
 
 // @public
 export type Action = "ingest" | "transform" | "store" | "serve";
+
+// @public
+export type Alert = {
+    kind: "email";
+    to: string[];
+    on: ("failure" | "slow")[];
+} | {
+    kind: "destination";
+    id: string;
+    on: ("failure" | "slow")[];
+};
 
 // @public
 export function anchorOf(parts: string[]): string;
@@ -19,11 +75,14 @@ export function anchorOf(parts: string[]): string;
 export { AnyDiagnostic }
 
 // @public
+export type AuditValue = "loaded_at" | "run_id" | "source_file" | "source_modified_at" | "source_object" | "source_connection" | "window_start" | "window_end" | "row_hash";
+
+// @public
 export interface Capability {
     // (undocumented)
     does: string;
     // (undocumented)
-    id: "schemas" | "tags" | "comments" | "checks";
+    id: "schemas" | "tags" | "comments" | "checks" | "grants" | "masks" | "filters";
     // (undocumented)
     needs: string[];
     // (undocumented)
@@ -47,10 +106,18 @@ export interface ChosenBy {
 }
 
 // @public
-export const codeHelp: Record<DefinitionCode, {
-    meaning: string;
+export function classificationTag(model: Pick<ResolvedModel, "standard">): string;
+
+// @public
+export interface CodeHelp {
     fix: string;
-}>;
+    meaning: string;
+    origin: "resolve" | "build";
+    severities: readonly Severity[];
+}
+
+// @public
+export const codeHelp: Record<DefinitionCode, CodeHelp>;
 
 // @public
 export interface Column {
@@ -66,6 +133,28 @@ export interface Column {
     physicalName?: string;
     tags?: string[];
     type?: string;
+}
+
+// @public
+export interface ColumnCleanse {
+    case?: "upper" | "lower";
+    default?: unknown;
+    empty?: true;
+    map?: Record<string, unknown>;
+    timezone?: {
+        from: string;
+        to: string;
+    };
+    trim?: true;
+}
+
+// @public
+export interface ColumnMask {
+    classification: string;
+    column: string;
+    mask: "null" | "hash" | "redact" | {
+        function: string;
+    };
 }
 
 // @public
@@ -98,6 +187,7 @@ export interface Connector {
         values?: string[];
         default?: string | number | boolean;
         find?: string;
+        suggest?: string;
     }[];
     title: string;
 }
@@ -107,6 +197,7 @@ export interface Contract {
     checks: {
         name: string;
         check: string;
+        rule?: RowRule;
     }[];
     // (undocumented)
     columns: Column[];
@@ -127,6 +218,7 @@ export interface Contract {
         name: string;
         description?: string;
         reason: string;
+        notEnforced?: "NOT_APPLIED" | "CAPABILITY_OFF";
     }[];
 }
 
@@ -168,7 +260,13 @@ export type ContractUse = {
 export function contractUseOf(pack: PackInfo, path: string): ContractUse | undefined;
 
 // @public
-export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "PACK_VERSION" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "REPLACE_ME" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS" | "DEPLOY_VALUE" | "ENVIRONMENTS_DIFFER" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS" | "PACK_NOTICE" | "PACK_LOAD";
+export const defaultClassificationTag = "classification";
+
+// @public
+export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "PACK_VERSION" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "SETTING_MOVED" | "PLATFORM_FIELD_MOVED" | "INTENT_CONFLICT" | "NOT_APPLIED" | "PREVIEW_FEATURE" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "DUPLICATE_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "REPLACE_ME" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "TRANSFORM_CODE" | "LAYER_RESPONSIBILITY" | "QUARANTINE_UNUSED" | "CLEANSE_COLUMN" | "CLEANSE_TYPE" | "DEDUPLICATE_KEY" | "DEDUPLICATE_MODE" | "TIMEZONE_NAME" | "TIMEZONE_SOURCE" | "ACCEPT_CODE" | "ACCEPT_UNUSED" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS" | "ROLE_ACCESS" | "MASK_TYPE" | "FILTER_MATCH" | "FILTER_MULTIPLE" | "MASK_NEEDS_RUN_AS" | "MASK_FUNCTIONS" | "POLICY_LIMIT" | "POLICY_PRINCIPALS" | "DEPLOY_VALUE" | "ENVIRONMENTS_DIFFER" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS" | "PACK_NOTICE" | "PACK_LOAD";
+
+// @public
+export type DeleteMode = "soft" | "hard" | "keep";
 
 // @public
 export interface DeployValue {
@@ -181,7 +279,18 @@ export interface DeployValue {
     }[];
 }
 
+// @public
+export type Diagnostic = AnyDiagnostic & {
+    subject?: DiagnosticSubject;
+};
+
 export { DiagnosticCode }
+
+// @public
+export interface DiagnosticSubject {
+    feature?: string;
+    table?: string;
+}
 
 // @public
 export function documentReference(kind: keyof typeof referenceKinds): FieldInfo[];
@@ -213,11 +322,19 @@ export interface EnvironmentsProblem {
 export interface Expectation {
     // (undocumented)
     action: "warn" | "drop" | "fail";
-    // (undocumented)
     check: string;
     from: "contract" | "definition";
     // (undocumented)
     name: string;
+    rule?: RowRule;
+}
+
+// @public
+export interface FeatureStatus {
+    checked: string;
+    label?: "Public Preview" | "Beta" | "Private Preview";
+    level: "ga" | "preview";
+    source: string;
 }
 
 // @public
@@ -229,6 +346,7 @@ export interface FieldInfo {
     docs: string;
     // (undocumented)
     example?: unknown;
+    find?: string;
     maximum?: number;
     minimum?: number;
     // (undocumented)
@@ -237,6 +355,7 @@ export interface FieldInfo {
     placement?: "platform" | "standard" | "definition";
     // (undocumented)
     required: boolean;
+    suggest?: string;
     type: string;
     values?: {
         value: unknown;
@@ -245,6 +364,14 @@ export interface FieldInfo {
 }
 
 export { FileSource }
+
+// @public
+export type FilterMatch = {
+    tag: string;
+    value?: string;
+} | {
+    classification: string;
+};
 
 // @public
 export interface FoldView {
@@ -272,13 +399,20 @@ export interface GovernanceDoc {
         sensitive?: {
             require?: ("access" | "description" | "firstLevelApprovers")[];
         };
+        grants?: "additive" | "exact";
     };
     // (undocumented)
     classification?: {
         values?: string[];
         columns?: "required" | "optional";
         sensitive?: string[];
+        tag?: string;
     };
+    filters?: Record<string, {
+        function: string;
+        match: FilterMatch;
+    }>;
+    masks?: Record<string, string | null>;
     // (undocumented)
     products?: {
         require?: ("owner" | "purpose" | "support" | "domain")[];
@@ -295,6 +429,73 @@ export interface Grant {
 
 // @public
 export type Handover = "files" | "table" | "query";
+
+// @public
+export type History = "none" | "latest" | "full" | "bitemporal";
+
+// @public
+export interface Intent {
+    // (undocumented)
+    audit?: {
+        value: AuditValue;
+        as: string;
+    }[];
+    // (undocumented)
+    history?: History;
+    // (undocumented)
+    load?: {
+        mode?: LoadMode;
+        cursor?: string;
+        deletes?: {
+            mode?: DeleteMode;
+            when?: string;
+        };
+    };
+    // (undocumented)
+    rescued?: boolean;
+    // (undocumented)
+    retention?: {
+        time_travel?: string;
+        log?: string;
+        landed_files?: string;
+    };
+    // (undocumented)
+    sequence?: string;
+    // (undocumented)
+    storage?: {
+        clustering?: "auto" | "none" | "keys";
+        features?: StorageFeature[];
+    };
+}
+
+// @public
+export interface IntentCoverage {
+    intent?: Record<string, IntentUse>;
+}
+
+// @public
+export function intentCoverageGaps(pack: IntentCoverage): string[];
+
+// @public
+export type IntentFragment = Intent;
+
+// @public
+export const intentPaths: Record<string, readonly string[]>;
+
+// @public
+export type IntentUse = {
+    use: "used";
+    does: string;
+    status?: FeatureStatus;
+    onlyWhere?: LayerDuty;
+    zonesNotApplied?: Readonly<Record<string, string>>;
+} | {
+    use: "not-yet" | "elsewhere" | "not-applicable";
+    reason: string;
+};
+
+// @public
+export function intentUseOf(pack: IntentCoverage, path: string, value?: string): IntentUse | undefined;
 
 export { JsonSchema }
 
@@ -313,6 +514,14 @@ export const kinds: {
 };
 
 // @public
+export type LayerDuty = "check" | "cleanse" | "deduplicate" | "quarantine";
+
+// @public
+export function layerNames<Layer extends string | {
+    name: string;
+}>(layers: readonly Layer[] | undefined): string[] | undefined;
+
+// @public
 export function loadDefinitions(folder: string, options: ResolveOptions): ResolveResult;
 
 // @public
@@ -320,22 +529,29 @@ export const loadingCodeHelp: Record<DiagnosticCode, {
     stage: LoadingStage;
     meaning: string;
     fix: string;
+    severities: readonly Severity[];
 }>;
 
 // @public
 export type LoadingStage = "Files and YAML" | "References" | "Environments and documents";
 
 // @public
+export type LoadMode = "files" | "incremental" | "changes" | "full";
+
+// @public
 export interface Method {
     accepts?: Handover[];
     // (undocumented)
     action: Action;
+    aliases?: Record<string, SettingAlias>;
     check?(table: ResolvedTable): string[];
     connectivity?: string[];
     connectors?: string[];
     defaults?: Record<string, unknown>;
     // (undocumented)
     description: string;
+    intent?: Record<string, IntentUse>;
+    intentDefaults?: Intent;
     needsOutput?: true;
     output?(table: ResolvedTable): StepOutput | undefined;
     placement?: {
@@ -375,10 +591,18 @@ export interface Naming {
 export const NO_STORE = "none";
 
 // @public
+export interface NotApplied {
+    column?: string;
+    feature: string;
+    reason: string;
+}
+
+// @public
 export interface Origin {
+    alias?: string;
     file?: string;
     // (undocumented)
-    layer: "pack" | "standard" | "platform" | "rule" | "definition" | "table" | "fixed";
+    layer: "pack" | "standard" | "platform" | "layer" | "rule" | "definition" | "table" | "fixed";
     // (undocumented)
     line?: number;
 }
@@ -412,9 +636,11 @@ export interface PackInfo {
     };
     // (undocumented)
     id: string;
+    intent?: Record<string, IntentUse>;
     // (undocumented)
     methods: Record<string, Method>;
     platformFields?: string[];
+    platformSection?: JsonSchema;
     rules: Partial<Record<Action, {
         default?: string;
         when?: Rule[];
@@ -443,6 +669,18 @@ export function passportFile(id: string): string;
 export type Permission = {
     level: string;
 } & Record<string, string>;
+
+// @public
+export function platformSectionReference(pack: PackInfo): FieldInfo[];
+
+// @public
+export interface PreviewFeature {
+    pack: string;
+    path: string;
+    status: FeatureStatus;
+    table: string;
+    value?: string;
+}
 
 // @public
 export const referenceKinds: {
@@ -480,8 +718,10 @@ export interface ResolvedModel {
         pipeline: string;
         job: string;
     };
+    operations: ResolvedOperations;
     // (undocumented)
     platform: ResolvedPlatform;
+    previewFeatures: PreviewFeature[];
     products: ResolvedProduct[];
     // (undocumented)
     project: {
@@ -489,6 +729,7 @@ export interface ResolvedModel {
         name?: string;
         environment: string;
     };
+    qualityResults: boolean;
     standard: {
         id: string;
         packs: string[];
@@ -499,7 +740,30 @@ export interface ResolvedModel {
 }
 
 // @public
+export interface ResolvedOperations {
+    alerts: {
+        on: ("failure" | "slow")[];
+        slow_after?: string;
+    };
+    concurrency?: {
+        max_runs: number;
+        queue: boolean;
+    };
+    require_tags: string[];
+    retries?: {
+        count: number;
+        interval: string;
+    };
+    schedule: {
+        per: "project" | "flow";
+    };
+    timeout?: string;
+    trigger: "schedule" | "files" | "upstream" | "continuous";
+}
+
+// @public
 export interface ResolvedPlatform {
+    alerts: Alert[];
     // (undocumented)
     compute: {
         serverless: boolean;
@@ -508,12 +772,14 @@ export interface ResolvedPlatform {
     };
     // (undocumented)
     grants: Record<string, Grant[]>;
-    // (undocumented)
     manage: {
         schemas: boolean;
         tags: boolean;
         comments: boolean;
         checks: boolean;
+        grants?: boolean;
+        masks?: boolean;
+        filters?: boolean;
     };
     // (undocumented)
     mode: "development" | "production";
@@ -523,10 +789,12 @@ export interface ResolvedPlatform {
     };
     // (undocumented)
     permissions: Permission[];
+    principals: Record<string, string>;
     // (undocumented)
     run_as?: Record<string, string>;
     // (undocumented)
     schedule?: Schedule;
+    sections: Record<string, Record<string, unknown>>;
     // (undocumented)
     tags: Record<string, string>;
     // (undocumented)
@@ -585,8 +853,11 @@ export interface ResolvedProduct {
 
 // @public
 export interface ResolvedTable {
+    access?: TableAccess;
+    cleanse?: TableCleanse;
     // (undocumented)
     contract: Contract;
+    does?: "raw" | LayerDuty[];
     endsAtFiles?: ChosenBy;
     // (undocumented)
     expectations: Expectation[];
@@ -602,19 +873,32 @@ export interface ResolvedTable {
         object: string;
         renamed: boolean;
     };
+    intent: Intent;
+    intentOrigins: Record<string, Origin>;
     // (undocumented)
     layer: string;
     // (undocumented)
     name: string;
+    notApplied?: NotApplied[];
     // (undocumented)
     origin: {
         kind: "Flow" | "Transform";
         id: string;
         file: string;
     };
+    quality?: {
+        quarantine?: boolean;
+        results?: boolean;
+    };
+    qualityOrigins?: Partial<Record<"required" | "default" | "quarantine" | "results", Origin>>;
+    quarantine?: {
+        fullName: FullName;
+        column: string;
+    };
     serve?: Step;
     sourceNotKnown?: string;
     store?: Step;
+    timezone?: string;
     transform?: Step & {
         code: string;
         inputs: Record<string, string>;
@@ -634,13 +918,57 @@ export interface ResolveOptions {
 
 // @public
 export interface ResolveResult {
-    // (undocumented)
-    diagnostics: AnyDiagnostic[];
+    acceptAtBuild?: AcceptAtBuild[];
+    accepted: AcceptedWarning[];
+    diagnostics: Diagnostic[];
     // (undocumented)
     model?: ResolvedModel;
     // (undocumented)
     ok: boolean;
 }
+
+// @public
+export interface RowFilter {
+    column: string;
+    function: string;
+    name: string;
+}
+
+// @public
+export type RowRule = {
+    kind: "notNull";
+    column: string;
+} | {
+    kind: "in" | "notIn";
+    column: string;
+    values: unknown[];
+    allowNull: boolean;
+} | {
+    kind: "pattern";
+    column: string;
+    pattern: string;
+} | {
+    kind: "length";
+    column: string;
+    min?: number;
+    max?: number;
+} | {
+    kind: "range";
+    column: string;
+    min?: number | string;
+    max?: number | string;
+    exclusive?: boolean;
+} | {
+    kind: "multipleOf";
+    column: string;
+    value: number;
+} | {
+    kind: "items";
+    column: string;
+    min?: number;
+    max?: number;
+    unique?: boolean;
+};
 
 // @public
 export interface Rule {
@@ -669,6 +997,13 @@ export interface Schedule {
 }
 
 // @public
+export type SettingAlias = {
+    path: string;
+} | {
+    values: Record<string, IntentFragment>;
+};
+
+// @public
 export function splitDeployText(text: string, deployValues: readonly DeployValue[]): (string | DeployValue)[];
 
 // @public
@@ -676,6 +1011,7 @@ export interface Step {
     chosenBy: ChosenBy;
     // (undocumented)
     method: string;
+    notApplied?: NotApplied[];
     origins: Record<string, Origin>;
     output?: StepOutput;
     // (undocumented)
@@ -694,9 +1030,20 @@ export interface StepOutput {
 }
 
 // @public
+export type StorageFeature = "change_feed" | "row_tracking" | "deletion_vectors" | "type_widening" | "iceberg_reads";
+
+// @public
 export interface SuppliedValue {
     name: string;
     suppliedAs: string[];
+}
+
+// @public
+export interface TableAccess {
+    exact: boolean;
+    filters: RowFilter[];
+    grants: AccessGrant[];
+    masks: ColumnMask[];
 }
 
 // @public
@@ -714,6 +1061,14 @@ export interface TableCheck {
 }
 
 // @public
+export interface TableCleanse {
+    columns: Record<string, ColumnCleanse>;
+    deduplicate?: {
+        orderBy: string[];
+    };
+}
+
+// @public
 export interface TargetComparison {
     differing: TargetDifference[];
     structural: EnvironmentsProblem[];
@@ -727,13 +1082,13 @@ export interface TargetDifference {
 
 // Warnings were encountered during analysis:
 //
-// dist/documents/documents.d.ts:231:5 - (ae-forgotten-export) The symbol "StandardDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:232:5 - (ae-forgotten-export) The symbol "PlatformDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:233:5 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:234:5 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:235:5 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:236:5 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:238:5 - (ae-forgotten-export) The symbol "ProductDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:238:5 - (ae-forgotten-export) The symbol "StandardDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:239:5 - (ae-forgotten-export) The symbol "PlatformDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:240:5 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:241:5 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:242:5 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:243:5 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:245:5 - (ae-forgotten-export) The symbol "ProductDoc" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

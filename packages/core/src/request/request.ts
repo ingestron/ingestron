@@ -4,16 +4,10 @@
 // shared infrastructure the methods expect, what each pack expects to exist
 // and its schedules, and the SQL to run once. The editor's command writes the
 // same text (spec/cli/request.md).
-import {
-  resolveProject,
-  type AnyDiagnostic,
-  type FileSource,
-  type Project,
-} from "@ingestron/config";
+import { resolveProject, type FileSource, type Project } from "@ingestron/config";
 import {
   kinds,
   resolveDefinitions,
-  type Capability,
   type Pack,
   type RequestSection,
   type ResolvedModel,
@@ -25,6 +19,7 @@ import {
   type ProjectOptions,
 } from "../generation/index.js";
 import { packs } from "../packs/index.js";
+import { packCapabilities, switchedOff, switchedOn } from "./request-capabilities.js";
 import { suppliedFor } from "./request-supplied.js";
 import { notKnown as whatIsNotKnown } from "./request-unknown.js";
 import { valuesToProvide } from "./request-values.js";
@@ -83,7 +78,7 @@ export function requestFor(
       resolved: false,
     };
   const project = hostProject(files, environment, envvars);
-  const capabilities = available.flatMap((pack) => pack.capabilities ?? []);
+  const capabilities = packCapabilities(available);
   const notKnown = whatIsNotKnown(project, model);
   const references = project?.envvarReferences ?? [];
   const text = [
@@ -136,30 +131,6 @@ function identity(model: ResolvedModel): string | undefined {
   const host =
     workspace.host && !workspace.host.includes("REPLACE_ME") ? ` in ${workspace.host}` : "";
   return `Pipelines and jobs run as ${who}${host}.`;
-}
-
-function switchedOn(model: ResolvedModel, capabilities: Capability[]): string | undefined {
-  const on = capabilities.filter((capability) => model.platform.manage[capability.id]);
-  if (on.length === 0) return undefined;
-  const sections = on.map(
-    (capability) =>
-      `### ${capability.title} (\`manage.${capability.id}\`)\n\n${capability.does}\n\n${capability.needs.map((need) => `- ${need}`).join("\n")}`,
-  );
-  return `## Switched on\n\n${sections.join("\n\n")}`;
-}
-
-/** Features the definitions use while the platform has them off, from the CAPABILITY_OFF warnings. */
-function switchedOff(diagnostics: AnyDiagnostic[], capabilities: Capability[]): string | undefined {
-  const lines = diagnostics
-    .filter((diagnostic) => diagnostic.code === "CAPABILITY_OFF")
-    .flatMap((diagnostic) => {
-      const pointer = diagnostic.fixes?.[0]?.edits[0]?.pointer ?? "";
-      const capability = capabilities.find((item) => pointer === `/manage/${item.id}`);
-      const what = diagnostic.message.split(":")[0];
-      return capability ? [`- ${capability.title} (\`manage.${capability.id}\`): ${what}`] : [];
-    });
-  if (lines.length === 0) return undefined;
-  return `## Used by the definitions, but switched off\n\n${[...new Set(lines)].join("\n")}`;
 }
 
 /** The platform's method settings, with values for this environment; secrets never shown. */

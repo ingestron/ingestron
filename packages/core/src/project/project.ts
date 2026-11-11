@@ -5,10 +5,9 @@ import type { Pack } from "@ingestron/definitions";
 import { planGeneration, type OutputFolder, type Plan } from "@ingestron/generate";
 import { compareEnvironments } from "../compare/index.js";
 import {
-  environmentReportsText,
   generateAll,
   outputsOf,
-  packReportsText,
+  reportsText,
   type Generated,
   type GeneratedOutputs,
   type ProjectOptions,
@@ -76,7 +75,7 @@ export class Project {
     const generated = this.generation();
     if (!generated.ok)
       throw new Error(
-        `The definitions have problems:\n${environmentReportsText(generated.environmentReports)}${packReportsText(generated.packReports)}`,
+        `The definitions have problems:\n${reportsText(generated.environmentReports, generated.packReports)}`,
       );
     const output = generated.outputs.find(({ name }) => name === outputName);
     if (!output) throw new Error(`The project generates no output named "${outputName}".`);

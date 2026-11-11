@@ -42,6 +42,26 @@ describe("compareTargets", () => {
     ]);
   });
 
+  it("leaves out the preview features, which follow from the tables' intent", () => {
+    const models = modelsOf(project(paths));
+    const status = { level: "preview", checked: "2026-11-09", source: "https://example.com" };
+    const feature = { table: "orders", path: "history", value: "full", pack: "test", status };
+    const prod = { ...models.prod!, previewFeatures: [feature as never] };
+    const { differing } = compareTargets({ ...models, prod });
+    expect(differing.filter(({ pointer }) => pointer.startsWith("/previewFeatures"))).toEqual([]);
+  });
+
+  it("leaves out where quality values were written, which is not a value in files", () => {
+    const models = modelsOf(project(paths));
+    const origin = (line: number) => ({ default: { layer: "standard", file: "a.yaml", line } });
+    const withOrigin = (line: number) =>
+      models.dev!.tables.map((table) => ({ ...table, qualityOrigins: origin(line) as never }));
+    const prod = { ...models.prod!, tables: withOrigin(9) };
+    const dev = { ...models.dev!, tables: withOrigin(5) };
+    const { differing } = compareTargets({ dev, prod });
+    expect(differing.filter(({ pointer }) => pointer.includes("qualityOrigins"))).toEqual([]);
+  });
+
   it("reports a table that some targets do not build, naming them", () => {
     const models = modelsOf(project(paths));
     const { structural } = compareTargets({ ...models, prod: { ...models.prod!, tables: [] } });

@@ -1,0 +1,79 @@
+description: "Grants are turned on per pack: manage written at the top counts for databricks, as its moved field, and not for another pack, whose own section turns them on. The fix for that pack sets its section (section 7.1)."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, databricks@1, views@1]
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    manage: { grants: true }
+  lake.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: lake
+    source: shop
+    store: { uses: uc-table }
+    tables:
+      orders: { object: orders, contract: orders }
+  served.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: served
+    source: shop
+    store: { uses: file-view }
+    tables:
+      orders_view: { object: orders_view, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+    roles:
+      - { role: finance-analysts, access: read }
+expect:
+  diagnostics:
+    - code: PLATFORM_FIELD_MOVED
+      severity: warning
+      file: platform.yaml
+      line: 4
+    - code: CAPABILITY_OFF
+      severity: warning
+      file: orders.odcs.yaml
+      line: 12
+      message: 'Access for the role "finance-analysts" in table "orders_view" is not applied: the platform has Grants off.'
+      hint: Turn it on with views.manage.grants in platform.yaml.
+      fixes: [Turn on manage.grants]
+      subject: { table: orders_view, feature: grants }
+  fixed:
+    - diagnostic: 1
+      title: Turn on manage.grants
+      files:
+        platform.yaml: |
+          apiVersion: ingestron.io/v1
+          kind: Platform
+          id: lake
+          manage: { grants: true }
+          views:
+            manage:
+              grants: true

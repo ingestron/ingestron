@@ -5,6 +5,7 @@ export {
   idsOf,
   kindOf,
   placeAt,
+  listAt,
   writtenKeys,
   type Place,
 } from "./context.js";

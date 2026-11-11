@@ -1,0 +1,54 @@
+description: "An appending store is the DEDUPLICATE_MODE error even when the layer's history is latest: a written mode append that no alias lists is kept, so the history stays as the layer wrote it, and the append is judged first, not reported as redundant."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [dedupe@1]
+    layers:
+      - { name: bronze, history: latest }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: dedupe
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders:
+        object: orders
+        contract: orders
+        store:
+          with: { mode: append }
+        cleanse:
+          deduplicate: { order_by: [updated_at] }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: updated_at, logicalType: timestamp }
+expect:
+  diagnostics:
+    - code: DEDUPLICATE_MODE
+      severity: error
+      file: sales.yaml
+      line: 12
+      message: 'Deduplicate cannot work for "orders": its store appends rows, and rows already kept cannot be deduplicated.'
+      hint: "Set history: latest to keep one row per key, or deduplicate in a transform that reads this table."

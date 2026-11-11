@@ -11,5 +11,4 @@ tables:
     # The source table: its database and schema, database.schema.Invoices
     object: REPLACE_ME.REPLACE_ME.Invoices
     contract: erp.invoices
-    ingest:
-      with: { mode: history } # keep every version of an invoice
+    history: full # keep every version of an invoice

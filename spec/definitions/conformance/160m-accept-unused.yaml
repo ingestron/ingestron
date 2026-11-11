@@ -1,0 +1,80 @@
+description: "An entry that matches no warning in the run is ACCEPT_UNUSED, a warning at the entry with the fix that removes it; the entry that matches still accepts."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    accept:
+      - code: NOT_APPLIED
+        reason: The on-call team checks this rule from CI.
+      - code: QUALITY_RULE_NOT_CHECKED
+        reason: Nothing is unchecked.
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - name: code
+            logicalType: string
+            logicalTypeOptions: { maxLength: 8 }
+            quality:
+              - { metric: invalidValues, arguments: { pattern: "^[A-Z]+$" }, mustBe: 0 }
+expect:
+  diagnostics:
+    - code: ACCEPT_UNUSED
+      severity: warning
+      file: platform.yaml
+      line: 7
+      message: "The accept entry for QUALITY_RULE_NOT_CHECKED matches no warning in this run."
+      hint: "Remove the entry, or correct its code or about. To accept different warnings in each environment, write the list as a value: accept: ${values.accept}."
+      fixes: [Remove the entry]
+  accepted:
+    - code: NOT_APPLIED
+      severity: warning
+      file: orders.odcs.yaml
+      line: 15
+      message: "The pattern rule isn't applied on quality: Its engine has no regular expressions."
+      subject: { table: orders, feature: pattern }
+      reason: The on-call team checks this rule from CI.
+      entry: { file: platform.yaml, line: 5 }
+  fixed:
+    - diagnostic: 0
+      title: Remove the entry
+      files:
+        platform.yaml: |
+          apiVersion: ingestron.io/v1
+          kind: Platform
+          id: lake
+          accept:
+            - code: NOT_APPLIED
+              reason: The on-call team checks this rule from CI.

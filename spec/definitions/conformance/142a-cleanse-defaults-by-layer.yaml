@@ -1,0 +1,74 @@
+description: "The standard's cleanse defaults reach a flow table in a layer with no does, and nothing in a layer whose does leaves out cleanse, in a raw layer, or in a transform's layer with no does. A table with nothing to cleanse has no cleanse."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    layers:
+      - bronze
+      - silver
+      - { name: gold, does: [check] }
+      - { name: vault, does: raw }
+    cleanse:
+      text: { trim: true }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+      old_orders: { object: old_orders, contract: orders }
+  vault.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: vault
+    source: shop
+    layer: vault
+    tables:
+      kept_orders: { object: kept_orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: name, logicalType: string }
+  a_silver.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: silver_orders
+    inputs: [orders]
+    contract: orders
+  b_gold.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Transform
+    id: gold_orders
+    inputs: [silver_orders]
+    contract: orders
+    layer: gold
+expect:
+  tables:
+    - { name: orders, layer: bronze, cleanse: { columns: { name: { trim: true } } } }
+    - { name: old_orders, layer: bronze, cleanse: { columns: { name: { trim: true } } } }
+    - { name: kept_orders, layer: vault, cleanse: null }
+    - { name: silver_orders, layer: silver, cleanse: null }
+    - { name: gold_orders, layer: gold, cleanse: null }

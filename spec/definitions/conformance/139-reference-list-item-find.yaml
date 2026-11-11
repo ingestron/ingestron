@@ -1,0 +1,33 @@
+description: "A list's items are an entry `*` under it only when their schema has a find or a suggest, so a value the owner fills in one item at a time is explained; other items are never an entry of their own."
+reference:
+  method: copy
+  settings:
+    type: object
+    properties:
+      to:
+        type: array
+        description: Email addresses told.
+        items:
+          type: string
+          description: An email address told.
+          find: "Your team decides it."
+          suggest: "<team>@<domain>"
+      steps:
+        type: array
+        description: The steps, in order.
+        items: { type: string, description: A step. }
+expect:
+  paths:
+    - to
+    - to.*
+    - steps
+  fields:
+    - path: to.*
+      name: "*"
+      type: text
+      required: false
+      description: An email address told.
+      find: "Your team decides it."
+      suggest: "<team>@<domain>"
+      docs: /docs/reference/packs/reference#copy-to-item
+  absent: ["steps.*"]

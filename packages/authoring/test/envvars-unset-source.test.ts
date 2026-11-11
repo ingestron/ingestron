@@ -48,6 +48,8 @@ function workspace(files: Record<string, string> = {}, contract = "shop.orders")
 
 const set = { ".env.dev": "INGT_SRC=shop\nINGT_CLUSTER=none\n" };
 const deployValue = { code: "DEPLOY_VALUE", severity: "error" };
+/** `cluster_by: none`, from .env, is now written as intent: `storage.clustering: none`. */
+const settingMoved = { code: "SETTING_MOVED", severity: "warning" };
 
 /** The DuckDB starter, whose flow reads its source from ${envvar:INGT_SRC}. */
 function duckdb(files: Record<string, string> = {}): string {
@@ -110,7 +112,7 @@ describe("an unset reference in a flow's source and in an anyOf setting", () => 
     const folder = workspace(set);
     const project = openProject(folder, new Map());
     const found = problems(project, "dev").map(({ code, severity }) => ({ code, severity }));
-    expect(found).toEqual([deployValue]);
+    expect(found).toEqual([settingMoved, deployValue]);
     const display = resolvedForDisplay(project, "dev");
     expect(display.diagnostics.map(({ code }) => code)).not.toContain("PACK_CHECK");
     const text = readFileSync(join(folder, flow), "utf8");
@@ -125,6 +127,7 @@ describe("an unset reference in a flow's source and in an anyOf setting", () => 
     const found = problems(openProject(folder, new Map()), "dev");
     // The source and the contract are each supplied only when deploying: plan's errors alone.
     expect(found.map(({ code, severity }) => ({ code, severity }))).toEqual([
+      settingMoved,
       deployValue,
       deployValue,
     ]);

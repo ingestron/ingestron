@@ -1,0 +1,53 @@
+description: "hash or redact for a column that is not text is MASK_TYPE, an error at the column's classification; null and a function take any type."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    governance:
+      masks:
+        confidential: hash
+        restricted: "null"
+        internal: governance.masks.mask_any
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true, classification: internal }
+          - { name: email, logicalType: string, classification: confidential }
+          - { name: customer_id, logicalType: integer, classification: confidential }
+          - { name: total, logicalType: number, classification: restricted }
+expect:
+  diagnostics:
+    - code: MASK_TYPE
+      severity: error
+      file: orders.odcs.yaml
+      line: 12
+      message: 'The mask "hash" for "confidential" works on text, and "customer_id" is integer in contract "orders".'
+      hint: 'Mask "confidential" with "null" or a function of your own, or classify "customer_id" differently.'

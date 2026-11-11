@@ -1,0 +1,134 @@
+description: "A mask the engine does not apply, whose warning the Platform accepts, is still not enforced in the passport; the command shows one accepted line in place of the warning."
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, local@1]
+    governance:
+      masks: { confidential: hash }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: laptop
+    accept:
+      - code: NOT_APPLIED
+        about: { feature: masks }
+        reason: Synthetic data on a laptop; the shared platform masks it.
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    store: { uses: local-table }
+    tables:
+      customers: { object: customers, contract: customers }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: email, logicalType: string, classification: confidential }
+  customers-product.yaml: |
+    apiVersion: v1.1.0
+    kind: DataProduct
+    id: customers
+    name: Customers
+    status: active
+    description:
+      purpose: Everyone who has bought from the shop.
+    team:
+      members:
+        - { username: ana@example.com, role: owner }
+    outputPorts:
+      - { name: customers, contractId: customers }
+command: apply
+expect:
+  exit: 0
+  lines:
+    - "1 accepted warning (platform.yaml)"
+  diagnostics: []
+  texts:
+    build/products/dev/customers.md: |
+      # Customers
+
+      Everyone who has bought from the shop.
+
+      - Status: active
+
+      ## Owners and support
+
+      - Owner: ana@example.com
+
+      ## What it provides in dev
+
+      | Output | What it is | Table in dev | Where it lives |
+      | --- | --- | --- | --- |
+      | customers |  | `dev.bronze.customers` | local |
+
+      ## Columns
+
+      ### customers
+
+      | Column | Description | Type | Required | Key | Classification |
+      | --- | --- | --- | --- | --- | --- |
+      | id |  | integer |  | yes |  |
+      | email |  | string |  |  | confidential |
+
+      ## Quality
+
+      ### customers
+
+      #### `dev.bronze.customers`
+
+      No quality rules.
+
+      Cleansing:
+
+      - Nothing is cleansed.
+
+      ## Freshness
+
+      - Refreshed when its pipelines run.
+
+      ## Who may use it
+
+      ### customers
+
+      #### `dev.bronze.customers`
+
+      No role is granted on this table.
+
+      Masked columns:
+
+      - `email` (confidential): hashed. Not enforced on local: It has no access control.
+
+      ## Lineage
+
+      ```mermaid
+      flowchart LR
+        n0["shop (files)"] --> n1["customers"]
+      ```
+
+      ## Governance
+
+      This product meets every governance rule of the standard:
+
+      - (none set)

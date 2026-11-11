@@ -1,0 +1,85 @@
+description: "A raw layer turns the fail a layer's quality asks for into warn, because the raw rule applies last; a layer that checks keeps it. A layer's required alone leaves the default the standard's."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    quality: { required: warn, default: drop }
+    layers:
+      - name: bronze
+        does: raw
+        quality: { required: fail, default: fail }
+      - name: silver
+        does: [check]
+        quality: { required: fail }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    manage: { checks: true }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders:
+        object: orders
+        contract: orders
+        expectations:
+          - { name: positive, check: total > 0 }
+  more.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: more
+    source: shop
+    layer: silver
+    tables:
+      refunds:
+        object: refunds
+        contract: orders
+        expectations:
+          - { name: positive, check: total > 0 }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true, unique: true }
+          - { name: total, logicalType: number, physicalType: "DECIMAL(18,2)" }
+expect:
+  tables:
+    - name: refunds
+      expectations:
+        - { name: id_not_null, action: fail }
+        - { name: positive, action: drop }
+      contract:
+        tableChecks:
+          - { name: id_unique, action: warn }
+    - name: orders
+      does: raw
+      expectations:
+        - { name: id_not_null, action: warn }
+        - { name: positive, action: warn }
+      contract:
+        tableChecks:
+          - { name: id_unique, action: warn }
+  diagnostics: []

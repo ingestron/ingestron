@@ -74,7 +74,7 @@ export function composableRecipe(
   const facts: RecipeFacts = {
     connection: selected.connection,
     flows: selected.flows,
-    route: { method: route.method, packs: standard.packs, packsComment: standard.comment },
+    route: { via, method: route.method, packs: standard.packs, packsComment: standard.comment },
     connector: packs
       .flatMap((pack) => pack.connectors ?? [])
       .find((item) => item.id === connector && item.method === route.method),

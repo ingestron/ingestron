@@ -1,0 +1,78 @@
+description: "An operation or deduplicate that a method applies only in a layer with that duty is NOT_APPLIED in a layer whose does does not list it, with a hint that names the duty, and is applied silently in a layer whose does lists it."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [quality@1]
+    layers:
+      - bronze
+      - { name: silver, does: [cleanse, deduplicate] }
+    cleanse:
+      text: { empty: null }
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: source
+    store: { uses: quality-view }
+    tables:
+      customers:
+        object: customers
+        contract: customers
+        cleanse:
+          deduplicate: { order_by: [updated_at] }
+  refined.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: refined
+    source: source
+    layer: silver
+    store: { uses: quality-view }
+    tables:
+      vips:
+        object: vips
+        contract: customers
+        cleanse:
+          deduplicate: { order_by: [updated_at] }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+          - { name: name, logicalType: string }
+          - { name: updated_at, logicalType: timestamp }
+expect:
+  diagnostics:
+    - code: NOT_APPLIED
+      severity: warning
+      file: standard.yaml
+      line: 9
+      message: 'Cleansing "empty" of text columns isn''t applied on quality: it is applied only in a layer whose does lists cleanse.'
+      hint: Add `cleanse` to the layer's `does` to apply it here.
+      subject: { table: customers, feature: cleanse.empty }
+    - code: NOT_APPLIED
+      severity: warning
+      file: sales.yaml
+      line: 11
+      message: "Deduplicate isn't applied on quality: it is applied only in a layer whose does lists deduplicate."
+      hint: Add `deduplicate` to the layer's `does` to apply it here.
+      subject: { table: customers, feature: deduplicate }

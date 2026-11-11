@@ -136,7 +136,7 @@ function resolve(
   envvars: Readonly<Record<string, string | undefined>>,
 ): ReturnType<typeof resolveDefinitions> {
   const refused = refusedPacks();
-  if (refused) return { ok: false, diagnostics: [refused] };
+  if (refused) return { ok: false, diagnostics: [refused], accepted: [] };
   return resolveDefinitions(files, {
     packs,
     ...(environment && { environment }),

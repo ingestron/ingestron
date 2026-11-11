@@ -2,10 +2,13 @@
 // method and each setting's value with the layer that set it; for a setting
 // under `with`, that one value and where it was set; for any described field
 // its meaning, values, default, example, usual place and documentation.
-import { type Origin, type ResolvedTable, type Step } from "@ingestron/definitions";
+import { type ResolvedTable, type Step } from "@ingestron/definitions";
 import { kindOf, placeAt, type Place } from "../navigation/index.js";
 import { referenceAround, referenceValue } from "../navigation/index.js";
 import { explainField, methodText, type HoverOptions } from "./explain.js";
+import { intentText } from "./intent-text.js";
+import { from } from "./origin-text.js";
+import { explainReplaceMe } from "./replace-me.js";
 import { methodAt, methodInfo } from "../assist/index.js";
 import { resolvedForDisplay, type Project } from "../project/index.js";
 import { holdsSecret } from "../project/index.js";
@@ -61,6 +64,10 @@ function explainSpot(
   environment: string | undefined,
   options: HoverOptions,
 ): string | undefined {
+  if (spot.part === "value" && spot.text.includes("REPLACE_ME")) {
+    const help = explainReplaceMe(project, file, spot.pointer, environment, options);
+    if (help) return help;
+  }
   const setting = settingAt(spot);
   const key = spot.part === "key";
   const parts = [
@@ -150,7 +157,9 @@ function explainTable(
   const target = table.endsAtFiles
     ? `\`${targetOf(table)}\``
     : `\`${catalog}\`.\`${schema}\`.\`${tableName}\``;
-  return [`**\`${name}\`** → ${target}`, ...stepsNotKnown(table, true), ...steps].join("\n\n");
+  return [`**\`${name}\`** → ${target}`, ...stepsNotKnown(table, true), ...steps, intentText(table)]
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 /** A step's method, then the settings something chose, then the pack's defaults on one line. */
@@ -187,22 +196,6 @@ function explainSetting(
   if (holdsSecret(step.settings[setting.key])) return undefined;
   const value = shown(step.settings[setting.key]);
   return `\`${setting.key}\` for \`${table.name}\`: \`${value}\`, set by ${from(step.origins[setting.key], table)}.`;
-}
-
-/** Which layer set a value, in words, with where it was written. */
-function from(origin: Origin | undefined, table: ResolvedTable): string {
-  if (!origin) return "";
-  const where = origin.file ? ` (${origin.file}:${origin.line})` : "";
-  const layer = {
-    pack: "pack default",
-    standard: "standard",
-    platform: "platform",
-    rule: "standard rule",
-    definition: table.origin.kind === "Flow" ? "the flow" : "the transform",
-    table: "this table",
-    fixed: "standard, fixed",
-  }[origin.layer];
-  return `${layer}${where}`;
 }
 
 /** A value as definitions write it: YAML flow style. */

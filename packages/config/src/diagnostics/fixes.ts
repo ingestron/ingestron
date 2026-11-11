@@ -43,12 +43,15 @@ export function fixEdits(fix: Fix, read: (file: string) => string | undefined): 
 }
 
 /**
- * One file's text with edits applied; the edits were all made against `text`.
+ * One file's text with edits applied; the edits were all made against `text`. They are
+ * applied from the end, so none moves another. Of two that start at one place, the one that
+ * removes or replaces text goes first: text added there then comes before it, and the
+ * removal takes only what it named.
  * @public
  */
 export function applyEdits(text: string, edits: readonly Omit<TextEdit, "file">[]): string {
   return [...edits]
-    .sort((a, b) => b.start - a.start)
+    .sort((a, b) => b.start - a.start || b.end - a.end)
     .reduce((out, edit) => out.slice(0, edit.start) + edit.text + out.slice(edit.end), text);
 }
 

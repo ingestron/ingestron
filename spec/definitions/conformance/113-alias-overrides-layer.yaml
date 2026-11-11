@@ -1,0 +1,71 @@
+description: A method setting that is another name for intent counts as intent written where the setting is, so a flow's store.with.mode overrides its layer's history. It is SETTING_MOVED, with a fix that writes the intent at the same place and removes the setting.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    layers:
+      - { name: bronze, history: latest }
+      - silver
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    store: { with: { mode: append } }
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  tables:
+    - name: orders
+      intent: { history: none }
+      intentOrigins:
+        history: { layer: definition, file: sales.yaml, line: 5, alias: mode }
+      store:
+        method: stream
+        settings: { mode: append }
+        origins:
+          mode: { layer: definition, file: sales.yaml, line: 5, alias: null }
+  diagnostics:
+    - code: SETTING_MOVED
+      severity: warning
+      file: sales.yaml
+      line: 5
+      message: '"mode" is now written as intent: history: none.'
+      fixes: [Write as intent]
+  fixed:
+    - diagnostic: 0
+      title: Write as intent
+      files:
+        sales.yaml: |
+          apiVersion: ingestron.io/v1
+          kind: Flow
+          id: sales
+          source: shop
+          tables:
+            orders: { object: orders, contract: orders }
+          history: none

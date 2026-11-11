@@ -84,7 +84,8 @@ databricks bundle deploy -t <environment>
 ```
 
 The Databricks CLI deploys to the workspace it is signed in to, unless the platform's
-`workspace.host` names one: sign in to each environment's workspace, or set it per environment.
+`databricks.workspace.host` names one: sign in to each environment's workspace, or set it per
+environment.
 
 ## Ask the platform team
 

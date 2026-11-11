@@ -1,0 +1,82 @@
+description: "One contract that two tables use is resolved for each table: kept by a pack that declares no checks capability, the table gets its table check with manage.checks off; kept by a pack that declares it, the table gets none, and the rule is CAPABILITY_OFF (section 7.1)."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, quality@1]
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  source.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: source
+    connector: quality
+    connectivity: public
+    settings: {}
+  lake.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: lake
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  counted.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: counted
+    source: source
+    ingest: { uses: quality-copy }
+    store: { uses: quality-counts }
+    tables:
+      orders_counted: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        quality:
+          - { metric: rowCount, mustBeGreaterThan: 0 }
+        properties:
+          - { name: id, logicalType: integer }
+expect:
+  diagnostics:
+    - code: CAPABILITY_OFF
+      severity: warning
+      file: orders.odcs.yaml
+      line: 10
+      subject: { table: orders, feature: checks }
+  tables:
+    - name: orders_counted
+      contract:
+        tableChecks:
+          - {
+              name: orders_rowcount,
+              metric: rowCount,
+              columns: [],
+              operator: mustBeGreaterThan,
+              value: 0,
+              unit: rows,
+              action: warn,
+            }
+    - name: orders
+      contract:
+        tableChecks: []

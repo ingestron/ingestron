@@ -1,0 +1,63 @@
+# A data-only pack with a section of the Platform, for the cases about the Databricks
+# fields that moved into it (section 7), and a store method that applies access, for the
+# cases about judging access (section 8.2). No rule chooses the method: a flow names it.
+id: databricks
+version: 1
+defaults:
+  naming: { catalog: unused, schema: unused, table: unused, pipeline: unused, job: unused }
+  layers: [unused]
+  types: {}
+  quality: { required: fail, default: fail }
+rules: {}
+methods:
+  uc-table:
+    action: store
+    description: Keeps the table and applies its access.
+    accepts: [files]
+    produces: table
+    settings: { type: object }
+  uc-view:
+    action: store
+    description: Keeps the table as a view, which masks no columns.
+    accepts: [files]
+    produces: table
+    settings: { type: object }
+    # What differs on this method from the pack's coverage (section 11.5).
+    intent:
+      access.masks: { use: not-applicable, reason: A view here masks no columns. }
+platformSection:
+  type: object
+  additionalProperties: false
+  properties:
+    mode: { enum: [development, production] }
+    workspace:
+      type: object
+      additionalProperties: false
+      properties: { host: { type: string }, root_path: { type: string } }
+    run_as: { type: object }
+    compute: { type: object }
+    permissions: { type: array }
+    manage:
+      type: object
+      properties:
+        grants: { type: boolean }
+        masks: { type: boolean }
+        filters: { type: boolean }
+    grants: { type: object }
+    governance:
+      type: object
+      additionalProperties: false
+      properties:
+        functions: { type: string }
+        unmasked: { type: array, items: { type: string } }
+# What it does with access (section 8.2).
+intent:
+  access: { use: used, does: Grants, masks and filters with the platform's own policies. }
+capabilities:
+  - { id: tags, title: Tags, does: Tags tables and columns., needs: [APPLY TAG on the tables] }
+  - { id: grants, title: Grants, does: Grants the contracts' roles., needs: [] }
+  - id: masks
+    title: Column masks
+    does: Masks classified columns.
+    needs: [CREATE FUNCTION on the functions schema]
+  - { id: filters, title: Row filters, does: Filters rows., needs: [] }
