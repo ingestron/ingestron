@@ -1,6 +1,6 @@
 {
   "name": "@ingestron/cli",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "ingestron plan | apply | check | schemas: generate platform assets from definitions.",
   "license": "Apache-2.0",
   "author": "Ingestron <hello@ingestron.io>",
