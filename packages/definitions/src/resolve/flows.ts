@@ -80,7 +80,7 @@ function flowTable(
   const steps = stepsOf(context, flow, name, facts);
   if (steps === false) return undefined;
   const { places, ...intent } = tableIntent(context, declared, steps);
-  const contract = flowContract(context, flow, name, steps, entry);
+  const contract = flowContract(context, flow, name, steps, entry, layer);
   const { id, source } = flow.value;
   const fullName = renderTableName(context, namer, { layer, table: name, flow: id, source });
   if (!steps || !contract || !fullName) return undefined;

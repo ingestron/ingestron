@@ -7,7 +7,7 @@ import type { DefinitionCode } from "./diagnostics.js";
 export const sourceCodeHelp: Record<
   Extract<
     DefinitionCode,
-    "SOURCE_METADATA_DUPLICATE" | "SOURCE_OBJECT_AMBIGUOUS" | "TABLE_NO_COLUMNS"
+    "SOURCE_METADATA_DUPLICATE" | "SOURCE_OBJECT_AMBIGUOUS" | "TABLE_NO_COLUMNS" | "CONTRACT_NEEDED"
   >,
   CodeHelp
 > = {
@@ -29,6 +29,13 @@ export const sourceCodeHelp: Record<
     meaning:
       "A flow table names no contract, and the project has no source metadata entry for its object, so nothing says what its columns are.",
     fix: "Import the source's metadata (ingestron source request says how), or name a contract.",
+    severities: ["error"],
+    origin: "resolve",
+  },
+  CONTRACT_NEEDED: {
+    meaning:
+      "A flow table names no contract, but needs one: its layer cleanses, checks or quarantines, access is managed for it, or it has expectations of its own. Source metadata does not stand in for a contract here.",
+    fix: "Name a contract for the table with contract. Or, for managed access, set access: { contract: false } on its layer.",
     severities: ["error"],
     origin: "resolve",
   },

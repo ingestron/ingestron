@@ -86,7 +86,8 @@ export type DefinitionCode =
   | "PACK_LOAD"
   | "SOURCE_METADATA_DUPLICATE"
   | "SOURCE_OBJECT_AMBIGUOUS"
-  | "TABLE_NO_COLUMNS";
+  | "TABLE_NO_COLUMNS"
+  | "CONTRACT_NEEDED";
 
 /**
  * What a warning is about, so it can be told apart from another with the same code
