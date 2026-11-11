@@ -58,18 +58,18 @@ has something to say:
 
 ## Switched on
 
-Capabilities are per pack (definitions specification, section 7.1). Only a
-pack that runs a step of a table of the environment (ingest, transform, store
-or serve) is considered, so a pack the standard names that has no table there
-adds nothing. They are listed in
-the packs' order, each pack's in its own order. A capability is on for the pack `databricks` as the model's `manage`
-has it (written at the top of the Platform or in its `databricks` section),
-and for any other pack when its own section has `<pack>.manage.<id>: true`;
+Capabilities are per pack (definitions specification, section 7.1). They are
+listed in the packs' order, each pack's in its own order. A capability of the
+pack `databricks` is on as the model's `manage` has it (written at the top of
+the Platform or in its `databricks` section), whether or not the environment
+has a table that pack runs. A capability of any other pack is on when its own
+section has `<pack>.manage.<id>: true`, and is listed only when that pack runs
+a step (ingest, transform, store or serve) of a table of the environment;
 `manage` at the top turns nothing on for another pack. Each is a `###`
-heading, `<title> (\`<name>\`)`, then what it does and a bullet for each
-need. The name is `manage.<id>`for`databricks`, and `<pack>.manage.<id>`
-for any other pack. Item 5 names a capability the same way, from the pack
-the warning's fix turns it on for.
+heading, ``<title> (`<name>`)``, then what it does and a bullet for each need.
+The name is `manage.<id>` for `databricks` and `<pack>.manage.<id>` for any
+other pack. Item 5 names a capability the same way, from the pack the
+warning's fix turns it on for.
 
 ## Values to replace
 

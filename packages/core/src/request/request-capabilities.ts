@@ -3,17 +3,17 @@
 import type { AnyDiagnostic } from "@ingestron/config";
 import type { Capability, Pack, ResolvedModel } from "@ingestron/definitions";
 
+/** A pack's capability, with the pack that declares it. */
+export interface PackCapability {
+  pack: string;
+  capability: Capability;
+}
+
 /** Each pack's capabilities, with the pack that declares them, in the packs' order. */
 export function packCapabilities(available: readonly Pack[]): PackCapability[] {
   return available.flatMap((pack) =>
     (pack.capabilities ?? []).map((capability) => ({ pack: pack.id, capability })),
   );
-}
-
-/** A pack's capability, with the pack that declares it. */
-export interface PackCapability {
-  pack: string;
-  capability: Capability;
 }
 
 /**
@@ -24,7 +24,11 @@ function switchName({ pack, capability }: PackCapability): string {
   return pack === "databricks" ? `manage.${capability.id}` : `${pack}.manage.${capability.id}`;
 }
 
-/** True when the platform turns the capability on for its pack (specification section 7.1). */
+/**
+ * True when the platform turns the capability on for its pack (specification section 7.1): the
+ * same rule as the definitions' `isOn`, read from the resolved model, whose `manage` holds
+ * the databricks fields wherever they were written.
+ */
 function isOn(model: ResolvedModel, { pack, capability }: PackCapability): boolean {
   if (pack === "databricks") return model.platform.manage[capability.id] === true;
   const manage = model.platform.sections[pack]?.manage;
@@ -35,7 +39,10 @@ function isOn(model: ResolvedModel, { pack, capability }: PackCapability): boole
   );
 }
 
-/** Capabilities that are on, for the packs that run a step of a table of the environment. */
+/**
+ * Capabilities that are on. Databricks' are listed as they always were; any other pack's only
+ * when it runs a step of a table of the environment.
+ */
 export function switchedOn(
   model: ResolvedModel,
   capabilities: PackCapability[],
@@ -47,7 +54,9 @@ export function switchedOn(
       ),
     ),
   );
-  const on = capabilities.filter((item) => used.has(item.pack) && isOn(model, item));
+  const on = capabilities.filter(
+    (item) => (item.pack === "databricks" || used.has(item.pack)) && isOn(model, item),
+  );
   if (on.length === 0) return undefined;
   const sections = on.map(
     (item) =>
