@@ -10,6 +10,7 @@ import { platformCodeHelp } from "./platform-codes.js";
 import { productCodeHelp } from "./product-codes.js";
 import { accessCodeHelp } from "./access-codes.js";
 import { cleanseCodeHelp } from "./cleanse-codes.js";
+import { sourceCodeHelp } from "./source-codes.js";
 import { transformCodeHelp } from "./transform-codes.js";
 
 /**
@@ -26,6 +27,7 @@ export const codeHelp: Record<DefinitionCode, CodeHelp> = {
   ...transformCodeHelp,
   ...cleanseCodeHelp,
   ...acceptCodeHelp,
+  ...sourceCodeHelp,
   NO_STANDARD: {
     meaning: "The project has no Standard document.",
     fix: "Add a Standard, or import your organisation's standard in project.yaml.",

@@ -83,7 +83,9 @@ export type DefinitionCode =
   | "ARM_PARAMETERS"
   | "SECRET_NAME_DIFFERS"
   | "PACK_NOTICE"
-  | "PACK_LOAD";
+  | "PACK_LOAD"
+  | "SOURCE_METADATA_DUPLICATE"
+  | "SOURCE_OBJECT_AMBIGUOUS";
 
 /**
  * What a warning is about, so it can be told apart from another with the same code

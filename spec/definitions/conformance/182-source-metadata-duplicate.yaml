@@ -1,0 +1,65 @@
+description: "A connection with two SourceMetadata documents is SOURCE_METADATA_DUPLICATE, an error at the second document's connection; the first is used."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml", "sources/*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        description: One row per order.
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  sources/shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: SourceMetadata
+    id: shop
+    connection: shop
+    tables:
+      - object: orders
+        captured: { at: 2026-11-12T09:30:00Z, from: catalog, file: orders.csv }
+        columns:
+          - { name: id, logicalType: integer, required: true, primaryKeyPosition: 1 }
+  sources/shop2.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: SourceMetadata
+    id: shop_again
+    connection: shop
+    tables:
+      - object: orders
+        captured: { at: 2026-11-12T10:00:00Z, from: catalog, file: orders.csv }
+        columns:
+          - { name: id, logicalType: integer, required: true, primaryKeyPosition: 1 }
+expect:
+  diagnostics:
+    - code: SOURCE_METADATA_DUPLICATE
+      severity: error
+      file: sources/shop2.yaml
+      line: 4
+      message: 'The source metadata for "shop" is already in "shop" (sources/shop.yaml); a connection has one document.'
