@@ -15,15 +15,16 @@ A project is loaded with the `@ingestron/config` syntax (its
 and these kinds, all `apiVersion: ingestron.io/v1` except contracts and data
 products:
 
-| Kind           | Schema                                         | Links                                                       |
-| -------------- | ---------------------------------------------- | ----------------------------------------------------------- |
-| `Standard`     | `standard.schema.yaml`                         |                                                             |
-| `Platform`     | `platform.schema.yaml`                         |                                                             |
-| `Connection`   | `connection.schema.yaml`                       |                                                             |
-| `Flow`         | `flow.schema.yaml`                             | `/source` → Connection; `/tables/*/contract` → DataContract |
-| `Transform`    | `transform.schema.yaml`                        | `/contract` → DataContract                                  |
-| `DataContract` | ODCS v3.1.0 (`apiVersion: v3.1.0`)             |                                                             |
-| `DataProduct`  | ODPS v1.1.0 (`apiVersion: v1.0.0` or `v1.1.0`) | `/outputPorts/*/contractId` → DataContract                  |
+| Kind             | Schema                                         | Links                                                       |
+| ---------------- | ---------------------------------------------- | ----------------------------------------------------------- |
+| `Standard`       | `standard.schema.yaml`                         |                                                             |
+| `Platform`       | `platform.schema.yaml`                         |                                                             |
+| `Connection`     | `connection.schema.yaml`                       |                                                             |
+| `Flow`           | `flow.schema.yaml`                             | `/source` → Connection; `/tables/*/contract` → DataContract |
+| `Transform`      | `transform.schema.yaml`                        | `/contract` → DataContract                                  |
+| `SourceMetadata` | `source-metadata.schema.yaml`                  | `/connection` → Connection                                  |
+| `DataContract`   | ODCS v3.1.0 (`apiVersion: v3.1.0`)             |                                                             |
+| `DataProduct`    | ODPS v1.1.0 (`apiVersion: v1.0.0` or `v1.1.0`) | `/outputPorts/*/contractId` → DataContract                  |
 
 A project MUST have exactly one `Standard` (`NO_STANDARD`, `MANY_STANDARDS`)
 and at most one `Platform` (`MANY_PLATFORMS`). The standard's `packs` list
@@ -237,7 +238,8 @@ from another with the same code.
   (section 6), and `CAPABILITY_OFF` for a contract field that only one table
   uses (more than one table, and it has none, as for any warning found for
   several tables).
-- `feature` is set on `NOT_APPLIED` and `CAPABILITY_OFF` only. For
+- `feature` is set on `NOT_APPLIED`, `CAPABILITY_OFF` and the codes of section
+  12.6 only. For
   `CAPABILITY_OFF` it is the capability's id (`tags`, `schemas`, `comments`,
   `checks`, `grants`, `masks`, `filters`). For `NOT_APPLIED` it is one of:
   - an intent value, as coverage keys it (section 11.5): `<path>=<value>`,
@@ -260,6 +262,8 @@ from another with the same code.
     and `filters` for a row filter;
   - a contract field path, such as `schema.*.properties.*.encryptedName`
     (section 6).
+
+  For the codes of section 12.6 it is a column's name, or `(primary key)`.
 
 Errors, and warnings from loading (the configuration specification), carry no
 subject. Two warnings that differ only in their `table`, such as one at a
@@ -767,7 +771,9 @@ this way, is not compared.
 The quality `required` and `default` actions below are the standard's, over
 which those of the table's layer apply (section 11.2).
 
-- A table's contract is the ODCS document it links to. The contract's
+- A table's contract is the ODCS document it links to, when it names one; a
+  flow table without one takes its columns from source metadata (section
+  12.4). The contract's
   `schema` entry whose `name` equals the table's name is used, or the only
   entry when there is one (`CONTRACT_TABLE` otherwise).
 - Each property becomes a column: its type is `physicalType`, else the type
@@ -986,6 +992,16 @@ column's type.` A value fits `string` when it is text; `integer` when it is a
 When any of these is reported, the table has no `cleanse` and its
 operations are not judged below.
 
+**A table with no contract.** A table whose columns come from source metadata
+(section 12.4) is judged against those columns, and its messages name the
+metadata where they would name the contract, since the id of its model
+contract is not one a person wrote. In each message above, `of contract "<id>"`
+becomes `of "<object>" in the source metadata` and `in contract "<id>"` becomes
+`in the source metadata of "<object>"`, with the `object` of its metadata
+entry, and in the hint of `CLEANSE_COLUMN`, `Use a column the contract lists:`
+becomes `Use a column the source metadata lists:`. So the message of
+`CLEANSE_COLUMN` is `"<column>" is not a column of "<object>" in the source metadata.`
+
 **Not applied.** The step that keeps the table (section 11.7) judges each
 operation for the intent path `cleanse.trim`, `cleanse.empty`, `cleanse.map`,
 `cleanse.case`, `cleanse.default` and, for a time zone conversion (section 6.3),
@@ -1019,10 +1035,16 @@ It happens after cleansing and before the row checks. It needs the layer's
 `does` to list `deduplicate`, or no `does` (`LAYER_RESPONSIBILITY`, with
 `deduplicating` as the thing written), and:
 
-- `DEDUPLICATE_KEY`, an error at `cleanse.deduplicate`, when the contract has
-  no primary key: `"<table>" has no primary key, so deduplicate cannot tell
-which rows belong together.`, with the hint `Mark the key columns
-`primaryKey: true` in contract "<id>".`
+- `DEDUPLICATE_KEY`, an error at `cleanse.deduplicate`, when the table has
+  no primary key, from its contract or, when it names none, from its source
+  metadata (section 12.4): `"<table>" has no primary key, so deduplicate cannot
+tell which rows belong together.` The hint depends on where the table's
+  columns come from. For a table with a contract it is
+  ``Mark the key columns `primaryKey: true` in contract "<id>".``
+  For a table with no contract, so that its columns come from source metadata,
+  it names the metadata alone, since its contract's `id` is not one a person
+  wrote (section 12.4): ``Give the key columns a `primaryKeyPosition` in the source metadata of "<object>", or name a contract that marks them.``,
+  with the `object` of its metadata entry.
 - `DEDUPLICATE_MODE`, when the table is stored by a step (a table that ends at
   the landed files, or that an ingest step writes, has none). It is judged first
   by how the store step keeps rows, then by the table's resolved `history`
@@ -1349,7 +1371,7 @@ of the Platform, the mapping under the key that is the pack's id. The
 Platform's other keys are reserved: `apiVersion`, `kind`, `id`,
 `description`, `workspace`, `mode`, `run_as`, `compute`, `settings`, `naming`,
 `tags`, `permissions`, `schedule`, `notifications`, `manage`, `grants`,
-`alerts`, `accept` and `principals`. Any other key that is a lower-case name
+`alerts`, `accept`, `principals` and `sources`. Any other key that is a lower-case name
 (letters, digits and hyphens, starting with a letter) is a section, and its
 value MUST be a mapping.
 
@@ -1692,8 +1714,8 @@ optional `environmentsTogether: true` (section 7), an optional
 `replaceMe: error` (section 1), and
 `expect`: `tables` (partial objects, in order,
 with `fullName` written as `catalog.schema.table`, and `null` at any key for
-a value the table does not have, such as `serve: null` for a step or
-`settings: { mode: null }` for a setting), `products` (partial objects,
+a value the table does not have, such as `serve: null` for a step,
+`settings: { mode: null }` for a setting or `type: null` in a listed column), `products` (partial objects,
 in order), `standard` (a partial object), `platform`, `names`, `deployValues`, `previewFeatures` and
 `operations` (the model's, exactly) and `qualityResults`, or
 `diagnostics` (matched in order on the fields given; `fixes` lists the fix
@@ -1812,6 +1834,15 @@ described once.
 
 A contract field's entry also carries Ingestron's own note on that field,
 which the implementation keeps beside the ODCS schema.
+
+The entries that section 12 adds are these, each from its schema:
+`SourceMetadata`'s `connection`, `environment`, `names` (`parts` and
+`caseSensitive`) and `tables` (with `object`, `captured` and its `at`, `from`,
+`recipe` and `file`, and `columns` with `name`, `sourceType`, `logicalType`,
+`logicalTypeOptions`, `required`, `primaryKeyPosition`, `properties` and
+`items`); a Connection's `metadata` (`from` and `with`); and the `sources`
+mapping of the Standard and of the Platform, with `breaking`. A flow table's
+`contract` is an entry that is not `required` (section 12.4).
 
 **Type words.** When the schema, its `$ref` followed, has an `anyOf` or a
 `oneOf`, the words are those of each of its items, each taken
@@ -2496,6 +2527,351 @@ the place `quarantine` was written, `Quarantine isn't applied on <pack>:
 any other value. On a table that ends at the landed files, it is `NOT_APPLIED`
 on the ingest step's pack with the reason and hint that section 6 gives for a
 check there, whatever any pack says.
+
+## 12. Source metadata
+
+Source metadata says what a source holds: its tables, their columns, types
+and keys. A flow table may take its columns and key from it instead of from a
+contract, and a table that has both is compared with it, so that a change at
+the source is found before the data stops landing. Metadata is an
+observation, never a promise: it gives a table names and types, and no checks,
+descriptions, classifications, roles or quality.
+
+Section 12.1 defines the document, section 12.2 how a connection says where
+its metadata comes from, section 12.3 how a flow table finds its entry,
+section 12.4 what a table without a contract takes from it, section 12.5 when
+a table needs a contract nonetheless and section 12.6 how a contract is
+compared with it. Resolving needs no network, no source and no credentials:
+the metadata is a file of the project.
+
+### 12.1 The document
+
+A `SourceMetadata` document (`apiVersion: ingestron.io/v1`) describes the
+tables of one connection. Its schema is `source-metadata.schema.yaml`.
+
+```yaml
+apiVersion: ingestron.io/v1
+kind: SourceMetadata
+id: erp
+connection: erp
+environment: dev
+names: { parts: 3, caseSensitive: false }
+tables:
+  - object: ERP.dbo.Customers
+    captured: { at: 2026-11-12T09:30:00Z, from: catalog, recipe: sqlserver, file: erp.columns.csv }
+    columns:
+      - {
+          name: CustomerID,
+          sourceType: int,
+          logicalType: integer,
+          required: true,
+          primaryKeyPosition: 1,
+        }
+      - { name: Name, sourceType: nvarchar(200), logicalType: string, required: false }
+      - {
+          name: CreditLimit,
+          sourceType: "decimal(18,2)",
+          logicalType: number,
+          logicalTypeOptions: { precision: 18, scale: 2 },
+          required: false,
+        }
+```
+
+- `id` (required, as for every document, section 1) names the document, in the same form as a Connection's.
+- `connection` (required) is the id of a Connection of the project. A
+  document whose `connection` is not one is `BROKEN_LINK`, an error at the
+  `connection`, as for any link (section 1).
+- `environment` (optional) records which environment's source was read.
+- `names` (optional) says how the source names its objects: `parts`, from 1
+  to 4, is how many parts, separated by `.`, each object has, and
+  `caseSensitive` whether names differ by case. When `names` is given it MUST
+  give both. Section 12.3 uses it. Without `names`, objects are compared as
+  files are.
+- `tables` lists the tables. Each has:
+  - `object` (required): the table's name at the source, in `names.parts`
+    parts when `names` is given. It MAY hold `/`, as a file path does.
+  - `captured` (required): where the table came from. `at` is the time it
+    was captured, `from` the rung of the ladder, one of `catalog` (a
+    recipe's query or API), `document` (a format read without a recipe),
+    `sample` (the rows of a data file), `columns` (a columns file) or
+    `assistant` (a columns file prepared by an assistant); `recipe` names
+    the recipe when there is one, and `file` the file imported. One document
+    MAY hold tables from different rungs, so each records its own.
+  - `columns` (required): the columns, in the source's order. Each has
+    `name`, `sourceType` (optional: the type as the source states it, kept
+    for comparing), `logicalType`, `logicalTypeOptions` (optional),
+    `required` (`true` when the source says the column cannot be null) and
+    `primaryKeyPosition` (optional, 1 or more: the column's place in the
+    table's primary key). Field names and values follow ODCS, so that a
+    contract can be drafted from them. A column whose value is a record or a
+    list has `logicalType: object` or `array`, and its fields as `properties`
+    or `items`, written as ODCS writes them.
+
+A connection MUST have at most one document: a second is
+`SOURCE_METADATA_DUPLICATE`, an error at the second document's `connection`:
+`The source metadata for "<connection>" is already in "<id>" (<file>); a connection has one document.`
+with the `id` and file of the first document. A third and later document is
+reported the same way. The first, in the order the documents are loaded
+(section 1), is used. A project with no document for a connection has no
+metadata for it, and nothing in this section applies to its tables.
+
+### 12.2 A connection's metadata origin
+
+A Connection MAY give `metadata: { from, with? }`, where the metadata comes
+from. `from` names a recipe: how the source's metadata is read. `with` is a
+mapping of the recipe's inputs, such as a schema owner. Resolving checks both
+for their shape only (`from` is text, `with` a mapping); whether the recipe
+exists, and what its inputs are, is checked where recipes are known, by the
+tool that imports the metadata. A Connection without `metadata` has its
+connector's default:
+
+| Connector    | Default                      |
+| ------------ | ---------------------------- |
+| `sqlserver`  | the `sqlserver` recipe       |
+| `salesforce` | the `salesforce` recipe      |
+| `kafka`      | the `schema-registry` recipe |
+| `files`      | a sample                     |
+
+A connector not listed has no default origin: its metadata comes from a
+sample, a columns file or a recipe that the connection names.
+
+`metadata` changes nothing that is built: it says how to fill the document of
+section 12.1, and nothing in resolving reads it.
+
+### 12.3 Matching
+
+A flow table's `object`, resolved for the environment being planned, is
+matched with the `object` of each table of its connection's metadata:
+
+- **With `names`.** The flow's `object` is split on `.` as it is written,
+  before any reference is replaced, and the parts are compared with the
+  metadata's from the right. A part that is exactly one `${…}` reference
+  matches anything, whatever its value and whether or not the reference is
+  set (an `${envvar:…}` that is unset at planning included). Any other part is
+  compared after its references are replaced, a part that mixes text and a
+  reference as well; a part the flow leaves out is not compared and matches
+  anything. When every written part is such a reference (the whole `object`
+  is one reference, such as `${values.table}`, or only references), none is a
+  wildcard: the parts are taken from the resolved text instead, so a variable
+  that holds the whole object matches its value and not every table, and a
+  reference that is unset at planning then matches nothing, and is not
+  `SOURCE_TABLE_GONE` either, since its name is not known (section 12.6). Case is compared
+  when `names.caseSensitive` is `true`, and ignored otherwise. A flow's `object` with more parts than `names.parts` matches
+  nothing, deliberately, so the table then has no entry (`TABLE_NO_COLUMNS`
+  in section 12.4, or `SOURCE_TABLE_GONE` in section 12.6 where catalog tables
+  exist). So `dbo.Customers`, `${values.erp_db}.dbo.Customers` and
+  `ERP.dbo.Customers` all match `ERP.dbo.Customers`, and an environment's
+  database with another name shares the one document.
+- **Without `names`.** The text must be equal, with case.
+
+More than one match is `SOURCE_OBJECT_AMBIGUOUS`, an error at the table's
+`object`: `"<object>" matches more than one table of the source metadata for "<connection>": <objects>.`
+with every matching `object`, in the order of the document, joined with `, `.
+It is reported also where the `object` holds a reference that is unset at
+planning, which makes that part match anything.
+No match is not an error here: sections 12.4 and 12.6 say what it means.
+
+### 12.4 Columns from metadata
+
+A flow table with no `contract` and a metadata entry takes its columns from
+the entry. It resolves as if it had a contract holding only the entry's
+columns, their logical types and the primary key:
+
+- Each column has the entry's `name`, never a `physicalName`, and is always
+  nullable, whatever `required` says. Its type is the type for its
+  `logicalType`, as for a contract property with no `physicalType`, or none
+  when the packs' `types` give none for it. `sourceType` never sets it. No
+  expectation, check or quarantine is made from the metadata, including from
+  `logicalTypeOptions`.
+- The primary key is the columns that have a `primaryKeyPosition`, ordered by
+  it. A table that needs a key (`history: latest`, a `sequence`, `deduplicate`)
+  takes it from its contract when it has one, else from this; with neither,
+  the existing key errors apply, and their messages name both the contract
+  and the source metadata.
+- A column with `logicalType: object` or `array` is one column, with that
+  logical type and its type if `types` give one. Its nested fields are kept in
+  the metadata, for comparing and for drafting, and are not columns of the
+  table.
+- The table has no descriptions, tags, classifications, roles or service
+  levels. Its model contract has `id` `<connection>:<object>` and
+  `origin: metadata`, so that a tool can tell it from a contract of the
+  project. Where a method takes the contract's columns, such as schema hints for
+  files or the columns a source's connector includes, it takes these. A message
+  of resolving that would cite `contract "<id>"` for such a table names the
+  source metadata and the entry's `object` instead (sections 6.1 and 6.2).
+
+A table with a `contract` uses it as section 6 says, and is compared with its
+metadata entry (section 12.6).
+
+A flow table with neither a contract nor a metadata entry has no columns:
+`TABLE_NO_COLUMNS`, an error at the table's key. The message is
+`"<table>" has no contract and no source metadata, so it has no columns.`
+and the hint is
+`Import the source's metadata (ingestron source request says how), or name a contract.`
+A table that needs a contract (section 12.5) has `CONTRACT_NEEDED` instead.
+
+### 12.5 When a table needs a contract
+
+A flow table needs a contract when any of these is true:
+
+- its layer's `does` lists `cleanse`, `check` or `quarantine`;
+- it is an output of a data product (a port names a contract, which must be
+  the table's own);
+- the standard governs it: access is resolved for it (it does not end at a
+  layer with `access: { contract: false }`) and the platform manages grants or
+  masks for its pack, since without a contract nothing would say which columns
+  to mask and the table would be published unmasked;
+- the flow table has its own `expectations`.
+
+Otherwise the contract is optional.
+
+Here, access is resolved for the table as section 8.2 says and its layer does
+not give `access: { contract: false }`; its pack is the pack that access is
+resolved on for the table (sections 7.1 and 8.2): the pack that keeps it, or,
+for a table that ends at the landed files and is served by a serve step, the
+serve step's pack. The platform manages grants or masks for it when
+`<pack>.manage.grants` or `<pack>.manage.masks` is on (section 7.1, as for
+every capability of a pack).
+
+The second trigger needs no rule of its own. A data product's port finds its
+table through the port's `contractId` (section 8), so a table without a
+contract is never a port's output, and a port naming a contract that no table
+uses keeps `PRODUCT_CONTRACT_UNUSED`.
+
+A table that needs a contract and names none is `CONTRACT_NEEDED`, an error at
+the table's key, whether or not the metadata has the table. The message is
+`"<table>" needs a contract: <reason>.`, where `<reason>` is the first that
+holds of:
+
+- `its layer <layer> does <duty>`, with the first of `cleanse`, `check` and
+  `quarantine`, in that order, that the layer's `does` lists;
+- `access is managed for it on <pack>`;
+- `it has its own expectations`.
+
+The rule is evaluated with the rest of resolution, for the environment being
+planned: the same flow table may need a contract in one environment, whose
+platform manages access, and not in another. `CONTRACT_NEEDED` replaces
+`TABLE_NO_COLUMNS` and the columns of section 12.4. The hint is
+`Name a contract for the table with `contract`.`, whichever the reason.
+
+### 12.6 Comparing
+
+During resolution, for each flow table with a `contract` whose connection has
+a metadata entry for it (section 12.3), the contract's columns are compared
+with the entry's; a flow table with a `contract` and no entry is compared
+only as `SOURCE_TABLE_GONE` says, below. A contract's column is matched with a metadata column by
+its `physicalName`, else its `name`, compared with case when
+`names.caseSensitive` is `true` or the document has no `names`, and without it
+otherwise. A flow table with no contract is
+not compared: its columns are the metadata's.
+
+| Difference                                                           | Code                  | Kind       |
+| -------------------------------------------------------------------- | --------------------- | ---------- |
+| A column in the metadata, not in the contract                        | `SOURCE_COLUMN_NEW`   | compatible |
+| A column in the contract, not in the metadata                        | `SOURCE_COLUMN_GONE`  | breaking   |
+| A type of the metadata that does not fit the contract's              | `SOURCE_TYPE_CHANGED` | breaking   |
+| A type of the metadata that fits the contract's, but differs from it | `SOURCE_TYPE_FITS`    | compatible |
+| A column the contract requires that the metadata says may be null    | `SOURCE_NULLABLE`     | breaking   |
+| A different primary key                                              | `SOURCE_KEY_CHANGED`  | breaking   |
+| A flow table whose `object` a catalog import does not list           | `SOURCE_TABLE_GONE`   | breaking   |
+
+**Types.** The metadata's `logicalType` is compared with the contract
+property's `logicalType`; a property that gives none is not compared for type.
+A source type _fits_ the contract's when each of its values is also a value
+of the contract's: a type fits itself; `integer` fits `number`; `number`
+fits `string`; `date` fits `timestamp`; and any type fits `string`, which
+makes `integer` fit `string` as well. `object` and `array` fit only
+themselves. For `number`, with the
+metadata's `precision` and `scale` as `p_src` and `s_src` and the contract's as
+`p_con` and `s_con`, the source type fits only when `s_src ≤ s_con` and
+`p_src − s_src ≤ p_con − s_con`; for `string`, with `maxLength`, when
+`max_src ≤ max_con`. Each option is compared only when both sides give it. A
+side that gives a `precision` and no `scale` has a `scale` of 0, and the rule
+on `p − s` needs both sides' precisions. So a side that gives no `precision`
+is never the reason a type does not fit. A
+type that fits but is not the same, in its `logicalType` or in those options,
+is `SOURCE_TYPE_FITS`, information; a type that does not fit is
+`SOURCE_TYPE_CHANGED`. The message of `SOURCE_TYPE_CHANGED` and of
+`SOURCE_TYPE_FITS` names the column, the metadata's type and the contract's.
+
+**Keys.** The primary keys are different when the contract's `primaryKey`
+columns, ordered by `primaryKeyPosition`, and the entry's, ordered the same
+way, are not the same list of names. A key is compared only when both sides give
+one: a contract with no `primaryKey`, or an entry that gives no key, is not
+compared for its key, since a side that does not say has not changed it.
+
+**What is compared depends on the rung.** `SOURCE_TABLE_GONE` applies to a
+flow table with a contract and no metadata entry, and only when the
+connection's document has at least one table whose `captured.from` is
+`catalog`, since only a catalog describes the whole source. A table whose
+`captured.from` is `sample` or `assistant` is compared by its column names
+only: `SOURCE_COLUMN_NEW` and `SOURCE_COLUMN_GONE`, and nothing about types,
+`required` or the key. A table from `document` or `columns` is compared in
+full.
+
+**Severity.** A breaking difference fails by default. The standard sets
+`sources: { breaking: fail }` or `warn`; the Platform MAY set the same key
+and wins, as it does for `naming`, so a team's choice lives in its own file
+and survives a kit upgrade. When neither sets it, it is `fail`. With `fail`,
+each breaking code is an error, and with `warn` a warning, which an entry of
+`accept` can accept (section "Accepted warnings") by code, `table` and
+`feature`. An error is never accepted. A compatible difference is information
+either way. So the code help lists each breaking code with `severities`
+`error` and `warning`, and each compatible one with `information`.
+
+**Where, and about what.** Each is reported at the flow table's `contract`.
+Its subject (section 1.2), carried when the code is reported as a warning or as
+information and not when it is an error (an error carries none, and is never
+accepted), is `{ table, feature: <column> }` for a column code (the contract's
+name for the column, and the metadata's for `SOURCE_COLUMN_NEW`),
+`{ table, feature: "(primary key)" }` for `SOURCE_KEY_CHANGED`, and `{ table }`
+for `SOURCE_TABLE_GONE`, so that a team accepts one column of one table and not
+another. The feature is `(primary key)` so that a column named `key` is not
+mistaken for the key.
+
+**Not known.** A flow table whose `object` is written as one reference that is
+unset at planning, such as `${envvar:TABLE}`, is not compared and is never
+`SOURCE_TABLE_GONE`: its name is not known, so that it is gone would be false.
+Unset is reported as for any reference (section 1).
+
+**Messages.** Each code's message and hint are, with `<column>` the column as
+the subject says it, `<contract>` the contract's id, `<object>` the `object` of
+the metadata entry and `<connection>` the flow's `source`:
+
+- `SOURCE_COLUMN_GONE`:
+  `Column "<column>" of contract "<contract>" is not in the source metadata for "<object>".`
+  The hint is
+  `Remove the column from the contract, or import the source's metadata again if the column is still there.`
+- `SOURCE_COLUMN_NEW`:
+  `The source metadata for "<object>" has a column "<column>" that contract "<contract>" does not have.`
+  The hint is `Add the column to the contract to use it, or leave it out.`
+- `SOURCE_TYPE_CHANGED`:
+  `Column "<column>" is <metadata type> in the source metadata for "<object>", but <contract type> in contract "<contract>".`
+  The hint is
+  `Change the column's type in the contract to one the source's type fits, or ask the source's owner about the change.`
+- `SOURCE_TYPE_FITS`:
+  `Column "<column>" is <metadata type> in the source metadata for "<object>", which fits <contract type> in contract "<contract>".`
+  The hint is
+  `Nothing breaks. Change the contract to the source's type if you want it exact.`
+- `SOURCE_NULLABLE`:
+  `Column "<column>" is required in contract "<contract>", but the source metadata for "<object>" says it can be null.`
+  The hint is
+  `Make the column not required in the contract, or ask the source's owner whether it can be null.`
+- `SOURCE_KEY_CHANGED`:
+  `The primary key of contract "<contract>" is (<contract key>), but the source metadata for "<object>" has (<metadata key>).`
+  The hint is
+  `Change the contract's primary key to the source's, or ask the source's owner about the change.`
+- `SOURCE_TABLE_GONE`:
+  `The source metadata for "<connection>" was read from a catalog and does not list "<flow object>".`
+  The hint is
+  `Check the object's name, or import the source's metadata again if the table was added since.`
+
+A type is written `number(<precision>,<scale>)` for a number that gives a
+precision, with a missing scale as 0, `string(<maxLength>)` for a string that
+gives a `maxLength`, and its `logicalType` otherwise. A key is its columns
+joined with `, `, ordered as above.
+`<flow object>` is the flow table's `object`, resolved. Where a message names a
+column, `<column>` is the one the subject has.
 
 ## Accepted warnings
 

@@ -32,8 +32,8 @@ export const cleanseCodeHelp: Record<
   },
   DEDUPLICATE_KEY: {
     meaning:
-      "A table deduplicates, but its contract has no primary key to say which rows belong together.",
-    fix: "Mark the key columns with primaryKey: true in the contract.",
+      "A table deduplicates, but its columns have no primary key to say which rows belong together: its contract has none or, when it names no contract, its source metadata has none.",
+    fix: "Mark the key columns with primaryKey: true in the contract or, for a table with no contract, give them a primaryKeyPosition in its source metadata.",
     severities: ["error"],
     origin: "resolve",
   },

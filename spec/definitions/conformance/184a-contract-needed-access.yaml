@@ -1,0 +1,42 @@
+description: "A flow table with no contract needs one when access is managed for it: the platform turns masks on for the pack that keeps it, and its layer does not give access contract false. The reason names the pack. The source metadata has no entry for the table either, and CONTRACT_NEEDED is the only error: it replaces TABLE_NO_COLUMNS."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, databricks@1]
+    layers:
+      - { name: bronze, does: raw }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    databricks:
+      manage: { masks: true, tags: true }
+  erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: erp
+    connector: files
+    connectivity: public
+    settings: { path: /data/erp }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: erp
+    store: { uses: uc-table }
+    tables:
+      orders: { object: ERP.dbo.Orders }
+expect:
+  diagnostics:
+    - code: CONTRACT_NEEDED
+      severity: error
+      file: sales.yaml
+      line: 7
+      message: '"orders" needs a contract: access is managed for it on databricks.'

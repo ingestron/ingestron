@@ -33,7 +33,14 @@ export interface Column {
  * @public
  */
 export interface Contract {
+  /** The contract's id; `<connection>:<object>` for one made from source metadata. */
   id: string;
+  /**
+   * `metadata` when the table has no contract and its columns and key come from source
+   * metadata (specification section 12.4): its columns are nullable, and it has no checks,
+   * description, tags, roles or service levels. Absent for a contract of the project.
+   */
+  origin?: "metadata";
   description?: string;
   columns: Column[];
   /** Columns marked `primaryKey`, in `primaryKeyPosition` order. */

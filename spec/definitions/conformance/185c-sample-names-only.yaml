@@ -1,0 +1,62 @@
+description: "A table captured from a sample is compared by column names only: a type change, a nullable column and a different key give nothing, and a new column is still SOURCE_COLUMN_NEW, as information."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml", "sources/*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+  erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: erp
+    connector: files
+    connectivity: public
+    settings: { path: /data/erp }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: erp
+    tables:
+      orders:
+        object: ERP.dbo.Orders
+        contract: orders
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+          - { name: total, logicalType: integer, required: true }
+  sources/erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: SourceMetadata
+    id: erp
+    connection: erp
+    names: { parts: 3, caseSensitive: false }
+    tables:
+      - object: ERP.dbo.Orders
+        captured: { at: 2026-11-12T09:30:00Z, from: sample, file: erp.csv }
+        columns:
+          - { name: id, logicalType: string, required: false }
+          - { name: total, logicalType: number, required: false, primaryKeyPosition: 1 }
+          - { name: region, logicalType: string, required: false }
+expect:
+  diagnostics:
+    - code: SOURCE_COLUMN_NEW
+      severity: information
+      file: sales.yaml
+      line: 8
+      message: 'The source metadata for "ERP.dbo.Orders" has a column "region" that contract "orders" does not have.'
+      hint: "Add the column to the contract to use it, or leave it out."
+      subject: { table: orders, feature: region }

@@ -58,14 +58,14 @@ properties:
     additionalProperties:
       type: object
       additionalProperties: false
-      required: [object, contract]
+      required: [object]
       properties:
         object:
           { type: string, description: The table or file path at the source., examples: [orders] }
         contract:
           {
             type: string,
-            description: Id of the DataContract (ODCS) for this table.,
+            description: "Id of the DataContract (ODCS) for this table. Optional when the table's columns come from source metadata.",
             examples: [shop.orders],
           }
         expectations:

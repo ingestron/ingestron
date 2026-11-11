@@ -297,6 +297,17 @@ properties:
       $ref: "#/$defs/rules",
       description: "Where tables are made available after their last step: method settings, rules, and allowed and fixed settings. Nothing is served unless something chooses.",
     }
+  sources:
+    type: object
+    additionalProperties: false
+    description: "How source metadata is compared with contracts: whether a breaking difference fails or warns."
+    properties:
+      breaking:
+        enum: [fail, warn]
+        enumDescriptions:
+          - A breaking difference is an error.
+          - A breaking difference is a warning, which an `accept` entry can accept.
+        description: "What a breaking difference between a contract and its source's metadata is. Default: fail."
   governance:
     type: object
     additionalProperties: false

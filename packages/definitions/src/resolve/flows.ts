@@ -3,6 +3,7 @@ import type { DefinitionDocument } from "@ingestron/config";
 import { allowsWritten, endsAtFiles, NO_STORE, type Facts, type Named } from "../choose/index.js";
 import { aboutOne, type Context } from "../context/index.js";
 import { flowContract } from "./flow-contract.js";
+import { checkSourceMetadata, matchTable, type TableMatch } from "../sources/index.js";
 import { kinds, type FlowDoc } from "../documents/index.js";
 import type { ResolvedTable } from "../pack/index.js";
 import type { SettingsLayer } from "./settings.js";
@@ -25,9 +26,13 @@ import {
 
 type Flow = DefinitionDocument<FlowDoc>;
 
-/** Every flow table in path order; tables that cannot be resolved are reported and left out. */
+/**
+ * Every flow table in path order; tables that cannot be resolved are reported and left out.
+ * Each table's entry in its connection's source metadata is looked for as well (section 12.3).
+ */
 export function flowTables(context: Context, namer: TableNamer): ResolvedTable[] {
   const seen = new Set<string>();
+  checkSourceMetadata(context);
   return context.project.all(kinds.flow).flatMap((flow) =>
     Object.keys(flow.value.tables).flatMap((name) => {
       if (seen.has(name)) {
@@ -35,7 +40,8 @@ export function flowTables(context: Context, namer: TableNamer): ResolvedTable[]
         return [];
       }
       seen.add(name);
-      const table = flowTable(aboutOne(context, name), flow, name, namer);
+      const match = matchTable(aboutOne(context, name), flow, name, flow.value.source);
+      const table = flowTable(aboutOne(context, name), flow, name, namer, match);
       return table ? [table] : [];
     }),
   );
@@ -60,6 +66,7 @@ function flowTable(
   flow: Flow,
   name: string,
   namer: TableNamer,
+  match: TableMatch | undefined,
 ): ResolvedTable | undefined {
   const doc = flow.value.tables[name];
   const layer = namer.layerOf(flow.value.layer, 0, { document: flow, pointer: "/layer" });
@@ -73,13 +80,9 @@ function flowTable(
   const steps = stepsOf(context, flow, name, facts);
   if (steps === false) return undefined;
   const { places, ...intent } = tableIntent(context, declared, steps);
-  const contract = flowContract(context, flow, name, steps);
-  const fullName = renderTableName(context, namer, {
-    layer,
-    table: name,
-    flow: flow.value.id,
-    source: flow.value.source,
-  });
+  const contract = flowContract(context, flow, name, steps, match, layer);
+  const { id, source } = flow.value;
+  const fullName = renderTableName(context, namer, { layer, table: name, flow: id, source });
   if (!steps || !contract || !fullName) return undefined;
   const table: ResolvedTable = {
     name,

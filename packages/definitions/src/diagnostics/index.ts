@@ -2,6 +2,7 @@
 export { codeHelp } from "./codes.js";
 export type { CodeHelp } from "./code-help.js";
 export type { NotApplied } from "./not-applied.js";
+export type { SourceCode } from "./source-codes.js";
 export {
   aboutTable,
   createReporter,

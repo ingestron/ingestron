@@ -1,0 +1,52 @@
+description: "A table in a layer that gives access contract false, with the platform managing masks for its pack and nothing else that needs a contract, takes its columns from the source metadata and has no CONTRACT_NEEDED."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml", "sources/*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, databricks@1]
+    layers:
+      - { name: bronze, does: raw, access: { contract: false } }
+  platform.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Platform
+    id: lake
+    databricks:
+      manage: { masks: true, tags: true }
+  erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: erp
+    connector: files
+    connectivity: public
+    settings: { path: /data/erp }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: erp
+    store: { uses: uc-table }
+    tables:
+      orders: { object: ERP.dbo.Orders }
+  sources/erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: SourceMetadata
+    id: erp
+    connection: erp
+    names: { parts: 3, caseSensitive: false }
+    tables:
+      - object: ERP.dbo.Orders
+        captured: { at: 2026-11-12T09:30:00Z, from: catalog, recipe: sqlserver, file: erp.csv }
+        columns:
+          - { name: id, sourceType: int, logicalType: integer, required: true, primaryKeyPosition: 1 }
+expect:
+  diagnostics: []
+  tables:
+    - name: orders
+      contract:
+        origin: metadata

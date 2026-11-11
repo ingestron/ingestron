@@ -4,7 +4,8 @@ import type { Fix } from "@ingestron/config";
 import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
 import { intentUseOf } from "../intent/index.js";
-import type { ResolvedTable } from "../pack/index.js";
+import type { Contract, ResolvedTable } from "../pack/index.js";
+import { metadataObject } from "../sources/index.js";
 import { placeOf, reportColumn, type OwnCleanse } from "./cleanse-checks.js";
 
 /** What checking deduplicate found: whether it is fine to resolve, and whether to judge it. */
@@ -43,7 +44,7 @@ export function checkDeduplicate(
       "DEDUPLICATE_KEY",
       `"${table.name}" has no primary key, so deduplicate cannot tell which rows belong together.`,
       at,
-      `Mark the key columns \`primaryKey: true\` in contract "${table.contract.id}".`,
+      keyHint(table.contract),
     );
     return { fine: false, judge: false };
   }
@@ -100,4 +101,11 @@ function checkMode(
     { feature: "deduplicate" },
   );
   return "warning";
+}
+
+/** What to do about a table with no primary key, naming where its key would be written. */
+function keyHint(contract: Contract): string {
+  if (contract.origin === "metadata")
+    return `Give the key columns a \`primaryKeyPosition\` in the source metadata of "${metadataObject(contract)}", or name a contract that marks them.`;
+  return `Mark the key columns \`primaryKey: true\` in contract "${contract.id}".`;
 }

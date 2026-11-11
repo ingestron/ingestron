@@ -76,6 +76,8 @@ export {
   packageSchema,
   type FilterMatch,
   type GovernanceDoc,
+  type SourceColumnDoc,
+  type SourceTableDoc,
 } from "./documents/index.js";
 
 // Intent: the words a standard, flow or transform uses for how data is loaded and kept.
@@ -132,7 +134,16 @@ export {
   type DiagnosticSubject,
   type LoadingStage,
   type NotApplied,
+  type SourceCode,
 } from "./diagnostics/index.js";
+
+// Comparing a table's columns with a source's metadata (specification section 12.6).
+export {
+  compareSourceColumns,
+  type SourceBefore,
+  type SourceColumnBefore,
+  type SourceDifference,
+} from "./sources/index.js";
 
 // Types from @ingestron/config that appear in this package's API, so a pack
 // needs only @ingestron/definitions.

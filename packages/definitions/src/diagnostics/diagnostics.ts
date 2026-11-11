@@ -1,6 +1,6 @@
 // Diagnostics in the same shape as @ingestron/config's, so one formatter
 // prints problems from loading and from resolving alike.
-import type { AnyDiagnostic, DefinitionDocument, Fix } from "@ingestron/config";
+import type { AnyDiagnostic, DefinitionDocument, Fix, Severity } from "@ingestron/config";
 import { keepOnce, subjectOf } from "./keep-once.js";
 import { notAppliedBook, type NotApplied, type NotAppliedDetail } from "./not-applied.js";
 
@@ -83,7 +83,18 @@ export type DefinitionCode =
   | "ARM_PARAMETERS"
   | "SECRET_NAME_DIFFERS"
   | "PACK_NOTICE"
-  | "PACK_LOAD";
+  | "PACK_LOAD"
+  | "SOURCE_METADATA_DUPLICATE"
+  | "SOURCE_OBJECT_AMBIGUOUS"
+  | "TABLE_NO_COLUMNS"
+  | "CONTRACT_NEEDED"
+  | "SOURCE_COLUMN_NEW"
+  | "SOURCE_COLUMN_GONE"
+  | "SOURCE_TYPE_CHANGED"
+  | "SOURCE_TYPE_FITS"
+  | "SOURCE_NULLABLE"
+  | "SOURCE_KEY_CHANGED"
+  | "SOURCE_TABLE_GONE";
 
 /**
  * What a warning is about, so it can be told apart from another with the same code
@@ -130,6 +141,18 @@ export interface Reporter {
     detail?: NotAppliedDetail,
   ): void;
   /**
+   * Advice that needs nothing done, such as a difference of a source that does not break the
+   * contract; `subject` says what it is about, as for a warning. It is never accepted.
+   */
+  information(
+    code: DefinitionCode,
+    message: string,
+    at?: Source,
+    hint?: string,
+    fixes?: Fix[],
+    subject?: DiagnosticSubject,
+  ): void;
+  /**
    * Each `NOT_APPLIED` feature reported about the table, before warnings about several tables
    * are merged (specification section 11.7): what the model's `notApplied` holds.
    */
@@ -164,26 +187,22 @@ export function createReporter(
   const unapplied = notAppliedBook();
   let leftOut = false;
   const report = (
-    severity: "error" | "warning",
+    severity: Severity,
     ...[code, message, at, hint, fixes, subject, detail]: Parameters<Reporter["warning"]>
   ) => {
-    if (at && unknown(at, code, severity)) {
+    if (at && unknown(at, code, severity === "error" ? "error" : "warning")) {
       leftOut = true;
       return;
     }
     if (code === "NOT_APPLIED") unapplied.record(subject, detail);
     const diagnostic = diagnosticOf(severity, code, message, at, hint, fixes);
-    keepOnce(
-      seen,
-      diagnostics,
-      diagnostic,
-      severity === "warning" ? subjectOf(subject) : undefined,
-    );
+    keepOnce(seen, diagnostics, diagnostic, severity === "error" ? undefined : subjectOf(subject));
   };
   return {
     diagnostics,
     error: (code, message, at, hint, fixes) => report("error", code, message, at, hint, fixes),
     warning: (...args) => report("warning", ...args),
+    information: (...args) => report("information", ...args),
     notAppliedOf: unapplied.of,
     noteNotApplied: (table, feature, detail) => unapplied.record({ table, feature }, detail),
     failed: () => diagnostics.some((diagnostic) => diagnostic.severity === "error"),
@@ -206,6 +225,8 @@ export function aboutTable(reporter: Reporter, table: string): Reporter {
     error: (...args) => reporter.error(...args),
     warning: (code, message, at, hint, fixes, subject, detail) =>
       reporter.warning(code, message, at, hint, fixes, { table, ...subject }, detail),
+    information: (code, message, at, hint, fixes, subject) =>
+      reporter.information(code, message, at, hint, fixes, { table, ...subject }),
     notAppliedOf: (name) => reporter.notAppliedOf(name),
     noteNotApplied: (...args) => reporter.noteNotApplied(...args),
     failed: () => reporter.failed(),
@@ -215,7 +236,7 @@ export function aboutTable(reporter: Reporter, table: string): Reporter {
 }
 
 function diagnosticOf(
-  severity: "error" | "warning",
+  severity: Severity,
   code: DefinitionCode,
   message: string,
   at?: Source,
