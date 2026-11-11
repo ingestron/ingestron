@@ -992,6 +992,16 @@ column's type.` A value fits `string` when it is text; `integer` when it is a
 When any of these is reported, the table has no `cleanse` and its
 operations are not judged below.
 
+**A table with no contract.** A table whose columns come from source metadata
+(section 12.4) is judged against those columns, and its messages name the
+metadata where they would name the contract, since the id of its model
+contract is not one a person wrote. In each message above, `of contract "<id>"`
+becomes `of "<object>" in the source metadata` and `in contract "<id>"` becomes
+`in the source metadata of "<object>"`, with the `object` of its metadata
+entry, and in the hint of `CLEANSE_COLUMN`, `Use a column the contract lists:`
+becomes `Use a column the source metadata lists:`. So the message of
+`CLEANSE_COLUMN` is `"<column>" is not a column of "<object>" in the source metadata.`
+
 **Not applied.** The step that keeps the table (section 11.7) judges each
 operation for the intent path `cleanse.trim`, `cleanse.empty`, `cleanse.map`,
 `cleanse.case`, `cleanse.default` and, for a time zone conversion (section 6.3),
@@ -1028,9 +1038,12 @@ It happens after cleansing and before the row checks. It needs the layer's
 - `DEDUPLICATE_KEY`, an error at `cleanse.deduplicate`, when the table has
   no primary key, from its contract or, without one, from its source metadata
   (section 12.4): `"<table>" has no primary key, so deduplicate cannot tell
-which rows belong together.`, with the hint `Mark the key columns
-`primaryKey: true`in contract "<id>", or give them a`primaryKeyPosition` in
-the source metadata.`
+which rows belong together.`, with the hint
+  ``Mark the key columns `primaryKey: true` in contract "<id>", or give them a `primaryKeyPosition` in the source metadata.``
+  When the table has no contract, so that its columns come from source
+  metadata, the hint names the metadata alone, since its contract's `id` is
+  not one a person wrote (section 12.4): ``Give the key columns a `primaryKeyPosition` in the source metadata of "<object>", or name a contract that marks them.``,
+  with the `object` of its metadata entry.
 - `DEDUPLICATE_MODE`, when the table is stored by a step (a table that ends at
   the landed files, or that an ingest step writes, has none). It is judged first
   by how the store step keeps rows, then by the table's resolved `history`
@@ -2681,7 +2694,9 @@ columns, their logical types and the primary key:
   levels. Its model contract has `id` `<connection>:<object>` and
   `origin: metadata`, so that a tool can tell it from a contract of the
   project. Where a method takes the contract's columns, such as schema hints for
-  files or the columns a source's connector includes, it takes these.
+  files or the columns a source's connector includes, it takes these. A message
+  of resolving that would cite `contract "<id>"` for such a table names the
+  source metadata and the entry's `object` instead (sections 6.1 and 6.2).
 
 A table with a `contract` uses it as section 6 says, and is compared with its
 metadata entry (section 12.6).

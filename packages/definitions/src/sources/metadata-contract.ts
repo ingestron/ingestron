@@ -48,3 +48,26 @@ function primaryKeyOf(columns: SourceColumnDoc[]): string[] {
     .sort((a, b) => a.primaryKeyPosition! - b.primaryKeyPosition!)
     .map((column) => column.name);
 }
+
+/**
+ * How a message names the place a table's columns are written: the contract, or for a table
+ * whose contract is made from source metadata (`origin: "metadata"`), that metadata and its
+ * entry's object, since the contract's id is not one a person wrote (specification section
+ * 12.4). `of` follows "a column of", `in` follows "is <type>", and `lists` is what lists the
+ * columns.
+ */
+export function columnsPlace(contract: Contract): { of: string; in: string; lists: string } {
+  if (contract.origin !== "metadata")
+    return { of: `contract "${contract.id}"`, in: `contract "${contract.id}"`, lists: "contract" };
+  const object = metadataObject(contract);
+  return {
+    of: `"${object}" in the source metadata`,
+    in: `the source metadata of "${object}"`,
+    lists: "source metadata",
+  };
+}
+
+/** The `object` of the metadata entry a contract with `origin: "metadata"` was made from. */
+export function metadataObject(contract: Contract): string {
+  return contract.id.slice(contract.id.indexOf(":") + 1);
+}

@@ -4,6 +4,7 @@ import type { Context } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
 import type { CleanseDoc, ColumnCleanseDoc } from "../documents/index.js";
 import type { Column, Contract } from "../pack/index.js";
+import { columnsPlace } from "../sources/index.js";
 import { fitsKey, fitsValue, isNotText, isNotTimestamp } from "./cleanse-fit.js";
 import { checkZoneName, type InputZones } from "./timezones.js";
 
@@ -30,11 +31,12 @@ const listed = 10;
 export function reportColumn(context: Context, contract: Contract, name: string, at: Source): void {
   const names = contract.columns.map((column) => column.name);
   const more = names.length > listed ? `, and ${names.length - listed} more` : "";
+  const place = columnsPlace(contract);
   context.reporter.error(
     "CLEANSE_COLUMN",
-    `"${name}" is not a column of contract "${contract.id}".`,
+    `"${name}" is not a column of ${place.of}.`,
     at,
-    `Use a column the contract lists: ${names.slice(0, listed).join(", ")}${more}.`,
+    `Use a column the ${place.lists} lists: ${names.slice(0, listed).join(", ")}${more}.`,
   );
 }
 
@@ -106,7 +108,7 @@ function checkZone(subject: Subject, block: ColumnCleanseDoc): boolean {
   if (!typed) {
     context.reporter.error(
       "CLEANSE_TYPE",
-      `"timezone" works on timestamps, and "${column.name}" is ${column.logicalType} in contract "${contract.id}".`,
+      `"timezone" works on timestamps, and "${column.name}" is ${column.logicalType} in ${columnsPlace(contract).in}.`,
       placeOf(own, "columns", column.name, "timezone"),
       `Remove "timezone" from "${column.name}", or convert it where it is still a timestamp.`,
     );
@@ -125,7 +127,7 @@ function checkText(subject: Subject, block: ColumnCleanseDoc, operation: Operati
   if (writtenOf(block, operation) === undefined || !isNotText(column)) return true;
   context.reporter.error(
     "CLEANSE_TYPE",
-    `"${operation}" works on text, and "${column.name}" is ${column.logicalType} in contract "${contract.id}".`,
+    `"${operation}" works on text, and "${column.name}" is ${column.logicalType} in ${columnsPlace(contract).in}.`,
     placeOf(own, "columns", column.name, operation),
     `Remove "${operation}" from "${column.name}", or cleanse it where it is still text.`,
   );
@@ -161,7 +163,7 @@ function reportValue(
 ): false {
   context.reporter.error(
     "CLEANSE_TYPE",
-    `The ${item.what} ${JSON.stringify(item.value)} doesn't fit "${column.name}", which is ${column.logicalType} in contract "${contract.id}".`,
+    `The ${item.what} ${JSON.stringify(item.value)} doesn't fit "${column.name}", which is ${column.logicalType} in ${columnsPlace(contract).in}.`,
     at,
     "Give a value of the column's type.",
   );

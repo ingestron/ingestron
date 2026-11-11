@@ -1,0 +1,55 @@
+description: "A deduplicate order_by column that the source metadata does not list is CLEANSE_COLUMN for a table with no contract, naming the metadata and its object, not a contract id."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml", "sources/*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    layers:
+      - { name: silver, does: [deduplicate] }
+  erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: erp
+    connector: files
+    connectivity: public
+    settings: { path: /data/erp }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: erp
+    tables:
+      orders:
+        object: ERP.dbo.Orders
+        cleanse:
+          deduplicate: { order_by: [changed_at] }
+  sources/erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: SourceMetadata
+    id: erp
+    connection: erp
+    names: { parts: 3, caseSensitive: false }
+    tables:
+      - object: ERP.dbo.Orders
+        captured: { at: 2026-11-12T09:30:00Z, from: catalog, recipe: sqlserver, file: erp.csv }
+        columns:
+          - { name: id, logicalType: integer, required: true }
+          - { name: updated_at, logicalType: timestamp, required: false }
+expect:
+  diagnostics:
+    - code: CLEANSE_COLUMN
+      severity: error
+      file: sales.yaml
+      line: 9
+      message: '"changed_at" is not a column of "ERP.dbo.Orders" in the source metadata.'
+      hint: "Use a column the source metadata lists: id, updated_at."
+    - code: DEDUPLICATE_KEY
+      severity: error
+      file: sales.yaml
+      line: 9
