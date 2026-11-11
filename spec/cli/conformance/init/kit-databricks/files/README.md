@@ -1,6 +1,6 @@
 # sales
 
-Streaming lakehouse on Databricks. Streaming tables that read each new file once, silver cleansed, checked and kept to the latest row per key, and gold materialised views, retried and alerted on failure.
+Streaming lakehouse on Databricks. Streaming tables that read each new file once, silver cleansed, checked and kept to the latest row per key, and gold materialised views, retried and alerted on failure, with roles granted and sensitive columns masked.
 `ingestron init` wrote this file on 2026-11-10; it is yours, and Ingestron never rewrites it.
 The standard comes from databricks/lakehouse-streaming@2026-11-10; STANDARD.md explains its choices.
 The tables `customers`, `orders` and the contracts `contracts/customers.yaml`, `contracts/daily_sales.yaml`, `contracts/orders.yaml` are examples: rename the tables and change the contracts' columns to your source's.
@@ -20,10 +20,12 @@ Ingestron cannot know these. `plan` warns about each; `ingestron check` fails un
 | --- | --- | --- | --- | --- |
 | `landing` | `project.yaml:14`, `:20` | Where the shop's files land in dev: a volume, such as /Volumes/dev_sales/landing/shop | Catalog Explorer: the volume the files land in; its path is /Volumes/<catalog>/<schema>/<volume>. | dev, prod |
 | `to` | `platform.yaml:12` | The address told when a run fails, such as data-team@example.com | Your team decides it: a shared mailbox or mailing list that the people who look after these pipelines read. | all |
+| `shop-analysts` | `platform.yaml:15` | The group that holds the contracts' role shop-analysts, and so reads the tables, such as marketing-analysts | Your identity administrator: the name of the group, user or service principal on this platform that holds the role. Databricks lists them under Identity and access; on Synapse, it is a database user. | all |
 | `host` | `project.yaml:12`, `:18` | The dev workspace's URL, such as https://adb-<workspace-id>.<n>.azuredatabricks.net | The address bar when you are signed in to the workspace; on Azure, also the workspace's URL field in the Azure portal. | dev, prod |
-| `service_principal_name` | `platform.yaml:18` | Application ID of the service principal the pipelines and jobs run as | Settings, then Identity and access, then Manage next to Service principals: the service principal's application ID. | all |
+| `service_principal_name` | `platform.yaml:21` | Application ID of the service principal the pipelines and jobs run as | Settings, then Identity and access, then Manage next to Service principals: the service principal's application ID. | all |
 | `engineers` | `project.yaml:5` | Group that manages the pipelines and jobs, such as data-engineers | Settings, then Identity and access, then Manage next to Groups: the group's name. | all |
 | `analysts` | `project.yaml:7` | Group that may view the pipelines and jobs, such as data-analysts | Settings, then Identity and access, then Manage next to Groups: the group's name. | all |
+| `functions` | `platform.yaml:34` | The schema, as catalog.schema, that holds the mask functions, such as main.governance | Ask your Unity Catalog administrator for a schema the run_as identity may create functions in; Catalog Explorer lists the schemas. | all |
 
 Write each in place, or set it when creating a project with `ingestron init --set <name>=<value>`.
 A value written once is used in every environment; to give one environment its own, write it in
