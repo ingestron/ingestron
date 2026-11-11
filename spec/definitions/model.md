@@ -1522,7 +1522,7 @@ is written, so one principal may appear more than once.
 `ROLE_ACCESS`: a contract role whose `access` is neither `read` nor `write` is
 an error at the `access`, once for each contract, where the role would be
 granted: on a table whose layer grants the contract's roles and whose keeping
-pack applies grants (below). Anywhere else the value is not used, and it is not
+pack, or serving pack (below), applies grants. Anywhere else the value is not used, and it is not
 reported, so a project that does not grant gains no error:
 `The role "<role>" of contract "<id>" has access "<access>"; it must be read or write.`
 with the hint `Write read, or write for read and write. Leave it out to read.`
@@ -1574,9 +1574,9 @@ with the columns in the contract's order, joined with `, `, and the hint
 **In the model.** `ResolvedTable.access` is `{ grants, exact, masks, filters }`
 when any of `grants`, `masks` and `filters` is not empty. With exact grants, a
 table that has none of them but whose grants are applied by the pack that
-keeps it (judged below, as for a role: the keeping step's entry for
-`access.grants=read` is `used` and the platform turns `grants` on for that
-pack) has `{ grants: [], exact: true, masks: [], filters: [] }`, and its exact
+keeps it, or by the pack that serves it (judged below, as for a role: that
+step's entry for `access.grants=read` is `used` and the platform turns
+`grants` on for that pack) has `{ grants: [], exact: true, masks: [], filters: [] }`, and its exact
 grants are judged as any table's. Otherwise the table has no `access`, as
 before access was resolved; additive grants, the default, give no table an
 `access` it did not have.
@@ -1620,6 +1620,19 @@ naming every table it is about, at no place when the declaring line is not
 known; its subject (section 1.2) has the feature, and
 the `table` only when it names one table. Each table it names has the feature in
 its `notApplied` (section 11.7), with the `column` for a mask.
+
+**A served table.** A table whose serve step's pack is not the keeping
+step's, such as a view in one engine over a table another engine stores, is
+used through that step too. It is judged a second time, by the serve step, on
+the same items, paths and capabilities, the entry found on the serve step's
+method, then its pack. Its warnings name that pack, and are reported and
+grouped as above, so a role or mask that two packs cannot apply gives one
+warning for each pack. What the serve step does not apply is recorded in that
+step's `notApplied` (`ResolvedTable.serve.notApplied`), with the same items as
+a table's (section 11.7), and not in the table's `notApplied`, which is the
+keeping pack's: each pack reads the judgement of its own step. The serve step
+has `notApplied` only when it has an item. A serve step of the keeping pack is
+not judged again.
 
 The errors below are judged only for a pack that keeps a table in the
 environment to which it applies a mask or a filter (its coverage uses it and
@@ -2431,7 +2444,8 @@ column. It is recorded
 as each warning is reported for the table, before warnings about several
 tables lose their `table` (section 1.2), so it says exactly which tables a
 feature is not applied on. The same feature, reason and column is listed once.
-`notApplied` is absent when the table has none. It does not depend on the
+`notApplied` is absent when the table has none. What a serve step of another
+pack does not apply is in that step's `notApplied` (section 8.2). It does not depend on the
 Platform's `accept` list: an accepted warning is still listed. The passport
 reads it to say what is not enforced.
 

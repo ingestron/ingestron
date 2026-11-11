@@ -4,7 +4,7 @@
 import type { Context } from "../context/index.js";
 import { warnOff } from "../context/index.js";
 import type { Source } from "../diagnostics/index.js";
-import type { Capability } from "../pack/index.js";
+import type { Capability, ResolvedTable } from "../pack/index.js";
 
 /** One role, mask or filter of one table that its keeping pack does not apply, or has off. */
 export interface Finding {
@@ -24,6 +24,8 @@ export interface Finding {
   /** For a mask, the column it is not applied to. */
   column?: string;
   table: string;
+  /** True when the table's serve step, of another pack, judged it, not its keeping step. */
+  served?: boolean;
 }
 
 /** Reports the findings, one for each declaring line, code, feature, pack and reason. */
@@ -38,6 +40,7 @@ export function reportFindings(context: Context, findings: Finding[]): void {
       finding.pack,
       finding.reason,
       finding.what,
+      finding.served === true,
     ]);
     groups.set(key, [...(groups.get(key) ?? []), finding]);
   }
@@ -49,16 +52,12 @@ function reportGroup(context: Context, group: Finding[]): void {
   const tables = [...new Set(group.map((finding) => finding.table))];
   const named = tables.length === 1 ? `table "${tables[0]}"` : `tables ${quoted(tables)}`;
   const table = tables.length === 1 ? tables[0] : undefined;
-  if (first.code === "CAPABILITY_OFF") {
-    // Without a known declaring line it is reported without a place, as NOT_APPLIED is.
-    const { document, pointer = "" } = first.at ?? {};
-    const message = `${first.what} in ${named} is not applied`;
-    warnOff(context, first.capability, message, document, pointer, table, first.pack);
-    return;
-  }
+  if (first.code === "CAPABILITY_OFF") return reportOff(context, first, named, table);
   const reason = first.reason ?? "";
-  const detail = { reason, ...(first.column !== undefined && { columns: [first.column] }) };
-  for (const name of tables) context.reporter.noteNotApplied(name, first.feature, detail);
+  // What a serve step does not apply is its own, not the table's (servedNotApplied).
+  const detail = first.served ? undefined : tableDetail(first, reason);
+  if (detail)
+    for (const name of tables) context.reporter.noteNotApplied(name, first.feature, detail);
   context.reporter.warning(
     "NOT_APPLIED",
     `${first.what} in ${named} isn't applied on ${first.pack}: ${reason}`,
@@ -68,6 +67,44 @@ function reportGroup(context: Context, group: Finding[]): void {
     { ...(table !== undefined && { table }), feature: first.feature },
     detail,
   );
+}
+
+/** A CAPABILITY_OFF group; without a known declaring line it is reported without a place. */
+function reportOff(context: Context, first: Finding, named: string, table?: string): void {
+  const { document, pointer = "" } = first.at ?? {};
+  const message = `${first.what} in ${named} is not applied`;
+  warnOff(context, first.capability, message, document, pointer, table, first.pack);
+}
+
+/** What the table's `notApplied` records for the finding: its reason, and a mask's column. */
+function tableDetail(finding: Finding, reason: string) {
+  return { reason, ...(finding.column !== undefined && { columns: [finding.column] }) };
+}
+
+/**
+ * Records in each served table's serve step what that step does not apply (specification
+ * section 8.2): the same items as a table's `notApplied`, each once.
+ */
+export function servedNotApplied(findings: readonly Finding[], tables: ResolvedTable[]): void {
+  for (const finding of findings) {
+    if (!finding.served || finding.code !== "NOT_APPLIED") continue;
+    const serve = tables.find((table) => table.name === finding.table)?.serve;
+    if (!serve) continue;
+    const item = {
+      feature: finding.feature,
+      reason: finding.reason ?? "",
+      ...(finding.column !== undefined && { column: finding.column }),
+    };
+    const list = serve.notApplied ?? [];
+    const known = list.some(
+      (other) =>
+        other.feature === item.feature &&
+        other.reason === item.reason &&
+        other.column === finding.column,
+    );
+    if (!known) list.push(item);
+    serve.notApplied = list;
+  }
 }
 
 function quoted(names: string[]): string {

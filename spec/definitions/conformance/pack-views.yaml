@@ -1,5 +1,5 @@
-# A data-only pack that keeps tables as views over files, for the cases about judging
-# access (section 8.2): it grants read access, and has no write access, masks or row
+# A data-only pack that keeps tables as views over files, and serves tables another pack
+# stores, for the cases about judging access (section 8.2): it grants read access, and has no write access, masks or row
 # filters. Its grants are turned on in its own section of the Platform (section 7.1).
 id: views
 version: 1
@@ -14,6 +14,12 @@ methods:
     action: store
     description: A view over the landed files.
     accepts: [files]
+    produces: table
+    settings: { type: object }
+  file-serve:
+    action: serve
+    description: A view over the files of a table another pack stores.
+    accepts: [table, files]
     produces: table
     settings: { type: object }
 platformSection:

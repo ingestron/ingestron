@@ -1011,6 +1011,7 @@ export interface Step {
     chosenBy: ChosenBy;
     // (undocumented)
     method: string;
+    notApplied?: NotApplied[];
     origins: Record<string, Origin>;
     output?: StepOutput;
     // (undocumented)

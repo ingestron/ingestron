@@ -9,7 +9,7 @@ import { kinds } from "../documents/index.js";
 import { intentUseOf } from "../intent/index.js";
 import type { Capability, ColumnMask, ResolvedTable, RowFilter } from "../pack/index.js";
 import { isGrantable } from "./access.js";
-import { reportFindings, type Finding } from "./access-findings.js";
+import { reportFindings, servedNotApplied, type Finding } from "./access-findings.js";
 import { stepsOf, type JudgingStep } from "./judgements.js";
 import { judgeOf } from "./judging-step.js";
 
@@ -35,10 +35,28 @@ export function judgeAccess(context: Context, tables: ResolvedTable[]): JudgedTa
   const findings: Finding[] = [];
   const judged = tables.flatMap((table) => {
     const keeper = table.endsAtFiles ? undefined : keeperOf(context, table);
-    return keeper ? [judgeTable(context, table, keeper, findings)] : [];
+    if (!keeper) return [];
+    const kept = judgeTable(context, table, keeper, findings);
+    const server = serverOf(context, table, keeper);
+    // The serving pack applies access on its own step; its errors stay the keeping pack's.
+    if (server) judgeTable(context, table, server, findings, true);
+    return [kept];
   });
   reportFindings(context, findings);
+  servedNotApplied(findings, tables);
   return judged;
+}
+
+/** The table's serve step, when its pack is not the keeping step's (specification section 8.2). */
+function serverOf(
+  context: Context,
+  table: ResolvedTable,
+  keeper: JudgingStep,
+): JudgingStep | undefined {
+  const serve = table.serve;
+  if (!serve || serve.pack === keeper.pack) return undefined;
+  const method = context.pack.methods[serve.method];
+  return method && { id: serve.method, pack: serve.pack, method };
 }
 
 function keeperOf(context: Context, table: ResolvedTable): JudgingStep | undefined {
@@ -50,11 +68,12 @@ function judgeTable(
   table: ResolvedTable,
   keeper: JudgingStep,
   findings: Finding[],
+  served = false,
 ): JudgedTable {
   const judge = (path: string, value: string, capability: Capability["id"]) =>
     stateOf(context, keeper, path, value, capability);
   const found = (item: Omit<Finding, "table" | "pack">) =>
-    findings.push({ ...item, table: table.name, pack: keeper.pack });
+    findings.push({ ...item, table: table.name, pack: keeper.pack, ...(served && { served }) });
   const grants = judge("access.grants", "read", "grants");
   if (grants === "applied") reachExact(context, table);
   judgeRoles(context, table, { grants, judge, found });

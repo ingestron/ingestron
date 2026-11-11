@@ -12,7 +12,6 @@ export {
 export { checkFold, splitDeployText, type FoldView } from "./fold.js";
 export type {
   Alert,
-  ChosenBy,
   Column,
   Contract,
   ContractRole,
@@ -20,7 +19,6 @@ export type {
   Expectation,
   FullName,
   Grant,
-  Origin,
   RowRule,
   Permission,
   PreviewFeature,
@@ -29,8 +27,8 @@ export type {
   ResolvedProduct,
   ResolvedTable,
   Schedule,
-  Step,
 } from "./model.js";
+export type { ChosenBy, Origin, Step } from "./step.js";
 export type {
   Action,
   Capability,
