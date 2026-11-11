@@ -1,26 +1,39 @@
 // A flow table's entry in its connection's source metadata (specification section 12.3).
 import type { DefinitionDocument } from "@ingestron/config";
 import type { Context } from "../context/index.js";
-import type { FlowDoc, SourceTableDoc } from "../documents/index.js";
+import type { FlowDoc, SourceMetadataDoc, SourceTableDoc } from "../documents/index.js";
 import { writtenValue } from "../internal/index.js";
 import { matchObject } from "./match.js";
 import { metadataTables } from "./metadata.js";
 
+/** What a flow table found in its connection's source metadata (specification section 12.3). */
+export interface TableMatch {
+  /** The connection's document. */
+  document: SourceMetadataDoc;
+  /** The one table the object matches; none for no match, or for more than one. */
+  entry?: SourceTableDoc;
+  /** True when more than one table matched, which `SOURCE_OBJECT_AMBIGUOUS` has reported. */
+  ambiguous: boolean;
+}
+
 /**
- * The metadata table of the flow table's object, or none: no document for the connection, no
- * match, or more than one, which is `SOURCE_OBJECT_AMBIGUOUS`, an error at the `object`. The
- * object's text as written is read from the flow's file, so references stay as they are
- * there; where the file cannot give it, the resolved text stands in.
+ * What the flow table's object matches in its connection's source metadata: nothing when the
+ * connection has no document, else its document with the metadata table the object matches,
+ * none when no table or more than one matches (more than one is `SOURCE_OBJECT_AMBIGUOUS`,
+ * an error at the `object`). The object's text as written is read from the flow's file, so
+ * references stay as they are there; where the file cannot give it, the resolved text stands
+ * in.
  */
 export function matchTable(
   context: Context,
   flow: DefinitionDocument<FlowDoc>,
   name: string,
   connection: string,
-): SourceTableDoc | undefined {
+): TableMatch | undefined {
   const found = metadataTables(context, connection);
   const object = flow.value.tables[name]?.object;
   if (!found || object === undefined) return undefined;
+  const document = found.document.value;
   const pointer = `/tables/${name.replaceAll("~", "~0").replaceAll("/", "~1")}/object`;
   const written = writtenValue(context.files, flow.file, pointer)?.value;
   const matches = matchObject(
@@ -36,7 +49,7 @@ export function matchTable(
       { document: flow, pointer },
       "Write more of the object's name, such as its schema, so that it matches one table.",
     );
-    return undefined;
+    return { document, ambiguous: true };
   }
-  return matches[0];
+  return { document, ambiguous: false, ...(matches[0] && { entry: matches[0] }) };
 }

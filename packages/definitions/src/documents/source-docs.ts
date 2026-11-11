@@ -9,7 +9,10 @@ export interface SourceMetadataDoc {
   tables: SourceTableDoc[];
 }
 
-/** One table of a `SourceMetadata` document. */
+/**
+ * One table of a `SourceMetadata` document.
+ * @public
+ */
 export interface SourceTableDoc {
   object: string;
   captured: {
@@ -21,7 +24,10 @@ export interface SourceTableDoc {
   columns: SourceColumnDoc[];
 }
 
-/** One column of a source table, with ODCS field names and values. */
+/**
+ * One column of a source table, with ODCS field names and values.
+ * @public
+ */
 export interface SourceColumnDoc {
   name: string;
   sourceType?: string;

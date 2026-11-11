@@ -158,6 +158,12 @@ export interface ColumnMask {
 }
 
 // @public
+export function compareSourceColumns(before: SourceBefore, after: SourceTableDoc, options: {
+    namesOnly: boolean;
+    caseSensitive: boolean;
+}): SourceDifference[];
+
+// @public
 export function compareTargets(models: Readonly<Record<string, ResolvedModel>>): TargetComparison;
 
 // @public
@@ -263,7 +269,7 @@ export function contractUseOf(pack: PackInfo, path: string): ContractUse | undef
 export const defaultClassificationTag = "classification";
 
 // @public
-export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "PACK_VERSION" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "SETTING_MOVED" | "PLATFORM_FIELD_MOVED" | "INTENT_CONFLICT" | "NOT_APPLIED" | "PREVIEW_FEATURE" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "DUPLICATE_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "REPLACE_ME" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "TRANSFORM_CODE" | "LAYER_RESPONSIBILITY" | "QUARANTINE_UNUSED" | "CLEANSE_COLUMN" | "CLEANSE_TYPE" | "DEDUPLICATE_KEY" | "DEDUPLICATE_MODE" | "TIMEZONE_NAME" | "TIMEZONE_SOURCE" | "ACCEPT_CODE" | "ACCEPT_UNUSED" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS" | "ROLE_ACCESS" | "MASK_TYPE" | "FILTER_MATCH" | "FILTER_MULTIPLE" | "MASK_NEEDS_RUN_AS" | "MASK_FUNCTIONS" | "POLICY_LIMIT" | "POLICY_PRINCIPALS" | "DEPLOY_VALUE" | "ENVIRONMENTS_DIFFER" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS" | "PACK_NOTICE" | "PACK_LOAD" | "SOURCE_METADATA_DUPLICATE" | "SOURCE_OBJECT_AMBIGUOUS" | "TABLE_NO_COLUMNS" | "CONTRACT_NEEDED";
+export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "PACK_VERSION" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "SETTING_MOVED" | "PLATFORM_FIELD_MOVED" | "INTENT_CONFLICT" | "NOT_APPLIED" | "PREVIEW_FEATURE" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "DUPLICATE_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "REPLACE_ME" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "TRANSFORM_CODE" | "LAYER_RESPONSIBILITY" | "QUARANTINE_UNUSED" | "CLEANSE_COLUMN" | "CLEANSE_TYPE" | "DEDUPLICATE_KEY" | "DEDUPLICATE_MODE" | "TIMEZONE_NAME" | "TIMEZONE_SOURCE" | "ACCEPT_CODE" | "ACCEPT_UNUSED" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS" | "ROLE_ACCESS" | "MASK_TYPE" | "FILTER_MATCH" | "FILTER_MULTIPLE" | "MASK_NEEDS_RUN_AS" | "MASK_FUNCTIONS" | "POLICY_LIMIT" | "POLICY_PRINCIPALS" | "DEPLOY_VALUE" | "ENVIRONMENTS_DIFFER" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS" | "PACK_NOTICE" | "PACK_LOAD" | "SOURCE_METADATA_DUPLICATE" | "SOURCE_OBJECT_AMBIGUOUS" | "TABLE_NO_COLUMNS" | "CONTRACT_NEEDED" | "SOURCE_COLUMN_NEW" | "SOURCE_COLUMN_GONE" | "SOURCE_TYPE_CHANGED" | "SOURCE_TYPE_FITS" | "SOURCE_NULLABLE" | "SOURCE_KEY_CHANGED" | "SOURCE_TABLE_GONE";
 
 // @public
 export type DeleteMode = "soft" | "hard" | "keep";
@@ -1003,6 +1009,68 @@ export type SettingAlias = {
 } | {
     values: Record<string, IntentFragment>;
 };
+
+// @public
+export interface SourceBefore {
+    columns: SourceColumnBefore[];
+    primaryKey: string[];
+}
+
+// @public
+export type SourceCode = Extract<DefinitionCode, "SOURCE_COLUMN_NEW" | "SOURCE_COLUMN_GONE" | "SOURCE_TYPE_CHANGED" | "SOURCE_TYPE_FITS" | "SOURCE_NULLABLE" | "SOURCE_KEY_CHANGED" | "SOURCE_TABLE_GONE">;
+
+// @public
+export interface SourceColumnBefore {
+    logicalType?: string;
+    logicalTypeOptions?: Record<string, unknown>;
+    name: string;
+    physicalName?: string;
+    required?: boolean;
+}
+
+// @public
+export interface SourceColumnDoc {
+    // (undocumented)
+    items?: SourceColumnDoc;
+    // (undocumented)
+    logicalType: string;
+    // (undocumented)
+    logicalTypeOptions?: Record<string, unknown>;
+    // (undocumented)
+    name: string;
+    // (undocumented)
+    primaryKeyPosition?: number;
+    // (undocumented)
+    properties?: SourceColumnDoc[];
+    // (undocumented)
+    required: boolean;
+    // (undocumented)
+    sourceType?: string;
+}
+
+// @public
+export interface SourceDifference {
+    after?: string;
+    before?: string;
+    code: SourceCode;
+    column?: string;
+    kind: "breaking" | "compatible";
+}
+
+// @public
+export interface SourceTableDoc {
+    // (undocumented)
+    captured: {
+        at: string;
+        from: "catalog" | "document" | "sample" | "columns" | "assistant";
+        recipe?: string;
+        file: string;
+    };
+    // (undocumented)
+    columns: SourceColumnDoc[];
+    // (undocumented)
+    object: string;
+}
 
 // @public
 export function splitDeployText(text: string, deployValues: readonly DeployValue[]): (string | DeployValue)[];

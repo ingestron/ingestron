@@ -47,10 +47,10 @@ files:
       - object: ERP.dbo.Customers
         captured: { at: 2026-11-12T09:30:00Z, from: catalog, file: erp.csv }
         columns:
-          - { name: CustomerID, logicalType: integer, required: true, primaryKeyPosition: 1 }
+          - { name: id, logicalType: integer, required: true, primaryKeyPosition: 1 }
       - object: CRM.dbo.Customers
         captured: { at: 2026-11-12T09:30:00Z, from: catalog, file: erp.csv }
         columns:
-          - { name: CustomerID, logicalType: integer, required: true, primaryKeyPosition: 1 }
+          - { name: id, logicalType: integer, required: true, primaryKeyPosition: 1 }
 expect:
   diagnostics: []
