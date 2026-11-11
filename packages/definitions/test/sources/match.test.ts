@@ -75,6 +75,19 @@ describe("matchObject with names", () => {
     ).toEqual([]);
   });
 
+  it("takes the parts from the resolved text when the whole object is one reference", () => {
+    expect(objects(matchObject("ERP.dbo.Customers", "${values.table}", both, insensitive))).toEqual(
+      ["ERP.dbo.Customers"],
+    );
+    expect(
+      objects(matchObject("ERP.dbo.Customers", "${values.db}.${values.table}", both, insensitive)),
+    ).toEqual(["ERP.dbo.Customers"]);
+  });
+
+  it("matches nothing when the whole object is one reference that is unset", () => {
+    expect(matchObject("${envvar:TABLE}", "${envvar:TABLE}", both, insensitive)).toEqual([]);
+  });
+
   it("does not split inside a reference", () => {
     expect(
       objects(matchObject("dev.dbo.Customers", "${envvar:ERP.DB}.dbo.Customers", erp, insensitive)),

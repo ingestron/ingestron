@@ -2592,8 +2592,11 @@ tables:
     or `items`, written as ODCS writes them.
 
 A connection MUST have at most one document: a second is
-`SOURCE_METADATA_DUPLICATE`, an error at the second document's `connection`.
-The first, in the order the documents are loaded (section 1), is used. A project with no document for a connection has no
+`SOURCE_METADATA_DUPLICATE`, an error at the second document's `connection`:
+`The source metadata for "<connection>" is already in "<id>" (<file>); a connection has one document.`
+with the `id` and file of the first document. A third and later document is
+reported the same way. The first, in the order the documents are loaded
+(section 1), is used. A project with no document for a connection has no
 metadata for it, and nothing in this section applies to its tables.
 
 ### 12.2 A connection's metadata origin
@@ -2631,8 +2634,12 @@ matched with the `object` of each table of its connection's metadata:
   set (an `${envvar:…}` that is unset at planning included). Any other part is
   compared after its references are replaced, a part that mixes text and a
   reference as well; a part the flow leaves out is not compared and matches
-  anything. Case is compared when `names.caseSensitive` is `true`, and ignored
-  otherwise. A flow's `object` with more parts than `names.parts` matches
+  anything. When every written part is such a reference (the whole `object`
+  is one reference, such as `${values.table}`, or only references), none is a
+  wildcard: the parts are taken from the resolved text instead, so a variable
+  that holds the whole object matches its value and not every table, and a
+  reference that is unset at planning then matches nothing. Case is compared
+  when `names.caseSensitive` is `true`, and ignored otherwise. A flow's `object` with more parts than `names.parts` matches
   nothing, deliberately, so the table then has no entry (`TABLE_NO_COLUMNS`
   in section 12.4, or `SOURCE_TABLE_GONE` in section 12.6 where catalog tables
   exist). So `dbo.Customers`, `${values.erp_db}.dbo.Customers` and
@@ -2643,6 +2650,8 @@ matched with the `object` of each table of its connection's metadata:
 More than one match is `SOURCE_OBJECT_AMBIGUOUS`, an error at the table's
 `object`: `"<object>" matches more than one table of the source metadata for "<connection>": <objects>.`
 with every matching `object`, in the order of the document, joined with `, `.
+It is reported also where the `object` holds a reference that is unset at
+planning, which makes that part match anything.
 No match is not an error here: sections 12.4 and 12.6 say what it means.
 
 ### 12.4 Columns from metadata

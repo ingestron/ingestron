@@ -103,9 +103,13 @@ export function reportDeployValue(
   );
 }
 
+/** The codes reported even at a value that holds an unset reference. */
+const kept = ["BAD_SETTING", "DEPLOY_VALUE", "FIXED_SETTING", "SOURCE_OBJECT_AMBIGUOUS"];
+
 /**
  * The reporter for resolving a loaded project. A problem at a value that holds an unset
- * reference is left out, except a settings failure (specification section 1). Resolving
+ * reference is left out, except a settings failure and an ambiguous source object (specification
+ * sections 1 and 12.3). Resolving
  * with `deployTime`, such an error is `DEPLOY_VALUE` there instead (section 1.1).
  */
 export function resolutionReporter(
@@ -115,7 +119,7 @@ export function resolutionReporter(
 ): Reporter {
   const context = {} as { reporter: Reporter };
   context.reporter = createReporter(start, (at, code, severity) => {
-    if (["BAD_SETTING", "DEPLOY_VALUE", "FIXED_SETTING"].includes(code)) return false;
+    if (kept.includes(code)) return false;
     if (!unsetEnvvarAt(project, at)) return false;
     if (deployTime && severity === "error") reportDeployValue(project, context, at);
     return true;

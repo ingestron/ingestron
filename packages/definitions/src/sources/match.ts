@@ -39,13 +39,15 @@ export function matchObject(
 
 /**
  * The flow's parts, left to right, each its resolved text, or `undefined` for a part that
- * is only a reference. A value with a `.` in it makes the resolved text split into more
+ * is only a reference. When every part is only a reference, none is a wildcard: the object
+ * is taken as the resolved text gives it, so a reference that is unset matches nothing. A value with a `.` in it makes the resolved text split into more
  * parts than were written: a leftmost part that is only a reference takes the extra, and
  * otherwise the resolved text is split as it stands, with nothing a wildcard.
  */
 function partsOf(object: string, written: string): (string | undefined)[] {
   const asWritten = splitWritten(written);
   const resolved = object.split(".");
+  if (asWritten.every((part) => onlyReference.test(part))) return resolved;
   if (asWritten.length === resolved.length)
     return asWritten.map((part, index) => (onlyReference.test(part) ? undefined : resolved[index]));
   if (asWritten.length < resolved.length && onlyReference.test(asWritten[0]!))

@@ -1,0 +1,58 @@
+description: "A part of the flow's object that is an envvar unset at planning matches anything, and an object that then matches one table of the metadata reports nothing but the unset variable."
+environment: dev
+envvars: {}
+missingEnvvars: information
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml", "sources/*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+  erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: erp
+    connector: files
+    connectivity: public
+    settings: { path: /data/erp }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: erp
+    tables:
+      customers: { object: "${envvar:ERP_DB}.Customers", contract: customers }
+  customers.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: customers
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: customers
+        logicalType: object
+        description: One row per customer.
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  sources/erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: SourceMetadata
+    id: erp
+    connection: erp
+    names: { parts: 3, caseSensitive: false }
+    tables:
+      - object: ERP.dbo.Customers
+        captured: { at: 2026-11-12T09:30:00Z, from: catalog, file: erp.csv }
+        columns:
+          - { name: CustomerID, logicalType: integer, required: true, primaryKeyPosition: 1 }
+      - object: CRM.dbo.Orders
+        captured: { at: 2026-11-12T09:30:00Z, from: catalog, file: erp.csv }
+        columns:
+          - { name: OrderID, logicalType: integer, required: true, primaryKeyPosition: 1 }
+expect:
+  diagnostics:
+    - { code: ENVVAR_MISSING, severity: information, file: sales.yaml, line: 6 }
