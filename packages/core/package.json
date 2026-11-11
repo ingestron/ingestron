@@ -1,6 +1,6 @@
 {
   "name": "@ingestron/core",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "The Ingestron API: load a project, plan, apply and check its output, compare environments, write the platform request, and create projects.",
   "license": "Apache-2.0",
   "author": "Ingestron <hello@ingestron.io>",

@@ -206,11 +206,13 @@ generated with the text as written. After the plans, `plan` and `apply`
 print, when the project has any,
 
 ```text
-<n> values are still REPLACE_ME; ingestron check fails until each is written.
+<n> places are still REPLACE_ME; ingestron check fails until each is written.
 ```
 
 where `<n>` counts the places written, each once whatever environments have
-it; for one place the line reads `1 value is still REPLACE_ME; …`.
+it; for one place the line reads `1 place is still REPLACE_ME; …`. It counts
+places, not names: `init`'s line counts README.md's rows, one per name, so a
+value written for two environments is one row there and two places here.
 
 **Exit codes.** 0 when every folder is clean (`plan`), written (`apply`), or up
 to date with nothing extra and no retired folder (`check`); 1 when an

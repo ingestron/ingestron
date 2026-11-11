@@ -4,7 +4,13 @@
 // shared infrastructure the methods expect, what each pack expects to exist
 // and its schedules, and the SQL to run once. The editor's command writes the
 // same text (spec/cli/request.md).
-import { resolveProject, type FileSource, type Project } from "@ingestron/config";
+import {
+  formatDiagnostics,
+  resolveProject,
+  type AnyDiagnostic,
+  type FileSource,
+  type Project,
+} from "@ingestron/config";
 import {
   kinds,
   resolveDefinitions,
@@ -72,11 +78,7 @@ export function requestFor(
     environment,
   });
   const name = environment ?? "default";
-  if (!model)
-    return {
-      text: `# Platform request (${name})\n\nThe definitions have problems; fix them first.\n`,
-      resolved: false,
-    };
+  if (!model) return { text: unresolved(name, diagnostics), resolved: false };
   const project = hostProject(files, environment, envvars);
   const capabilities = packCapabilities(available);
   const notKnown = whatIsNotKnown(project, model);
@@ -97,6 +99,22 @@ export function requestFor(
     .join("\n\n")
     .concat("\n");
   return { text, resolved: true };
+}
+
+/**
+ * The request when an error stops it: the note and each error as `ingestron plan` writes a
+ * problem. The request resolves with each set variable's value, so its errors may not be
+ * plan's (spec/cli/request.md).
+ */
+function unresolved(name: string, diagnostics: readonly AnyDiagnostic[]): string {
+  const errors = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
+  return [
+    `# Platform request (${name})`,
+    "The definitions have problems; fix them first:",
+    `\`\`\`text\n${formatDiagnostics(errors)}\n\`\`\``,
+  ]
+    .join("\n\n")
+    .concat("\n");
 }
 
 /** The project as the host's values resolve it, a variable set nowhere not yet known. */

@@ -76,7 +76,7 @@ function stillToReplace(io: Io, reports: Generated["environmentReports"]): void 
   const count = replaceMeCount(reports);
   if (count > 0)
     io.write(
-      `${count} ${count === 1 ? "value is" : "values are"} still REPLACE_ME; ingestron check fails until each is written.\n`,
+      `${count} ${count === 1 ? "place is" : "places are"} still REPLACE_ME; ingestron check fails until each is written.\n`,
     );
 }
 

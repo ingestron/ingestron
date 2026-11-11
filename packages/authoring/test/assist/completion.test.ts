@@ -117,7 +117,8 @@ describe("completion", () => {
       ),
     );
     expect(labels(items)).toEqual(expect.arrayContaining(["mode", "sequence_by", "cluster_by"]));
-    expect(items.find((item) => item.label === "cluster_by")?.detail).toBe("default: auto");
+    expect(items.find((item) => item.label === "except_columns")?.detail).toBeUndefined();
+    expect(items.find((item) => item.label === "changes_suffix")?.detail).toBe("default: _changes");
   });
 
   it("offers the names a naming pattern can use inside {{ }}", () => {
