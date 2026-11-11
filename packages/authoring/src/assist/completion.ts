@@ -13,6 +13,7 @@ import { methodChoices } from "./method-suggestions.js";
 import { flowFacts, listAt, placeAt, writtenKeys, type Place } from "../navigation/index.js";
 import { fieldAt, fieldsIn } from "./fields.js";
 import { markFixed } from "./fixed.js";
+import { movedSettingsLast } from "./moved-settings.js";
 import type { Suggestion } from "./suggestion.js";
 import { inputCompletions } from "./inputs.js";
 import { valueHelp } from "./value-help.js";
@@ -205,7 +206,8 @@ function keyCompletions(
   if (path.length === 1 && path[0] === "tables" && place.kind === "Flow")
     return newTables(project, place);
   const described = fieldsIn(project, place, path, environment);
-  if (described) return described.map(fieldSuggestion);
+  if (described)
+    return movedSettingsLast(project, place, path, environment, described.map(fieldSuggestion));
   const schema = schemaFor(place.file, place.kind);
   if (!schema) return [];
   const fields = schemasAt(schema, path).flatMap((item) => Object.entries(item.properties ?? {}));
