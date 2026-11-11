@@ -263,7 +263,7 @@ from another with the same code.
   - a contract field path, such as `schema.*.properties.*.encryptedName`
     (section 6).
 
-  For the codes of section 12.6 it is a column's name, or `key`.
+  For the codes of section 12.6 it is a column's name, or `(primary key)`.
 
 Errors, and warnings from loading (the configuration specification), carry no
 subject. Two warnings that differ only in their `table`, such as one at a
@@ -2566,8 +2566,9 @@ tables:
 - `environment` (optional) records which environment's source was read.
 - `names` (optional) says how the source names its objects: `parts`, from 1
   to 4, is how many parts, separated by `.`, each object has, and
-  `caseSensitive` whether names differ by case. Section 12.3 uses it.
-  Without `names`, objects are compared as files are.
+  `caseSensitive` whether names differ by case. When `names` is given it MUST
+  give both. Section 12.3 uses it. Without `names`, objects are compared as
+  files are.
 - `tables` lists the tables. Each has:
   - `object` (required): the table's name at the source, in `names.parts`
     parts when `names` is given. It MAY hold `/`, as a file path does.
@@ -2590,7 +2591,7 @@ tables:
 
 A connection MUST have at most one document: a second is
 `SOURCE_METADATA_DUPLICATE`, an error at the second document's `connection`.
-The first is used. A project with no document for a connection has no
+The first, in the order the documents are loaded (section 1), is used. A project with no document for a connection has no
 metadata for it, and nothing in this section applies to its tables.
 
 ### 12.2 A connection's metadata origin
@@ -2610,6 +2611,9 @@ connector's default:
 | `kafka`      | the `schema-registry` recipe |
 | `files`      | a sample                     |
 
+A connector not listed has no default origin: its metadata comes from a
+sample, a columns file or a recipe that the connection names.
+
 `metadata` changes nothing that is built: it says how to fill the document of
 section 12.1, and nothing in resolving reads it.
 
@@ -2618,14 +2622,20 @@ section 12.1, and nothing in resolving reads it.
 A flow table's `object`, resolved for the environment being planned, is
 matched with the `object` of each table of its connection's metadata:
 
-- **With `names`.** Both are split on `.`, and the parts are compared from
-  the right. A part of the flow's `object` is compared; a part it leaves out,
-  or writes only as a `${…}` reference, matches anything. Case is compared when
-  `names.caseSensitive` is `true`, and ignored otherwise. A flow's `object`
-  with more parts than `names.parts` matches nothing. So `dbo.Customers`,
-  `${values.erp_db}.dbo.Customers` and `ERP.dbo.Customers` all match
-  `ERP.dbo.Customers`, and an environment's database with another name shares
-  the one document.
+- **With `names`.** The flow's `object` is split on `.` as it is written,
+  before any reference is replaced, and the parts are compared with the
+  metadata's from the right. A part that is exactly one `${…}` reference
+  matches anything, whatever its value and whether or not the reference is
+  set (an `${envvar:…}` that is unset at planning included). Any other part is
+  compared after its references are replaced, a part that mixes text and a
+  reference as well; a part the flow leaves out is not compared and matches
+  anything. Case is compared when `names.caseSensitive` is `true`, and ignored
+  otherwise. A flow's `object` with more parts than `names.parts` matches
+  nothing, deliberately, so the table then has no entry (`TABLE_NO_COLUMNS`
+  in section 12.4, or `SOURCE_TABLE_GONE` in section 12.6 where catalog tables
+  exist). So `dbo.Customers`, `${values.erp_db}.dbo.Customers` and
+  `ERP.dbo.Customers` all match `ERP.dbo.Customers`, and an environment's
+  database with another name shares the one document.
 - **Without `names`.** The text must be equal, with case.
 
 More than one match is `SOURCE_OBJECT_AMBIGUOUS`, an error at the table's
@@ -2686,8 +2696,10 @@ A flow table needs a contract when any of these is true:
 Otherwise the contract is optional.
 
 Here, access is resolved for the table as section 8.2 says and its layer does
-not give `access: { contract: false }`; its pack is the pack that keeps it
-(section 7.1), and the platform manages grants or masks for it when
+not give `access: { contract: false }`; its pack is the pack that access is
+resolved on for the table (sections 7.1 and 8.2): the pack that keeps it, or,
+for a table that ends at the landed files and is served by a serve step, the
+serve step's pack. The platform manages grants or masks for it when
 `<pack>.manage.grants` or `<pack>.manage.masks` is on (section 7.1, as for
 every capability of a pack).
 
@@ -2715,7 +2727,8 @@ platform manages access, and not in another. `CONTRACT_NEEDED` replaces
 
 During resolution, for each flow table with a `contract` whose connection has
 a metadata entry for it (section 12.3), the contract's columns are compared
-with the entry's. A contract's column is matched with a metadata column by
+with the entry's; a flow table with a `contract` and no entry is compared
+only as `SOURCE_TABLE_GONE` says, below. A contract's column is matched with a metadata column by
 its `physicalName`, else its `name`, compared with case when
 `names.caseSensitive` is `true` or the document has no `names`, and without it
 otherwise. A flow table with no contract is
@@ -2741,7 +2754,10 @@ themselves. For `number`, with the
 metadata's `precision` and `scale` as `p_src` and `s_src` and the contract's as
 `p_con` and `s_con`, the source type fits only when `s_src ≤ s_con` and
 `p_src − s_src ≤ p_con − s_con`; for `string`, with `maxLength`, when
-`max_src ≤ max_con`. An option that only one of them gives is not compared. A
+`max_src ≤ max_con`. Each option is compared only when both sides give it. A
+side that gives a `precision` and no `scale` has a `scale` of 0, and the rule
+on `p − s` needs both sides' precisions. So a side that gives no `precision`
+is never the reason a type does not fit. A
 type that fits but is not the same, in its `logicalType` or in those options,
 is `SOURCE_TYPE_FITS`, information; a type that does not fit is
 `SOURCE_TYPE_CHANGED`. The message of `SOURCE_TYPE_CHANGED` and of
@@ -2772,11 +2788,14 @@ either way. So the code help lists each breaking code with `severities`
 `error` and `warning`, and each compatible one with `information`.
 
 **Where, and about what.** Each is reported at the flow table's `contract`.
-Its subject (section 1.2) is `{ table, feature: <column> }` for a column code
-(the contract's name for the column, and the metadata's for `SOURCE_COLUMN_NEW`),
-`{ table, feature: "key" }` for `SOURCE_KEY_CHANGED`, and `{ table }` for
-`SOURCE_TABLE_GONE`, so that a team accepts one column of one table and not
-another.
+Its subject (section 1.2), carried when the code is reported as a warning or as
+information and not when it is an error (an error carries none, and is never
+accepted), is `{ table, feature: <column> }` for a column code (the contract's
+name for the column, and the metadata's for `SOURCE_COLUMN_NEW`),
+`{ table, feature: "(primary key)" }` for `SOURCE_KEY_CHANGED`, and `{ table }`
+for `SOURCE_TABLE_GONE`, so that a team accepts one column of one table and not
+another. The feature is `(primary key)` so that a column named `key` is not
+mistaken for the key.
 
 ## Accepted warnings
 
