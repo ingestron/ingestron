@@ -50,3 +50,43 @@ describe("accepted warnings", () => {
     expect(found[1]).toMatchObject({ file: "platform.yaml", severity: "warning" });
   });
 });
+
+describe("a role that no engine applies", () => {
+  /** The starter with a role on its orders contract, and `accept` entries added when given. */
+  function withRole(accept = ""): string {
+    const folder = mkdtempSync(join(tmpdir(), "ingestron-accept-"));
+    cpSync(starter, folder, { recursive: true });
+    const contract = join(folder, "contracts/orders.yaml");
+    writeFileSync(
+      contract,
+      `${readFileSync(contract, "utf8")}roles:\n  - { role: marketing-analysts, access: read }\n`,
+    );
+    const platform = join(folder, "platform.yaml");
+    writeFileSync(platform, `${readFileSync(platform, "utf8")}${accept}`);
+    return folder;
+  }
+  const roleMarks = (folder: string) =>
+    problems(openProject(folder, new Map()), "dev").filter((problem) =>
+      problem.message.includes("marketing-analysts"),
+    );
+
+  it("is marked at the role's line", () => {
+    expect(roleMarks(withRole())).toMatchObject([
+      {
+        file: "contracts/orders.yaml",
+        code: "NOT_APPLIED",
+        severity: "warning",
+        range: { start: { line: 15 } },
+      },
+    ]);
+  });
+
+  it("is not marked when the Platform accepts its feature", () => {
+    const folder = withRole(
+      "accept:\n  - code: NOT_APPLIED\n    about: { feature: grants }\n    reason: The folder's permissions do it.\n",
+    );
+    expect(roleMarks(folder)).toEqual([]);
+    // Only the notNull warning is left, and the entry is not stale.
+    expect(codes(folder)).toEqual(["NOT_APPLIED"]);
+  });
+});

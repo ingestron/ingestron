@@ -327,6 +327,8 @@ properties:
       type: string
       minLength: 1
       description: "The user, group or service principal the role is on this platform."
+      find: "Your identity administrator: the name of the group, user or service principal on this platform that holds the role. Databricks lists them under Identity and access; on Synapse, it is a database user."
+      suggest: "<group, user or service principal>"
       examples: ["${values.marketing_group}"]
     description: >-
       The principal each contract role is on this platform, by role, usually per environment through

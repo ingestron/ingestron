@@ -6,12 +6,13 @@ import { packs } from "@ingestron/core";
 import {
   documentReference,
   methodReference,
+  platformSectionReference,
   referenceKinds,
   type Connector,
   type FieldInfo,
 } from "@ingestron/definitions";
 import type { Place } from "../navigation/index.js";
-import { parse, stringify } from "yaml";
+import { withoutSettings } from "./without-settings.js";
 import { openProject, resolved, type Project } from "../project/index.js";
 
 /** A method's settings at a place: the method and the keys below its settings. */
@@ -164,7 +165,17 @@ export function fieldsIn(
 
 function documentFields(place: Place): FieldInfo[] {
   const kind = place.kind as keyof typeof referenceKinds | undefined;
-  return kind && kind in referenceKinds ? documentReference(kind) : [];
+  if (!kind || !(kind in referenceKinds)) return [];
+  return kind === "Platform"
+    ? [...documentReference(kind), ...sectionFields()]
+    : documentReference(kind);
+}
+
+let sections: FieldInfo[] | undefined;
+
+/** The fields of every pack's section of the Platform, each written under the pack's id. */
+function sectionFields(): FieldInfo[] {
+  return (sections ??= packs.flatMap((pack) => platformSectionReference(pack)));
 }
 
 /** A described path matches when each key is the same or the description says `*`. */
@@ -196,44 +207,4 @@ function methodOfTable(
     methodIn(withoutSettings(project, file)) ??
     methodIn(openProject(project.folder, new Map()))
   );
-}
-
-const stripped = new WeakMap<Project, Map<string, Project>>();
-
-/** The project with every `with` in `file` removed, once per project snapshot and file. */
-function withoutSettings(project: Project, file: string): Project {
-  let byFile = stripped.get(project);
-  if (!byFile) stripped.set(project, (byFile = new Map()));
-  let found = byFile.get(file);
-  if (!found) {
-    const text = stripWith(project.files.read(file) ?? "");
-    const files = {
-      ...project.files,
-      read: (path: string) => (path === file ? text : project.files.read(path)),
-    };
-    byFile.set(file, (found = { ...project, files }));
-  }
-  return found;
-}
-
-/** The document without the `with` of each action, at the top and in each table. */
-function stripWith(text: string): string {
-  let data: unknown;
-  try {
-    data = parse(text);
-  } catch {
-    return text;
-  }
-  if (!isObject(data)) return text;
-  const tables = isObject(data.tables) ? Object.values(data.tables) : [];
-  for (const owner of [data, ...tables].filter(isObject))
-    for (const action of ["ingest", "transform", "store", "serve"]) {
-      const step = owner[action];
-      if (isObject(step)) delete step.with;
-    }
-  return stringify(data);
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

@@ -62,12 +62,20 @@ function fieldText(field: FieldInfo, spot: Spot, { docs = (link) => link }: Hove
     ? [`\`${spot.text}\`: ${chosen.description ?? ""}`.trim()]
     : aboutField(field);
   return [
-    `**${field.name}**: ${field.description ?? ""}`.trim(),
+    `**${nameOf(field, spot)}**: ${field.description ?? ""}`.trim(),
     ...body,
     `[Reference](${docs(field.docs)})`,
   ]
     .filter(Boolean)
     .join("\n\n");
+}
+
+/** The field's name; a mapping's value, described as `*`, is named by its key, else by its list. */
+function nameOf(field: FieldInfo, spot: Spot): string {
+  if (field.name !== "*") return field.name;
+  const key = spot.segments.at(-1);
+  if (key !== undefined && !/^\d+$/.test(key)) return key;
+  return field.path.findLast((part) => part !== "*") ?? field.name;
 }
 
 /** Every allowed value with its meaning, the default, an example and where it is usually set. */

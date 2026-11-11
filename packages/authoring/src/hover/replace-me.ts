@@ -1,7 +1,6 @@
 // What a REPLACE_ME stands for: the field it fills, where to find the value, and a
 // suggestion. A kit's skeleton leaves the team's own values as REPLACE_ME.
-import { packs } from "@ingestron/core";
-import { platformSectionReference, type FieldInfo } from "@ingestron/definitions";
+import type { FieldInfo } from "@ingestron/definitions";
 import { fieldAt } from "../assist/index.js";
 import { placeAt } from "../navigation/index.js";
 import type { Project } from "../project/index.js";
@@ -158,22 +157,5 @@ function describedAt(
   );
   if (!spot) return undefined;
   const place = placeAt(file, text, spot.range[0]);
-  return (
-    fieldAt(project, place, segments, environment) ??
-    (place.kind === "Platform" ? sectionField(segments) : undefined)
-  );
-}
-
-/** A field of a pack's section of the Platform, written under the pack's id. */
-function sectionField(segments: string[]): FieldInfo | undefined {
-  const pack = packs.find((item) => item.id === segments[0]);
-  return pack && platformSectionReference(pack).find((field) => same(field.path, segments));
-}
-
-/** Described keys match when each is the same or the description says `*`. */
-function same(described: string[], path: string[]): boolean {
-  return (
-    described.length === path.length &&
-    described.every((key, index) => key === "*" || key === path[index])
-  );
+  return fieldAt(project, place, segments, environment);
 }
