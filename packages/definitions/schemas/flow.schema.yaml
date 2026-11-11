@@ -65,7 +65,7 @@ properties:
         contract:
           {
             type: string,
-            description: Id of the DataContract (ODCS) for this table.,
+            description: "Id of the DataContract (ODCS) for this table. Optional when the table's columns come from source metadata.",
             examples: [shop.orders],
           }
         expectations:
