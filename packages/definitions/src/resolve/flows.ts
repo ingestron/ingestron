@@ -1,8 +1,8 @@
 // Tables brought in by flows: ingest and store steps, contract, quality and names.
 import type { DefinitionDocument } from "@ingestron/config";
 import { aboutOne, type Context } from "../context/index.js";
-import { noteSourceTable } from "./source-tables.js";
-import { stepsOf } from "./flow-step-choice.js";
+import { needsOf, sourceTableOf } from "./source-tables.js";
+import { flowTableSteps } from "./flow-step-choice.js";
 import { flowContract } from "./flow-contract.js";
 import {
   checkSourceMetadata,
@@ -10,7 +10,8 @@ import {
   type SourceTable,
   type TableMatch,
 } from "../sources/index.js";
-import { kinds, type FlowDoc } from "../documents/index.js";
+import { kinds, type ConnectionDoc, type FlowDoc } from "../documents/index.js";
+import type { DeclaredIntent } from "./declared-intent.js";
 import type { ResolvedTable } from "../pack/index.js";
 import { renderTableName, type TableNamer } from "../tables/index.js";
 import { flowFacts } from "./rule-facts.js";
@@ -70,21 +71,54 @@ function flowTable(
   match: TableMatch | undefined,
   listed: SourceTable[] | undefined,
 ): ResolvedTable | undefined {
-  const doc = flow.value.tables[name];
   const layer = namer.layerOf(flow.value.layer, 0, { document: flow, pointer: "/layer" });
   const connection = connectionOf(context, flow.value.source);
-  const note = (steps: Partial<FlowSteps> | undefined) =>
-    noteSourceTable(context, listed, { flow, name, layer, match }, steps);
-  if (!doc || !layer || !connection) return void note(undefined);
+  const about = { flow, name, layer, match };
+  const listWithNeeds = (steps: Partial<FlowSteps> | undefined) => {
+    const needs = needsOf(context, about, steps);
+    listed?.push(sourceTableOf(about, needs));
+    return needs;
+  };
+  if (!layer || !connection) return void listWithNeeds(undefined);
   const { facts, declared } = flowFacts(context, flow, name, {
     connectivity: connection.connectivity,
     connector: connection.connector,
     layer,
   });
-  const steps = stepsOf(context, flow, name, facts);
-  if (steps === false) return void note(undefined);
+  const steps = flowTableSteps(context, flow, name, facts);
+  if (steps === false) return void listWithNeeds(undefined);
+  return finishTable(context, flow, name, namer, {
+    layer,
+    connection,
+    steps,
+    declared,
+    match,
+    needs: listWithNeeds(steps),
+  });
+}
+
+/** What `finishTable` has of a flow table once its steps are known. */
+interface FoundTable {
+  layer: string;
+  connection: ConnectionDoc;
+  steps: Partial<FlowSteps> | undefined;
+  declared: DeclaredIntent;
+  match: TableMatch | undefined;
+  /** Why the table needs a contract, if it does (section 12.5). */
+  needs: string | undefined;
+}
+
+/** The resolved table, with its name and intent; undefined when a part of it is missing. */
+function finishTable(
+  context: Context,
+  flow: Flow,
+  name: string,
+  namer: TableNamer,
+  { layer, connection, steps, declared, match, needs }: FoundTable,
+): ResolvedTable | undefined {
+  const doc = flow.value.tables[name]!;
   const { places, ...intent } = tableIntent(context, declared, steps);
-  const contract = flowContract(context, flow, name, steps, match, note(steps));
+  const contract = flowContract(context, flow, name, steps, match, needs);
   const { id, source } = flow.value;
   const fullName = renderTableName(context, namer, { layer, table: name, flow: id, source });
   if (!steps || !contract || !fullName) return undefined;

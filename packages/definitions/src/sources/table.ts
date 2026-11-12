@@ -76,7 +76,7 @@ export function objectNotKnown(
 }
 
 /** The JSON Pointer to a flow table's `object`. */
-function objectPointer(name: string): string {
+export function objectPointer(name: string): string {
   return `/tables/${name.replaceAll("~", "~0").replaceAll("/", "~1")}/object`;
 }
 

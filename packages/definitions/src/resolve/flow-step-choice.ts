@@ -17,7 +17,7 @@ type Flow = DefinitionDocument<FlowDoc>;
  * The table's steps: none when they are not known yet, false when runs-on leaves the
  * table out (with a warning), undefined after reporting why they cannot be resolved.
  */
-export function stepsOf(
+export function flowTableSteps(
   context: Context,
   flow: Flow,
   name: string,

@@ -1,0 +1,34 @@
+description: "Planned with the variable unset and no editor mode, a flow table whose object is only references with one unset fails loading with ENVVAR_MISSING, an error, before TABLE_NO_COLUMNS is reached."
+environment: dev
+envvars: {}
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    values: { schema: dbo }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [checked@1]
+  erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: erp
+    connector: checked
+    connectivity: public
+    settings: { path: /data/erp }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: erp
+    ingest: { uses: checked-read }
+    tables:
+      one: { object: "${envvar:TABLE}" }
+      several: { object: "${values.schema}.${envvar:TABLE}" }
+expect:
+  diagnostics:
+    - { code: ENVVAR_MISSING, severity: error, file: sales.yaml, line: 7 }
+    - { code: ENVVAR_MISSING, severity: error, file: sales.yaml, line: 8 }

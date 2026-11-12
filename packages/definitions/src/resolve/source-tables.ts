@@ -19,25 +19,24 @@ export interface ListedTable {
 }
 
 /**
- * The reason the table needs a contract, as far as its steps are known (section 12.5), and the
- * table added to `listed` (section 12.7) when there is a list to add it to. Every flow table is
- * added once, whether or not it resolves.
+ * The reason the table needs a contract, as far as its steps are known (section 12.5); none
+ * when it does not, or when its layer cannot be resolved.
  */
-export function noteSourceTable(
+export function needsOf(
   context: Context,
-  listed: SourceTable[] | undefined,
-  table: ListedTable,
+  { flow, name, layer }: ListedTable,
   steps: Partial<FlowSteps> | undefined,
 ): string | undefined {
-  const { flow, name, layer } = table;
+  if (!layer) return undefined;
   const expectations = (flow.value.tables[name]!.expectations ?? []).length > 0;
-  const needs = layer ? contractNeeded(context, { layer, steps, expectations }) : undefined;
-  listed?.push(sourceTableOf(table, needs));
-  return needs;
+  return contractNeeded(context, { layer, steps, expectations });
 }
 
 /** The flow table's item of the list (section 12.7). */
-function sourceTableOf({ flow, name, match }: ListedTable, needs: string | undefined): SourceTable {
+export function sourceTableOf(
+  { flow, name, match }: ListedTable,
+  needs: string | undefined,
+): SourceTable {
   const doc = flow.value.tables[name]!;
   const names = match?.document.names;
   return {

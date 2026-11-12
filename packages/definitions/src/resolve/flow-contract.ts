@@ -9,6 +9,7 @@ import {
   compareWithContract,
   metadataContract,
   objectNotKnown,
+  objectPointer,
   type TableMatch,
 } from "../sources/index.js";
 import type { FlowSteps } from "./flow-sources.js";
@@ -80,9 +81,8 @@ function reportNeeded(
 }
 
 /**
- * The contract of a table that names none: made from its metadata entry, else reported, unless
- * the table's name is not known yet (an object written only as references, one unset): it
- * has no columns until the value is set, and nothing is reported of it here.
+ * The contract of a table that names none: made from its metadata entry, else `TABLE_NO_COLUMNS`,
+ * at the `object` when the table's name is not known yet (see `noColumnsPointer`).
  */
 function fromMetadata(
   context: Context,
@@ -91,14 +91,22 @@ function fromMetadata(
   match: TableMatch | undefined,
 ): Contract | undefined {
   if (match?.entry) return metadataContract(context, flow.value.source, match.entry);
-  if (objectNotKnown(context, flow, name)) return undefined;
   context.reporter.error(
     "TABLE_NO_COLUMNS",
     `"${name}" has no contract and no source metadata, so it has no columns.`,
-    { document: flow, pointer: `/tables/${name}` },
+    { document: flow, pointer: noColumnsPointer(context, flow, name) },
     "Import the source's metadata (ingestron source request says how), or name a contract.",
   );
   return undefined;
+}
+
+/**
+ * Where `TABLE_NO_COLUMNS` is reported: at the table's key, or, when its name is not known yet,
+ * at its `object`, a value that holds an unset reference, so that the reporter treats the
+ * problem as it does any such value (specification section 12.4).
+ */
+function noColumnsPointer(context: Context, flow: Flow, name: string): string {
+  return objectNotKnown(context, flow, name) ? objectPointer(name) : `/tables/${name}`;
 }
 
 /** The pack that keeps the table: its store's, else that of an ingest step that writes a table. */
