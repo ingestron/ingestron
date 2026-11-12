@@ -4307,7 +4307,7 @@
       }
     },
     {
-      "name": "OData CSDL: Scale=\"Variable\" gives no scale, and a missing Scale is 0",
+      "name": "OData CSDL: Scale=\"Variable\", \"variable\" or \"floating\" gives no scale, and a missing Scale is 0",
       "file": "sources/org.xml",
       "input": "variable.csdl.xml",
       "expected": {
@@ -4353,6 +4353,15 @@
                 "logicalTypeOptions": {
                   "precision": 19,
                   "scale": 4
+                }
+              },
+              {
+                "name": "Total",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 12
                 }
               },
               {
@@ -4423,6 +4432,15 @@
                 }
               },
               {
+                "name": "Total",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 12
+                }
+              },
+              {
                 "name": "Share",
                 "sourceType": "Edm.Decimal",
                 "logicalType": "number",
@@ -4438,6 +4456,201 @@
         "notes": []
       },
       "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a recipe's columnNames renames the columns of each table once, without case, and leaves nested fields alone",
+      "file": "sources/crm.catalog.xml",
+      "input": "lookups.csdl.xml",
+      "recipe": "lookups",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "account",
+            "columns": [
+              {
+                "name": "accountid",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "name",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": false,
+                "logicalTypeOptions": {
+                  "maxLength": 160
+                }
+              },
+              {
+                "name": "primarycontactid",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "OwningUser",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "a_value_b",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "revenue",
+                "sourceType": "Crm.Money",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "_unit_value",
+                    "sourceType": "Edm.Guid",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "object": "contact",
+            "columns": [
+              {
+                "name": "contactid",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "a file read without the recipe keeps its column names",
+      "file": "sources/crm.xml",
+      "input": "lookups.csdl.xml",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Accounts",
+            "columns": [
+              {
+                "name": "accountid",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "name",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": false,
+                "logicalTypeOptions": {
+                  "maxLength": 160
+                }
+              },
+              {
+                "name": "_primarycontactid_value",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "_OwningUser_VALUE",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "_a_value_b_value",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "revenue",
+                "sourceType": "Crm.Money",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "_unit_value",
+                    "sourceType": "Edm.Guid",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "object": "Contacts",
+            "columns": [
+              {
+                "name": "contactid",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "columnNames that give two columns of a table the same name is refused",
+      "file": "sources/crm.catalog.xml",
+      "input": "clash.csdl.xml",
+      "recipe": "lookups",
+      "refused": [
+        "sources/crm.catalog.xml: the recipe \"lookups\" gives two columns of the table \"clash\" the name \"x\"."
+      ]
+    },
+    {
+      "name": "a name rule's columns file is read without the recipe's columnNames",
+      "file": "sources/crm.columns.csv",
+      "input": "lookups.columns.csv",
+      "recipe": "lookups",
+      "expected": {
+        "reader": "columns",
+        "from": "columns",
+        "tables": [
+          {
+            "object": "t",
+            "columns": [
+              {
+                "name": "_a_value",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "b",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
     }
   ]
 }

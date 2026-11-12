@@ -13,6 +13,7 @@
         <Property Name="Revenue" Type="Edm.Decimal" Scale="Variable"/>
         <Property Name="Credit" Type="Edm.Decimal" Precision="19" Scale="variable"/>
         <Property Name="Limit" Type="Edm.Decimal" Precision="19" Scale="4"/>
+        <Property Name="Total" Type="Edm.Decimal" Precision="12" Scale="Floating"/>
         <Property Name="Share" Type="Edm.Decimal" Precision="5"/>
         <Annotation Term="Core.Description" String="ZZ-SECRET-42"/>
       </EntityType>

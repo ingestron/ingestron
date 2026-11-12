@@ -116,6 +116,18 @@ than those below is an error.
   form each table's primary key, in order.
 - `objects` (optional, with the reader `odata`): `sets`, the default, names
   each table after its entity set; `types` names it after its entity type.
+- `columnNames` (optional): `{ match, to }`, which renames a column the way
+  the source's copy tools name it, such as Dataverse's lookup property
+  `_<name>_value`, which Azure Data Factory and Fabric copy as `<name>`.
+  `match` is a regular expression, applied without case to the name of each
+  column of a table, and `to` is the new name, in which `$1`, `$2` and so on
+  are the capture groups of `match`, and a group that matched nothing is
+  empty. A column whose name `match` does not match keeps its name, and so
+  does one whose new name would be empty. The rule is applied once to each
+  name, and only to the columns of a table, not to the fields nested in a
+  column. It is applied by the reader the recipe names, to the names that
+  reader reads (section 2); `fields` and `key` name the result's own names, as
+  it holds them, before the rule is applied.
 - `sources`: at least one `{ url, read }`, the vendor's documentation the
   recipe's query, call and type rules come from: `url` an `https://` URL, and
   `read` the date it was read, `YYYY-MM-DD`, a real date written as text.
@@ -125,11 +137,12 @@ is broken, as `readKit` does ([kits.md](kits.md), "Rules"):
 
 1. The file is valid YAML and a mapping.
 2. No key other than those above, and none of the required ones missing.
-3. Each field has its shape: `title`, `ask`'s fields, `rows` and each
-   `description` are text; `inputs`, `ask`, `names` and `fields` are
-   mappings; `types`, `key` and `sources` are lists; `kind`, `read`,
+3. Each field has its shape: `title`, `ask`'s fields, `rows`, `columnNames`'
+   `match` and `to`, and each `description` are text; `inputs`, `ask`,
+   `names`, `fields` and `columnNames` are mappings; `types`, `key` and `sources` are lists; `kind`, `read`,
    `objects` and each `logicalType` are one of their values; `names` has
-   both `parts`, from 1 to 4, and `caseSensitive`, true or false.
+   both `parts`, from 1 to 4, and `caseSensitive`, true or false;
+   `columnNames` has both `match` and `to`.
 4. `id` matches its pattern and equals the file's name.
 5. Each input's name matches its pattern and is not one of the three
    reserved names.
@@ -137,7 +150,8 @@ is broken, as `readKit` does ([kits.md](kits.md), "Rules"):
 7. `rows`, `fields`, `key` and `objects` are given only with their readers;
    each key of `fields` is a field of the columns file, and `fields` maps
    `table_name`, `column_name` and `data_type`.
-8. Each `match` is a valid regular expression.
+8. Each `match` is a valid regular expression, those of `types` first and
+   then `columnNames`'s.
 9. `sources` has at least one entry; each `url` is an `https://` URL and each
    `read` a real date, `YYYY-MM-DD`.
 
@@ -205,6 +219,19 @@ message is never shown, since it may quote the file.
 No refusal and no note quotes a file's content, except the names of fields,
 tables and columns and the source's type names. A value in a row is never
 shown, so a refusal is as safe to print as the metadata itself.
+
+When the recipe that reads a file gives `columnNames` (section 1), the reader
+applies it to the name of each column of each table it reads, once all the
+tables are read, so that a source's naming quirk is in its recipe and not in a
+reader. Only the columns of a table are renamed, not the fields nested in a
+column, and a table's key and the columns' other facts are unchanged. A column
+whose name the rule does not change, and one whose new name would be empty,
+keeps its name. A table in which the rule gives two columns the same name is
+refused:
+`<file>: the recipe "<id>" gives two columns of the table "<object>" the name "<column>".`
+(the first such name, in the table's column order, and the first such table).
+`<id>` is the recipe's `id`. A file read by another reader than the recipe's,
+and a columns file chosen by its name (section 2.5), are not renamed.
 
 ### 2.1 The columns file
 
@@ -411,8 +438,8 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
   `MaxLength` as `maxLength` when it is a number; `Edm.Byte`, `Edm.SByte`,
   `Edm.Int16`, `Edm.Int32` and `Edm.Int64` are `integer`; `Edm.Decimal` is
   `number`, with `Precision` when it is a number and `Scale`, which is 0 when
-  it is missing or is not a number, except that `Scale="Variable"`, in any case (any
-  scale), gives no scale; `Edm.Single`
+  it is missing or is not a number, except that `Scale="Variable"` or
+  `Scale="floating"`, in any letter case, means any scale and gives none; `Edm.Single`
   and `Edm.Double` are `number`; `Edm.Boolean` is `boolean`; `Edm.Date` is
   `date`; `Edm.DateTimeOffset` and `Edm.DateTime` are `timestamp`;
   `Edm.TimeOfDay` and `Edm.Time` are `time`; any other is `string`.
@@ -524,7 +551,7 @@ its last two extensions:
 
 - a name that ends `.columns.<ext>` or `.assistant.<ext>` is read as a
   columns file only, with the recipe's `types` but without its `rows`,
-  `fields` and `key`;
+  `fields`, `key` and `columnNames`;
 - a name that ends `.odcs.<ext>` is read as an ODCS document only;
 - a name that ends `.catalog.<ext>` is read by the recipe's reader only,
   with every field of the recipe. Without a recipe it is refused:
