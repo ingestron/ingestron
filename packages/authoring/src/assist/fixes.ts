@@ -4,6 +4,7 @@ import { fixEdits, type Fix } from "@ingestron/config";
 import { parse } from "yaml";
 import { problems, type Problem } from "../diagnostics/index.js";
 import type { Project } from "../project/index.js";
+import { draftContractFixes } from "./source-fix.js";
 import { plainText, skeletons } from "./skeletons.js";
 import { occurrences } from "../navigation/index.js";
 import { offsetAt, positionAt, type Position } from "../project/index.js";
@@ -42,7 +43,11 @@ export function quickFixes(
       })),
     )
     .filter((fix) => fix.edits.length > 0);
-  return [...edited, ...here.flatMap((problem) => createFixes(project, problem))];
+  return [
+    ...edited,
+    ...here.flatMap((problem) => createFixes(project, problem)),
+    ...here.flatMap((problem) => draftContractFixes(project, environment, problem)),
+  ];
 }
 
 /** A fix's text edits, at line and character positions. */
