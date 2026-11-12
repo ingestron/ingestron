@@ -1,0 +1,12 @@
+# The drafting conformance project: orders needs a contract and has a catalog entry with a key and nested columns; events comes from a sample; returns needs a contract and has no entry.
+id: retail
+environments:
+  dev:
+    values:
+      erp_db: ERP
+imports:
+  - standard.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - sources/*.yaml
+  - contracts/*.yaml

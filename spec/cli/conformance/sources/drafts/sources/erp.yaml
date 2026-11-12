@@ -1,0 +1,66 @@
+apiVersion: ingestron.io/v1
+kind: SourceMetadata
+id: erp
+connection: erp
+names: { parts: 3, caseSensitive: false }
+tables:
+  - object: ERP.dbo.Invoices
+    captured:
+      { at: 2026-11-12T09:30:00Z, from: catalog, recipe: sqlserver, file: sources/erp.catalog.csv }
+    columns:
+      - {
+          name: InvoiceID,
+          sourceType: int,
+          logicalType: integer,
+          required: true,
+          primaryKeyPosition: 1,
+        }
+  - object: ERP.dbo.Orders
+    captured:
+      { at: 2026-11-12T09:30:00Z, from: catalog, recipe: sqlserver, file: sources/erp.catalog.csv }
+    columns:
+      - {
+          name: OrderID,
+          sourceType: int,
+          logicalType: integer,
+          required: true,
+          primaryKeyPosition: 1,
+        }
+      - {
+          name: Region,
+          sourceType: char(2),
+          logicalType: string,
+          logicalTypeOptions: { maxLength: 2 },
+          required: true,
+          primaryKeyPosition: 2,
+        }
+      - {
+          name: Total,
+          sourceType: "decimal(18,2)",
+          logicalType: number,
+          logicalTypeOptions: { precision: 18, scale: 2 },
+          required: false,
+        }
+      - {
+          name: Customer Name,
+          sourceType: nvarchar(200),
+          logicalType: string,
+          logicalTypeOptions: { maxLength: 200 },
+          required: false,
+        }
+      - name: Shipping
+        sourceType: json
+        logicalType: object
+        required: false
+        properties:
+          - { name: city, logicalType: string, required: false }
+          - name: lines
+            logicalType: array
+            required: false
+            items:
+              name: item
+              logicalType: object
+              required: false
+              properties:
+                - { name: sku, logicalType: string, required: true }
+                - { name: quantity, logicalType: integer, required: false }

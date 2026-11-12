@@ -25,7 +25,28 @@ export type ColumnsField = "table_catalog" | "table_schema" | "table_name" | "co
 export function compareEnvironments(files: FileSource, a: string, b: string, options?: ProjectOptions): string;
 
 // @public
+export interface ContractDraft {
+    id: string;
+    path: string;
+    table: string;
+    text: string;
+}
+
+// @public
 export function contractFromSample(text: string, file: string, id: string): string;
+
+// @public
+export function draftContracts(files: FileSource, options?: DraftContractsOptions): {
+    drafts: ContractDraft[];
+    problems: string[];
+};
+
+// @public
+export interface DraftContractsOptions extends ProjectOptions {
+    environment?: string;
+    needed?: boolean;
+    tables?: string[];
+}
 
 // @public
 export function generateAll(files: FileSource, available: readonly Pack[], envvars: Readonly<Record<string, string | undefined>>, replaceMe?: "warning" | "error"): Generated;

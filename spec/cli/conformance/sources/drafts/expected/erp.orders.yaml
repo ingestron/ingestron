@@ -1,0 +1,50 @@
+# Drafted from "ERP.dbo.Orders" in sources/erp.yaml (catalog, captured 2026-11-12).
+# Review the types, required columns and key, then add descriptions, classifications and checks.
+apiVersion: v3.1.0
+kind: DataContract
+id: erp.orders
+version: 0.1.0
+status: draft
+schema:
+  - name: orders
+    logicalType: object
+    properties:
+      - name: OrderID
+        logicalType: integer
+        required: true
+        primaryKey: true
+        primaryKeyPosition: 1
+      - name: Region
+        logicalType: string
+        logicalTypeOptions: { maxLength: 2 }
+        required: true
+        primaryKey: true
+        primaryKeyPosition: 2
+      - name: Total
+        logicalType: number
+        required: false
+      - name: Customer Name
+        logicalType: string
+        logicalTypeOptions: { maxLength: 200 }
+        required: false
+      - name: Shipping
+        logicalType: object
+        required: false
+        properties:
+          - name: city
+            logicalType: string
+            required: false
+          - name: lines
+            logicalType: array
+            required: false
+            items:
+              name: item
+              logicalType: object
+              required: false
+              properties:
+                - name: sku
+                  logicalType: string
+                  required: true
+                - name: quantity
+                  logicalType: integer
+                  required: false

@@ -27,3 +27,4 @@ export { importSource, type SourceImport, type SourceImportInput } from "./impor
 export { withSourcesImport } from "./imports.js";
 export { sourceFileFor } from "./paths.js";
 export { sourceRequest, sourceRequestFor, type SourceRequestOptions } from "./request.js";
+export { draftContracts, type ContractDraft, type DraftContractsOptions } from "./draft.js";

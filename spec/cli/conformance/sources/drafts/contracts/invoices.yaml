@@ -1,0 +1,16 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: invoices
+version: 1.0.0
+status: active
+schema:
+  - name: invoices
+    logicalType: object
+    properties:
+      - {
+          name: InvoiceID,
+          logicalType: integer,
+          required: true,
+          primaryKey: true,
+          primaryKeyPosition: 1,
+        }

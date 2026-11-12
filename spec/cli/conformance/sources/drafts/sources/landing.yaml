@@ -1,0 +1,11 @@
+apiVersion: ingestron.io/v1
+kind: SourceMetadata
+id: landing
+connection: landing
+tables:
+  - object: events
+    captured: { at: 2026-11-10T14:00:00Z, from: sample, file: sources/landing/events.csv }
+    columns:
+      - { name: event_id, sourceType: integer, logicalType: integer, required: true }
+      - { name: happened_at, sourceType: timestamp, logicalType: timestamp, required: false }
+      - { name: "yes: no", sourceType: text, logicalType: string, required: false }

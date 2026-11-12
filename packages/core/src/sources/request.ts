@@ -23,7 +23,7 @@ export interface SourceRequestOptions extends ProjectOptions {
 }
 
 /** The errors that do not stop the request, since the metadata it asks for settles them. */
-const settled = new Set([
+const settled = new Set<string>([
   "TABLE_NO_COLUMNS",
   "CONTRACT_NEEDED",
   "SOURCE_COLUMN_GONE",
@@ -32,6 +32,19 @@ const settled = new Set([
   "SOURCE_KEY_CHANGED",
   "SOURCE_TABLE_GONE",
 ]);
+
+/**
+ * The errors among the diagnostics that the metadata does not settle, and so stop a request or a
+ * draft (spec/cli/sources.md, section 4, "Resolving").
+ * @internal
+ */
+export function stoppingErrors<T extends { severity: string; code: string }>(
+  diagnostics: readonly T[],
+): T[] {
+  return diagnostics.filter(
+    (diagnostic) => diagnostic.severity === "error" && !settled.has(diagnostic.code),
+  );
+}
 
 const introduction =
   "Ingestron needs to know what each source table looks like: its columns, their types and its key. Only names and types are needed, never rows of real data. Save each file where this request says.";
@@ -71,9 +84,7 @@ export function sourceRequestFor(
   });
   const project = hostProject(files, environment, envvars);
   const asked = askedFor(files, project, sourceTables, options);
-  const errors = diagnostics.filter(
-    (diagnostic) => diagnostic.severity === "error" && !settled.has(diagnostic.code),
-  );
+  const errors = stoppingErrors(diagnostics);
   if (errors.length > 0 || asked.problems.length > 0 || project === undefined)
     return {
       text: problemsText(`# Source request (${name})`, errors, asked.problems),

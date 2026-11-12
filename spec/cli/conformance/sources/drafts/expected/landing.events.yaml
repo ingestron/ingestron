@@ -1,0 +1,20 @@
+# Drafted from "events" in sources/landing.yaml (sample, captured 2026-11-10).
+# Review the types and required columns, then add the key, descriptions, classifications and checks.
+apiVersion: v3.1.0
+kind: DataContract
+id: landing.events
+version: 0.1.0
+status: draft
+schema:
+  - name: events
+    logicalType: object
+    properties:
+      - name: event_id
+        logicalType: integer
+        required: true
+      - name: happened_at
+        logicalType: timestamp
+        required: false
+      - name: "yes: no"
+        logicalType: string
+        required: false

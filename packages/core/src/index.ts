@@ -78,3 +78,4 @@ export {
 
 // The source request: what to ask for each connection's metadata, and how to import it.
 export { sourceRequest, type SourceRequestOptions } from "./sources/index.js";
+export { draftContracts, type ContractDraft, type DraftContractsOptions } from "./sources/index.js";

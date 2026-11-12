@@ -950,7 +950,11 @@ Each draft is `contracts/<connection>.<table>.yaml`, with:
   `logicalType`, `logicalTypeOptions` and `required`, and, except for a table
   `captured.from: sample` or `assistant`, `primaryKey: true` and
   `primaryKeyPosition` for a column of the key. Nested `properties` and
-  `items` are kept, written the same way. `sourceType` is not carried.
+  `items` are kept, written the same way. `sourceType` is not carried, and
+  neither are a decimal's `precision` and `scale` in `logicalTypeOptions`:
+  ODCS 3.1 has no such field, so a contract that had them would fail its
+  schema. The comparison reads an option only when both sides give it, so the
+  contract's missing precision is never a difference.
 
 It starts with a comment that says where it came from and what to add:
 
