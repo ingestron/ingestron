@@ -3,7 +3,7 @@
 import { existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { writeSafely } from "../src/commands/assistant.js";
+import { writeSafely } from "../src/commands/assistant-write.js";
 import { temp } from "./assistant-helpers.js";
 
 describe("writeSafely", () => {
