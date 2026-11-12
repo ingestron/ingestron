@@ -22,10 +22,9 @@ type Flow = DefinitionDocument<FlowDoc>;
  * source metadata entry of `match`, found by `matchTable` (section 12.4); with neither it has
  * no columns, which is `TABLE_NO_COLUMNS`. When the table's name is not known yet, that error is
  * at its `object`, which holds the unset reference, so section 1's rule for such values decides
- * whether it stops the command. A table
- * that needs a contract, for the reason `needs` (section 12.5), is `CONTRACT_NEEDED` instead,
- * whether or not it has an entry. A table with a contract is compared with its entry, or with
- * the lack of one (section 12.6).
+ * whether it stops the command. A table that needs a contract, for the reason `needs` (section
+ * 12.5), is `CONTRACT_NEEDED` instead, whether or not it has an entry. A table with a contract
+ * is compared with its entry, or with the lack of one (section 12.6).
  */
 export function flowContract(
   context: Context,
@@ -49,7 +48,10 @@ export function flowContract(
   return contract;
 }
 
-/** The contract of a table that names none: from its metadata, or `CONTRACT_NEEDED` or `TABLE_NO_COLUMNS`. */
+/**
+ * The contract of a table that names none: from its metadata, or `CONTRACT_NEEDED` or
+ * `TABLE_NO_COLUMNS`.
+ */
 function withoutContract(
   context: Context,
   flow: Flow,

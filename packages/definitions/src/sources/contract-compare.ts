@@ -18,7 +18,8 @@ const keyFeature = "(primary key)";
  * reports each difference at the table's `contract`: a table that no entry matches is
  * `SOURCE_TABLE_GONE`, but only when the connection's document has a table captured from a
  * catalog. Nothing is compared when the object matched more than one table (reported
- * already) or is one reference that is unset, so that its name is not known. The context reports as about the table.
+ * already) or is one reference that is unset, so that its name is not known. The context
+ * reports as about the table.
  */
 export function compareWithContract(
   context: Context,
@@ -55,7 +56,10 @@ function featureOf({ code, column }: SourceDifference): { feature?: string } {
   return column === undefined ? {} : { feature: column };
 }
 
-/** `SOURCE_TABLE_GONE`, when a catalog was imported for the connection, and so lists its whole source. */
+/**
+ * `SOURCE_TABLE_GONE`, when a catalog was imported for the connection, and so lists its whole
+ * source.
+ */
 function tableGone(
   context: Context,
   at: Place,

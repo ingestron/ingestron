@@ -12,11 +12,17 @@ import { movedFields, movedTo } from "../documents/index.js";
 
 const actions = ["ingest", "transform", "store", "serve"];
 
-/** The values of a flow or flow table that decide how its data is loaded and kept (section 11.2). */
+/**
+ * The values of a flow or flow table that decide how its data is loaded and kept (section
+ * 11.2).
+ */
 const flowIntent = (base: string) =>
   ["/history", "/load/mode", "/load/deletes/mode"].map((path) => base + path);
 
-/** The Platform's deciding values, and those of its moved fields again in the databricks section. */
+/**
+ * The Platform's deciding values, and those of its moved fields again in the databricks
+ * section.
+ */
 const platformDeciding = (() => {
   const top = ["/naming/*", "/mode"];
   const moved = top.filter((pattern) =>
@@ -144,7 +150,10 @@ export function deployValuesOf(project: Project): DeployValue[] {
   return [...byName.values()];
 }
 
-/** True when the resolved value at the pointer, in the file's documents or values, holds the text. */
+/**
+ * True when the resolved value at the pointer, in the file's documents or values, holds the
+ * text.
+ */
 function feeds(project: Project, file: string, pointer: string, text: string): boolean {
   const documents = project.documents.filter((document) => document.file === file);
   const values = documents.length > 0 ? documents.map((document) => document.value) : [project];

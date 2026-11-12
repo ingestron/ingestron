@@ -54,6 +54,22 @@ export function indexTables(
 }
 
 /**
+ * The tables that can match a flow's object whose last part, or whole text without `names`, is
+ * `text`: those the index lists under its key, or every table when there is no index or the last
+ * part is a reference (`text` undefined), which matches any table. The caller still compares
+ * their `object`. This and `indexKey` are the one place that decides what the index holds.
+ */
+function candidatesFor(
+  tables: SourceTableDoc[],
+  names: SourceMetadataDoc["names"],
+  index: TableIndex | undefined,
+  text: string | undefined,
+): SourceTableDoc[] {
+  if (!index || text === undefined) return tables;
+  return index.get(indexKey(text, names)) ?? [];
+}
+
+/**
  * Every table whose `object` the flow's object matches, in the order given. `object` is the
  * resolved text and `written` the same text as written, before any reference was replaced,
  * which says which parts are references. Without `names` the text must be equal. With
@@ -72,17 +88,13 @@ export function matchObject(
   index?: TableIndex,
 ): SourceTableDoc[] {
   if (!names)
-    return index
-      ? [...(index.get(indexKey(object, names)) ?? [])]
-      : tables.filter((table) => table.object === object);
+    return candidatesFor(tables, names, index, object).filter((table) => table.object === object);
   const parts = partsOf(object, written);
-  if (parts.length > names.parts) return [];
+  if (!parts || parts.length > names.parts) return [];
   const fold = folder(names);
-  // A last part that is not a reference is the resolved object's last part, so the flow's
+  // A last part that is not a reference is the flow's last part as resolved, so the flow's
   // object has the key its matches have.
-  const last = parts[parts.length - 1];
-  const candidates =
-    index && last !== undefined ? (index.get(indexKey(object, names)) ?? []) : tables;
+  const candidates = candidatesFor(tables, names, index, parts[parts.length - 1]);
   return candidates.filter((table) => {
     const theirs = table.object.split(".");
     return (
@@ -96,36 +108,71 @@ export function matchObject(
 }
 
 /**
- * The flow's parts, left to right, each its resolved text, or `undefined` for a part that
- * is only a reference. When every part is only a reference, none is a wildcard: the object
- * is taken as the resolved text gives it, so a reference that is unset matches nothing. A value with a `.` in it makes the resolved text split into more
- * parts than were written: a leftmost part that is only a reference takes the extra, and
- * otherwise the resolved text is split as it stands, with nothing a wildcard.
+ * The flow's parts, left to right, each its resolved text, or `undefined` for a part that is
+ * only a reference, which matches anything. None when the resolved text cannot be those parts.
+ *
+ * A value put in a part by a reference is not split again, so each written part is one part
+ * however many dots its value holds (specification section 12.3). The resolved text is read
+ * with a pattern made from the written parts: a part that is only a reference takes any text,
+ * dots included, and a part with text takes none, so a dotted value in a part that mixes text
+ * and a reference gives no parts, and matches nothing.
+ *
+ * When every part is only a reference, none is a wildcard: the object is the resolved text
+ * split as it stands, so a variable that holds the whole object matches its value, and one that
+ * is unset matches nothing. With no reference to see (`written` is the resolved text, as when
+ * the flow's file could not give it) every part is compared as it stands.
  */
-function partsOf(object: string, written: string): (string | undefined)[] {
+function partsOf(object: string, written: string): (string | undefined)[] | undefined {
   const asWritten = splitWritten(written);
-  const resolved = object.split(".");
-  if (asWritten.every((part) => onlyReference.test(part))) return resolved;
-  if (asWritten.length === resolved.length)
-    return asWritten.map((part, index) => (onlyReference.test(part) ? undefined : resolved[index]));
-  if (asWritten.length < resolved.length && onlyReference.test(asWritten[0]!))
-    return [undefined, ...resolved.slice(resolved.length - asWritten.length + 1)];
-  return resolved;
+  if (asWritten.every((part) => onlyReference.test(part))) return object.split(".");
+  const found = new RegExp(`^${asWritten.map(patternOf).join("\\.")}$`, "s").exec(object);
+  if (!found) return undefined;
+  return asWritten.map((part, at) => (onlyReference.test(part) ? undefined : found[at + 1]!));
 }
 
-/** The written text split on each `.` that is not inside a `${…}` reference. */
+/** The pattern for one written part, with one group: the part's text in the resolved object. */
+function patternOf(part: string): string {
+  if (onlyReference.test(part)) return "(.*)";
+  const text: string[] = [];
+  let at = 0;
+  while (at < part.length) {
+    if (part.startsWith("$${", at)) {
+      text.push("\\$\\{");
+      at += 3;
+    } else if (part.startsWith("${", at)) {
+      text.push("[^.]*");
+      at = referenceEnd(part, at);
+    } else {
+      text.push(part[at]!.replace(/[\\^$.*+?()[\]{}|/-]/, "\\$&"));
+      at += 1;
+    }
+  }
+  return `(${text.join("")})`;
+}
+
+/** Where the `${…}` that starts at `start` ends: after its `}`, or at the end of the text. */
+function referenceEnd(text: string, start: number): number {
+  const close = text.indexOf("}", start + 2);
+  return close < 0 ? text.length : close + 1;
+}
+
+/**
+ * The written text split on each `.` that is not inside a `${…}` reference. A `$${` is the
+ * text `${`, as the references of the configuration read it, so it starts no reference.
+ */
 function splitWritten(written: string): string[] {
   const parts: string[] = [];
   let part = "";
-  let inside = false;
-  for (let at = 0; at < written.length; at++) {
-    const char = written[at]!;
-    if (!inside && char === "$" && written[at + 1] === "{") inside = true;
-    else if (inside && char === "}") inside = false;
-    if (char === "." && !inside) {
+  let at = 0;
+  while (at < written.length) {
+    let end = at + 1;
+    if (written.startsWith("$${", at)) end = at + 3;
+    else if (written.startsWith("${", at)) end = referenceEnd(written, at);
+    if (written[at] === "." && end === at + 1) {
       parts.push(part);
       part = "";
-    } else part += char;
+    } else part += written.slice(at, end);
+    at = end;
   }
   return [...parts, part];
 }

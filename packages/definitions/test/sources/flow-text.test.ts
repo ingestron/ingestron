@@ -4,13 +4,32 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { memoryFiles, type FileSource } from "@ingestron/config";
 import { parse } from "yaml";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import type * as Match from "../../src/sources/match.js";
 import {
   documentReference,
   referenceKinds,
   resolveDefinitions,
   type PackInfo,
 } from "../../src/index.js";
+
+/** What the matching of flow tables does, counted: the index made, and each call's use of it. */
+const matching = vi.hoisted(() => ({ indexes: 0, calls: 0, withIndex: 0 }));
+vi.mock("../../src/sources/match.js", async (importOriginal) => {
+  const original = await importOriginal<typeof Match>();
+  return {
+    ...original,
+    indexTables: (...args: Parameters<typeof original.indexTables>) => {
+      matching.indexes += 1;
+      return original.indexTables(...args);
+    },
+    matchObject: (...args: Parameters<typeof original.matchObject>) => {
+      matching.calls += 1;
+      if (args[4] !== undefined) matching.withIndex += 1;
+      return original.matchObject(...args);
+    },
+  };
+});
 
 const pack = parse(
   readFileSync(
@@ -80,25 +99,17 @@ describe("a flow's text in one resolution", () => {
     expect(large.reads.get("sales.yaml")).toBe(3);
   });
 
-  it.each([
-    [2000, 2],
-    [4000, 4],
-  ])(
-    "resolves %i tables with source metadata in under %i s",
-    (count, bound) => {
-      const files = memoryFiles(project(count));
-      // The best of three, so that other test files running at the same time do not decide it.
-      const seconds = Math.min(
-        ...[1, 2, 3].map(() => {
-          const started = performance.now();
-          resolve(files);
-          return (performance.now() - started) / 1000;
-        }),
-      );
-      expect(seconds).toBeLessThan(bound);
-    },
-    30_000,
-  );
+  it("indexes the document once and matches every table through the index", () => {
+    // A bound on time would pass on a full scan for each table (about 16 million comparisons for
+    // 4,000 tables); this counts what the matching does instead, and the unit tests of
+    // `matchObject` count the comparisons each call makes.
+    for (const key of Object.keys(matching) as (keyof typeof matching)[]) matching[key] = 0;
+    const result = resolve(memoryFiles(project(4000)));
+    expect(result.sourceTables?.filter((item) => item.entry)).toHaveLength(4000);
+    expect(matching.indexes).toBe(1);
+    expect(matching.calls).toBe(4000);
+    expect(matching.withIndex).toBe(4000);
+  });
 
   it("compares every table when the last part of the flow's object is a reference", () => {
     const flow = `apiVersion: ingestron.io/v1\nkind: Flow\nid: sales\nsource: erp\ntables:\n  one: { object: "ERP.dbo.\${values.t}" }\n`;
@@ -114,6 +125,32 @@ describe("a flow's text in one resolution", () => {
     // A last part that is a reference matches every table with the other parts: the full scan.
     const ambiguous = result.diagnostics.find((item) => item.code === "SOURCE_OBJECT_AMBIGUOUS");
     expect(ambiguous?.message).toContain("ERP.dbo.T0, ERP.dbo.T1, ERP.dbo.T2");
+  });
+
+  it("compares a reference literally when the flow's text cannot be read again", () => {
+    // The text is read to load the documents, and then to see which parts of an object are
+    // references. Where it cannot be read the second time, the resolved text stands in for it.
+    const flow = `apiVersion: ingestron.io/v1\nkind: Flow\nid: sales\nsource: erp\ntables:\n  one: { object: "\${values.db}.dbo.T1" }\n`;
+    const files = project(3, flow);
+    files["project.yaml"] =
+      "id: retail\nenvironments: { dev: {} }\nvalues: { db: OTHER }\nimports: ['*.yaml', 'sources/*.yaml']\n";
+    const inner = memoryFiles(files);
+    let reads = 0;
+    const lost: FileSource = {
+      ...inner,
+      read: (path) => (path === "sales.yaml" && ++reads > 1 ? undefined : inner.read(path)),
+    };
+    const entry = (from: FileSource) =>
+      resolveDefinitions(from, {
+        packs: [pack],
+        environment: "dev",
+        envvars: {},
+        sourceTables: true,
+      }).sourceTables?.[0]?.entry?.object;
+    // With the text, `${values.db}` is a part that matches anything, so OTHER matches ERP.
+    expect(entry(inner)).toBe("ERP.dbo.T1");
+    // Without it, the part is the resolved OTHER, compared as it stands: no table.
+    expect(entry(lost)).toBeUndefined();
   });
 
   it("is read again by the next resolution of the same files, so a changed text is never stale", () => {
@@ -137,5 +174,14 @@ describe("the reference", () => {
     expect(fields.find((field) => field.path.join("/") === "connection")?.docs).toBe(
       "/docs/reference/documents#sourcemetadata-connection",
     );
+  });
+
+  it("shows the description written beside a $ref, not the referenced column's", () => {
+    const fields = documentReference("SourceMetadata");
+    const items = fields.find((field) => field.path.join("/") === "tables/*/columns/*/items");
+    expect(items?.description).toBe("The element of a column whose logical type is `array`.");
+    // The same column definition gives a list of columns its own, other description.
+    const nested = fields.find((field) => field.path.join("/") === "tables/*/columns/*/properties");
+    expect(nested?.description).toBe("The fields of a column whose logical type is `object`.");
   });
 });

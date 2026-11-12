@@ -1720,7 +1720,7 @@ optional `environmentsTogether: true` (section 7), an optional
 `replaceMe: error` (section 1), an optional `sourceTables: true` (section
 12.7), and `expect`.
 
-`expect` gives either `tables` and the other results below, or `diagnostics`:
+`expect` gives any of the results below:
 
 - `tables` are partial objects, in order, with `fullName` written as
   `catalog.schema.table`. `null` at any key stands for a value the table does
@@ -2788,6 +2788,9 @@ for a table that ends at the landed files and is served by a serve step, the
 serve step's pack. The platform manages grants or masks for it when
 `<pack>.manage.grants` or `<pack>.manage.masks` is on (section 7.1, as for
 every capability of a pack).
+A table whose steps cannot be resolved (an unknown method, for example) has no
+known pack, so this trigger is not judged for it, and nothing is reported for
+that: its own error is the one to fix.
 
 The second trigger needs no rule of its own. A data product's port finds its
 table through the port's `contractId` (section 8), so a table without a
@@ -2933,8 +2936,9 @@ the metadata entry and `<connection>` the flow's `source`:
   `Check the object's name, or import the source's metadata again if the table was added since.`
 
 A type is written `number(<precision>,<scale>)` for a number that gives a
-precision, with a missing scale as 0, `string(<maxLength>)` for a string that
-gives a `maxLength`, and its `logicalType` otherwise. A key is its columns
+precision, with a missing scale as 0, `number(scale <scale>)` for a number that
+gives a scale and no precision, `string(<maxLength>)` for a string that gives a
+`maxLength`, and its `logicalType` otherwise. A key is its columns
 joined with `, `, ordered as above.
 `<flow object>` is the flow table's `object`, resolved. Where a message names a
 column, `<column>` is the one the subject has.

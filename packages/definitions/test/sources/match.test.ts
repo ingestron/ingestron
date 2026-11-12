@@ -95,7 +95,7 @@ describe("matchObject with names", () => {
     ).toEqual(["ERP.dbo.Customers"]);
   });
 
-  it("takes a part a reference's value splits in two as the resolved text gives it", () => {
+  it("keeps a dotted value inside the leftmost part that is only a reference", () => {
     expect(
       objects(matchObject("a.b.dbo.Customers", "${values.db}.dbo.Customers", erp, insensitive)),
     ).toEqual(["ERP.dbo.Customers"]);
@@ -192,7 +192,8 @@ describe("matchObject with an index of the tables", () => {
     };
     for (const names of [insensitive, undefined]) {
       const index = indexTables(many, names);
-      expect(matchAll(names, index)).toBeLessThanOrEqual(count);
+      // One read of one table for each object: the index lists one candidate, compared once.
+      expect(matchAll(names, index)).toBe(count);
       // Without the index every object is compared with every table.
       expect(matchAll(names)).toBe(count * count);
     }

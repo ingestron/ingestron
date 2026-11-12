@@ -186,4 +186,24 @@ describe("compareSourceColumns types", () => {
       ),
     ).toEqual(["SOURCE_TYPE_CHANGED"]);
   });
+
+  it("keeps a scale that has no precision in the types a message names", () => {
+    const found = compareSourceColumns(
+      {
+        columns: [{ name: "price", logicalType: "number", logicalTypeOptions: { scale: 2 } }],
+        primaryKey: [],
+      },
+      table(column("price", "number", { logicalTypeOptions: { scale: 4 } })),
+      loose,
+    );
+    expect(found).toEqual([
+      {
+        code: "SOURCE_TYPE_CHANGED",
+        kind: "breaking",
+        column: "price",
+        before: "number(scale 2)",
+        after: "number(scale 4)",
+      },
+    ]);
+  });
 });
