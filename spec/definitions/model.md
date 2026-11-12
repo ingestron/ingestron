@@ -1845,7 +1845,7 @@ The entries that section 12 adds are these, each from its schema:
 `logicalTypeOptions`, `required`, `primaryKeyPosition`, `properties` and
 `items`); a Connection's `metadata` (`from` and `with`); and the `sources`
 mapping of the Standard and of the Platform, with `breaking`. A flow table's
-`contract` is an entry that is not `required` (section 12.4). The model's
+`contract` is an entry that is not `required` (section 12.4). The result's
 `sourceTables` (section 12.7) is made by resolving, not written in a
 document, so it has no entry.
 
@@ -2846,8 +2846,9 @@ for `SOURCE_TABLE_GONE`, so that a team accepts one column of one table and not
 another. The feature is `(primary key)` so that a column named `key` is not
 mistaken for the key.
 
-**Not known.** A flow table whose `object` is written as one reference that is
-unset at planning, such as `${envvar:TABLE}`, is not compared and is never
+**Not known.** A flow table whose `object` is written as one reference, or only
+references (section 12.3), with at least one unset at planning, such as
+`${envvar:TABLE}`, is not compared and is never
 `SOURCE_TABLE_GONE`: its name is not known, so that it is gone would be false.
 Unset is reported as for any reference (section 1).
 
@@ -2890,7 +2891,7 @@ joined with `, `, ordered as above.
 `<flow object>` is the flow table's `object`, resolved. Where a message names a
 column, `<column>` is the one the subject has.
 
-### 12.7 The model's source tables
+### 12.7 The source tables of the result
 
 The source request and contract drafting (CLI specification,
 [sources.md](../cli/sources.md)) need each flow table's metadata entry, and
