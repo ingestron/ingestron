@@ -14,7 +14,8 @@ export const commands = [
   },
   {
     name: "contract",
-    summary: "Draft a contract from a sample CSV or JSON file: column names and types.",
+    summary:
+      "Draft a contract from a sample CSV or JSON file, or with --from-metadata from imported source metadata.",
   },
   {
     name: "request",
@@ -26,6 +27,10 @@ export const commands = [
     summary: "Create a project from a connection, a starter or a published standard.",
   },
   { name: "standard", summary: "Install or list published standards." },
+  {
+    name: "source",
+    summary: "Request source metadata from its owners, or import the file they send.",
+  },
 ] as const;
 
 /**
@@ -49,7 +54,28 @@ export const flags = [
   {
     flag: "--env <name>",
     summary:
-      "compare and request: only this environment (repeatable). Default: all in project.yaml. init: the environments.",
+      "compare and request: only this environment (repeatable). Default: all in project.yaml. source and contract --from-metadata: one environment. init: the environments.",
+  },
+  {
+    flag: "--connection <id>",
+    summary: "source request: only this connection. Default: every connection a flow reads.",
+  },
+  {
+    flag: "--object <text>",
+    summary:
+      "source import: the table a file of one table describes, when its path does not name it.",
+  },
+  {
+    flag: "--dry-run",
+    summary: "source import: show what the file would change and write nothing.",
+  },
+  {
+    flag: "--from-metadata",
+    summary: "contract: draft from the source metadata of the tables named, such as sales.orders.",
+  },
+  {
+    flag: "--needed",
+    summary: "contract --from-metadata: draft every table that needs a contract and names none.",
   },
   { flag: "--definitions <dir>", summary: "Folder with project.yaml. Default: ." },
   { flag: "--out <dir>", summary: "Output folder. Default: build" },
@@ -94,7 +120,7 @@ const flagWidth = Math.max(...flags.map(({ flag }) => flag.length)) + 2;
 
 /** Usage text for --help and mistakes. */
 export const usage = [
-  "Usage: ingestron <plan|apply|check|compare|contract|request|schemas|init|standard> [options]",
+  "Usage: ingestron <plan|apply|check|compare|contract|request|schemas|init|standard|source> [options]",
   "",
   ...commands.map(({ name, summary }) => `  ${name.padEnd(10)}${summary}`),
   "",

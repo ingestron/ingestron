@@ -12,6 +12,16 @@ import { sourceOrigin, sourceRecipes } from "./recipes.js";
 import { sourceSection, type SectionInput } from "./request-step.js";
 
 /**
+ * The message for a connection the project lacks, with every connection id in code point order
+ * (spec/cli/sources.md, section 4, "Resolving"); the import gives it too.
+ * @internal
+ */
+export function notAConnection(id: string, connections: readonly string[]): string {
+  const ids = [...connections].sort(byCodePoint);
+  return `"${id}" is not a connection of the project. Connections: ${ids.join(", ") || "none"}.`;
+}
+
+/**
  * What the source request is for, beyond the environment.
  * @public
  */
@@ -133,10 +143,7 @@ function askedFor(
   const problems: string[] = [];
   const ids = connections.map((connection) => connection.id).sort(byCodePoint);
   const { connection: named } = options;
-  if (named !== undefined && !ids.includes(named))
-    problems.push(
-      `"${named}" is not a connection of the project. Connections: ${ids.join(", ") || "none"}.`,
-    );
+  if (named !== undefined && !ids.includes(named)) problems.push(notAConnection(named, ids));
   const recipes = options.recipes ?? recipesOf(files, problems);
   if (recipes === undefined) return { sections: [], problems };
   const chosen =

@@ -19,7 +19,7 @@ export const commands: readonly [{
     readonly summary: "Show what differs between two environments, after resolving.";
 }, {
     readonly name: "contract";
-    readonly summary: "Draft a contract from a sample CSV or JSON file: column names and types.";
+    readonly summary: "Draft a contract from a sample CSV or JSON file, or with --from-metadata from imported source metadata.";
 }, {
     readonly name: "request";
     readonly summary: "Print what to ask of whoever runs the data platform, per environment.";
@@ -32,6 +32,9 @@ export const commands: readonly [{
 }, {
     readonly name: "standard";
     readonly summary: "Install or list published standards.";
+}, {
+    readonly name: "source";
+    readonly summary: "Request source metadata from its owners, or import the file they send.";
 }];
 
 // @public
@@ -46,7 +49,22 @@ export const flags: readonly [{
     readonly summary: "init: the route: Databricks directly, or ADF into Databricks, Synapse views, DuckDB tables or the landed files alone.";
 }, {
     readonly flag: "--env <name>";
-    readonly summary: "compare and request: only this environment (repeatable). Default: all in project.yaml. init: the environments.";
+    readonly summary: "compare and request: only this environment (repeatable). Default: all in project.yaml. source and contract --from-metadata: one environment. init: the environments.";
+}, {
+    readonly flag: "--connection <id>";
+    readonly summary: "source request: only this connection. Default: every connection a flow reads.";
+}, {
+    readonly flag: "--object <text>";
+    readonly summary: "source import: the table a file of one table describes, when its path does not name it.";
+}, {
+    readonly flag: "--dry-run";
+    readonly summary: "source import: show what the file would change and write nothing.";
+}, {
+    readonly flag: "--from-metadata";
+    readonly summary: "contract: draft from the source metadata of the tables named, such as sales.orders.";
+}, {
+    readonly flag: "--needed";
+    readonly summary: "contract --from-metadata: draft every table that needs a contract and names none.";
 }, {
     readonly flag: "--definitions <dir>";
     readonly summary: "Folder with project.yaml. Default: .";

@@ -5,17 +5,34 @@ import { packLoadProblem } from "@ingestron/definitions";
 import {
   compare,
   draftContract,
+  draftFromMetadata,
   generate,
   init,
   request,
+  source,
   standard,
   writeSchemas,
 } from "./commands/index.js";
-import { readArgs, usage, type Io } from "./terminal/index.js";
+import { readArgs, usage, type Io, type Options } from "./terminal/index.js";
 
 // The command's arguments and options, as help lists them.
 export { commands, flags } from "./terminal/index.js";
 export type { Io } from "./terminal/index.js";
+
+/** What each command runs. */
+const handlers: Record<Options["command"], (options: Options, io: Io) => number> = {
+  plan: generate,
+  apply: generate,
+  check: generate,
+  compare,
+  contract: (options, io) =>
+    options.fromMetadata ? draftFromMetadata(options, io) : draftContract(options, io),
+  request,
+  schemas: writeSchemas,
+  init,
+  standard,
+  source,
+};
 
 /**
  * Runs `ingestron` with `args` and returns the exit code: 0 success, 1
@@ -40,10 +57,5 @@ export function run(args: string[], io: Io): number {
     io.write(`${formatDiagnostics([refused])}\n`);
     return 2;
   }
-  if (options.command === "init") return init(options, io);
-  if (options.command === "standard") return standard(options, io);
-  if (options.command === "request") return request(options, io);
-  if (options.command === "compare") return compare(options, io);
-  if (options.command === "contract") return draftContract(options, io);
-  return options.command === "schemas" ? writeSchemas(options, io) : generate(options, io);
+  return handlers[options.command](options, io);
 }

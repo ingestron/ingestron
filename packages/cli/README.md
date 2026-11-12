@@ -10,6 +10,17 @@ ingestron check     # for CI: fail when the output is not up to date
 ingestron schemas   # editor schemas for VS Code's YAML extension
 ```
 
+`ingestron source request` prints what to ask the owners of a source for, so that
+Ingestron knows the columns and types of its tables. `ingestron source import`
+reads the file they send into `sources/<connection>.yaml`, and `ingestron contract
+--from-metadata` drafts a contract from that metadata:
+
+```sh
+ingestron source request --env dev                           # what to ask for, and where to save it
+ingestron source import erp sources/erp.catalog.csv --dry-run # what the file would change
+ingestron contract --from-metadata --needed                  # a draft for each table that needs a contract
+```
+
 It loads the definitions with [`@ingestron/definitions`](../definitions/README.md),
 builds the files with the packs its standard names, such as the
 [Databricks pack](https://github.com/ingestron/pack-databricks), and

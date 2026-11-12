@@ -1,6 +1,9 @@
 // Command-line arguments.
 import { parseArgs } from "node:util";
 import { commands } from "./help.js";
+import { metadataTables, sourceAction, type SourceAction } from "./source-args.js";
+
+export type { SourceAction } from "./source-args.js";
 
 /** What the user asked for. */
 export interface Options {
@@ -13,9 +16,14 @@ export interface Options {
     | "contract"
     | "schemas"
     | "init"
-    | "standard";
+    | "standard"
+    | "source";
   /** standard: install a kit's standard, or list the kits, for one platform when given. */
   standard?: StandardAction;
+  /** source: print the source request, or import a file of source metadata. */
+  source?: SourceAction;
+  /** contract --from-metadata: the tables to draft, or every table that needs a contract. */
+  fromMetadata?: { tables: string[]; needed: boolean };
   /** contract: the sample file to draft a contract from. */
   sample?: string;
   /** compare and request: the environments; empty means every environment in project.yaml. */
@@ -69,6 +77,11 @@ const spec = {
   set: { type: "string", multiple: true },
   yes: { type: "boolean", default: false },
   platform: { type: "string" },
+  connection: { type: "string" },
+  object: { type: "string" },
+  "dry-run": { type: "boolean", default: false },
+  "from-metadata": { type: "boolean", default: false },
+  needed: { type: "boolean", default: false },
 } as const;
 
 type Values = ReturnType<
@@ -85,13 +98,11 @@ export function readArgs(args: string[]): Options | "help" | { mistake: string }
   }
   const { values, positionals } = parsed;
   if (values.help) return "help";
-  const chosen = commandOf(positionals, values.platform);
+  const chosen = commandOf(positionals, values);
   if ("mistake" in chosen) return chosen;
-  const { command, extra, standard } = chosen;
-  if (values.env !== undefined && generates.has(command))
-    return {
-      mistake: `Every environment is generated together, so ${command} does not take --env. Use compare for two environments, or request for one.`,
-    };
+  const { command, extra, ...subCommand } = chosen;
+  const unwanted = envMistake(command, values.env, subCommand);
+  if (unwanted) return { mistake: unwanted };
   const init = initOptions(values, extra[0]);
   if ("mistake" in init) return init;
   return {
@@ -102,9 +113,22 @@ export function readArgs(args: string[]): Options | "help" | { mistake: string }
     diffs: !values["no-diff"],
     allowExtra: values["allow-extra"],
     ...sampleOf(command, extra[0]),
-    ...(standard && { standard }),
+    ...subCommand,
     init,
   };
+}
+
+/** The mistake in the --env given: for a command that generates every environment, or too many. */
+function envMistake(
+  command: string,
+  env: string[] | undefined,
+  { source, fromMetadata }: Pick<Chosen, "source" | "fromMetadata">,
+): string | undefined {
+  if (env !== undefined && generates.has(command))
+    return `Every environment is generated together, so ${command} does not take --env. Use compare for two environments, or request for one.`;
+  if (env !== undefined && env.length > 1 && (source || fromMetadata))
+    return `${source ? "source" : "contract --from-metadata"} takes at most one --env.`;
+  return undefined;
 }
 
 /** standard's sub-command: `install <kit>` or `list`, or a mistake. */
@@ -123,15 +147,33 @@ function standardAction(
   return { mistake: `Unknown command "standard ${extra.join(" ")}".` };
 }
 
-/** The command and the arguments after it, with standard's sub-command, or a mistake. */
-function commandOf(
-  positionals: string[],
-  platform: string | undefined,
-): { command: string; extra: string[]; standard?: StandardAction } | { mistake: string } {
+/** What `commandOf` found: the command, its other arguments and its sub-command, or a mistake. */
+interface Chosen {
+  command: string;
+  extra: string[];
+  standard?: StandardAction;
+  source?: SourceAction;
+  fromMetadata?: { tables: string[]; needed: boolean };
+}
+
+/** The command and the arguments after it, with standard's and source's sub-commands, or a mistake. */
+function commandOf(positionals: string[], values: Values): Chosen | { mistake: string } {
   const [command = "", ...extra] = positionals;
   if (command === "standard") {
-    const standard = standardAction(extra, platform);
+    const standard = standardAction(extra, values.platform);
     return "mistake" in standard ? standard : { command, extra: [], standard };
+  }
+  if (command === "source") {
+    const source = sourceAction(extra, {
+      connection: values.connection,
+      object: values.object,
+      dryRun: values["dry-run"],
+    });
+    return "mistake" in source ? source : { command, extra: [], source };
+  }
+  if (command === "contract" && values["from-metadata"]) {
+    const fromMetadata = metadataTables(extra, values.needed);
+    return "mistake" in fromMetadata ? fromMetadata : { command, extra: [], fromMetadata };
   }
   return known(command, extra)
     ? { command, extra }

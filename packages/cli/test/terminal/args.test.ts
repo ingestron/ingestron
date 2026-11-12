@@ -15,6 +15,7 @@ describe("command metadata", () => {
       "schemas",
       "init",
       "standard",
+      "source",
     ]);
     for (const { name, summary } of commands)
       expect(usage).toContain(`${name.padEnd(10)}${summary}`);
