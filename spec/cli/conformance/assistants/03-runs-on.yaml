@@ -25,4 +25,6 @@ expect:
       - |
         7. Values written `${envvar:NAME}` are not secrets. The `databricks@2` and `adf@2` output keeps them as values the deploying pipeline supplies. DuckDB reads them from the environment or the project's `.env` files when it runs. Do not read, print or commit `.env` files. `ingestron request` lists the values each environment needs. This project uses none.
       - |
-        <!-- ingestron:end sha256:088e6c679894b5825691287418bb3732f326dea6aabe1aca81d82852122b346c -->
+        8. Environments differ only in values, under `environments.<name>.values` in `project.yaml`, and in `runs-on`. `plan`, `apply` and `check` always cover every environment; `ingestron compare --env <a> --env <b>` shows what differs.
+      - |
+        <!-- ingestron:end sha256:3e939a63cba4147b0f0df020ec37957fcf8725f359705b8d78aed2aecd9e3ceb -->

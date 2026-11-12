@@ -19,4 +19,4 @@ expect:
   contains:
     AGENTS.md:
       - "# Notes\r\nKeep it short.\r\n\r\n<!-- ingestron:begin guide 1. Ingestron writes this section and `ingestron apply` keeps it current. Write your own notes outside it, or delete both markers to make it yours. -->\r\n# Working on this Ingestron project\r\n\r\nThis folder holds"
-      - "- `ingestron contract <sample>`: drafts a contract from a CSV or JSON sample.\r\n<!-- ingestron:end sha256:423f0f50de23c00bda2cfe489dde0e3a7a63f06b76312b85e68487d2cfcbc7d9 -->\r\n"
+      - "- `ingestron contract <sample>`: drafts a contract from a CSV or JSON sample.\r\n<!-- ingestron:end sha256:d68173ffdbe8dad3ba659761cabe453ca0c9a53e1189f3000b93c144ce563e36 -->\r\n"

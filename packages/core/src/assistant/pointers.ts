@@ -7,8 +7,8 @@ const claudeText = "<!-- Ingestron: the project guide is in AGENTS.md. -->\n@AGE
 const copilotText = [
   "See [AGENTS.md](../AGENTS.md) for this Ingestron project.",
   "",
-  "- Change the definitions, never `build/`: Ingestron reports a hand edit there as a conflict.",
-  "- After a change, run `ingestron plan`, fix every problem it reports, and show the user the plan before running `ingestron apply`. Then `ingestron check` must pass.",
+  "- Change the definitions, never the generated files: Ingestron reports a hand edit there as a conflict.",
+  "- After a change, follow AGENTS.md: run its plan command, fix every problem it reports, and show the user the plan before applying. Its check command must then pass.",
   "- Never write a password, token, key or connection string in any file. Use `${secret:name}` for a credential.",
   "",
 ].join("\n");

@@ -126,10 +126,10 @@ describe("guideHash", () => {
       stale.indexOf("\n\n## More notes") + 1,
     );
     expect(section).toContain(
-      "sha256:a38151ec87fcee75915aca35f30ee07066eb7dfd04eeb0a2a2f7256c99db72f8",
+      "sha256:5188f2782f59e693f00b590cc8d790667c9af9f7fe4646a1a8d6fe9ba6db7211",
     );
     expect(guideHash(section)).toBe(
-      "a38151ec87fcee75915aca35f30ee07066eb7dfd04eeb0a2a2f7256c99db72f8",
+      "5188f2782f59e693f00b590cc8d790667c9af9f7fe4646a1a8d6fe9ba6db7211",
     );
   });
 });

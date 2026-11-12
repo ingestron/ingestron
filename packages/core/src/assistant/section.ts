@@ -1,5 +1,6 @@
 // The section of AGENTS.md that Ingestron owns: its hash, and what to do with a file that may hold it
 // (spec/cli/assistants.md, sections 3 and 5).
+import { sourceGuideHeading } from "../source-text.js";
 import { hashOf, lineEnding, shapeOf } from "./markers.js";
 
 /**
@@ -64,5 +65,5 @@ export function hasSourceGuide(agents: string | undefined): boolean {
   return agents
     .slice(shape.start, shape.endStart)
     .split("\n")
-    .some((line) => line.replace(/\r$/, "") === "## Source metadata");
+    .some((line) => line.replace(/\r$/, "") === sourceGuideHeading);
 }

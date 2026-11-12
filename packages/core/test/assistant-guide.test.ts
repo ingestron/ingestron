@@ -49,7 +49,7 @@ describe("guideSection against the conformance cases", () => {
       guideFacts(caseProject(assistantCase("01-duckdb-only")), "build") as GuideFacts,
     );
     expect(duckdb).toContain(
-      "<!-- ingestron:end sha256:423f0f50de23c00bda2cfe489dde0e3a7a63f06b76312b85e68487d2cfcbc7d9 -->\n",
+      "<!-- ingestron:end sha256:d68173ffdbe8dad3ba659761cabe453ca0c9a53e1189f3000b93c144ce563e36 -->\n",
     );
   });
 

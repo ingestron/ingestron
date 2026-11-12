@@ -34,6 +34,8 @@ The names are `copilot`, `claude`, `codex`, `cursor`, `agents` and `none`.
   `"none" cannot be given with another assistant.`
 - `assistant add` with no names, or with `none`, is a usage mistake (exit 2):
   `assistant add needs one or more of copilot, claude, codex, cursor or agents.`
+- `assistant` with no sub-command is a usage mistake (exit 2):
+  `assistant needs add <names>.`
 - Duplicates are kept once. The names are taken in the order of the first
   paragraph of this section.
 
@@ -58,13 +60,14 @@ write one more file:
 ```
 
 `.github/copilot-instructions.md` holds exactly this text, each line ending in
-LF. It holds no fact about the project, so it never goes stale:
+LF. It holds no fact about the project, and names no folder or command option,
+so it never goes stale and never conflicts with `AGENTS.md`:
 
 ```text
 See [AGENTS.md](../AGENTS.md) for this Ingestron project.
 
-- Change the definitions, never `build/`: Ingestron reports a hand edit there as a conflict.
-- After a change, run `ingestron plan`, fix every problem it reports, and show the user the plan before running `ingestron apply`. Then `ingestron check` must pass.
+- Change the definitions, never the generated files: Ingestron reports a hand edit there as a conflict.
+- After a change, follow AGENTS.md: run its plan command, fix every problem it reports, and show the user the plan before applying. Its check command must then pass.
 - Never write a password, token, key or connection string in any file. Use `${secret:name}` for a credential.
 ```
 
@@ -140,7 +143,7 @@ This folder holds Ingestron definitions: YAML that generates the files the data 
 ## Rules
 
 1. Change the definitions, never `<out>/`. Ingestron records each generated file in `.generated.json` and reports a hand edit as a conflict.
-2. After a change, run `ingestron plan`. Fix every problem it reports, then show the user the plan before running `ingestron apply`. Then `ingestron check` must pass; CI runs it.
+2. After a change, run `ingestron plan`. Fix every problem it reports, then show the user the plan before running `ingestron apply`. Then `ingestron check` must pass; CI should run it.
 3. Work inside the standard. Do not edit `<standard file>` to clear a problem; tell the user what the platform team would need to change.
    - `<action>` allows `<m>`, `<m>`.
    - `<action>` fixes, for `<method>`: `<key>: <value>`, `<key>: <value>`.
@@ -149,7 +152,7 @@ This folder holds Ingestron definitions: YAML that generates the files the data 
 5. Look settings up; do not guess. Each method's settings, types and defaults: https://docs.ingestron.io/docs/reference/packs, or run `ingestron schemas` and read `.ingestron/schemas/`. Error codes: https://docs.ingestron.io/docs/reference/errors.
 6. Never write a password, token, key or connection string in any file. Use `${secret:name}` for a credential.
 7. Values written `${envvar:NAME}` are not secrets.<deploy><duckdb> Do not read, print or commit `.env` files. `ingestron request` lists the values each environment needs. This project uses: `<NAME>`, `<NAME>`.
-8. Environments differ only in values, under `environments.<name>.values` in `project.yaml`. `plan`, `apply` and `check` always cover every environment; `ingestron compare --env <a> --env <b>` shows what differs.
+8. Environments differ only in values, under `environments.<name>.values` in `project.yaml`<, and in `runs-on`>. `plan`, `apply` and `check` always cover every environment; `ingestron compare --env <a> --env <b>` shows what differs.
 
 ## Source metadata
 
@@ -210,7 +213,8 @@ other `<…>` is filled in.
     and the rest of that line, with its surrounding spaces removed;
   - else nothing.
 
-  Without a standard document the line is
+  When the standard lists no packs the line ends `Packs: none.`. Without a
+  standard document the line is
   `- No standard was found in the files project.yaml imports.`
 
 - **Definitions.** The patterns of `imports`, as written, in order. With none,
@@ -231,6 +235,8 @@ other `<…>` is filled in.
 
 ### The rules
 
+Rule 2 ends `Then `ingestron check` must pass; CI should run it.`.
+
 Rule 3 is written as the first two sentences alone when the project has no
 standard document, and with the items when it has. With no standard it reads
 exactly:
@@ -242,11 +248,14 @@ exactly:
 The items are, in this order:
 
 1. ``- `<action>` allows `<m>`, `<m>`.`` for each action of the standard that has
-   `allowed`, in the order the standard writes the actions, with each method
-   as written.
+   `allowed`, with each method as written. The actions are exactly `ingest`,
+   `transform`, `store` and `serve`, in that order: no other top-level key of
+   the standard counts as an action, even with `allowed` or `fixed`. The
+   methods of an action are in the order the standard writes them.
 2. ``- `<action>` fixes, for `<method>`: `<key>: <value>`, `<key>: <value>`.``
-   for each `<action>.fixed.<method>` that has keys, in the order the standard
-   writes them, a key as written. A value is written as YAML flow text, on
+   for each `<action>.fixed.<method>` that has keys, the actions in the order
+   of item 1 and the methods in the order the standard writes them, a key as
+   written. A value is written as YAML flow text, on
    one line: a number, `true`, `false` and `null` as they are, a string bare
    when it is made of letters, digits and `_ . / @ : -`, starts with a letter
    or digit and is not read as another type (`true`, `false`, `null`, `~`, a
@@ -257,6 +266,12 @@ The items are, in this order:
    ``- `<action>` fixes, for `<method>`: `<key>`, `<key>`.``
 3. ``- Fixed for every table: `<key>`, `<key>`.`` for the keys of the
    standard's top-level `fixed`, when it has any.
+
+Rule 8 has one sentence that depends on the environments: when at least one
+environment has `runs-on`, its first sentence reads ``Environments differ only
+in values, under `environments.<name>.values` in `project.yaml`, and in
+`runs-on`.``; otherwise it is as shown above. The `<, and in `runs-on`>` of the
+template is that part.
 
 Rule 7 has two sentences that depend on the packs:
 
@@ -280,7 +295,17 @@ is `This project uses none.`
   order, at most 20 each. A longer list is cut after 20 and ends
   `, and <n> more`, with `<n>` the number left out: `` `a`, `b`, and 3 more``.
 - `<out>` is the output folder relative to the project folder, with `/`
-  separators: `build` unless `--out` names another.
+  separators: `build` unless `--out` names another. When `<out>` is not
+  `build`, every `ingestron plan`, `ingestron apply` and `ingestron check` the
+  guide writes (in rule 2 and in `## Commands`) gains ` --out <out>` directly
+  after the command word, such as `ingestron plan --out dist`. With `build`
+  the text is as shown above.
+- Facts are made safe before they are written. Each CR, LF or other control
+  character (U+0000 to U+001F, U+007F) in a fact is replaced by a space. A
+  fact that holds a backtick is written as a CommonMark code span with double
+  backticks and a space on each side (``` `` a`b `` ```), not with single
+  backticks. So a fact never starts a line, never ends a code span early and
+  never makes a marker line.
 - The facts are read from `project.yaml` and the files its `imports` match,
   as YAML, without resolving. A file that does not parse is skipped. The
   `${envvar:NAME}` names are found in the text of those files, as the
@@ -301,18 +326,20 @@ in the order `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`.
 Nothing else is ever replaced. `.gitignore` is unchanged. Each file prints one
 line, from this closed set:
 
-| Line                                                                                                                                                     | When                                                                                                                  |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `<file>: written`                                                                                                                                        | The file is new (or empty, and holds only the new text).                                                              |
-| `AGENTS.md: added the Ingestron section`                                                                                                                 | `AGENTS.md` exists and is the user's.                                                                                 |
-| `AGENTS.md: updated the Ingestron section`                                                                                                               | `AGENTS.md` holds a stale section.                                                                                    |
-| `<file>: up to date`                                                                                                                                     | The file already has what would be written.                                                                           |
-| `CLAUDE.md: added @AGENTS.md`                                                                                                                            | `CLAUDE.md` exists and has no line `@AGENTS.md`.                                                                      |
-| `.github/copilot-instructions.md: added the link to AGENTS.md`                                                                                           | `.github/copilot-instructions.md` exists and has no line equal to the first line of its text (section 2).             |
-| `AGENTS.md: the Ingestron section was edited by hand, so it was not updated. Move your notes outside it, or delete both markers to keep it as your own.` | `AGENTS.md` is edited by hand.                                                                                        |
-| `<file>: not a regular file, so nothing was written to it.`                                                                                              | The path is a symbolic link, a folder or anything else that is not a regular file, or a parent of it is not a folder. |
-| `No guide: project.yaml cannot be read.`                                                                                                                 | `project.yaml` does not parse as YAML, or is not a mapping; nothing is written.                                       |
-| `No guide: project.yaml has no id.`                                                                                                                      | `project.yaml` parses but has no `id` that is a string; nothing is written.                                           |
+| Line                                                                                                                                                     | When                                                                                                                                 |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `<file>: written`                                                                                                                                        | The file is new (or empty, and holds only the new text).                                                                             |
+| `AGENTS.md: added the Ingestron section`                                                                                                                 | `AGENTS.md` exists and is the user's.                                                                                                |
+| `AGENTS.md: updated the Ingestron section`                                                                                                               | `AGENTS.md` holds a stale section.                                                                                                   |
+| `<file>: up to date`                                                                                                                                     | The file already has what would be written.                                                                                          |
+| `CLAUDE.md: added @AGENTS.md`                                                                                                                            | `CLAUDE.md` exists and has no line `@AGENTS.md`.                                                                                     |
+| `.github/copilot-instructions.md: added the link to AGENTS.md`                                                                                           | `.github/copilot-instructions.md` exists and has no line equal to the first line of its text (section 2).                            |
+| `AGENTS.md: the Ingestron section was edited by hand, so it was not updated. Move your notes outside it, or delete both markers to keep it as your own.` | `AGENTS.md` is edited by hand.                                                                                                       |
+| `<file>: not a regular file, so nothing was written to it.`                                                                                              | The path is a symbolic link, a folder or anything else that is not a regular file, or a parent of it is not a folder.                |
+| `<file>: could not be read (<code>), so nothing was written to it.`                                                                                      | The file cannot be read (a mode that denies it, say). `<code>` is the error's `code`, such as `EACCES`, or `error` when it has none. |
+| `<file>: could not be written (<code>).`                                                                                                                 | The file or its folder cannot be written, with `<code>` as above. The original is left as it was.                                    |
+| `No guide: project.yaml cannot be read.`                                                                                                                 | `project.yaml` does not parse as YAML, or is not a mapping; nothing is written.                                                      |
+| `No guide: project.yaml has no id.`                                                                                                                      | `project.yaml` parses but has no `id` that is a string; nothing is written.                                                          |
 
 - A new section is appended to an existing user's `AGENTS.md` after one blank
   line, in the file's line ending (section 3: decided by its first line). A
@@ -328,10 +355,22 @@ line, from this closed set:
   so. The other files are still written.
 - A file that is not a regular file is left as it is, and the other files are
   still written.
+- A file that cannot be read or written prints its line (`could not be read`
+  or `could not be written`) and the command moves on to the next file.
+  Nothing is thrown out of the command. `<code>` is the error's `code`, or
+  `error` when it has none.
+- An existing file is rewritten safely: the new text is written to a
+  temporary file in the same folder, named `.<name>.<random>.tmp` and created
+  with `O_CREAT|O_EXCL`, which is given the original file's mode and renamed
+  over the target. Just before the rename the target is looked at again
+  without following a link, and it is replaced only if it is still a regular
+  file. A write that fails leaves the original as it was and removes the
+  temporary file. A new file is created with `O_CREAT|O_EXCL` directly.
 
 **`init`.** `init --assistant <names>` writes the files after the project's
 files and before its plan: it prints each file's line directly after its
-`Created …` line, before the blank line that precedes the plan. With a terminal, and neither `--assistant` nor `--yes`, it
+`Created …` line, before the blank line that precedes the plan. None of these lines changes
+`init`'s exit code. With a terminal, and neither `--assistant` nor `--yes`, it
 asks last, after every other question:
 
 ```text
@@ -350,8 +389,9 @@ resolved against the working folder as `plan` resolves it. It needs
 and exit 1, with `<folder>` the project folder relative to the working folder,
 with `/` separators, and `.` when it is the working folder. It prints each
 file's line. It exits 1 when there is no guide (nothing is written, and the
-line says why), or when any file was not a regular file, and 0 otherwise, an
-edited section included. It is idempotent: run again, it prints
+line says why), when any file was not a regular file, or when any file printed
+`could not be read` or `could not be written`, and 0 otherwise, an edited
+section included. It is idempotent: run again, it prints
 `<file>: up to date` for every file it wrote.
 
 `<out>` in the guide (section 4) is the folder `--out` names, written relative

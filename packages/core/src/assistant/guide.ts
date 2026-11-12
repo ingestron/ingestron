@@ -1,6 +1,7 @@
 // The guide's text (spec/cli/assistants.md, section 4): Markdown with LF line endings, made from the
 // facts alone, so the same facts always give the same bytes.
 import type { GuideFacts, GuideStandard } from "./facts.js";
+import { columnsFileFields, sourceGuideHeading } from "../source-text.js";
 import { beginMarker, endMarker } from "./markers.js";
 
 /** The most names a list shows. */
@@ -8,7 +9,18 @@ const listed = 20;
 /** The most fixed settings a standard has before the guide lists keys only. */
 const valuesUpTo = 8;
 
-const ticks = (text: string): string => `\`${text}\``;
+/** A fact with each line ending and other control character (U+0000 to U+001F, U+007F) as a space. */
+// eslint-disable-next-line no-control-regex
+const safe = (text: string): string => text.replace(/[\u0000-\u001f\u007f]/g, " ");
+
+/**
+ * A fact as a code span: with single backticks, or, when it holds a backtick, with double ones and
+ * a space on each side (CommonMark). A fact never starts a line or ends the span early.
+ */
+const ticks = (text: string): string => {
+  const fact = safe(text);
+  return fact.includes("`") ? `\`\` ${fact} \`\`` : `\`${fact}\``;
+};
 
 /** `` `a`, `b` ``, cut after 20 names with `, and <n> more`. */
 function names(all: readonly string[]): string {
@@ -47,7 +59,7 @@ export function guideSection(facts: GuideFacts): string {
     ...(connected ? [...sourceMetadata(facts), ""] : []),
     "## Commands",
     "",
-    ...commands(facts.out, connected),
+    ...commands(facts, connected),
   ];
   const text = body.join("\n") + "\n";
   return `${text}${endMarker(text)}\n`;
@@ -78,7 +90,7 @@ function project(facts: GuideFacts): string[] {
 function origin(standard: GuideStandard): string {
   if (standard.origin !== undefined)
     return `, from the published standard ${ticks(standard.origin)}${standard.explained ? "; STANDARD.md explains its choices" : ""}`;
-  return standard.from === undefined ? "" : `, from ${standard.from}`;
+  return standard.from === undefined ? "" : `, from ${safe(standard.from)}`;
 }
 
 function generated(facts: GuideFacts): string {
@@ -92,19 +104,27 @@ function generated(facts: GuideFacts): string {
   return items.length === 0 ? "none yet" : items.join(", ");
 }
 
+/** An `ingestron <word>` command as a code span, with `--out <out>` after the word unless `out` is `build`. */
+function command(facts: GuideFacts, word: string): string {
+  return ticks(
+    facts.out === "build" ? `ingestron ${word}` : `ingestron ${word} --out ${facts.out}`,
+  );
+}
+
 function rules(facts: GuideFacts): string[] {
   const out = `${facts.out}/`;
   const { standard } = facts;
+  const runsOn = facts.environments.some((environment) => environment.runsOn !== undefined);
   return [
     `1. Change the definitions, never ${ticks(out)}. Ingestron records each generated file in \`.generated.json\` and reports a hand edit as a conflict.`,
-    "2. After a change, run `ingestron plan`. Fix every problem it reports, then show the user the plan before running `ingestron apply`. Then `ingestron check` must pass; CI runs it.",
+    `2. After a change, run ${command(facts, "plan")}. Fix every problem it reports, then show the user the plan before running ${command(facts, "apply")}. Then ${command(facts, "check")} must pass; CI should run it.`,
     `3. Work inside the standard. Do not edit ${standard === undefined ? "the standard file" : ticks(standard.file)} to clear a problem; tell the user what the platform team would need to change.`,
     ...(standard === undefined ? [] : standardItems(standard)),
     "4. A value written `REPLACE_ME` is one only a person can give. Ask the user for it; never invent one. `ingestron check` fails while any is left.",
     "5. Look settings up; do not guess. Each method's settings, types and defaults: https://docs.ingestron.io/docs/reference/packs, or run `ingestron schemas` and read `.ingestron/schemas/`. Error codes: https://docs.ingestron.io/docs/reference/errors.",
     "6. Never write a password, token, key or connection string in any file. Use `${secret:name}` for a credential.",
     envvarRule(facts),
-    "8. Environments differ only in values, under `environments.<name>.values` in `project.yaml`. `plan`, `apply` and `check` always cover every environment; `ingestron compare --env <a> --env <b>` shows what differs.",
+    `8. Environments differ only in values, under \`environments.<name>.values\` in \`project.yaml\`${runsOn ? ", and in `runs-on`" : ""}. \`plan\`, \`apply\` and \`check\` always cover every environment; \`ingestron compare --env <a> --env <b>\` shows what differs.`,
   ];
 }
 
@@ -143,7 +163,7 @@ function envvarRule(facts: GuideFacts): string {
 
 function sourceMetadata(facts: GuideFacts): string[] {
   return [
-    "## Source metadata",
+    sourceGuideHeading,
     "",
     `- Connections: ${names(facts.connections)}. Each one's source tables are described in \`sources/<connection>.yaml\`, which \`ingestron source import\` writes. Never edit that file: import again to replace it.`,
     "- `ingestron source request` says what to run or export at each source, and where to save it under `sources/`.",
@@ -151,7 +171,7 @@ function sourceMetadata(facts: GuideFacts): string[] {
     "",
     "When the user gives you material no reader takes (a vendor's data dictionary, a spreadsheet, a PDF, inconsistent or deeply nested API responses, a description in an email), turn it into a columns file saved as `sources/<connection>.assistant.csv`:",
     "",
-    "- One row for each column, with these fields in order: `table_catalog`, `table_schema`, `table_name`, `column_name`, `ordinal_position`, `data_type`, `is_nullable` (`YES` or `NO`), `primary_key_position` (empty when the column is not in the key).",
+    `- One row for each column, with these fields in order: ${columnsFileFields}.`,
     "- Keep every table and column the material shows, custom ones included.",
     "- Write a type you are unsure of as `string`, and never invent a key.",
     "- Never copy a value from a row of data.",
@@ -159,11 +179,12 @@ function sourceMetadata(facts: GuideFacts): string[] {
   ];
 }
 
-function commands(out: string, connected: boolean): string[] {
+function commands(facts: GuideFacts, connected: boolean): string[] {
+  const out = ticks(`${facts.out}/`);
   return [
-    "- `ingestron plan`: problems and changes, with diffs. Writes nothing.",
-    `- \`ingestron apply\`: writes ${ticks(`${out}/`)}; never overwrites a hand edit.`,
-    `- \`ingestron check\`: fails when ${ticks(`${out}/`)} is out of date. Writes nothing.`,
+    `- ${command(facts, "plan")}: problems and changes, with diffs. Writes nothing.`,
+    `- ${command(facts, "apply")}: writes ${out}; never overwrites a hand edit.`,
+    `- ${command(facts, "check")}: fails when ${out} is out of date. Writes nothing.`,
     "- `ingestron compare --env <a> --env <b>`: what differs after resolving.",
     "- `ingestron request --env <name>`: what the platform team must provide.",
     "- `ingestron contract <sample>`: drafts a contract from a CSV or JSON sample.",

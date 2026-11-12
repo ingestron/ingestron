@@ -59,7 +59,7 @@ files:
     ## Rules
 
     1. Change the definitions, never `build/`. Ingestron records each generated file in `.generated.json` and reports a hand edit as a conflict.
-    2. After a change, run `ingestron plan`. Fix every problem it reports, then show the user the plan before running `ingestron apply`. Then `ingestron check` must pass; CI runs it.
+    2. After a change, run `ingestron plan`. Fix every problem it reports, then show the user the plan before running `ingestron apply`. Then `ingestron check` must pass; CI should run it.
     3. Work inside the standard. Do not edit `standard.yaml` to clear a problem; tell the user what the platform team would need to change.
     4. A value written `REPLACE_ME` is one only a person can give. Ask the user for it; never invent one. `ingestron check` fails while any is left.
     5. Look settings up; do not guess. Each method's settings, types and defaults: https://docs.ingestron.io/docs/reference/packs, or run `ingestron schemas` and read `.ingestron/schemas/`. Error codes: https://docs.ingestron.io/docs/reference/errors.
@@ -91,7 +91,7 @@ files:
     - `ingestron contract <sample>`: drafts a contract from a CSV or JSON sample.
     - `ingestron source request`: what to ask each source's owners for.
     - `ingestron source import <connection> <file> --dry-run`: what a file of source metadata would change.
-    <!-- ingestron:end sha256:6776b3d955818d5f6526a37b2f4dca50cee720f9e8f508be57b2f8a79b4be336 -->
+    <!-- ingestron:end sha256:46b0daad9800f75b11f2030ced0e8b21792bb74d66c07342eaa8c56e05eb9c17 -->
 command: check
 expect:
   exit: 0

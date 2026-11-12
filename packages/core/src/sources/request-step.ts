@@ -1,6 +1,7 @@
 // One connection's section of the source request: what is already covered, the recipe's step
 // with its placeholders filled, and the alternatives (spec/cli/sources.md, section 4, "Layout").
 import type { SourceTable } from "@ingestron/definitions";
+import { columnsFileFields } from "../source-text.js";
 import { byCodePoint } from "./changes.js";
 import type { SourceAsk, SourceRecipe } from "./recipe.js";
 
@@ -199,7 +200,7 @@ function alternatives(
         ]
       : []),
     `- A data contract (ODCS) for the tables, from the source's team, saved as \`sources/${connection}.odcs.yaml\`.`,
-    `- The columns file, saved as \`sources/${connection}.columns.csv\`, with one row for each column and these fields, in order: \`table_catalog\`, \`table_schema\`, \`table_name\`, \`column_name\`, \`ordinal_position\`, \`data_type\`, \`is_nullable\` (\`YES\` or \`NO\`), \`primary_key_position\` (empty when the column is not in the key). A script, a catalog export or a spreadsheet can make it.`,
+    `- The columns file, saved as \`sources/${connection}.columns.csv\`, with one row for each column and these fields, in order: ${columnsFileFields}. A script, a catalog export or a spreadsheet can make it.`,
     ...(assistant
       ? [
           `- Or ask the coding assistant this project's guide sets up to prepare the columns file from whatever you have (a data dictionary, a spreadsheet, API responses), saved as \`sources/${connection}.assistant.csv\`. Check it with \`ingestron source import ${connection} sources/${connection}.assistant.csv --dry-run\`.`,

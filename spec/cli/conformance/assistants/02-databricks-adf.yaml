@@ -42,7 +42,7 @@ expect:
         ## Rules
 
         1. Change the definitions, never `build/`. Ingestron records each generated file in `.generated.json` and reports a hand edit as a conflict.
-        2. After a change, run `ingestron plan`. Fix every problem it reports, then show the user the plan before running `ingestron apply`. Then `ingestron check` must pass; CI runs it.
+        2. After a change, run `ingestron plan`. Fix every problem it reports, then show the user the plan before running `ingestron apply`. Then `ingestron check` must pass; CI should run it.
         3. Work inside the standard. Do not edit `standard.yaml` to clear a problem; tell the user what the platform team would need to change.
            - `ingest` allows `adf-copy`, `files`.
            - `store` allows `streaming-table`.
@@ -62,7 +62,7 @@ expect:
         - `ingestron compare --env <a> --env <b>`: what differs after resolving.
         - `ingestron request --env <name>`: what the platform team must provide.
         - `ingestron contract <sample>`: drafts a contract from a CSV or JSON sample.
-        <!-- ingestron:end sha256:e223f4d13f8923ad274fb9e821d8d3c5ece6fedb4c82544c755ec4cad9dcc049 -->
+        <!-- ingestron:end sha256:51a709fec785669226eb6113484c297df43fb1beb072e6764fe1dea8db483133 -->
     CLAUDE.md:
       - |
         <!-- Ingestron: the project guide is in AGENTS.md. -->
@@ -71,8 +71,8 @@ expect:
       - |
         See [AGENTS.md](../AGENTS.md) for this Ingestron project.
 
-        - Change the definitions, never `build/`: Ingestron reports a hand edit there as a conflict.
-        - After a change, run `ingestron plan`, fix every problem it reports, and show the user the plan before running `ingestron apply`. Then `ingestron check` must pass.
+        - Change the definitions, never the generated files: Ingestron reports a hand edit there as a conflict.
+        - After a change, follow AGENTS.md: run its plan command, fix every problem it reports, and show the user the plan before applying. Its check command must then pass.
         - Never write a password, token, key or connection string in any file. Use `${secret:name}` for a credential.
   absent:
     AGENTS.md:

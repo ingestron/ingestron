@@ -73,7 +73,8 @@ export interface NoGuide {
 }
 
 const envvarName = /\$\{envvar:([A-Za-z_][A-Za-z0-9_]*)\}/g;
-const notAction = new Set(["apiVersion", "kind", "id", "packs", "origin", "fixed"]);
+/** The actions of a standard, in the order the guide lists them. No other key counts. */
+const actions = ["ingest", "transform", "store", "serve"];
 
 /**
  * The facts for the guide of the project in `files`, or why there is none. `out` is the output
@@ -229,12 +230,13 @@ function standardFrom(
   };
 }
 
-/** What each action of a standard allows and fixes, in the order the standard writes them. */
+/** What each action of a standard allows and fixes: the actions in a fixed order, the methods as the standard writes them. */
 function actionsOf(document: Mapping): Pick<GuideStandard, "allowed" | "fixed"> {
   const allowed: GuideStandard["allowed"] = [];
   const fixed: GuideStandard["fixed"] = [];
-  for (const [key, rules] of document) {
-    if (typeof key !== "string" || notAction.has(key) || !isMapping(rules)) continue;
+  for (const key of actions) {
+    const rules = document.get(key);
+    if (!isMapping(rules)) continue;
     const methods = stringsAt(rules, "allowed");
     if (methods.length > 0) allowed.push({ action: key, methods });
     const methodsFixed = rules.get("fixed");

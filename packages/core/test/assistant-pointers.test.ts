@@ -26,6 +26,11 @@ describe("pointerFiles", () => {
       "See [AGENTS.md](../AGENTS.md) for this Ingestron project.",
     );
   });
+
+  it("names no output folder and no command with an option, so it never conflicts with AGENTS.md", () => {
+    const [copilot] = pointerFiles(["copilot"]);
+    expect(copilot!.text).not.toMatch(/build|dist|--out|`ingestron /);
+  });
 });
 
 describe("pointerUpdate", () => {
@@ -105,6 +110,21 @@ describe("guideLine", () => {
     expect(line("AGENTS.md", "user")).toBeUndefined();
   });
 
+  it("writes the lines for a file that cannot be read or written, with the error's code", () => {
+    expect(guideLine("AGENTS.md", "unreadable", "write", "EACCES")).toBe(
+      "AGENTS.md: could not be read (EACCES), so nothing was written to it.",
+    );
+    expect(guideLine("CLAUDE.md", "unwritable", "write", "EROFS")).toBe(
+      "CLAUDE.md: could not be written (EROFS).",
+    );
+    expect(guideLine("AGENTS.md", "unreadable", "write")).toBe(
+      "AGENTS.md: could not be read (error), so nothing was written to it.",
+    );
+    expect(guideLine("AGENTS.md", "unwritable", "write")).toBe(
+      "AGENTS.md: could not be written (error).",
+    );
+  });
+
   it("writes what plan says, and nothing for what it does not report", () => {
     expect(guideLine("AGENTS.md", "updated", "plan")).toBe(
       "AGENTS.md: the Ingestron section would change",
@@ -112,7 +132,7 @@ describe("guideLine", () => {
     expect(guideLine("AGENTS.md", "edited", "plan")).toBe(
       "AGENTS.md: the Ingestron section was edited by hand, so apply will not update it. Move your notes outside it, or delete both markers to keep it as your own.",
     );
-    for (const kind of ["current", "user", "not-regular"] as const)
+    for (const kind of ["current", "user", "not-regular", "unreadable", "unwritable"] as const)
       expect(guideLine("AGENTS.md", kind, "plan")).toBeUndefined();
   });
 
@@ -123,7 +143,7 @@ describe("guideLine", () => {
     expect(guideLine("AGENTS.md", "edited", "apply")).toBe(
       "AGENTS.md: the Ingestron section was edited by hand, so it was not updated. Move your notes outside it, or delete both markers to keep it as your own.",
     );
-    for (const kind of ["current", "user", "not-regular"] as const)
+    for (const kind of ["current", "user", "not-regular", "unreadable", "unwritable"] as const)
       expect(guideLine("AGENTS.md", kind, "apply")).toBeUndefined();
   });
 });
