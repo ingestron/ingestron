@@ -6,6 +6,9 @@ import {
   type SourceDifference,
   type SourceTableDoc,
 } from "@ingestron/definitions";
+import { byCodePoint } from "../code-point.js";
+
+export { byCodePoint };
 
 /**
  * One table an import added, removed or changed.
@@ -20,15 +23,6 @@ export interface SourceChange {
   breaking: boolean;
   /** The differences of a changed table, as `compareSourceColumns` gives them; none otherwise. */
   differences: SourceDifference[];
-}
-
-/** Text order by code point, the same on every machine, unlike localeCompare. */
-export function byCodePoint(left: string, right: string): number {
-  const a = [...left].map((character) => character.codePointAt(0)!);
-  const b = [...right].map((character) => character.codePointAt(0)!);
-  for (let index = 0; index < Math.min(a.length, b.length); index++)
-    if (a[index] !== b[index]) return a[index]! - b[index]!;
-  return a.length - b.length;
 }
 
 /**

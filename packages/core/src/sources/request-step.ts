@@ -16,6 +16,8 @@ export interface SectionInput {
   tables: readonly SourceTable[];
   recipe?: SourceRecipe;
   inputs: Record<string, string>;
+  /** The project guide has its source metadata part, so the assistant's columns file is offered. */
+  assistant?: boolean;
 }
 
 /** What to write for each placeholder the request fills in itself, when it cannot. */
@@ -27,7 +29,7 @@ const leftText: Record<string, string> = {
 
 /** The section for one connection. */
 export function sourceSection(input: SectionInput): SourceSection {
-  const { connection, tables, recipe } = input;
+  const { connection, tables, recipe, assistant = false } = input;
   const objects = [...new Set(tables.map((table) => table.object))];
   if (tables.length > 0 && tables.every((table) => table.entry !== undefined))
     return { text: covered(connection, tables), imports: [] };
@@ -36,7 +38,7 @@ export function sourceSection(input: SectionInput): SourceSection {
       text: [
         `## ${connection}`,
         "No recipe describes this source. Send one of these:",
-        alternatives(connection, objects, true),
+        alternatives(connection, objects, true, assistant),
       ].join("\n\n"),
       imports: [[connection, `sources/${connection}.columns.csv`]],
     };
@@ -45,7 +47,7 @@ export function sourceSection(input: SectionInput): SourceSection {
     text: [
       `## ${connection}`,
       ...step.parts,
-      `### If that cannot be done\n\n${alternatives(connection, objects, recipe.kind !== "sample")}`,
+      `### If that cannot be done\n\n${alternatives(connection, objects, recipe.kind !== "sample", assistant)}`,
     ].join("\n\n"),
     imports: step.saves.map((file): [string, string] => [connection, file]),
   };
@@ -179,8 +181,16 @@ function header(recipe: SourceRecipe, values: Readonly<Record<string, string>>):
   ].join("\n");
 }
 
-/** The alternatives, for when the step cannot be done; a sample recipe's has no sample item. */
-function alternatives(connection: string, objects: readonly string[], sample: boolean): string {
+/**
+ * The alternatives, for when the step cannot be done; a sample recipe's has no sample item, and
+ * the assistant's columns file comes last when the project guide offers it.
+ */
+function alternatives(
+  connection: string,
+  objects: readonly string[],
+  sample: boolean,
+  assistant: boolean,
+): string {
   const items = [
     ...(sample
       ? [
@@ -190,6 +200,11 @@ function alternatives(connection: string, objects: readonly string[], sample: bo
       : []),
     `- A data contract (ODCS) for the tables, from the source's team, saved as \`sources/${connection}.odcs.yaml\`.`,
     `- The columns file, saved as \`sources/${connection}.columns.csv\`, with one row for each column and these fields, in order: \`table_catalog\`, \`table_schema\`, \`table_name\`, \`column_name\`, \`ordinal_position\`, \`data_type\`, \`is_nullable\` (\`YES\` or \`NO\`), \`primary_key_position\` (empty when the column is not in the key). A script, a catalog export or a spreadsheet can make it.`,
+    ...(assistant
+      ? [
+          `- Or ask the coding assistant this project's guide sets up to prepare the columns file from whatever you have (a data dictionary, a spreadsheet, API responses), saved as \`sources/${connection}.assistant.csv\`. Check it with \`ingestron source import ${connection} sources/${connection}.assistant.csv --dry-run\`.`,
+        ]
+      : []),
   ];
   return items.join("\n");
 }

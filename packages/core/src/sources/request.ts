@@ -4,6 +4,7 @@
 import type { FileSource, Project } from "@ingestron/config";
 import { kinds, resolveDefinitions, type SourceTable } from "@ingestron/definitions";
 import type { ProjectOptions } from "../generation/index.js";
+import { hasSourceGuide } from "../assistant/index.js";
 import { packs } from "../packs/index.js";
 import { hostProject, problemsText, resolving } from "../request/index.js";
 import { byCodePoint } from "./changes.js";
@@ -155,12 +156,20 @@ function askedFor(
       : connections
           .filter((connection) => sourceTables.some((table) => table.connection === connection.id))
           .sort((a, b) => byCodePoint(a.id, b.id));
+  // The project guide's source metadata part adds one alternative to each section.
+  const assistant = hasSourceGuide(files.read("AGENTS.md"));
   const sections = chosen.map((connection) => {
     const { recipe, inputs, problems: found } = sourceOrigin(connection, recipes);
     problems.push(...found);
     const tables = sourceTables.filter((table) => table.connection === connection.id);
     const given = givenInputs(inputs, project.unsetEnvvars);
-    return { connection: connection.id, tables, inputs: given, ...(recipe && { recipe }) };
+    return {
+      connection: connection.id,
+      tables,
+      inputs: given,
+      ...(recipe && { recipe }),
+      ...(assistant && { assistant }),
+    };
   });
   return { sections, problems };
 }

@@ -3,7 +3,7 @@
 import { matchesImport, type FileSource } from "@ingestron/config";
 import type { Pack } from "@ingestron/definitions";
 import { packs as corePacks } from "../packs/index.js";
-import { byCodePoint } from "../sources/index.js";
+import { byCodePoint } from "../code-point.js";
 import { flowText, isMapping, readYaml, stringAt, stringsAt, type Mapping } from "./yaml.js";
 
 /**
