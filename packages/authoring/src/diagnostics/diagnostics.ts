@@ -8,6 +8,7 @@ import { digestOf } from "@ingestron/generate";
 import type { Fix } from "@ingestron/config";
 import { editorDiagnostics } from "../generation/index.js";
 import { loadedDocuments, type Project } from "../project/index.js";
+import { recipeProblems } from "../sources/index.js";
 import type { Position } from "../project/index.js";
 
 /**
@@ -42,6 +43,7 @@ export function problems(project: Project, environment: string | undefined): Pro
       ...templateProblems(project),
       ...editedProblems(project),
       ...notImportedProblems(project, environment),
+      ...recipeProblems(project, environment),
     ];
     byEnvironment.set(environment, result);
   }
