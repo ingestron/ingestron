@@ -2,7 +2,7 @@
 // (specification section 12.3).
 import { describe, expect, it } from "vitest";
 import { matchObject } from "../../src/sources/index.js";
-import { indexTables, onlyReferences } from "../../src/sources/match.js";
+import { indexTables, onlyReferences, type TableIndex } from "../../src/sources/match.js";
 import type { SourceTableDoc } from "../../src/documents/index.js";
 
 const table = (object: string): SourceTableDoc => ({
@@ -171,6 +171,32 @@ describe("matchObject with an index of the tables", () => {
         );
     });
   }
+
+  it("compares about one table for each object, not every table", () => {
+    const count = 1000;
+    let compared = 0;
+    /** A table that counts each read of its object, as each comparison reads it once. */
+    const counted = (object: string): SourceTableDoc =>
+      Object.defineProperty(table(object), "object", {
+        get: () => {
+          compared += 1;
+          return object;
+        },
+      });
+    const many = Array.from({ length: count }, (_, n) => counted(`ERP.dbo.T${n}`));
+    const matchAll = (names: typeof insensitive | undefined, index?: TableIndex) => {
+      compared = 0;
+      for (let n = 0; n < count; n += 1)
+        expect(matchObject(`ERP.dbo.T${n}`, `ERP.dbo.T${n}`, many, names, index)).toHaveLength(1);
+      return compared;
+    };
+    for (const names of [insensitive, undefined]) {
+      const index = indexTables(many, names);
+      expect(matchAll(names, index)).toBeLessThanOrEqual(count);
+      // Without the index every object is compared with every table.
+      expect(matchAll(names)).toBe(count * count);
+    }
+  });
 
   it("keeps the full scan when the last part is a reference", () => {
     const index = indexTables(tables, insensitive);

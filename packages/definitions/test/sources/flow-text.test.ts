@@ -74,6 +74,10 @@ describe("a flow's text in one resolution", () => {
     const result = resolve(large.source);
     expect(result.sourceTables?.filter((item) => item.entry)).toHaveLength(2000);
     expect(large.reads.get("sales.yaml")).toBe(small.reads.get("sales.yaml"));
+    // Not one read: the flow is read once by each of three steps of a resolution, whatever the
+    // number of tables. Loading the documents reads it, matching the objects reads it once for
+    // the text as written (one parse shared by every table), and the placeholder warnings read it.
+    expect(large.reads.get("sales.yaml")).toBe(3);
   });
 
   it.each([

@@ -28,18 +28,24 @@ function lastPart(object: string): string {
 }
 
 /**
- * The tables by the last part of their `object`, folded as `names` says, each list in the
- * document's order. Without `names` the key is the whole `object`, with case. Made once for
+ * An object's key in a `TableIndex`, for a metadata table's object and a flow's alike: its last
+ * part folded as `names` says, or without `names` the whole object, with case.
+ */
+function indexKey(object: string, names: SourceMetadataDoc["names"]): string {
+  return names ? folder(names)(lastPart(object)) : object;
+}
+
+/**
+ * The tables by `indexKey` of their `object`, each list in the document's order. Made once for
  * a document, it lets `matchObject` compare only the tables that can match.
  */
 export function indexTables(
   tables: SourceTableDoc[],
   names: SourceMetadataDoc["names"],
 ): TableIndex {
-  const fold = folder(names);
   const index: TableIndex = new Map();
   for (const table of tables) {
-    const key = names ? fold(lastPart(table.object)) : table.object;
+    const key = indexKey(table.object, names);
     const same = index.get(key);
     if (same) same.push(table);
     else index.set(key, [table]);
@@ -67,13 +73,16 @@ export function matchObject(
 ): SourceTableDoc[] {
   if (!names)
     return index
-      ? [...(index.get(object) ?? [])]
+      ? [...(index.get(indexKey(object, names)) ?? [])]
       : tables.filter((table) => table.object === object);
   const parts = partsOf(object, written);
   if (parts.length > names.parts) return [];
   const fold = folder(names);
+  // A last part that is not a reference is the resolved object's last part, so the flow's
+  // object has the key its matches have.
   const last = parts[parts.length - 1];
-  const candidates = index && last !== undefined ? (index.get(fold(last)) ?? []) : tables;
+  const candidates =
+    index && last !== undefined ? (index.get(indexKey(object, names)) ?? []) : tables;
   return candidates.filter((table) => {
     const theirs = table.object.split(".");
     return (
