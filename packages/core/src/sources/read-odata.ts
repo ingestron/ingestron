@@ -188,9 +188,11 @@ function read(input: ReaderInput): Outcome {
   const byType = input.recipe?.objects === "types";
   const { tables, notes } = byType
     ? {
+        // A type with no property, own or inherited, such as Dataverse's `expando`, has no columns.
         tables: model.entityTypes
           .filter((type) => attributeOf(type, "Abstract") !== "true")
-          .map((type) => tableOf(attributeOf(type, "Name")!, type, model)),
+          .map((type) => tableOf(attributeOf(type, "Name")!, type, model))
+          .filter((table) => table.columns.length > 0),
         notes: [],
       }
     : setTables(model);

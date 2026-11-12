@@ -22,7 +22,7 @@ export {
   sourceRecipes,
   standardsRecipesFolder,
 } from "./recipes.js";
-export { byCodePoint, sourceChangesText, type SourceChange } from "./changes.js";
+export { sourceChangesText, type SourceChange } from "./changes.js";
 export { importSource, type SourceImport, type SourceImportInput } from "./import.js";
 export {
   sourceImportFor,

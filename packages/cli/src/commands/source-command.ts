@@ -1,7 +1,7 @@
 // ingestron source request and ingestron source import (spec/cli/sources.md, section 6). The rules
 // are @ingestron/core's: this reads the files, calls it, writes and prints.
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import { nodeFiles } from "@ingestron/config";
 import { sourceChangesText } from "@ingestron/core";
 import {
@@ -10,6 +10,7 @@ import {
   type SourceImportResult,
 } from "@ingestron/core/internal";
 import type { Io, Options, SourceAction } from "../terminal/index.js";
+import { writeStaged } from "./write-staged.js";
 
 type Import = Extract<SourceAction, { action: "import" }>;
 
@@ -62,12 +63,12 @@ function finish(action: Import, definitions: string, result: SourceImportResult,
     io.write("Nothing was written (--dry-run).\n");
     return 0;
   }
-  const target = join(definitions, document);
-  mkdirSync(dirname(target), { recursive: true });
-  writeFileSync(target, imported.text);
+  // The document and project.yaml are written together, so a failure leaves neither half written.
+  writeStaged([
+    { file: join(definitions, document), text: imported.text },
+    ...(project === undefined ? [] : [{ file: join(definitions, "project.yaml"), text: project }]),
+  ]);
   io.write(`Wrote ${document}.\n`);
-  if (project === undefined) return 0;
-  writeFileSync(join(definitions, "project.yaml"), project);
-  io.write(`Added ${document} to the imports of project.yaml.\n`);
+  if (project !== undefined) io.write(`Added ${document} to the imports of project.yaml.\n`);
   return 0;
 }

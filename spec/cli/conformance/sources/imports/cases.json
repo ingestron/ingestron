@@ -1,5 +1,5 @@
 {
-  "description": "Importing source metadata (spec/cli/sources.md, section 3). Each case of imports runs importSource for the connection, with the current document's text from the fixture named by current (none when it is left out), the fixture named by input as the file at the project path file, the recipe fixture of ../recipes named by recipe, the import's object, environment and time. text names the fixture holding the exact new text; changes and notes are the rest of the result, and summary the lines of sourceChangesText, each ending with a line break. refused lists the reasons instead. forbidden lists text that must appear nowhere in the result or the summary. files gives sourceFileFor for each path (null for undefined), and projectImports withSourcesImport for the project.yaml fixture and the document's path, with expected the fixture holding the new text, or null when an import already matches.",
+  "description": "Importing source metadata (spec/cli/sources.md, section 3). Each case of imports runs importSource for the connection, with the current document's text from the fixture named by current (none when it is left out), the fixture named by input as the file at the project path file, the recipe fixture of ../recipes named by recipe, the import's object, environment and time. text names the fixture holding the exact new text; changes and notes are the rest of the result, and summary the lines of sourceChangesText, each ending with a line break. refused lists the reasons instead. forbidden lists text that must appear nowhere in the result or the summary. files gives sourceFileFor for each path (null for undefined), a path being read as the import reads it: `./` dropped, `\\` read as `/`, and a path that leaves the folder taking nothing from it, and projectImports withSourcesImport for the project.yaml fixture and the document's path, with expected the fixture holding the new text, or null when an import already matches.",
   "imports": [
     {
       "name": "a first catalog import writes every table, sorted, with the recipe's names and the header comment",
@@ -311,6 +311,64 @@
       "refused": ["sources/crm.yaml is not the source metadata of \"crm\"."]
     },
     {
+      "name": "a current text that is not a schema-valid document (api version) is refused",
+      "connection": "erp",
+      "current": "bad-api-version.yaml",
+      "file": "sources/erp.catalog.csv",
+      "input": "first.catalog.csv",
+      "recipe": "sqlserver",
+      "at": "2026-11-12T10:00:00Z",
+      "refused": ["sources/erp.yaml is not the source metadata of \"erp\"."]
+    },
+    {
+      "name": "a current text that is not a schema-valid document (logical type) is refused",
+      "connection": "erp",
+      "current": "bad-logical-type.yaml",
+      "file": "sources/erp.catalog.csv",
+      "input": "first.catalog.csv",
+      "recipe": "sqlserver",
+      "at": "2026-11-12T10:00:00Z",
+      "refused": ["sources/erp.yaml is not the source metadata of \"erp\"."]
+    },
+    {
+      "name": "a current text that is not a schema-valid document (names parts) is refused",
+      "connection": "erp",
+      "current": "bad-names-parts.yaml",
+      "file": "sources/erp.catalog.csv",
+      "input": "first.catalog.csv",
+      "recipe": "sqlserver",
+      "at": "2026-11-12T10:00:00Z",
+      "refused": ["sources/erp.yaml is not the source metadata of \"erp\"."]
+    },
+    {
+      "name": "a current text that is not a schema-valid document (key position) is refused",
+      "connection": "erp",
+      "current": "bad-key-position.yaml",
+      "file": "sources/erp.catalog.csv",
+      "input": "first.catalog.csv",
+      "recipe": "sqlserver",
+      "at": "2026-11-12T10:00:00Z",
+      "refused": ["sources/erp.yaml is not the source metadata of \"erp\"."]
+    },
+    {
+      "name": "an import time that is not a time is refused",
+      "connection": "erp",
+      "file": "sources/erp.catalog.csv",
+      "input": "first.catalog.csv",
+      "recipe": "sqlserver",
+      "at": "yesterday",
+      "refused": ["The import time \"yesterday\" is not an ISO 8601 time."]
+    },
+    {
+      "name": "an import time that is not a day of the calendar is refused",
+      "connection": "erp",
+      "file": "sources/erp.catalog.csv",
+      "input": "first.catalog.csv",
+      "recipe": "sqlserver",
+      "at": "2026-02-30T09:30:00Z",
+      "refused": ["The import time \"2026-02-30T09:30:00Z\" is not an ISO 8601 time."]
+    },
+    {
       "name": "the metadata document itself is refused",
       "connection": "erp",
       "file": "sources/erp.yaml",
@@ -345,6 +403,31 @@
       "refused": [
         "sources/erp.catalog.csv is a catalog result, but no recipe was given to read it."
       ]
+    },
+    {
+      "name": "a description in the current document is kept",
+      "connection": "erp",
+      "current": "erp.described.yaml",
+      "file": "sources/erp/ERP.dbo.Shipments.csv",
+      "input": "shipments.csv",
+      "recipe": "sqlserver",
+      "at": "2026-11-12T10:00:00Z",
+      "text": "erp.described.second.yaml",
+      "changes": [
+        {
+          "object": "ERP.dbo.Shipments",
+          "change": "added",
+          "breaking": false,
+          "differences": []
+        }
+      ],
+      "notes": [],
+      "summary": [
+        "sources/erp.yaml: 1 added, 0 changed, 0 removed.",
+        "Compatible:",
+        "  ERP.dbo.Shipments: added"
+      ],
+      "forbidden": ["ZZ-SECRET-42", "ORD-0002", "Swift Freight", "Blue Haulage"]
     }
   ],
   "files": [
@@ -388,6 +471,27 @@
     },
     {
       "path": "exports/sources/erp/orders.csv",
+      "expected": null
+    },
+    {
+      "path": "./sources/erp.catalog.csv",
+      "expected": {
+        "connection": "erp"
+      }
+    },
+    {
+      "path": "sources\\crm\\Account.json",
+      "expected": {
+        "connection": "crm",
+        "object": "Account"
+      }
+    },
+    {
+      "path": "../sources/erp.catalog.csv",
+      "expected": null
+    },
+    {
+      "path": "/home/me/sources/erp.catalog.csv",
       "expected": null
     }
   ],

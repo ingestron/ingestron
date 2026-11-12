@@ -1,6 +1,6 @@
 // ingestron source import (spec/cli/sources.md, section 6), run on a copy of the request
 // conformance project with an export of the erp catalog saved in it.
-import { cpSync, existsSync, mkdirSync, mkdtempSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -110,6 +110,38 @@ describe("ingestron source import", () => {
     expect(code).toBe(0);
     expect(output).toContain("  ERP.dbo.Shipments: added\n");
     expect(read(folder, "sources/erp.yaml")).toContain("file: elsewhere/shipments.csv");
+  });
+
+  it("copies no value from a sample's rows into the printed text or any file written", () => {
+    const { folder, ingestron } = sourceProject("request");
+    mkdirSync(join(folder, "sources/erp"));
+    cpSync(
+      join(fixture("imports"), "shipments.csv"),
+      join(folder, "sources/erp/ERP.dbo.Shipments.csv"),
+    );
+    const { code, output } = ingestron(
+      "source",
+      "import",
+      "erp",
+      "sources/erp/ERP.dbo.Shipments.csv",
+    );
+    expect(code).toBe(0);
+    const written = ["sources/erp.yaml", "project.yaml"].map((file) => read(folder, file));
+    expect(written[0]).toContain("ERP.dbo.Shipments");
+    const folderText = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+        entry.isDirectory()
+          ? folderText(join(dir, entry.name))
+          : entry.name === "ERP.dbo.Shipments.csv"
+            ? []
+            : [readFileSync(join(dir, entry.name), "utf8")],
+      );
+    for (const value of ["ZZ-SECRET-42", "ORD-0002", "Swift Freight", "Blue Haulage"])
+      for (const text of [output, ...written, ...folderText(folder)])
+        expect(text).not.toContain(value);
+    // The import leaves no temporary file in the folders it wrote to.
+    for (const dir of [folder, join(folder, "sources")])
+      expect(readdirSync(dir).filter((name) => name.endsWith(".tmp"))).toEqual([]);
   });
 
   it("takes the file relative to the current folder and records its path in the project", () => {

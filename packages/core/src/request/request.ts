@@ -114,7 +114,8 @@ function errorsOf(diagnostics: readonly AnyDiagnostic[]): AnyDiagnostic[] {
 /**
  * A request that an error stops: the title, the note and each error as `ingestron plan` writes
  * a problem, then each of `lines` on a line of its own. The request resolves with each set
- * variable's value, so its errors may not be plan's (spec/cli/request.md).
+ * variable's value, so its errors may not be plan's (spec/cli/request.md). When there is nothing
+ * to list, the block says the project could not be loaded, so it is never empty.
  * @internal
  */
 export function problemsText(
@@ -123,6 +124,8 @@ export function problemsText(
   lines: readonly string[] = [],
 ): string {
   const problems = [...(errors.length > 0 ? [formatDiagnostics(errors)] : []), ...lines];
+  // Nothing to list means the project could not be loaded and no error said why.
+  if (problems.length === 0) problems.push("The project could not be loaded.");
   return [
     title,
     "The definitions have problems; fix them first:",

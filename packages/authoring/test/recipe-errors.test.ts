@@ -64,3 +64,19 @@ describe("a recipe problem", () => {
     expectTypeOf<RecipeProblem>().toExtend<Problem>();
   });
 });
+
+describe("a recipe file whose name starts with a dot", () => {
+  it("is neither read nor a broken recipe, as for the request", () => {
+    const hidden = join(folder, "recipes/.draft.yaml");
+    writeFileSync(hidden, "id: draft\ntitle: [\n");
+    try {
+      const project = openProject(folder, new Map());
+      expect(
+        recipeProblems(project, "dev").filter(({ code }) => code === "SOURCE_RECIPE_BROKEN"),
+      ).toEqual([]);
+      expect(catalogRecipes(project)?.has("draft")).toBe(false);
+    } finally {
+      rmSync(hidden);
+    }
+  });
+});

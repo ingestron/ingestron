@@ -3,10 +3,11 @@ title: OData service that names lookups _<name>_value
 kind: document
 inputs:
   serviceRoot: { description: "The service's root URL, such as https://example.com/odata" }
+  version: { description: "The service's version, such as v2", default: v1 }
 ask:
   who: Someone who can call the service
   access: Read access to the service's metadata
-  call: "{serviceRoot}/$metadata"
+  call: "{serviceRoot}/{version}/$metadata"
   save: sources/{connection}.catalog.xml
   how: With a browser, curl or Postman.
 read: odata

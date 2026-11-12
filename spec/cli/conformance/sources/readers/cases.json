@@ -5204,6 +5204,47 @@
       "forbidden": ["ZZ-SECRET-42"]
     },
     {
+      "name": "OData CSDL with objects: types leaves out an entity type with no properties, such as Dataverse's expando",
+      "file": "sources/crm.catalog.xml",
+      "input": "helpers.csdl.xml",
+      "recipe": "lookups",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Account",
+            "columns": [
+              {
+                "name": "AccountID",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Name",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": false,
+                "logicalTypeOptions": {
+                  "maxLength": 100
+                }
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "OData CSDL with objects: types whose entity types are all abstract or without properties describes no entity types",
+      "file": "sources/crm.catalog.xml",
+      "input": "helpers-only.csdl.xml",
+      "recipe": "lookups",
+      "refused": ["sources/crm.catalog.xml describes no entity types."]
+    },
+    {
       "name": "a recipe's columnNames renames the columns of each table once, without case, and leaves nested fields alone",
       "file": "sources/crm.catalog.xml",
       "input": "lookups.csdl.xml",
@@ -5365,6 +5406,60 @@
       "recipe": "lookups",
       "refused": [
         "sources/crm.catalog.xml: the recipe \"lookups\" gives two columns of the table \"clash\" the name \"x\"."
+      ]
+    },
+    {
+      "name": "columnNames that give two columns names that differ only by case keeps both when the recipe's names are case sensitive",
+      "file": "sources/crm.catalog.xml",
+      "input": "clash-case.csdl.xml",
+      "recipe": "lookups",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "clashcase",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "X",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "x",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "columnNames that give two columns names that differ only by case is refused when the recipe's names are not case sensitive",
+      "file": "sources/crm.catalog.xml",
+      "input": "clash-case.csdl.xml",
+      "recipe": {
+        "from": "lookups",
+        "set": {
+          "names": {
+            "parts": 1,
+            "caseSensitive": false
+          }
+        }
+      },
+      "refused": [
+        "sources/crm.catalog.xml: the recipe \"lookups\" gives two columns of the table \"clashcase\" the name \"x\"."
       ]
     },
     {

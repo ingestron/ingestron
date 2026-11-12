@@ -3,7 +3,8 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
-import type { FileSource } from "@ingestron/config";
+import { defaultLimits, type FileSource } from "@ingestron/config";
+import { byCodePoint } from "../code-point.js";
 import { bundledRecipesFolder } from "../folders.js";
 import { readSourceRecipe } from "./read.js";
 import type { SourceRecipe } from "./recipe.js";
@@ -44,7 +45,7 @@ function recipeFiles(folder: string): string[] {
   return readdirSync(folder, { withFileTypes: true })
     .filter((entry) => entry.isFile() && /^[^.].*\.yaml$/.test(entry.name))
     .map((entry) => entry.name)
-    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+    .sort(byCodePoint);
 }
 
 /**
@@ -63,6 +64,22 @@ export function installedSourceRecipes(root?: string): SourceRecipe[] {
   );
 }
 
+/** A project's own recipe: `recipes/<id>.yaml`, directly in the folder, with no `.` to start the name. */
+const projectRecipe = /^recipes\/[^/.][^/]*\.yaml$/;
+
+/** The project recipe's text; a file over the size limit is refused, before it is read when its size is known. */
+function textOf(files: FileSource, path: string): string {
+  const limit = defaultLimits.maxFileBytes;
+  const refuse = (bytes: number): Error =>
+    new Error(`${path}: it is ${bytes} bytes; the limit is ${limit}.`);
+  const known = files.size?.(path);
+  if (known !== undefined && known > limit) throw refuse(known);
+  const text = files.read(path) ?? "";
+  const bytes = Buffer.byteLength(text);
+  if (bytes > limit) throw refuse(bytes);
+  return text;
+}
+
 /**
  * The recipes a project can use, by id in code point order: the installed ones, with each of
  * the project's own `recipes/<id>.yaml` replacing the installed recipe of the same id. A recipe
@@ -72,20 +89,25 @@ export function installedSourceRecipes(root?: string): SourceRecipe[] {
 export function sourceRecipes(files?: FileSource, root?: string): Map<string, SourceRecipe> {
   const recipes = new Map<string, SourceRecipe>();
   for (const recipe of installedSourceRecipes(root)) recipes.set(recipe.id, recipe);
-  for (const path of files?.list().filter((name) => /^recipes\/[^/]+\.yaml$/.test(name)) ?? []) {
-    const recipe = readSourceRecipe(files?.read(path) ?? "", path);
+  for (const path of files?.list().filter((name) => projectRecipe.test(name)) ?? []) {
+    const recipe = readSourceRecipe(textOf(files!, path), path);
     recipes.set(recipe.id, recipe);
   }
-  return new Map([...recipes].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+  return new Map([...recipes].sort(([a], [b]) => byCodePoint(a, b)));
 }
 
 /** The recipe each connector uses when its connection gives no `metadata`. */
-const defaultRecipes: Record<string, string> = {
+const defaultRecipes: Readonly<Record<string, string>> = {
   files: "sample",
   sqlserver: "sqlserver",
   salesforce: "salesforce",
   kafka: "schema-registry",
 };
+
+/** The recipe a connector uses by default, or the empty id when it has none. */
+function defaultOf(connector: string): string {
+  return Object.hasOwn(defaultRecipes, connector) ? defaultRecipes[connector]! : "";
+}
 
 const ids = (names: string[]): string => (names.length > 0 ? names.join(", ") : "none");
 
@@ -107,14 +129,14 @@ export function sourceOrigin(
   recipes: Map<string, SourceRecipe>,
 ): { recipe?: SourceRecipe; inputs: Record<string, string>; problems: string[] } {
   const { metadata } = connection;
-  const recipe = recipes.get(metadata?.from ?? defaultRecipes[connection.connector] ?? "");
+  const recipe = recipes.get(metadata?.from ?? defaultOf(connection.connector));
   if (metadata === undefined)
     return recipe ? { recipe, inputs: {}, problems: [] } : { inputs: {}, problems: [] };
   if (recipe === undefined)
     return {
       inputs: {},
       problems: [
-        `The connection "${connection.id}" names the recipe "${metadata.from}", which does not exist. Recipes: ${ids([...recipes.keys()].sort())}.`,
+        `The connection "${connection.id}" names the recipe "${metadata.from}", which does not exist. Recipes: ${ids([...recipes.keys()].sort(byCodePoint))}.`,
       ],
     };
   const taken = Object.keys(recipe.inputs);

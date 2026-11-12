@@ -7,7 +7,7 @@ import type { ProjectOptions } from "../generation/index.js";
 import { hasSourceGuide } from "../assistant/index.js";
 import { packs } from "../packs/index.js";
 import { hostProject, problemsText, resolving } from "../request/index.js";
-import { byCodePoint } from "./changes.js";
+import { byCodePoint } from "../code-point.js";
 import { sourceEnvironment } from "./environment.js";
 import type { SourceRecipe } from "./recipe.js";
 import { sourceOrigin, sourceRecipes } from "./recipes.js";

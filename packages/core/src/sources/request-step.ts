@@ -2,7 +2,7 @@
 // with its placeholders filled, and the alternatives (spec/cli/sources.md, section 4, "Layout").
 import type { SourceTable } from "@ingestron/definitions";
 import { columnsFileFields } from "../source-text.js";
-import { byCodePoint } from "./changes.js";
+import { byCodePoint } from "../code-point.js";
 import type { SourceAsk, SourceRecipe } from "./recipe.js";
 
 /** A connection's section, and the import of each file it asks to be saved, as `[<connection>, <file>]`. */
@@ -60,8 +60,8 @@ function covered(connection: string, tables: readonly SourceTable[]): string {
   const lines = [...entries.values()]
     .sort((a, b) => byCodePoint(a.object, b.object))
     .map(({ object, captured }) => {
-      const date = String(captured.at).slice(0, 10);
-      return `- \`${object}\`: ${captured.from}, captured ${date}`;
+      const date = /^\d{4}-\d{2}-\d{2}(?![0-9])/.exec(String(captured.at))?.[0];
+      return `- \`${object}\`: ${captured.from}${date === undefined ? "" : `, captured ${date}`}`;
     });
   return [
     `## ${connection}`,
@@ -84,10 +84,25 @@ function schemasOf(recipe: SourceRecipe, objects: readonly string[]): string | u
     .join(", ");
 }
 
-/** The text with each known placeholder filled; any other text in braces is left as written. */
+/**
+ * The text with each known placeholder filled; any other text in braces is left as written. A
+ * value that holds `{object}` has it filled too, when the values name a table.
+ */
 function fill(text: string, values: Readonly<Record<string, string>>): string {
-  return text.replace(/\{([A-Za-z][A-Za-z0-9_]*)\}/g, (whole, name: string) =>
-    Object.hasOwn(values, name) ? values[name]! : whole,
+  return text.replace(/\{([A-Za-z][A-Za-z0-9_]*)\}/g, (whole, name: string) => {
+    if (!Object.hasOwn(values, name)) return whole;
+    const value = values[name]!;
+    const object = values.object;
+    return name === "object" || !object ? value : value.replaceAll("{object}", object);
+  });
+}
+
+/** The inputs' defaults, for the ones the connection does not give. */
+function defaultsOf(recipe: SourceRecipe): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(recipe.inputs).flatMap(([name, { default: given }]) =>
+      given === undefined ? [] : [[name, given]],
+    ),
   );
 }
 
@@ -105,7 +120,8 @@ function fillIn(
   eachObject: boolean,
 ): string[] {
   const left = new Map<string, string>();
-  for (const [, name] of shownText(recipe, eachObject).matchAll(/\{([A-Za-z][A-Za-z0-9_]*)\}/g)) {
+  const shown = fill(shownText(recipe, eachObject), values);
+  for (const [, name] of shown.matchAll(/\{([A-Za-z][A-Za-z0-9_]*)\}/g)) {
     if (Object.hasOwn(values, name!) || left.has(name!)) continue;
     const input = Object.hasOwn(recipe.inputs, name!) ? recipe.inputs[name!] : undefined;
     if (input !== undefined) left.set(name!, input.description);
@@ -130,6 +146,21 @@ function askedOf({ run, call }: SourceAsk): {
   return { intro: "Save a sample of each table:", block: "", saved: "result" };
 }
 
+/**
+ * The values for the fill-in list of a step with one item for each table. The items fill `{object}`
+ * and the block and save line leave it as written, so it is not listed; but text shown once
+ * (who, access and how) leaves it as written too, so then it is.
+ */
+function withoutObject(
+  { ask }: SourceRecipe,
+  values: Readonly<Record<string, string>>,
+): Readonly<Record<string, string>> {
+  const once = [ask.who, ask.access, ask.how ?? ""].some((text) =>
+    fill(text, values).includes("{object}"),
+  );
+  return once ? values : { ...values, object: "" };
+}
+
 /** The recipe's step: who, access and recipe, what to run, call or save, and where. */
 function recipeStep(
   input: SectionInput & { recipe: SourceRecipe },
@@ -138,7 +169,12 @@ function recipeStep(
   const { connection, recipe, inputs } = input;
   const { save, how } = recipe.ask;
   const schemas = schemasOf(recipe, objects);
-  const values = { ...inputs, connection, ...(schemas !== undefined && { schemas }) };
+  const values = {
+    ...defaultsOf(recipe),
+    ...inputs,
+    connection,
+    ...(schemas !== undefined && { schemas }),
+  };
   const asked = askedOf(recipe.ask);
   // With no tables, {object} is left as written in the block and the save line.
   const eachObject =
@@ -148,8 +184,7 @@ function recipeStep(
   else if (asked.text !== undefined)
     parts.push(`\`\`\`${asked.block}\n${fill(asked.text, values).replace(/\n+$/, "")}\n\`\`\``);
   if (how !== undefined) parts.push(fill(how, values).trim());
-  // In the list, each item fills {object}; only the block and save line leave it as written.
-  parts.push(...fillIn(recipe, eachObject ? { ...values, object: "" } : values, eachObject));
+  parts.push(...fillIn(recipe, eachObject ? withoutObject(recipe, values) : values, eachObject));
   if (eachObject)
     return { parts, saves: objects.map((object) => fill(save, { ...values, object })) };
   parts.push(`Save the ${asked.saved} as \`${fill(save, values)}\`.`);

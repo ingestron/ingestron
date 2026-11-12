@@ -23,7 +23,7 @@ function checkListKeys(data: Data, check: Checker): void {
 function checkInnerKeys(data: Data, check: Checker): void {
   if (isMapping(data.inputs))
     for (const [name, input] of Object.entries(data.inputs))
-      if (isMapping(input)) check.unknownKey(input, ["description"], `inputs.${name}`);
+      if (isMapping(input)) check.unknownKey(input, ["description", "default"], `inputs.${name}`);
   if (isMapping(data.ask)) check.unknownKey(data.ask, askKeys, "ask");
   for (const [key, allowed] of [
     ["names", ["parts", "caseSensitive"]],
@@ -50,6 +50,7 @@ function checkInputsShape(inputs: Data, check: Checker): void {
     const entry = check.mapping(input, `inputs.${name}`, "description:");
     const description = check.required(entry, "description", `inputs.${name}.`);
     check.text(description, `inputs.${name}.description`);
+    if (entry.default !== undefined) check.text(entry.default, `inputs.${name}.default`);
   }
 }
 

@@ -16,9 +16,9 @@ test(
   "packs a self-contained ingestron package that installs and runs",
   { timeout: 300_000 },
   async () => {
-    // The installed @ingestron/standards has no recipes folder yet; the copy is of a fixture.
-    const recipes = join(repository, "spec/cli/conformance/sources/recipes");
-    const tarball = await packCli({ recipes });
+    // The installed @ingestron/standards may have no recipes folder yet; the copy is of a fixture.
+    const recipesFolder = join(repository, "spec/cli/conformance/sources/recipes");
+    const tarball = await packCli({ recipesFolder });
     const entries = execFileSync("tar", ["-tzf", tarball], { encoding: "utf8" }).split("\n");
     for (const entry of [
       "package/LICENSE",
@@ -102,6 +102,17 @@ test(
     assert.ok(existsSync(join(folder, "local/.gitignore")));
   },
 );
+
+test("stops with a message when the recipes folder is not there", async () => {
+  const outDir = mkdtempSync(join(tmpdir(), "ingestron-pack-"));
+  const recipesFolder = join(outDir, "no-such-recipes");
+  await assert.rejects(packCli({ outDir, recipesFolder }), (error) => {
+    assert.ok(error.message.includes(`The recipes folder ${recipesFolder}`));
+    assert.ok(error.message.endsWith("does not exist."));
+    assert.equal(error.code, undefined);
+    return true;
+  });
+});
 
 /** A file:// URL of a repository that is not there. */
 function missingCatalogue(folder) {

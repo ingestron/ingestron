@@ -419,6 +419,7 @@ export interface SourceRecipe {
     id: string;
     inputs: Record<string, {
         description: string;
+        default?: string;
     }>;
     key?: string[];
     kind: "catalog" | "document" | "sample";
@@ -475,6 +476,10 @@ export const sourceRecipeSchema: {
                 required: string[];
                 properties: {
                     description: {
+                        description: string;
+                        type: string;
+                    };
+                    default: {
                         description: string;
                         type: string;
                     };

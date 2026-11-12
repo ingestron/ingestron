@@ -39,7 +39,10 @@ When neither exists, there are none.
 A project MAY keep its own recipes in `<project>/recipes/<id>.yaml`. A
 project recipe replaces Ingestron's recipe of the same id, so a team can
 correct a query without waiting for a release. The request names the file of
-a project recipe it uses.
+a project recipe it uses. Only a file directly in `recipes/` whose name ends
+`.yaml` and does not start with `.` is a recipe, and one over 10,485,760
+bytes (the limit of any project file) is refused, before it is read when the
+file's size is known: `<path>: it is <n> bytes; the limit is 10485760.`
 
 <!-- prettier-ignore -->
 ```yaml
@@ -76,7 +79,9 @@ than those below is an error.
   publishes, such as OData `$metadata`) or `sample` (a file of what the
   source sends).
 - `inputs` (default none): a mapping from each input's name to
-  `{ description }`, the text that says what to write for it. An input's name
+  `{ description }`, the text that says what to write for it, and optionally
+  `default`, the text the request uses when the connection gives no value for
+  the input; a default may hold `{object}` (below). An input's name
   matches `^[a-z][a-zA-Z0-9_]*$` and is not `connection`, `object` or
   `schemas`. A connection gives the values in
   `metadata.with`.
@@ -138,7 +143,7 @@ is broken, as `readKit` does ([kits.md](kits.md), "Rules"):
 1. The file is valid YAML and a mapping.
 2. No key other than those above, and none of the required ones missing.
 3. Each field has its shape: `title`, `ask`'s fields, `rows`, `columnNames`'
-   `match` and `to`, and each `description` are text; `inputs`, `ask`,
+   `match` and `to`, and each `description` and `default` are text; `inputs`, `ask`,
    `names`, `fields` and `columnNames` are mappings; `types`, `key` and
    `sources` are lists; `kind`, `read`, `objects` and each `logicalType` are
    one of their values; `names` has both `parts`, from 1 to 4, and
@@ -176,10 +181,12 @@ The text of `ask` MAY hold these placeholders, which the request fills in:
   `run` or `call` holds it MUST hold it in `save` too (section 1, rule 6);
 - `{schemas}`: the schemas the connection's flow tables read (section 4), each
   as a single-quoted SQL literal, joined with `, `, such as `'dbo', 'sales'`;
-- `{<input>}`: the value the connection gives for that input. A value that
-  holds an unset reference (`${envvar:…}` set nowhere) is not given: the
-  placeholder is left as written, as for an input the connection does not
-  give.
+- `{<input>}`: the value the connection gives for that input, else the
+  input's `default`. A value that holds an unset reference (`${envvar:…}` set
+  nowhere) is not given: the default is used, or, when the input has none,
+  the placeholder is left as written, as for an input the connection does not
+  give. A value, given or default, that holds `{object}` has it filled for each
+  table, as the step's text has (section 4).
 
 A placeholder that cannot be filled is left as written, and the request says
 what to write in its place. Any other text in braces is left as written.
@@ -254,7 +261,8 @@ reader. Only the columns of a table are renamed, not the fields nested in a
 column, and a table's key and the columns' other facts are unchanged. A column
 whose name the rule does not change, and one whose new name would be empty,
 keeps its name. A table in which the rule gives two columns the same name is
-refused:
+refused, names that differ only by case being the same when the recipe's
+`names.caseSensitive` is `false`:
 `<file>: the recipe "<id>" gives two columns of the table "<object>" the name "<column>".`
 (the first such name, in the table's column order, and the first such table).
 `<id>` is the recipe's `id`. A file read by another reader than the recipe's,
@@ -500,7 +508,9 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
   (section 2.5). Each
   entity set is a table named after the set, or, with the recipe's
   `objects: types`, each entity type that is not abstract (`Abstract="true"`)
-  is a table named after the type. Each
+  and has at least one property, its own or a base type's, is a table named
+  after the type (a helper type with none, such as Dataverse's `expando`, is
+  left out). Each
   property is a column: `Nullable="false"` makes it required, and
   `<Key>`'s `PropertyRef`s, in order, are the primary key, whose columns are
   required. A complex type is `object`, with its properties as `properties`,
@@ -526,7 +536,7 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
   document does not define is left out, with the note
   `The entity set "<set>" is left out: its type "<type>" is not defined in the document.`
   A document with no entity set (or, with
-  `objects: types`, no entity type that is not abstract) is refused:
+  `objects: types`, no such entity type) is refused:
   `<file> describes no entity sets.` (or `no entity types`).
 - **OpenAPI** (`openapi`): JSON or YAML with a top-level `openapi` (3.x) or
   `swagger` (2.0). Each schema of `components.schemas` (`definitions` in
@@ -698,7 +708,13 @@ and the notes, or the reasons it refuses the file. It writes nothing.
 
 It refuses:
 
-- a current text that is not a `SourceMetadata` document of the connection:
+- a time of the import that is not an ISO 8601 date, or date and time, that
+  a calendar has: `The import time "<at>" is not an ISO 8601 time.`;
+- a current text that is not a `SourceMetadata` document of the connection,
+  with `apiVersion: ingestron.io/v1`, tables and columns whose values are as
+  `source-metadata.schema.yaml` gives them (a `logicalType` of the nine, a
+  `primaryKeyPosition` and `names.parts` that are whole numbers in range, a
+  `captured.from` of the five):
   `sources/<connection>.yaml is not the source metadata of "<connection>".`;
 - the metadata document itself, `sources/<connection>.yaml` or `.yml`:
   `<file> is source metadata already; import the file it was made from.`;
@@ -750,6 +766,7 @@ otherwise.
 The new document has:
 
 - `id` and `connection`: the connection's id;
+- `description`: the current document's, else none;
 - `environment`: `--env`'s value, else the current document's, else none;
 - `names`: the recipe's, else the current document's, else none;
 - `tables`: each with `captured` of `at` (the time of the import, as
@@ -763,8 +780,8 @@ It is written so that a new import shows as a small diff:
 
 - It starts with the comment
   `# Written by ingestron source import. Do not edit: import again to replace it.`
-- Then `apiVersion`, `kind`, `id`, `connection`, `environment`, `names` and
-  `tables`, in that order, in block style. `names` is a one-line flow mapping.
+- Then `apiVersion`, `kind`, `id`, `description`, `connection`, `environment`,
+  `names` and `tables`, in that order, in block style. `names` is a one-line flow mapping.
 - Tables are sorted by `object`, in code-point order. Columns keep the
   source's order.
 - Each table has `object`, `captured` and `columns`, in that order.
@@ -909,7 +926,9 @@ have problems; fix them first:", and each error in a `text` code block,
 written as `ingestron plan` writes a problem, as the platform request writes
 them. Warnings and information are left out. An unknown connection and a
 recipe's problems are written in the same block, each on a line of its own,
-after the definitions' errors. A pack that cannot be loaded gives the
+after the definitions' errors. When the project cannot be loaded and no
+error says why, the block holds the line `The project could not be loaded.`
+A pack that cannot be loaded gives the
 `PACK_LOAD` error and the exit code 2, as for every command
 ([output folders](outputs.md), section 4). An unknown connection is
 `"<id>" is not a connection of the project. Connections: <ids>.`
@@ -948,7 +967,9 @@ Every table its flows read is in sources/<connection>.yaml:
 ```
 
 with one line for each entry, in code-point order of its `object`, each once.
-Nothing is asked for that connection.
+A line ends after `<captured.from>`, with no `, captured <YYYY-MM-DD>`, when
+`captured.at` does not start with a date. Nothing is asked for that
+connection.
 
 **The recipe's step.** Otherwise, when the connection has a recipe, the
 section starts with its step:
@@ -990,12 +1011,16 @@ Save the result as `<save>`.
   - `<run or call, filled>`, saved as `<save, filled>`
   ```
 
-- Every placeholder is filled where its value is known (section 1). The
+- Every placeholder is filled where its value is known (section 1); an
+  input's value that holds `{object}` has it filled in the list's items, and
+  left as written elsewhere. The
   list after `Fill in before use:` names, in the order they first appear,
   each that is not: an input the connection does not give, with the input's
   `description`, `{schemas}` when the schemas are not known, with
   `the schemas to describe, each in single quotes and separated by commas, such as 'dbo', 'sales'`,
-  and `{object}` when it is left as written, with
+  and `{object}` when it is left as written (in the block and save line when
+  there are no flow tables, and in `who`, `access` or `how`, which are shown
+  once and not for each table), with
   `a table to describe, as a flow's object names it; do this once for each table`.
   With none, the list and its line are left out.
 
@@ -1206,7 +1231,7 @@ and 0 otherwise: a skipped file alone is not a problem.
 | Code | When                                                                                                                                                                                                                                                                                                         |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 0    | Done, a dry run that would write included. Breaking changes do not change it.                                                                                                                                                                                                                                |
-| 1    | A refusal; an unknown connection, flow table or recipe; definitions that cannot be loaded; or definitions with errors that stop the command (section 4, "Resolving").                                                                                                                                        |
+| 1    | A refusal; an unknown connection, flow table or recipe; a recipe that breaks a rule (section 1), even one no connection uses; definitions that cannot be loaded; or definitions with errors that stop the command (section 4, "Resolving").                                                                  |
 | 2    | A usage mistake: `source` without `request` or `import`, `import` without both arguments or with more, `--env` more than once on `source` or on `contract --from-metadata`, `--from-metadata` with neither a table nor `--needed`, or with both, or a flag given to a command it does not belong to (below). |
 
 ### Flags

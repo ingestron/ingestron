@@ -81,8 +81,11 @@ export interface SourceRecipe {
   title: string;
   /** `catalog`: a query or API call on the source's catalog; `document`: a published document; `sample`: a file of what the source sends. */
   kind: "catalog" | "document" | "sample";
-  /** Each input's name and what to write for it; a connection gives the values in `metadata.with`. */
-  inputs: Record<string, { description: string }>;
+  /**
+   * Each input's name, what to write for it and, optionally, the text used when the connection
+   * gives none; a connection gives the values in `metadata.with`.
+   */
+  inputs: Record<string, { description: string; default?: string }>;
   /** What the request asks for. */
   ask: SourceAsk;
   /** The reader that reads the result. */

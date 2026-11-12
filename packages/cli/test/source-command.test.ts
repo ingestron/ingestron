@@ -1,11 +1,21 @@
 // ingestron source request and the usage mistakes of source (spec/cli/sources.md, section 6), run
 // on a copy of the request conformance project.
-import { existsSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { fixture, read, sourceProject, withCatalog } from "./source-projects.js";
 
 const expected = (name: string) => read(fixture("request"), name);
+
+describe("ingestron source request, a recipe that breaks a rule", () => {
+  it("exits 1 and names the recipe's file, even when no connection uses it", () => {
+    const { folder, ingestron } = sourceProject("request");
+    writeFileSync(join(folder, "recipes/unused.yaml"), "id: unused\ntitle: [\n");
+    const { code, output } = ingestron("source", "request", "--env", "dev");
+    expect(code).toBe(1);
+    expect(output).toContain("recipes/unused.yaml: ");
+  });
+});
 
 describe("ingestron source request", () => {
   it("prints the conformance Markdown for an environment", () => {
