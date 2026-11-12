@@ -395,7 +395,8 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
   `.edmx`; any other file is read as OData only as the reader of the
   connection's recipe, or by the `.catalog.` name rule (section 2.5). Each
   entity set is a table named after the set, or, with the recipe's
-  `objects: types`, each entity type is a table named after the type. Each
+  `objects: types`, each entity type that is not abstract (`Abstract="true"`)
+  is a table named after the type. Each
   property is a column: `Nullable="false"` makes it required, and
   `<Key>`'s `PropertyRef`s, in order, are the primary key, whose columns are
   required. A complex type is `object`, with its properties as `properties`,
@@ -410,7 +411,8 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
   `MaxLength` as `maxLength` when it is a number; `Edm.Byte`, `Edm.SByte`,
   `Edm.Int16`, `Edm.Int32` and `Edm.Int64` are `integer`; `Edm.Decimal` is
   `number`, with `Precision` when it is a number and `Scale`, which is 0 when
-  it is missing or is not a number; `Edm.Single`
+  it is missing or is not a number, except that `Scale="Variable"`, in any case (any
+  scale), gives no scale; `Edm.Single`
   and `Edm.Double` are `number`; `Edm.Boolean` is `boolean`; `Edm.Date` is
   `date`; `Edm.DateTimeOffset` and `Edm.DateTime` are `timestamp`;
   `Edm.TimeOfDay` and `Edm.Time` are `time`; any other is `string`.
@@ -420,7 +422,7 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
   document does not define is left out, with the note
   `The entity set "<set>" is left out: its type "<type>" is not defined in the document.`
   A document with no entity set (or, with
-  `objects: types`, no entity type) is refused:
+  `objects: types`, no entity type that is not abstract) is refused:
   `<file> describes no entity sets.` (or `no entity types`).
 - **OpenAPI** (`openapi`): JSON or YAML with a top-level `openapi` (3.x) or
   `swagger` (2.0). Each schema of `components.schemas` (`definitions` in
