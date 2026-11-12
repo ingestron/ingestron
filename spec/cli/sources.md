@@ -204,6 +204,12 @@ second), each with the message above, in the connection's document at
 `/metadata/from` and at `/metadata/with/<name>` of the input. `plan` and
 `check` do not report them.
 
+An editor MAY also report a project recipe that breaks a rule (above) as the
+error `SOURCE_RECIPE_BROKEN`, at the first line of `recipes/<id>.yaml`, with
+the message `readSourceRecipe` gives. While any project recipe is broken the
+editor reports no other recipe problem, since the recipes cannot be read
+whole. An installed recipe that breaks a rule is not reported by an editor.
+
 An input the recipe takes and the connection does not give is not an error:
 the request leaves its placeholder for the reader to fill in.
 
