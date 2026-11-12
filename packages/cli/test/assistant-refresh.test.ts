@@ -8,6 +8,7 @@ import {
   rmSync,
   symlinkSync,
   utimesSync,
+  chmodSync,
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
@@ -145,6 +146,47 @@ describe("plan and apply keep the guide current", () => {
     expect(code).toBe(0);
     expect(output).not.toContain("AGENTS.md");
   });
+
+  // chmod does not deny the superuser, so these two cannot show anything as root.
+  const denied = process.getuid?.() === 0 ? it.skip : it;
+
+  denied(
+    "plan with an AGENTS.md that cannot be read gives the output and exit as without it",
+    () => {
+      const folder = staleProject();
+      const text = read(folder, "AGENTS.md");
+      rmSync(join(folder, "AGENTS.md"));
+      const without = ingestron(folder, ["plan"]);
+      writeFileSync(join(folder, "AGENTS.md"), text);
+      chmodSync(join(folder, "AGENTS.md"), 0o000);
+      try {
+        const { code, output } = ingestron(folder, ["plan"]);
+        expect(code).toBe(without.code);
+        expect(output).toBe(without.output);
+        expect(output).not.toContain("AGENTS.md");
+      } finally {
+        chmodSync(join(folder, "AGENTS.md"), 0o644);
+      }
+    },
+  );
+
+  denied(
+    "apply with a read-only AGENTS.md holding a stale section leaves it and exits as before",
+    () => {
+      const folder = staleProject();
+      const text = read(folder, "AGENTS.md");
+      const without = ingestron(project(), ["apply"]);
+      chmodSync(join(folder, "AGENTS.md"), 0o444);
+      try {
+        const { code, output } = ingestron(folder, ["apply"]);
+        expect(code).toBe(without.code);
+        expect(output).not.toContain("AGENTS.md");
+        expect(read(folder, "AGENTS.md")).toBe(text);
+      } finally {
+        chmodSync(join(folder, "AGENTS.md"), 0o644);
+      }
+    },
+  );
 
   it("check never looks at it", () => {
     const folder = staleProject();

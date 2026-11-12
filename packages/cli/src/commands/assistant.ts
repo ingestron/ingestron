@@ -156,20 +156,36 @@ export function guideOut(definitions: string, out: string, cwd: string): string 
  */
 export function refreshGuide(options: Options, io: Io, available?: readonly Pack[]): void {
   if (options.command !== "plan" && options.command !== "apply") return;
-  const definitions = resolve(io.cwd, options.definitions);
-  const found = look(definitions, "AGENTS.md");
-  if (found.state !== "file") return;
-  const facts = guideFacts(
-    nodeFiles(definitions),
-    guideOut(definitions, options.out, io.cwd),
-    available,
-  );
-  if ("noGuide" in facts) return;
-  const update = guideUpdate(found.text, guideSection(facts), false);
-  if (update.kind === "updated" && options.command === "apply")
-    if (!writeSafely(join(definitions, "AGENTS.md"), update.text, true)) return;
-  const line = guideLine("AGENTS.md", update.kind, options.command);
+  const line = guideRefresh(options, io, available);
   if (line !== undefined) io.write(`${line}\n`);
+}
+
+/**
+ * The line `refreshGuide` prints, or undefined for none. A file that cannot be read or written
+ * (a mode that denies it, say) is left as it is: the guide never fails the command.
+ */
+function guideRefresh(
+  options: Options,
+  io: Io,
+  available: readonly Pack[] | undefined,
+): string | undefined {
+  try {
+    const definitions = resolve(io.cwd, options.definitions);
+    const found = look(definitions, "AGENTS.md");
+    if (found.state !== "file") return undefined;
+    const facts = guideFacts(
+      nodeFiles(definitions),
+      guideOut(definitions, options.out, io.cwd),
+      available,
+    );
+    if ("noGuide" in facts) return undefined;
+    const update = guideUpdate(found.text, guideSection(facts), false);
+    const writes = update.kind === "updated" && options.command === "apply";
+    if (writes && !writeSafely(join(definitions, "AGENTS.md"), update.text, true)) return undefined;
+    return guideLine("AGENTS.md", update.kind, options.command as "plan" | "apply");
+  } catch {
+    return undefined;
+  }
 }
 
 /**
