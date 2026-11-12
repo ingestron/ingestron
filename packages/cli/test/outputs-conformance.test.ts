@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import { readArgs, usage } from "../src/terminal/index.js";
 import { generate } from "../src/commands/generate.js";
 import { generatedFolders } from "../src/commands/outputs.js";
+import { checkLines } from "./conformance-checks.js";
 import { standIns, type Notice } from "./outputs-packs.js";
 
 interface Case {
@@ -51,17 +52,6 @@ function runCase(testCase: Case): { folder: string; exit: number; output: string
     for (const name of Object.keys(testCase.envvars ?? {}))
       if (saved[name] === undefined) delete process.env[name];
       else process.env[name] = saved[name];
-  }
-}
-
-/** The lines expected, in order, with any others between them. */
-function checkLines(output: string, lines: string[]): void {
-  const found = output.split("\n");
-  let at = 0;
-  for (const line of lines) {
-    const index = found.indexOf(line, at);
-    expect(index, `"${line}" after line ${at} of:\n${output}`).toBeGreaterThanOrEqual(0);
-    at = index + 1;
   }
 }
 

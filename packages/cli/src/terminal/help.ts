@@ -31,6 +31,10 @@ export const commands = [
     name: "source",
     summary: "Request source metadata from its owners, or import the file they send.",
   },
+  {
+    name: "assistant",
+    summary: "Add the project guide that coding assistants read: assistant add <names>.",
+  },
 ] as const;
 
 /**
@@ -109,6 +113,11 @@ export const flags = [
   },
   { flag: "--yes", summary: "init: take the default of each choice not given as a flag." },
   {
+    flag: "--assistant <names>",
+    summary:
+      "init: write the project guide for coding assistants, with files for copilot, claude, codex, cursor or agents (comma-separated). Default: none.",
+  },
+  {
     flag: "--platform <id>",
     summary: "standard list: only the standards for this platform, such as duckdb.",
   },
@@ -120,7 +129,7 @@ const flagWidth = Math.max(...flags.map(({ flag }) => flag.length)) + 2;
 
 /** Usage text for --help and mistakes. */
 export const usage = [
-  "Usage: ingestron <plan|apply|check|compare|contract|request|schemas|init|standard|source> [options]",
+  "Usage: ingestron <plan|apply|check|compare|contract|request|schemas|init|standard|source|assistant> [options]",
   "",
   ...commands.map(({ name, summary }) => `  ${name.padEnd(10)}${summary}`),
   "",

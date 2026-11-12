@@ -232,8 +232,14 @@ other `<…>` is filled in.
 ### The rules
 
 Rule 3 is written as the first two sentences alone when the project has no
-standard document, and with the items when it has. The items are, in this
-order:
+standard document, and with the items when it has. With no standard it reads
+exactly:
+
+```text
+3. Work inside the standard. Do not edit the standard file to clear a problem; tell the user what the platform team would need to change.
+```
+
+The items are, in this order:
 
 1. ``- `<action>` allows `<m>`, `<m>`.`` for each action of the standard that has
    `allowed`, in the order the standard writes the actions, with each method

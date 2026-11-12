@@ -3,6 +3,7 @@ import { formatDiagnostics } from "@ingestron/config";
 import * as core from "@ingestron/core";
 import { packLoadProblem } from "@ingestron/definitions";
 import {
+  assistant,
   compare,
   draftContract,
   draftFromMetadata,
@@ -32,6 +33,7 @@ const handlers: Record<Options["command"], (options: Options, io: Io) => number>
   init,
   standard,
   source,
+  assistant,
 };
 
 /**

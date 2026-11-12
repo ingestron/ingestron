@@ -35,6 +35,9 @@ export const commands: readonly [{
 }, {
     readonly name: "source";
     readonly summary: "Request source metadata from its owners, or import the file they send.";
+}, {
+    readonly name: "assistant";
+    readonly summary: "Add the project guide that coding assistants read: assistant add <names>.";
 }];
 
 // @public
@@ -95,6 +98,9 @@ export const flags: readonly [{
 }, {
     readonly flag: "--yes";
     readonly summary: "init: take the default of each choice not given as a flag.";
+}, {
+    readonly flag: "--assistant <names>";
+    readonly summary: "init: write the project guide for coding assistants, with files for copilot, claude, codex, cursor or agents (comma-separated). Default: none.";
 }, {
     readonly flag: "--platform <id>";
     readonly summary: "standard list: only the standards for this platform, such as duckdb.";

@@ -1,9 +1,12 @@
 // Command-line arguments.
 import { parseArgs } from "node:util";
+import { readAssistantNames } from "@ingestron/core/internal";
 import { commands } from "./help.js";
+import { plainSub, type AssistantAction, type StandardAction } from "./sub-args.js";
 import { metadataTables, misplacedFlag, sourceAction, type SourceAction } from "./source-args.js";
 
 export type { SourceAction } from "./source-args.js";
+export type { StandardAction } from "./sub-args.js";
 
 /** What the user asked for. */
 export interface Options {
@@ -17,7 +20,10 @@ export interface Options {
     | "schemas"
     | "init"
     | "standard"
-    | "source";
+    | "source"
+    | "assistant";
+  /** assistant: add the project guide and the files that point to it. */
+  assistant?: AssistantAction;
   /** standard: install a kit's standard, or list the kits, for one platform when given. */
   standard?: StandardAction;
   /** source: print the source request, or import a file of source metadata. */
@@ -48,12 +54,10 @@ export interface Options {
     standard?: string;
     set: Record<string, string>;
     yes: boolean;
+    /** The raw values of --assistant; absent when it is not given. */
+    assistants?: string[];
   };
 }
-
-/** What `standard` was asked to do. */
-export type StandardAction =
-  { action: "install"; kit: string } | { action: "list"; platform?: string };
 
 const commandNames = new Set<string>(commands.map((command) => command.name));
 
@@ -82,6 +86,7 @@ const spec = {
   "dry-run": { type: "boolean", default: false },
   "from-metadata": { type: "boolean", default: false },
   needed: { type: "boolean", default: false },
+  assistant: { type: "string", multiple: true },
 } as const;
 
 type Values = ReturnType<
@@ -132,38 +137,21 @@ function envMistake(
   return undefined;
 }
 
-/** standard's sub-command: `install <kit>` or `list`, or a mistake. */
-function standardAction(
-  extra: string[],
-  platform: string | undefined,
-): StandardAction | { mistake: string } {
-  const [action, kit, ...rest] = extra;
-  if (action === undefined) return { mistake: "standard needs install <kit> or list." };
-  if (action === "install" && kit === undefined)
-    return { mistake: "standard install needs a kit, such as duckdb/local-medallion." };
-  if (action === "install" && kit !== undefined && rest.length === 0)
-    return { action: "install", kit };
-  if (action === "list" && kit === undefined)
-    return { action: "list", ...(platform !== undefined && { platform }) };
-  return { mistake: `Unknown command "standard ${extra.join(" ")}".` };
-}
-
 /** What `commandOf` found: the command, its other arguments and its sub-command, or a mistake. */
 interface Chosen {
   command: string;
   extra: string[];
   standard?: StandardAction;
   source?: SourceAction;
+  assistant?: AssistantAction;
   fromMetadata?: { tables: string[]; needed: boolean };
 }
 
-/** The command and the arguments after it, with standard's and source's sub-commands, or a mistake. */
+/** The command and the arguments after it, with standard's, source's and assistant's sub-commands, or a mistake. */
 function commandOf(positionals: string[], values: Values): Chosen | { mistake: string } {
   const [command = "", ...extra] = positionals;
-  if (command === "standard") {
-    const standard = standardAction(extra, values.platform);
-    return "mistake" in standard ? standard : { command, extra: [], standard };
-  }
+  const plain = plainSub(command, extra, values.platform);
+  if (plain) return "mistake" in plain ? plain : { command, extra: [], ...plain };
   if (command === "source") {
     const source = sourceAction(extra, {
       connection: values.connection,
@@ -209,7 +197,10 @@ function initOptions(values: Values, folder = "."): Options["init"] | { mistake:
   const given = initTexts.flatMap((key) =>
     values[key] === undefined ? [] : [[key, values[key]] as const],
   );
-  return { folder, ...Object.fromEntries(given), set, yes: values.yes };
+  const named = values.assistant && readAssistantNames(values.assistant);
+  if (named && "mistake" in named) return named;
+  const assistants = values.assistant === undefined ? {} : { assistants: values.assistant };
+  return { folder, ...Object.fromEntries(given), set, yes: values.yes, ...assistants };
 }
 
 /** `--set key=value` pairs, or a mistake naming the one without `=`. */
