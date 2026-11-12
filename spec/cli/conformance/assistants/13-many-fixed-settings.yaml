@@ -11,15 +11,14 @@ files:
     packs: [databricks@2, adf@2]
     ingest:
       fixed:
-        adf-copy: { parallel: 4, retries: 2, timeout: "0.02:00:00", audit_columns: true }
+        adf-copy: { mode: full, format: parquet, encrypt: mandatory, retries: 2, runtime_kind: self-hosted }
     store:
       fixed:
         streaming-table:
+          mode: append
           cluster_by: auto
           properties: { delta.enableChangeDataFeed: "true" }
-          schema_evolution: true
-          comment: Managed by Ingestron
-          owner: data-platform
+          changes_suffix: _changes
 command: assistant
 args: ["add", "agents"]
 expect:
@@ -28,10 +27,9 @@ expect:
     - "AGENTS.md: written"
   contains:
     AGENTS.md:
-      - |
-        - `ingest` fixes, for `adf-copy`: `parallel`, `retries`, `timeout`, `audit_columns`.
-        - `store` fixes, for `streaming-table`: `cluster_by`, `properties`, `schema_evolution`, `comment`, `owner`.
+      - "   - `ingest` fixes, for `adf-copy`: `mode`, `format`, `encrypt`, `retries`, `runtime_kind`.\n   - `store` fixes, for `streaming-table`: `mode`, `cluster_by`, `properties`, `changes_suffix`.\n"
   absent:
     AGENTS.md:
       - "cluster_by: auto"
       - "retries: 2"
+      - "mode: full"

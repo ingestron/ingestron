@@ -962,9 +962,10 @@ recipe has no step, and its section starts
 - The columns file, saved as `sources/<connection>.columns.csv`, with one row for each column and these fields, in order: `table_catalog`, `table_schema`, `table_name`, `column_name`, `ordinal_position`, `data_type`, `is_nullable` (`YES` or `NO`), `primary_key_position` (empty when the column is not in the key). A script, a catalog export or a spreadsheet can make it.
 ```
 
-When the project's `AGENTS.md` holds an Ingestron section with its source
-metadata part ([the project guide](assistants.md), section 4), every
-connection's alternatives end with one more item, after the columns file's:
+When the project's `AGENTS.md` has the begin and end markers in the shape of
+a section ([the project guide](assistants.md), section 3; edited by hand or
+not) and a line `## Source metadata` between them, every connection's
+alternatives end with one more item, after the columns file's:
 
 <!-- prettier-ignore -->
 ```markdown

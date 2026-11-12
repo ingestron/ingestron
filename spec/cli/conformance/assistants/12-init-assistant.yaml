@@ -1,12 +1,13 @@
-description: "init --assistant claude writes AGENTS.md and CLAUDE.md after the project's files, and prints a line for each after its Created line."
+description: "init --assistant claude writes AGENTS.md and CLAUDE.md after the project's files, and prints a line for each directly after its Created line, before the blank line that precedes the plan."
 command: init
 args: ["local", "--template", "duckdb", "--assistant", "claude", "--yes"]
 expect:
   exit: 0
-  lines:
+  block:
     - "Created local from the template duckdb (12 files)."
     - "AGENTS.md: written"
     - "CLAUDE.md: written"
+    - ""
   contains:
     local/AGENTS.md:
       - |

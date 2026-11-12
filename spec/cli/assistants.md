@@ -108,7 +108,14 @@ file is in one of these states:
 
 A file that holds a section is **current** when the hash matches and its text
 is the section this page says is written now, **stale** when the hash matches
-and the text differs, and edited by hand when the hash does not match.
+and the text differs, and edited by hand when the hash does not match. The text
+of a section is always hashed and compared with CRLF read as LF, so a file's
+line endings never make a section stale.
+
+**Line endings.** A file's line ending is decided by its first line: CRLF when
+the first line ends with CRLF, else LF (and LF for a file with no line ending).
+Whatever Ingestron appends or rewrites in a file is written in that line
+ending. The guide itself (section 4) is generated with LF.
 
 ## 4. The guide's text
 
@@ -175,18 +182,26 @@ When the user gives you material no reader takes (a vendor's data dictionary, a 
 they are there only when at least one `Connection` document is imported.
 Blocks are separated by one blank line, a list's items are on consecutive
 lines, and the end marker follows the last line with no blank line between.
-`<connection>` and `<name>` in the text above are written as they are: they
-are never filled in. The numbered rules and the items under rule 3 are
-written as shown, with the items indented three spaces.
+The numbered rules and the items under rule 3 are written as shown, with the
+items indented three spaces.
+
+Some `<…>` stay literal in the guide, as written above: in rule 8, `<a>`, `<b>`
+and `<name>`; in `## Commands`, `<a>`, `<b>`, `<name>`, `<sample>`,
+`<connection>` and `<file>`; and in `## Source metadata`, `<connection>`. Every
+other `<…>` is filled in.
 
 ### This project
 
 - **Environments.** The environments of `project.yaml`, in its order, each
   written `` `<name>` ``. An environment with `runs-on` is written
   `` `<name>` (runs on `<pack>`) ``, with the pack as `project.yaml` gives
-  it. With no environments the line reads `Environments: none`.
+  it. With no environments the line is
+  ``- Project `<id>`. Environments: none (`project.yaml`).``
 - **The standard line.** The standard is the first `Standard` document among
-  the imported files, in path order. Its line is
+  the imported files. The files are the union of those the patterns of
+  `imports` match, each once, in code-point order of their paths, as the
+  definitions loader orders them (config specification, section 2), whatever
+  the order of the patterns. Its line is
   ``- Standard `<id>` in `<file>`<origin>. Packs: `<pack>`, `<pack>`.``, with
   `<file>` its path, and the packs as its `packs` field writes them.
   `<origin>` is, in this order of preference:
@@ -201,7 +216,9 @@ written as shown, with the items indented three spaces.
 - **Definitions.** The patterns of `imports`, as written, in order. With none,
   ``- Definitions: the files `project.yaml` imports: none.``
 - **Generated.** The packs are the standard's `packs`, then any `runs-on` pack
-  not already among them. A pack's id is what precedes `@`. For each pack,
+  not already among them. The second part matters only for a project the
+  definitions reject, since a `runs-on` pack MUST be one of the standard's
+  packs (`UNKNOWN_PACK`) and the guide is read without resolving. A pack's id is what precedes `@`. For each pack,
   in that order, an item is written `` `<out>/<pack id>/` ``, followed by
   ` (every environment together)` for a pack that builds environments
   together (the pack has `buildEnvironments`: `databricks`, `adf` and `synapse`
@@ -264,11 +281,11 @@ is `This project uses none.`
   pattern `\$\{envvar:([A-Za-z_][A-Za-z0-9_]*)\}` matches them, each once.
   No other file is read: in particular a `.env` file is never read, and no
   value from the environment or from one appears in any file written.
-- With no `id` in `project.yaml`, or when `project.yaml` cannot be read, there
-  is no guide.
-- The same facts always give the same bytes. A project's section stays under
-  6 KiB (6144 bytes) however many connections, names and fixed settings it
-  has, for the lists above and the keys-only rule hold it there.
+- When `project.yaml` does not parse as YAML, or is not a mapping, or has no
+  `id` that is a string, there is no guide (section 5 gives the two messages).
+- The same facts always give the same bytes. The lists of connections and
+  names are capped, and fixed settings are listed by key alone above eight, so
+  that the section stays small; this is not a limit the text promises.
 - No tool is named in the guide, so one text serves every name.
 
 ## 5. Writing
@@ -288,15 +305,15 @@ line, from this closed set:
 | `.github/copilot-instructions.md: added the link to AGENTS.md`                                                                                           | `.github/copilot-instructions.md` exists and has no line equal to the first line of its text (section 2).             |
 | `AGENTS.md: the Ingestron section was edited by hand, so it was not updated. Move your notes outside it, or delete both markers to keep it as your own.` | `AGENTS.md` is edited by hand.                                                                                        |
 | `<file>: not a regular file, so nothing was written to it.`                                                                                              | The path is a symbolic link, a folder or anything else that is not a regular file, or a parent of it is not a folder. |
-| `No guide: project.yaml has no id.`                                                                                                                      | There is no guide (section 4); nothing is written.                                                                    |
+| `No guide: project.yaml cannot be read.`                                                                                                                 | `project.yaml` does not parse as YAML, or is not a mapping; nothing is written.                                       |
+| `No guide: project.yaml has no id.`                                                                                                                      | `project.yaml` parses but has no `id` that is a string; nothing is written.                                           |
 
 - A new section is appended to an existing user's `AGENTS.md` after one blank
-  line, in the file's own line endings: CRLF when the first line ending in the
-  file is CRLF, else LF. A file that does not end with a line ending gets one
-  first. Everything already in the file stays byte for byte. A stale section
+  line, in the file's line ending (section 3: decided by its first line). A
+  file that does not end with a line ending gets one first. Everything already in the file stays byte for byte. A stale section
   is replaced in place, from the start of its begin-marker line to the end of
-  its end-marker line, in the same line endings, and the rest of the file
-  stays byte for byte.
+  its end-marker line, in the file's line ending, and the rest of the file stays
+  byte for byte.
 - `CLAUDE.md` gets its two lines appended, each on a line of its own, in the
   file's line endings. `.github/copilot-instructions.md` gets its whole text
   appended after one blank line. A new `.github` folder is made only when
@@ -307,8 +324,8 @@ line, from this closed set:
   still written.
 
 **`init`.** `init --assistant <names>` writes the files after the project's
-files and before its plan: it prints each file's line after its
-`Created …` line. With a terminal, and neither `--assistant` nor `--yes`, it
+files and before its plan: it prints each file's line directly after its
+`Created …` line, before the blank line that precedes the plan. With a terminal, and neither `--assistant` nor `--yes`, it
 asks last, after every other question:
 
 ```text
@@ -320,11 +337,19 @@ asked again, after the mistake's text (section 1). Without a terminal, or
 with `--yes`, and without `--assistant`, nothing is written and nothing is
 asked.
 
-**`assistant add <names>`.** It needs `project.yaml` in the project folder:
-without it, `No project.yaml in <folder>.` and exit 1. It prints each file's
-line. It exits 1 when any file was not a regular file, and 0 otherwise, an
-edited section and a missing `id` included. It is idempotent: run again, it
-prints `<file>: up to date` for every file it wrote.
+**`assistant add <names>`.** It takes `--definitions <dir>`, the project's
+folder (default `.`), and `--out <dir>`, the output folder (default `build`),
+resolved against the working folder as `plan` resolves it. It needs
+`project.yaml` in the project folder: without it, `No project.yaml in <folder>.`
+and exit 1, with `<folder>` the project folder relative to the working folder,
+with `/` separators, and `.` when it is the working folder. It prints each
+file's line. It exits 1 when there is no guide (nothing is written, and the
+line says why), or when any file was not a regular file, and 0 otherwise, an
+edited section included. It is idempotent: run again, it prints
+`<file>: up to date` for every file it wrote.
+
+`<out>` in the guide (section 4) is the folder `--out` names, written relative
+to the project folder with `/` separators.
 
 ## 6. Keeping it current
 
@@ -344,7 +369,12 @@ from the project as it is now, with `<out>` the folder given by `--out`.
   when it is not a regular file, when the section is current, or when there is
   no guide.
 - They act whether the definitions resolve or not, as the guide reads its
-  facts without resolving.
+  facts without resolving. A pack that cannot be loaded comes first: as for
+  every command ([output folders](outputs.md), section 4), `PACK_LOAD` is the
+  whole output, nothing is read or written, and the exit code is 2.
+- A section is current, stale or edited by the rules of section 3, so a file
+  with CRLF line endings that holds a current section is neither reported nor
+  rewritten.
 - The guide never changes either command's exit code.
 - `check` never looks at it: neither a build nor CI fails over a guide.
 - Neither `CLAUDE.md` nor `.github/copilot-instructions.md` is read or
@@ -376,19 +406,27 @@ expect:
       - "- Project `retail`."
   absent: # optional; path → texts the file does not have, or ~: the file does not exist
     CLAUDE.md: ~
+  block: # optional; lines the output has one directly after another, in this order
+    - "Created local from the template duckdb (12 files)."
+    - "AGENTS.md: written"
   absentLines: # optional; texts that no line of the output contains
     - "AGENTS.md"
   unchanged: # optional; paths whose bytes are as `files` gave them
     - AGENTS.md
 ```
 
-For `plan`, `apply` and `check` the command runs in the project's folder with
-`--definitions .` and `--out build`, with the data-only packs and stand-in
-builds of the output folder cases. For `assistant`, `args` follow `assistant`.
-For `init`, the case's `files` are left out, the command runs in an empty
-folder, `args` are the arguments of `init` (the first is the folder it
-creates), and the paths of `contains` and `absent` are relative to the
-working folder, so start with that folder's name.
+Every case runs in a folder that is both the working folder and the project
+folder: the case's `files` are written there first, and the command runs with
+`--definitions .`, and `--out build` for the commands that take it. A case with
+the command `assistant` or `init` uses the CLI's real packs (`databricks`, `adf`,
+`synapse` and `duckdb`). A case with the command `plan`, `apply` or `check`
+uses the data-only packs and stand-in builds of the output folder cases, so that
+`fold` builds environments together and `local` does not. For `assistant`,
+`args` follow `assistant`. For `init`, the case's `files` are left out, the
+command runs in an empty folder, `args` are the arguments of `init` (the first
+is the folder it creates, which is then the project folder), and the paths of
+`contains` and `absent` are relative to the working folder, so start with that
+folder's name.
 
 In a case, `AGENTS.md`, `CLAUDE.md` and `.github/copilot-instructions.md`
 appear only as keys of the YAML: no such file is in this repository. A section
