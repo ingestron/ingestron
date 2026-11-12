@@ -1,0 +1,27 @@
+description: "An environment that runs on DuckDB: DuckDB's pack is used through runs-on, so the guide has the deploy sentence for Databricks and ADF and the DuckDB sentence, and writes the environment as running on it."
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, prod: {}, local: { runs-on: duckdb } }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [databricks@2, adf@2]
+command: assistant
+args: ["add", "agents"]
+expect:
+  exit: 0
+  lines:
+    - "AGENTS.md: written"
+  contains:
+    AGENTS.md:
+      - |
+        - Project `retail`. Environments: `dev`, `prod`, `local` (runs on `duckdb`) (`project.yaml`).
+      - |
+        - Generated, one folder per pack: `build/databricks/` (every environment together), `build/adf/` (every environment together), `build/duckdb/` (a folder per environment).
+      - |
+        7. Values written `${envvar:NAME}` are not secrets. The `databricks@2` and `adf@2` output keeps them as values the deploying pipeline supplies. DuckDB reads them from the environment or the project's `.env` files when it runs. Do not read, print or commit `.env` files. `ingestron request` lists the values each environment needs. This project uses none.
+      - |
+        <!-- ingestron:end sha256:f53b8a11d8eaaa44c4842c9730e70c34d9e7e07425cfbb049623c125dd04647e -->

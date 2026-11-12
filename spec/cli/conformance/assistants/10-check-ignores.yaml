@@ -1,0 +1,103 @@
+description: "check never looks at the guide: a stale section changes neither its lines nor its exit code."
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [fold@2]
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: fold
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        description: One row per order.
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+  build/fold/.generated.json: |
+    { "version": 1, "files": { "tables.txt": "sha256:e3f7f152fbb1e26e92fd7e7e2a1dddbe616299a7b9078eea54aa5d8c2a5d170a", "targets.txt": "sha256:9c5955fc99a60b8f6dee6cf582c4420d91e1b3e2a201f532c91e2cbdfce7fa51" } }
+  build/fold/tables.txt: |
+    orders /data/shop
+  build/fold/targets.txt: |
+    dev
+  # The section was written for the environments `dev` and `test`, and project.yaml has only `dev`, so it is stale; its hash is its text's true hash, made with:
+  #     node -e 'const s=require("fs").readFileSync(0,"utf8");console.log(require("crypto").createHash("sha256").update(s.replace(/\r\n/g,"\n")).digest("hex"))'
+  AGENTS.md: |
+    <!-- ingestron:begin guide 1. Ingestron writes this section and `ingestron apply` keeps it current. Write your own notes outside it, or delete both markers to make it yours. -->
+    # Working on this Ingestron project
+
+    This folder holds Ingestron definitions: YAML that generates the files the data platform deploys. Ingestron runs on this computer; it never connects to a source or a cloud.
+
+    ## This project
+
+    - Project `retail`. Environments: `dev`, `test` (`project.yaml`).
+    - Standard `acme` in `standard.yaml`. Packs: `fold@2`.
+    - Definitions: the files `project.yaml` imports: `*.yaml`.
+    - Generated, one folder per pack: `build/fold/` (every environment together).
+
+    ## Rules
+
+    1. Change the definitions, never `build/`. Ingestron records each generated file in `.generated.json` and reports a hand edit as a conflict.
+    2. After a change, run `ingestron plan`. Fix every problem it reports, then show the user the plan before running `ingestron apply`. Then `ingestron check` must pass; CI runs it.
+    3. Work inside the standard. Do not edit `standard.yaml` to clear a problem; tell the user what the platform team would need to change.
+    4. A value written `REPLACE_ME` is one only a person can give. Ask the user for it; never invent one. `ingestron check` fails while any is left.
+    5. Look settings up; do not guess. Each method's settings, types and defaults: https://docs.ingestron.io/docs/reference/packs, or run `ingestron schemas` and read `.ingestron/schemas/`. Error codes: https://docs.ingestron.io/docs/reference/errors.
+    6. Never write a password, token, key or connection string in any file. Use `${secret:name}` for a credential.
+    7. Values written `${envvar:NAME}` are not secrets. The `fold@2` output keeps them as values the deploying pipeline supplies. Do not read, print or commit `.env` files. `ingestron request` lists the values each environment needs. This project uses none.
+    8. Environments differ only in values, under `environments.<name>.values` in `project.yaml`. `plan`, `apply` and `check` always cover every environment; `ingestron compare --env <a> --env <b>` shows what differs.
+
+    ## Source metadata
+
+    - Connections: `shop`. Each one's source tables are described in `sources/<connection>.yaml`, which `ingestron source import` writes. Never edit that file: import again to replace it.
+    - `ingestron source request` says what to run or export at each source, and where to save it under `sources/`.
+    - A flow table needs a contract only where a person must say something the source cannot. `ingestron contract --from-metadata --needed` drafts the missing ones, for the user to review.
+
+    When the user gives you material no reader takes (a vendor's data dictionary, a spreadsheet, a PDF, inconsistent or deeply nested API responses, a description in an email), turn it into a columns file saved as `sources/<connection>.assistant.csv`:
+
+    - One row for each column, with these fields in order: `table_catalog`, `table_schema`, `table_name`, `column_name`, `ordinal_position`, `data_type`, `is_nullable` (`YES` or `NO`), `primary_key_position` (empty when the column is not in the key).
+    - Keep every table and column the material shows, custom ones included.
+    - Write a type you are unsure of as `string`, and never invent a key.
+    - Never copy a value from a row of data.
+    - Run `ingestron source import <connection> sources/<connection>.assistant.csv --dry-run` and fix what it reports before saying you are done.
+
+    ## Commands
+
+    - `ingestron plan`: problems and changes, with diffs. Writes nothing.
+    - `ingestron apply`: writes `build/`; never overwrites a hand edit.
+    - `ingestron check`: fails when `build/` is out of date. Writes nothing.
+    - `ingestron compare --env <a> --env <b>`: what differs after resolving.
+    - `ingestron request --env <name>`: what the platform team must provide.
+    - `ingestron contract <sample>`: drafts a contract from a CSV or JSON sample.
+    - `ingestron source request`: what to ask each source's owners for.
+    - `ingestron source import <connection> <file> --dry-run`: what a file of source metadata would change.
+    <!-- ingestron:end sha256:6776b3d955818d5f6526a37b2f4dca50cee720f9e8f508be57b2f8a79b4be336 -->
+command: check
+expect:
+  exit: 0
+  lines:
+    - "fold: up to date"
+  absentLines:
+    - "AGENTS.md"
+  unchanged:
+    - AGENTS.md

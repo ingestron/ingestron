@@ -1,0 +1,59 @@
+description: "With connections, the guide has the source metadata part, and the names of the ${envvar:…} references, but never a value from a .env file."
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [databricks@2]
+  crm.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: crm
+    connector: files
+    connectivity: public
+    settings: { path: "${envvar:LANDING_PATH}/crm" }
+  erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: erp
+    connector: files
+    connectivity: public
+    settings: { path: /data/erp }
+  .env: |
+    LANDING_PATH=sentinel-value-7
+envvars: { LANDING_PATH: sentinel-value-7 }
+command: assistant
+args: ["add", "agents"]
+expect:
+  exit: 0
+  lines:
+    - "AGENTS.md: written"
+  contains:
+    AGENTS.md:
+      - |
+        ## Source metadata
+
+        - Connections: `crm`, `erp`. Each one's source tables are described in `sources/<connection>.yaml`, which `ingestron source import` writes. Never edit that file: import again to replace it.
+        - `ingestron source request` says what to run or export at each source, and where to save it under `sources/`.
+        - A flow table needs a contract only where a person must say something the source cannot. `ingestron contract --from-metadata --needed` drafts the missing ones, for the user to review.
+
+        When the user gives you material no reader takes (a vendor's data dictionary, a spreadsheet, a PDF, inconsistent or deeply nested API responses, a description in an email), turn it into a columns file saved as `sources/<connection>.assistant.csv`:
+
+        - One row for each column, with these fields in order: `table_catalog`, `table_schema`, `table_name`, `column_name`, `ordinal_position`, `data_type`, `is_nullable` (`YES` or `NO`), `primary_key_position` (empty when the column is not in the key).
+        - Keep every table and column the material shows, custom ones included.
+        - Write a type you are unsure of as `string`, and never invent a key.
+        - Never copy a value from a row of data.
+        - Run `ingestron source import <connection> sources/<connection>.assistant.csv --dry-run` and fix what it reports before saying you are done.
+      - |
+        This project uses: `LANDING_PATH`.
+      - |
+        - `ingestron source import <connection> <file> --dry-run`: what a file of source metadata would change.
+  absent:
+    AGENTS.md:
+      - "sentinel-value-7"
+  unchanged:
+    - .env

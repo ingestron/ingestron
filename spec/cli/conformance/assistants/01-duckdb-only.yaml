@@ -1,0 +1,42 @@
+description: "A project that runs on DuckDB alone: the DuckDB sentence, no deploy sentence, and no source metadata part, since no connection is imported."
+files:
+  project.yaml: |
+    id: local
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: defaults
+    packs: [duckdb@2]
+command: assistant
+args: ["add", "agents"]
+expect:
+  exit: 0
+  lines:
+    - "AGENTS.md: written"
+  contains:
+    AGENTS.md:
+      - |
+        <!-- ingestron:begin guide 1. Ingestron writes this section and `ingestron apply` keeps it current. Write your own notes outside it, or delete both markers to make it yours. -->
+        # Working on this Ingestron project
+      - |
+        - Project `local`. Environments: `dev` (`project.yaml`).
+        - Standard `defaults` in `standard.yaml`. Packs: `duckdb@2`.
+        - Definitions: the files `project.yaml` imports: `*.yaml`.
+        - Generated, one folder per pack: `build/duckdb/` (a folder per environment).
+      - |-
+        3. Work inside the standard. Do not edit `standard.yaml` to clear a problem; tell the user what the platform team would need to change.
+        4. A value written `REPLACE_ME`
+      - |
+        7. Values written `${envvar:NAME}` are not secrets. DuckDB reads them from the environment or the project's `.env` files when it runs. Do not read, print or commit `.env` files. `ingestron request` lists the values each environment needs. This project uses none.
+      - |
+        - `ingestron contract <sample>`: drafts a contract from a CSV or JSON sample.
+        <!-- ingestron:end sha256:423f0f50de23c00bda2cfe489dde0e3a7a63f06b76312b85e68487d2cfcbc7d9 -->
+  absent:
+    AGENTS.md:
+      - "output keeps them as values the deploying pipeline supplies"
+      - "## Source metadata"
+      - "ingestron source import"
+    CLAUDE.md: ~
+    .github/copilot-instructions.md: ~

@@ -214,6 +214,13 @@ it; for one place the line reads `1 place is still REPLACE_ME; …`. It counts
 places, not names: `init`'s line counts README.md's rows, one per name, so a
 value written for two environments is one row there and two places here.
 
+**The project guide.** After the output folders, `plan` and `apply` also look
+at the project guide in `AGENTS.md`, as the
+[guide specification](assistants.md), section 6, says: `plan` reports a stale
+section, `apply` rewrites it, an edited section is reported and left as it is,
+and a file without the Ingestron section is left alone. Neither command's exit
+code changes, and `check` ignores it.
+
 **Exit codes.** 0 when every folder is clean (`plan`), written (`apply`), or up
 to date with nothing extra and no retired folder (`check`); 1 when an
 environment or a pack has problems (sections 1 and 3), a folder is not clean,

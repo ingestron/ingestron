@@ -1,0 +1,37 @@
+description: "When a standard fixes more than eight settings in all, each fixes item lists keys only, with no values."
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [databricks@2, adf@2]
+    ingest:
+      fixed:
+        adf-copy: { parallel: 4, retries: 2, timeout: "0.02:00:00", audit_columns: true }
+    store:
+      fixed:
+        streaming-table:
+          cluster_by: auto
+          properties: { delta.enableChangeDataFeed: "true" }
+          schema_evolution: true
+          comment: Managed by Ingestron
+          owner: data-platform
+command: assistant
+args: ["add", "agents"]
+expect:
+  exit: 0
+  lines:
+    - "AGENTS.md: written"
+  contains:
+    AGENTS.md:
+      - |
+        - `ingest` fixes, for `adf-copy`: `parallel`, `retries`, `timeout`, `audit_columns`.
+        - `store` fixes, for `streaming-table`: `cluster_by`, `properties`, `schema_evolution`, `comment`, `owner`.
+  absent:
+    AGENTS.md:
+      - "cluster_by: auto"
+      - "retries: 2"
