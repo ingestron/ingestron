@@ -157,7 +157,10 @@ The text of `ask` MAY hold these placeholders, which the request fills in:
   that holds it is written once for each table (section 4);
 - `{schemas}`: the schemas the connection's flow tables read (section 4), each
   as a single-quoted SQL literal, joined with `, `, such as `'dbo', 'sales'`;
-- `{<input>}`: the value the connection gives for that input.
+- `{<input>}`: the value the connection gives for that input. A value that
+  holds an unset reference (`${envvar:…}` set nowhere) is not given: the
+  placeholder is left as written, as for an input the connection does not
+  give.
 
 A placeholder that cannot be filled is left as written, and the request says
 what to write in its place. Any other text in braces is left as written.
@@ -768,7 +771,8 @@ ready to send to whoever can reach the source.
 
 The definitions are resolved for the environment (`default` when none is
 given) as for the platform request ([request.md](request.md), "Resolving"),
-with `missingEnvvars: information`, and with `sourceTables: true`, so that
+with `missingEnvvars: information` and `environmentsTogether: true`, and with
+`sourceTables: true`, so that
 the result lists each flow table's metadata entry (definitions
 specification, section 12.7) with or without a model. These errors do not
 stop it,
@@ -778,7 +782,9 @@ because the metadata the request asks for is what settles them:
 `SOURCE_TABLE_GONE`.
 
 Any other error stops it, and so do an unknown `--connection`, a recipe that
-breaks a rule, and a connection's recipe problems (section 1). The request is
+breaks a rule, and a connection's recipe problems (section 1). Recipe
+problems are checked for the connections the request covers: each a flow
+reads from, or the one `--connection` names. The request is
 then the title `# Source request (<environment>)`, the note "The definitions
 have problems; fix them first:", and each error in a `text` code block,
 written as `ingestron plan` writes a problem, as the platform request writes
@@ -855,7 +861,10 @@ Save the result as `<save>`.
 - When `run`, `call` or `save` holds `{object}`, the block and the save line
   are replaced by a list with one item for each table, in the order of the
   flows and their tables, each `object` once, as below. A `sample` recipe's
-  item is the save path alone.
+  item is the save path alone. When the connection has no flow tables (as
+  for a `--connection` that no flow reads from), the block and the save line
+  are kept, with `{object}` left as written, and the import line keeps it
+  too.
 
   ```markdown
   - `<run or call, filled>`, saved as `<save, filled>`
@@ -864,8 +873,10 @@ Save the result as `<save>`.
 - Every placeholder is filled where its value is known (section 1). The
   list after `Fill in before use:` names, in the order they first appear,
   each that is not: an input the connection does not give, with the input's
-  `description`, and `{schemas}` when the schemas are not known, with
-  `the schemas to describe, each in single quotes and separated by commas, such as 'dbo', 'sales'`.
+  `description`, `{schemas}` when the schemas are not known, with
+  `the schemas to describe, each in single quotes and separated by commas, such as 'dbo', 'sales'`,
+  and `{object}` when it is left as written, with
+  `a table to describe, as a flow's object names it; do this once for each table`.
   With none, the list and its line are left out.
 
 **The alternatives.** Then, after `### If that cannot be done`, these, as
