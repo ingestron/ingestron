@@ -1,0 +1,11 @@
+id: sample
+title: A sample of what the source sends
+kind: sample
+ask:
+  who: Someone who can export a small sample from the source
+  access: Read access to the data
+  save: sources/{connection}/{object}.csv
+  how: Export a few rows, with a header, as CSV, JSON, JSON Lines or Parquet.
+read: sample
+sources:
+  - { url: "https://example.com/files/samples", read: 2026-11-12 }

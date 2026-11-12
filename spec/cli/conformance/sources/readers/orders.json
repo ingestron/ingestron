@@ -1,0 +1,13 @@
+[
+  {
+    "id": 1,
+    "customer": { "name": "ZZ-SECRET-42", "city": "Leeds" },
+    "tags": ["a", "b"],
+    "lines": [
+      { "sku": "X1", "qty": 2 },
+      { "sku": "X2", "qty": 3.5 }
+    ],
+    "paid": true
+  },
+  { "id": 2, "customer": { "name": "Bob", "vip": true }, "tags": [], "lines": [], "paid": null }
+]

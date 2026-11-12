@@ -1,0 +1,4859 @@
+{
+  "description": "Source readers (spec/cli/sources.md, section 2). Each case reads the fixture file named by input as the project path file, with the recipe fixture of ../recipes named by recipe (or that fixture with the keys of set replaced), the import's object and the connection being imported; expected is readSourceFile's result, or refused the reasons. forbidden lists text that must appear nowhere in the result or its reasons.",
+  "cases": [
+    {
+      "name": "columns file: objects joined, types mapped, empty column name skipped, key and ordinal read",
+      "file": "sources/erp.columns.csv",
+      "input": "erp.columns.csv",
+      "expected": {
+        "reader": "columns",
+        "from": "columns",
+        "tables": [
+          {
+            "object": "ERP.dbo.Customers",
+            "columns": [
+              {
+                "name": "CustomerID",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Name",
+                "sourceType": "nvarchar(200)",
+                "logicalType": "string",
+                "logicalTypeOptions": {
+                  "maxLength": 200
+                },
+                "required": false
+              },
+              {
+                "name": "CreditLimit",
+                "sourceType": "decimal(18,2)",
+                "logicalType": "number",
+                "logicalTypeOptions": {
+                  "precision": 18,
+                  "scale": 2
+                },
+                "required": false
+              },
+              {
+                "name": "Location",
+                "sourceType": "geography",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Notes",
+                "sourceType": "varchar(max)",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          },
+          {
+            "object": "ERP.dbo.Orders",
+            "columns": [
+              {
+                "name": "OrderID",
+                "sourceType": "bigint",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "CustomerID",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "Placed",
+                "sourceType": "timestamp with time zone",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "Total",
+                "sourceType": "numeric(10)",
+                "logicalType": "number",
+                "logicalTypeOptions": {
+                  "precision": 10,
+                  "scale": 0
+                },
+                "required": false
+              },
+              {
+                "name": "Active",
+                "sourceType": "boolean",
+                "logicalType": "boolean",
+                "required": true
+              }
+            ]
+          }
+        ],
+        "notes": ["Type \"geography\" of ERP.dbo.Customers.Location is not known; read as string."]
+      }
+    },
+    {
+      "name": "columns file from a spreadsheet: byte-order mark, CRLF, ;, quoted upper-case header",
+      "file": "sources/erp.columns.csv",
+      "input": "erp-sheet.columns.csv",
+      "expected": {
+        "reader": "columns",
+        "from": "columns",
+        "tables": [
+          {
+            "object": "ERP.dbo.Customers",
+            "columns": [
+              {
+                "name": "CustomerID",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Name",
+                "sourceType": "nvarchar(200)",
+                "logicalType": "string",
+                "logicalTypeOptions": {
+                  "maxLength": 200
+                },
+                "required": false
+              },
+              {
+                "name": "CreditLimit",
+                "sourceType": "decimal(18,2)",
+                "logicalType": "number",
+                "logicalTypeOptions": {
+                  "precision": 18,
+                  "scale": 2
+                },
+                "required": false
+              },
+              {
+                "name": "Location",
+                "sourceType": "geography",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Notes",
+                "sourceType": "varchar(max)",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          },
+          {
+            "object": "ERP.dbo.Orders",
+            "columns": [
+              {
+                "name": "OrderID",
+                "sourceType": "bigint",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "CustomerID",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "Placed",
+                "sourceType": "timestamp with time zone",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "Total",
+                "sourceType": "numeric(10)",
+                "logicalType": "number",
+                "logicalTypeOptions": {
+                  "precision": 10,
+                  "scale": 0
+                },
+                "required": false
+              },
+              {
+                "name": "Active",
+                "sourceType": "boolean",
+                "logicalType": "boolean",
+                "required": true
+              }
+            ]
+          }
+        ],
+        "notes": ["Type \"geography\" of ERP.dbo.Customers.Location is not known; read as string."]
+      }
+    },
+    {
+      "name": "columns file: every is_nullable spelling, file order without ordinal_position",
+      "file": "sources/t.columns.csv",
+      "input": "spellings.columns.csv",
+      "expected": {
+        "reader": "columns",
+        "from": "columns",
+        "tables": [
+          {
+            "object": "T",
+            "columns": [
+              {
+                "name": "a",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "b",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "c",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "d",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "e",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "f",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "g",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "h",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "columns file as JSON: booleans, numbers, null and text",
+      "file": "sources/erp.columns.json",
+      "input": "erp.columns.json",
+      "expected": {
+        "reader": "columns",
+        "from": "columns",
+        "tables": [
+          {
+            "object": "ERP.dbo.Customers",
+            "columns": [
+              {
+                "name": "CustomerID",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Name",
+                "sourceType": "nvarchar(200)",
+                "logicalType": "string",
+                "logicalTypeOptions": {
+                  "maxLength": 200
+                },
+                "required": false
+              }
+            ]
+          },
+          {
+            "object": "Items",
+            "columns": [
+              {
+                "name": "Code",
+                "sourceType": "varchar(10)",
+                "logicalType": "string",
+                "logicalTypeOptions": {
+                  "maxLength": 10
+                },
+                "required": true,
+                "primaryKeyPosition": 1
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "columns file from an assistant",
+      "file": "sources/erp.assistant.csv",
+      "input": "erp.columns.csv",
+      "expected": {
+        "reader": "columns",
+        "from": "assistant",
+        "tables": [
+          {
+            "object": "ERP.dbo.Customers",
+            "columns": [
+              {
+                "name": "CustomerID",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Name",
+                "sourceType": "nvarchar(200)",
+                "logicalType": "string",
+                "logicalTypeOptions": {
+                  "maxLength": 200
+                },
+                "required": false
+              },
+              {
+                "name": "CreditLimit",
+                "sourceType": "decimal(18,2)",
+                "logicalType": "number",
+                "logicalTypeOptions": {
+                  "precision": 18,
+                  "scale": 2
+                },
+                "required": false
+              },
+              {
+                "name": "Location",
+                "sourceType": "geography",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Notes",
+                "sourceType": "varchar(max)",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          },
+          {
+            "object": "ERP.dbo.Orders",
+            "columns": [
+              {
+                "name": "OrderID",
+                "sourceType": "bigint",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "CustomerID",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "Placed",
+                "sourceType": "timestamp with time zone",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "Total",
+                "sourceType": "numeric(10)",
+                "logicalType": "number",
+                "logicalTypeOptions": {
+                  "precision": 10,
+                  "scale": 0
+                },
+                "required": false
+              },
+              {
+                "name": "Active",
+                "sourceType": "boolean",
+                "logicalType": "boolean",
+                "required": true
+              }
+            ]
+          }
+        ],
+        "notes": ["Type \"geography\" of ERP.dbo.Customers.Location is not known; read as string."]
+      }
+    },
+    {
+      "name": "catalog result with the sqlserver recipe: its type rules, then the generic map",
+      "file": "sources/erp.catalog.csv",
+      "input": "erp.catalog.csv",
+      "recipe": "sqlserver",
+      "expected": {
+        "reader": "columns",
+        "from": "catalog",
+        "tables": [
+          {
+            "object": "ERP.dbo.Customers",
+            "columns": [
+              {
+                "name": "CustomerID",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Active",
+                "sourceType": "bit",
+                "logicalType": "boolean",
+                "required": true
+              },
+              {
+                "name": "Code",
+                "sourceType": "varchar(30)",
+                "logicalType": "string",
+                "logicalTypeOptions": {
+                  "maxLength": 30
+                },
+                "required": false
+              },
+              {
+                "name": "CreditLimit",
+                "sourceType": "decimal(18,2)",
+                "logicalType": "number",
+                "logicalTypeOptions": {
+                  "precision": 18,
+                  "scale": 2
+                },
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "catalog result without a recipe is refused",
+      "file": "sources/erp.catalog.csv",
+      "input": "erp.catalog.csv",
+      "refused": [
+        "sources/erp.catalog.csv is a catalog result, but no recipe was given to read it."
+      ]
+    },
+    {
+      "name": "a name rule's columns file is read without the recipe's rows, fields and key",
+      "file": "sources/dictionary.columns.json",
+      "input": "dictionary.catalog.json",
+      "recipe": "files-mapped",
+      "refused": [
+        "sources/dictionary.columns.json holds no records: a JSON columns file is a list of records."
+      ]
+    },
+    {
+      "name": "mapped JSON result: rows, fields, a negated field and the key",
+      "file": "sources/dictionary.catalog.json",
+      "input": "dictionary.catalog.json",
+      "recipe": "files-mapped",
+      "expected": {
+        "reader": "columns",
+        "from": "catalog",
+        "tables": [
+          {
+            "object": "incident",
+            "columns": [
+              {
+                "name": "sys_id",
+                "sourceType": "GUID",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "short_description",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "opened_at",
+                "sourceType": "glide_date_time",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          },
+          {
+            "object": "task",
+            "columns": [
+              {
+                "name": "number",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": true
+              }
+            ]
+          }
+        ],
+        "notes": [
+          "Type \"GUID\" of incident.sys_id is not known; read as string.",
+          "Type \"glide_date_time\" of incident.opened_at is not known; read as string."
+        ]
+      }
+    },
+    {
+      "name": "mapped JSON result without a mapped field is refused",
+      "file": "sources/dictionary.catalog.json",
+      "input": "dictionary-nofield.catalog.json",
+      "recipe": "files-mapped",
+      "refused": [
+        "sources/dictionary.catalog.json has no field \"mandatory\", which the recipe \"files-mapped\" reads as is_nullable."
+      ]
+    },
+    {
+      "name": "a ninth field is refused, naming the header's fields",
+      "file": "sources/erp.columns.csv",
+      "input": "ninth-field.columns.csv",
+      "refused": [
+        "sources/erp.columns.csv has 1 other field; a columns file has exactly: table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position."
+      ]
+    },
+    {
+      "name": "a ninth key in a JSON columns file is refused the same way",
+      "file": "sources/erp.columns.json",
+      "input": "ninth-field.columns.json",
+      "refused": [
+        "sources/erp.columns.json lacks the field primary_key_position and has 1 other field; a columns file has exactly: table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position."
+      ]
+    },
+    {
+      "name": "a headerless columns file is refused without quoting its first row",
+      "file": "sources/erp.columns.csv",
+      "input": "headerless.columns.csv",
+      "refused": [
+        "sources/erp.columns.csv lacks the fields table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position and has 8 other fields; a columns file has exactly: table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position."
+      ],
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a row with an empty table_name is refused, naming only the row",
+      "file": "sources/erp.columns.csv",
+      "input": "empty-table.columns.csv",
+      "refused": ["sources/erp.columns.csv, row 2: table_name is empty."]
+    },
+    {
+      "name": "a row with an empty data_type is refused, naming only the row",
+      "file": "sources/erp.columns.csv",
+      "input": "empty-type.columns.csv",
+      "refused": ["sources/erp.columns.csv, row 2: data_type is empty."]
+    },
+    {
+      "name": "an is_nullable that is not YES or NO is refused, row counted from 1 without the header",
+      "file": "sources/erp.columns.csv",
+      "input": "bad-nullable.columns.csv",
+      "refused": ["sources/erp.columns.csv, row 2: is_nullable is not YES or NO."],
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "an ordinal_position that is not a whole number is refused",
+      "file": "sources/erp.columns.csv",
+      "input": "bad-ordinal.columns.csv",
+      "refused": ["sources/erp.columns.csv, row 1: ordinal_position is not a whole number from 1."]
+    },
+    {
+      "name": "a primary_key_position of 0 is refused",
+      "file": "sources/erp.columns.csv",
+      "input": "bad-key.columns.csv",
+      "refused": [
+        "sources/erp.columns.csv, row 1: primary_key_position is not a whole number from 1."
+      ]
+    },
+    {
+      "name": "each table that breaks a rule is refused, naming it",
+      "file": "sources/t.columns.csv",
+      "input": "tables-bad.columns.csv",
+      "refused": [
+        "sources/t.columns.csv: the table \"A\" lists the column \"x\" twice.",
+        "sources/t.columns.csv: the table \"B\" gives two columns the same ordinal_position.",
+        "sources/t.columns.csv: the table \"C\" gives ordinal_position to some columns and not others.",
+        "sources/t.columns.csv: the table \"D\" gives two columns the same primary_key_position."
+      ]
+    },
+    {
+      "name": "a recipe's key replaces primary_key_position, which is then not read",
+      "file": "sources/k.catalog.csv",
+      "input": "keyed.columns.csv",
+      "recipe": {
+        "from": "sqlserver",
+        "set": {
+          "key": ["b", "a"]
+        }
+      },
+      "expected": {
+        "reader": "columns",
+        "from": "catalog",
+        "tables": [
+          {
+            "object": "K",
+            "columns": [
+              {
+                "name": "a",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 2
+              },
+              {
+                "name": "b",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "c",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "a key given by the recipe is not checked for a bad primary_key_position",
+      "file": "sources/k.catalog.csv",
+      "input": "bad-key.columns.csv",
+      "recipe": {
+        "from": "sqlserver",
+        "set": {
+          "key": ["CustomerID"]
+        }
+      },
+      "expected": {
+        "reader": "columns",
+        "from": "catalog",
+        "tables": [
+          {
+            "object": "ERP.dbo.Customers",
+            "columns": [
+              {
+                "name": "CustomerID",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "an empty file under a name rule lists no columns",
+      "file": "sources/e.columns.csv",
+      "input": "empty.csv",
+      "refused": ["sources/e.columns.csv lists no columns."]
+    },
+    {
+      "name": "CSV sample: narrowest types, nothing required, no key, no value from a row",
+      "file": "sources/shop/orders.csv",
+      "input": "orders.csv",
+      "object": "orders",
+      "connection": "shop",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "notes": [],
+        "tables": [
+          {
+            "object": "orders",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "amount",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "placed",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "due",
+                "logicalType": "date",
+                "required": false
+              },
+              {
+                "name": "active",
+                "logicalType": "boolean",
+                "required": false
+              },
+              {
+                "name": "code",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "note",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "blank",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ]
+      },
+      "forbidden": ["ZZ-SECRET-42", "hello", "00123", "10.50"]
+    },
+    {
+      "name": "JSON sample with nested records and lists: a record whose fields differ between records has no properties",
+      "file": "sources/shop/orders.json",
+      "input": "orders.json",
+      "object": "orders",
+      "connection": "shop",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "notes": [],
+        "tables": [
+          {
+            "object": "orders",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "customer",
+                "logicalType": "object",
+                "required": false
+              },
+              {
+                "name": "tags",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "string",
+                  "required": false
+                }
+              },
+              {
+                "name": "lines",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "object",
+                  "required": false,
+                  "properties": [
+                    {
+                      "name": "sku",
+                      "logicalType": "string",
+                      "required": false
+                    },
+                    {
+                      "name": "qty",
+                      "logicalType": "number",
+                      "required": false
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "paid",
+                "logicalType": "boolean",
+                "required": false
+              }
+            ]
+          }
+        ]
+      },
+      "forbidden": ["ZZ-SECRET-42", "Leeds", "X1"]
+    },
+    {
+      "name": "JSON sample: a nested record whose keys differ between records is a dictionary keyed by values, written without properties",
+      "file": "sources/landing/sales.json",
+      "input": "by-customer.json",
+      "object": "sales",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "sales",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "byCustomer",
+                "logicalType": "object",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42", "ZZ-OTHER"]
+    },
+    {
+      "name": "JSON sample: a nested record with the same keys in every record, in any order, keeps its properties",
+      "file": "sources/landing/people.json",
+      "input": "same-keys.json",
+      "object": "people",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "people",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "address",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "street",
+                    "logicalType": "string",
+                    "required": false
+                  },
+                  {
+                    "name": "city",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "JSON sample: an empty key is not a column, at any depth",
+      "file": "sources/landing/events.json",
+      "input": "unnamed.json",
+      "object": "events",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "events",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "detail",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "kind",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "CSV sample separated by tabs: the header line holds more tabs than commas or semicolons",
+      "file": "sources/landing/orders.csv",
+      "input": "tabbed.csv",
+      "object": "orders",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "orders",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "amount",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "placed",
+                "logicalType": "date",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "Avro: a field with an empty name is not a column, at any depth",
+      "file": "sources/events.avsc",
+      "input": "unnamed.avsc",
+      "expected": {
+        "reader": "avro",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Event",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "long",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "detail",
+                "sourceType": "record",
+                "logicalType": "object",
+                "required": true,
+                "properties": [
+                  {
+                    "name": "kind",
+                    "sourceType": "string",
+                    "logicalType": "string",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "JSON Schema: a property with an empty name is not a column, at any depth",
+      "file": "sources/event.schema.json",
+      "input": "unnamed.schema.json",
+      "expected": {
+        "reader": "json-schema",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Event",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "integer",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "detail",
+                "sourceType": "object",
+                "logicalType": "object",
+                "properties": [
+                  {
+                    "name": "kind",
+                    "sourceType": "string",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ],
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "OData: a property with no Name, or an empty one, is not a column, in an entity type or a complex type",
+      "file": "sources/shop.xml",
+      "input": "unnamed.csdl.xml",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Events",
+            "columns": [
+              {
+                "name": "Id",
+                "sourceType": "Edm.Int32",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Detail",
+                "sourceType": "Shop.Detail",
+                "logicalType": "object",
+                "properties": [
+                  {
+                    "name": "Kind",
+                    "sourceType": "Edm.String",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ],
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "JSON lines sample, with an empty line",
+      "file": "sources/shop/orders.jsonl",
+      "input": "orders.jsonl",
+      "object": "orders",
+      "connection": "shop",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "notes": [],
+        "tables": [
+          {
+            "object": "orders",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "customer",
+                "logicalType": "object",
+                "required": false
+              },
+              {
+                "name": "tags",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "string",
+                  "required": false
+                }
+              },
+              {
+                "name": "lines",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "object",
+                  "required": false,
+                  "properties": [
+                    {
+                      "name": "sku",
+                      "logicalType": "string",
+                      "required": false
+                    },
+                    {
+                      "name": "qty",
+                      "logicalType": "number",
+                      "required": false
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "paid",
+                "logicalType": "boolean",
+                "required": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "ndjson sample",
+      "file": "sources/shop/orders.ndjson",
+      "input": "orders.jsonl",
+      "object": "orders",
+      "connection": "shop",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "notes": [],
+        "tables": [
+          {
+            "object": "orders",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "customer",
+                "logicalType": "object",
+                "required": false
+              },
+              {
+                "name": "tags",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "string",
+                  "required": false
+                }
+              },
+              {
+                "name": "lines",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "object",
+                  "required": false,
+                  "properties": [
+                    {
+                      "name": "sku",
+                      "logicalType": "string",
+                      "required": false
+                    },
+                    {
+                      "name": "qty",
+                      "logicalType": "number",
+                      "required": false
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "paid",
+                "logicalType": "boolean",
+                "required": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "a wrapped JSON sample is one record without the recipe's rows",
+      "file": "sources/shop/wrapped.json",
+      "input": "wrapped.json",
+      "object": "wrapped",
+      "connection": "shop",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "notes": [],
+        "tables": [
+          {
+            "object": "wrapped",
+            "columns": [
+              {
+                "name": "value",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "object",
+                  "required": false,
+                  "properties": [
+                    {
+                      "name": "id",
+                      "logicalType": "integer",
+                      "required": false
+                    },
+                    {
+                      "name": "name",
+                      "logicalType": "string",
+                      "required": false
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a wrapped JSON sample read through the recipe's rows",
+      "file": "sources/shop/wrapped.json",
+      "input": "wrapped.json",
+      "object": "wrapped",
+      "connection": "shop",
+      "recipe": {
+        "from": "sample",
+        "set": {
+          "rows": "value"
+        }
+      },
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "notes": [],
+        "tables": [
+          {
+            "object": "wrapped",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "name",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ]
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a sample's table is named by the import",
+      "file": "sources/shop/orders.csv",
+      "input": "orders.csv",
+      "refused": ["Name the table this file describes with --object."]
+    },
+    {
+      "name": "a sample under a connection's folder is a sample whatever its name says",
+      "file": "sources/shop/shop.catalog.Products.csv",
+      "input": "orders.csv",
+      "object": "shop.catalog.Products",
+      "connection": "shop",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "notes": [],
+        "tables": [
+          {
+            "object": "shop.catalog.Products",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "amount",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "placed",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "due",
+                "logicalType": "date",
+                "required": false
+              },
+              {
+                "name": "active",
+                "logicalType": "boolean",
+                "required": false
+              },
+              {
+                "name": "code",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "note",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "blank",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "a file under another connection's folder is read by its name",
+      "file": "sources/other/erp.columns.csv",
+      "input": "erp.columns.csv",
+      "connection": "erp",
+      "expected": {
+        "reader": "columns",
+        "from": "columns",
+        "tables": [
+          {
+            "object": "ERP.dbo.Customers",
+            "columns": [
+              {
+                "name": "CustomerID",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Name",
+                "sourceType": "nvarchar(200)",
+                "logicalType": "string",
+                "logicalTypeOptions": {
+                  "maxLength": 200
+                },
+                "required": false
+              },
+              {
+                "name": "CreditLimit",
+                "sourceType": "decimal(18,2)",
+                "logicalType": "number",
+                "logicalTypeOptions": {
+                  "precision": 18,
+                  "scale": 2
+                },
+                "required": false
+              },
+              {
+                "name": "Location",
+                "sourceType": "geography",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Notes",
+                "sourceType": "varchar(max)",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          },
+          {
+            "object": "ERP.dbo.Orders",
+            "columns": [
+              {
+                "name": "OrderID",
+                "sourceType": "bigint",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "CustomerID",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "Placed",
+                "sourceType": "timestamp with time zone",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "Total",
+                "sourceType": "numeric(10)",
+                "logicalType": "number",
+                "logicalTypeOptions": {
+                  "precision": 10,
+                  "scale": 0
+                },
+                "required": false
+              },
+              {
+                "name": "Active",
+                "sourceType": "boolean",
+                "logicalType": "boolean",
+                "required": true
+              }
+            ]
+          }
+        ],
+        "notes": ["Type \"geography\" of ERP.dbo.Customers.Location is not known; read as string."]
+      }
+    },
+    {
+      "name": "a CSV sample whose first line is all numbers and dates is refused without quoting it",
+      "file": "sources/shop/h.csv",
+      "input": "headerless.csv",
+      "object": "h",
+      "connection": "shop",
+      "refused": [
+        "sources/shop/h.csv has no header row: every field of its first line is a number, a date, a timestamp or a boolean."
+      ],
+      "forbidden": ["2.5", "2026-01-01"]
+    },
+    {
+      "name": "a CSV sample header may hold numbers beside a name",
+      "file": "sources/shop/region.csv",
+      "input": "region.csv",
+      "object": "region",
+      "connection": "shop",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "notes": [],
+        "tables": [
+          {
+            "object": "region",
+            "columns": [
+              {
+                "name": "region",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "2023",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "2024",
+                "logicalType": "integer",
+                "required": false
+              }
+            ]
+          }
+        ]
+      },
+      "forbidden": ["north", "south"]
+    },
+    {
+      "name": "an empty CSV has no columns",
+      "file": "sources/shop/e.csv",
+      "input": "empty.csv",
+      "object": "e",
+      "connection": "shop",
+      "refused": ["sources/shop/e.csv has no columns."]
+    },
+    {
+      "name": "invalid JSON is refused, saying only where",
+      "file": "sources/shop/i.json",
+      "input": "invalid.json",
+      "object": "i",
+      "connection": "shop",
+      "refused": ["sources/shop/i.json is not valid JSON at line 2, column 2."]
+    },
+    {
+      "name": "invalid JSON lines is refused at its line",
+      "file": "sources/shop/i.jsonl",
+      "input": "invalid.jsonl",
+      "object": "i",
+      "connection": "shop",
+      "refused": ["sources/shop/i.jsonl is not valid JSON at line 2, column 10."]
+    },
+    {
+      "name": "a JSON sample that is not records is refused",
+      "file": "sources/shop/n.json",
+      "input": "numbers.json",
+      "object": "n",
+      "connection": "shop",
+      "refused": [
+        "sources/shop/n.json holds no records: a JSON sample is a list of records, or one record."
+      ]
+    },
+    {
+      "name": "a Parquet sample from its footer: annotations, a group, a list, a decimal and a required column",
+      "file": "sources/shop/orders.parquet",
+      "input": "orders.parquet",
+      "object": "orders",
+      "connection": "shop",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "notes": [],
+        "tables": [
+          {
+            "object": "orders",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "INT64(INTEGER)",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "reference",
+                "sourceType": "BYTE_ARRAY(STRING)",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "total",
+                "sourceType": "INT64(DECIMAL)",
+                "logicalType": "number",
+                "logicalTypeOptions": {
+                  "precision": 18,
+                  "scale": 2
+                },
+                "required": false
+              },
+              {
+                "name": "quantity",
+                "sourceType": "INT32(DECIMAL)",
+                "logicalType": "number",
+                "logicalTypeOptions": {
+                  "precision": 9,
+                  "scale": 0
+                },
+                "required": false
+              },
+              {
+                "name": "placed",
+                "sourceType": "INT64(TIMESTAMP)",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "loaded",
+                "sourceType": "INT96",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "due",
+                "sourceType": "INT32(DATE)",
+                "logicalType": "date",
+                "required": false
+              },
+              {
+                "name": "opens",
+                "sourceType": "INT64(TIME)",
+                "logicalType": "time",
+                "required": false
+              },
+              {
+                "name": "shipped",
+                "sourceType": "BOOLEAN",
+                "logicalType": "boolean",
+                "required": false
+              },
+              {
+                "name": "weight",
+                "sourceType": "DOUBLE",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "address",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "street",
+                    "sourceType": "BYTE_ARRAY(STRING)",
+                    "logicalType": "string",
+                    "required": false
+                  },
+                  {
+                    "name": "city",
+                    "sourceType": "BYTE_ARRAY(STRING)",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              },
+              {
+                "name": "tags",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "sourceType": "BYTE_ARRAY(STRING)",
+                  "logicalType": "string",
+                  "required": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "forbidden": ["REF-A", "REF-B", "Main St", "Leeds"]
+    },
+    {
+      "name": "a file that is not Parquet is refused",
+      "file": "sources/shop/p.parquet",
+      "input": "not-parquet.parquet",
+      "object": "p",
+      "connection": "shop",
+      "refused": ["sources/shop/p.parquet is not a Parquet file Ingestron can read."],
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "an ODCS contract: physical names, key places, nested properties and items",
+      "file": "sources/shop.odcs.yaml",
+      "input": "shop.odcs.yaml",
+      "expected": {
+        "reader": "odcs",
+        "from": "document",
+        "tables": [
+          {
+            "object": "shop.orders",
+            "columns": [
+              {
+                "name": "ORDER_ID",
+                "sourceType": "INT",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "total",
+                "sourceType": "DECIMAL(18,2)",
+                "logicalType": "number",
+                "logicalTypeOptions": {
+                  "precision": 18,
+                  "scale": 2
+                },
+                "required": false
+              },
+              {
+                "name": "note",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "address",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "city",
+                    "logicalType": "string",
+                    "required": false,
+                    "logicalTypeOptions": {
+                      "maxLength": 80
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "tags",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "string",
+                  "required": false
+                }
+              },
+              {
+                "name": "line_no",
+                "logicalType": "integer",
+                "required": false,
+                "primaryKeyPosition": 2
+              },
+              {
+                "name": "place",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          },
+          {
+            "object": "customers",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false,
+                "primaryKeyPosition": 4
+              },
+              {
+                "name": "code",
+                "logicalType": "string",
+                "required": false,
+                "primaryKeyPosition": 3
+              },
+              {
+                "name": "region",
+                "logicalType": "string",
+                "required": false,
+                "primaryKeyPosition": 5
+              },
+              {
+                "name": "extra",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "shape",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": [
+          "Type \"geography\" of shop.orders.place is not known; read as string.",
+          "Type \"polygon\" of customers.extra.shape is not known; read as string."
+        ]
+      }
+    },
+    {
+      "name": "an ODCS contract is found by its kind, not its name",
+      "file": "sources/contract.yaml",
+      "input": "shop.odcs.yaml",
+      "expected": {
+        "reader": "odcs",
+        "from": "document",
+        "tables": [
+          {
+            "object": "shop.orders",
+            "columns": [
+              {
+                "name": "ORDER_ID",
+                "sourceType": "INT",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "total",
+                "sourceType": "DECIMAL(18,2)",
+                "logicalType": "number",
+                "logicalTypeOptions": {
+                  "precision": 18,
+                  "scale": 2
+                },
+                "required": false
+              },
+              {
+                "name": "note",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "address",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "city",
+                    "logicalType": "string",
+                    "required": false,
+                    "logicalTypeOptions": {
+                      "maxLength": 80
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "tags",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "string",
+                  "required": false
+                }
+              },
+              {
+                "name": "line_no",
+                "logicalType": "integer",
+                "required": false,
+                "primaryKeyPosition": 2
+              },
+              {
+                "name": "place",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          },
+          {
+            "object": "customers",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false,
+                "primaryKeyPosition": 4
+              },
+              {
+                "name": "code",
+                "logicalType": "string",
+                "required": false,
+                "primaryKeyPosition": 3
+              },
+              {
+                "name": "region",
+                "logicalType": "string",
+                "required": false,
+                "primaryKeyPosition": 5
+              },
+              {
+                "name": "extra",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "shape",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": [
+          "Type \"geography\" of shop.orders.place is not known; read as string.",
+          "Type \"polygon\" of customers.extra.shape is not known; read as string."
+        ]
+      }
+    },
+    {
+      "name": "a contract with no schema entries is refused",
+      "file": "sources/x.odcs.yaml",
+      "input": "empty.odcs.yaml",
+      "refused": ["sources/x.odcs.yaml is a data contract with no schema entries."]
+    },
+    {
+      "name": "a name rule's ODCS file without kind: DataContract is refused",
+      "file": "sources/x.odcs.yaml",
+      "input": "not-a-contract.odcs.yaml",
+      "refused": ["sources/x.odcs.yaml is not an ODCS data contract: it has no kind: DataContract."]
+    },
+    {
+      "name": "invalid YAML is refused, saying only where",
+      "file": "sources/x.odcs.yaml",
+      "input": "invalid.odcs.yaml",
+      "refused": ["sources/x.odcs.yaml is not valid YAML at line 3, column 1."]
+    },
+    {
+      "name": "a file no reader accepts is refused",
+      "file": "sources/notes.txt",
+      "input": "notes.txt",
+      "refused": [
+        "sources/notes.txt is not a file Ingestron reads: a columns file, an ODCS contract, OData CSDL, OpenAPI, JSON Schema, Avro, a schema registry response, a Salesforce describe, or a sample ending .csv, .json, .jsonl, .ndjson or .parquet."
+      ],
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a recipe's reader is tried first, so a sample recipe reads a CSV",
+      "file": "sources/shop/orders.csv",
+      "input": "orders.csv",
+      "object": "orders",
+      "connection": "shop",
+      "recipe": "sample",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "notes": [],
+        "tables": [
+          {
+            "object": "orders",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "amount",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "placed",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "due",
+                "logicalType": "date",
+                "required": false
+              },
+              {
+                "name": "active",
+                "logicalType": "boolean",
+                "required": false
+              },
+              {
+                "name": "code",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "note",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "blank",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "a sample under the sqlserver recipe is not a catalog result",
+      "file": "sources/erp/dbo.Customers.csv",
+      "input": "orders.csv",
+      "object": "dbo.Customers",
+      "connection": "erp",
+      "recipe": "sqlserver",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "notes": [],
+        "tables": [
+          {
+            "object": "dbo.Customers",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "amount",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "placed",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "due",
+                "logicalType": "date",
+                "required": false
+              },
+              {
+                "name": "active",
+                "logicalType": "boolean",
+                "required": false
+              },
+              {
+                "name": "code",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "note",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "blank",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "a file with a columns file's fields is read as one without a name rule",
+      "file": "sources/erp-export.csv",
+      "input": "erp.columns.csv",
+      "expected": {
+        "reader": "columns",
+        "from": "columns",
+        "tables": [
+          {
+            "object": "ERP.dbo.Customers",
+            "columns": [
+              {
+                "name": "CustomerID",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Name",
+                "sourceType": "nvarchar(200)",
+                "logicalType": "string",
+                "logicalTypeOptions": {
+                  "maxLength": 200
+                },
+                "required": false
+              },
+              {
+                "name": "CreditLimit",
+                "sourceType": "decimal(18,2)",
+                "logicalType": "number",
+                "logicalTypeOptions": {
+                  "precision": 18,
+                  "scale": 2
+                },
+                "required": false
+              },
+              {
+                "name": "Location",
+                "sourceType": "geography",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Notes",
+                "sourceType": "varchar(max)",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          },
+          {
+            "object": "ERP.dbo.Orders",
+            "columns": [
+              {
+                "name": "OrderID",
+                "sourceType": "bigint",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "CustomerID",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "Placed",
+                "sourceType": "timestamp with time zone",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "Total",
+                "sourceType": "numeric(10)",
+                "logicalType": "number",
+                "logicalTypeOptions": {
+                  "precision": 10,
+                  "scale": 0
+                },
+                "required": false
+              },
+              {
+                "name": "Active",
+                "sourceType": "boolean",
+                "logicalType": "boolean",
+                "required": true
+              }
+            ]
+          }
+        ],
+        "notes": ["Type \"geography\" of ERP.dbo.Customers.Location is not known; read as string."]
+      }
+    },
+    {
+      "name": "OData CSDL: entity sets are tables; keys, nullability, Edm types, a complex type, collections and a base type",
+      "file": "sources/shop-metadata.xml",
+      "input": "shop.csdl.xml",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Products",
+            "columns": [
+              {
+                "name": "ProductID",
+                "sourceType": "Edm.Int32",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Name",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": true,
+                "logicalTypeOptions": {
+                  "maxLength": 80
+                }
+              },
+              {
+                "name": "Notes",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Price",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 10,
+                  "scale": 2
+                }
+              },
+              {
+                "name": "Rating",
+                "sourceType": "Edm.Double",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "InStock",
+                "sourceType": "Edm.Boolean",
+                "logicalType": "boolean",
+                "required": false
+              },
+              {
+                "name": "Released",
+                "sourceType": "Edm.Date",
+                "logicalType": "date",
+                "required": false
+              },
+              {
+                "name": "Updated",
+                "sourceType": "Edm.DateTimeOffset",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "Opens",
+                "sourceType": "Edm.TimeOfDay",
+                "logicalType": "time",
+                "required": false
+              },
+              {
+                "name": "Reference",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Colour",
+                "sourceType": "Shop.Colour",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Size",
+                "sourceType": "Shop.Dimensions",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "Width",
+                    "sourceType": "Edm.Double",
+                    "logicalType": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "Unit",
+                    "sourceType": "Edm.String",
+                    "logicalType": "string",
+                    "required": false,
+                    "logicalTypeOptions": {
+                      "maxLength": 2
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "Tags",
+                "sourceType": "Collection(Edm.String)",
+                "logicalType": "array",
+                "required": true,
+                "items": {
+                  "name": "items",
+                  "sourceType": "Edm.String",
+                  "logicalType": "string",
+                  "required": false
+                }
+              },
+              {
+                "name": "Packs",
+                "sourceType": "Collection(Shop.Dimensions)",
+                "logicalType": "array",
+                "required": true,
+                "items": {
+                  "name": "items",
+                  "sourceType": "Shop.Dimensions",
+                  "logicalType": "object",
+                  "required": false
+                }
+              },
+              {
+                "name": "Parts",
+                "sourceType": "Collection(Edm.Int32)",
+                "logicalType": "array",
+                "required": true,
+                "items": {
+                  "name": "items",
+                  "sourceType": "Edm.Int32",
+                  "logicalType": "integer",
+                  "required": true
+                }
+              }
+            ]
+          },
+          {
+            "object": "Catalogue",
+            "columns": [
+              {
+                "name": "Code",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": true,
+                "logicalTypeOptions": {
+                  "maxLength": 8
+                },
+                "primaryKeyPosition": 2
+              },
+              {
+                "name": "Region",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": true,
+                "logicalTypeOptions": {
+                  "maxLength": 4
+                },
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Revision",
+                "sourceType": "Edm.Int64",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "Weight",
+                "sourceType": "Edm.Single",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "Stamp",
+                "sourceType": "Edm.DateTime",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "Rate",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 5,
+                  "scale": 0
+                }
+              },
+              {
+                "name": "Amount",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "scale": 0
+                }
+              }
+            ]
+          },
+          {
+            "object": "Library",
+            "columns": [
+              {
+                "name": "ProductID",
+                "sourceType": "Edm.Int32",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Name",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": true,
+                "logicalTypeOptions": {
+                  "maxLength": 80
+                }
+              },
+              {
+                "name": "Notes",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Price",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 10,
+                  "scale": 2
+                }
+              },
+              {
+                "name": "Rating",
+                "sourceType": "Edm.Double",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "InStock",
+                "sourceType": "Edm.Boolean",
+                "logicalType": "boolean",
+                "required": false
+              },
+              {
+                "name": "Released",
+                "sourceType": "Edm.Date",
+                "logicalType": "date",
+                "required": false
+              },
+              {
+                "name": "Updated",
+                "sourceType": "Edm.DateTimeOffset",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "Opens",
+                "sourceType": "Edm.TimeOfDay",
+                "logicalType": "time",
+                "required": false
+              },
+              {
+                "name": "Reference",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Colour",
+                "sourceType": "Shop.Colour",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Size",
+                "sourceType": "Shop.Dimensions",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "Width",
+                    "sourceType": "Edm.Double",
+                    "logicalType": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "Unit",
+                    "sourceType": "Edm.String",
+                    "logicalType": "string",
+                    "required": false,
+                    "logicalTypeOptions": {
+                      "maxLength": 2
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "Tags",
+                "sourceType": "Collection(Edm.String)",
+                "logicalType": "array",
+                "required": true,
+                "items": {
+                  "name": "items",
+                  "sourceType": "Edm.String",
+                  "logicalType": "string",
+                  "required": false
+                }
+              },
+              {
+                "name": "Packs",
+                "sourceType": "Collection(Shop.Dimensions)",
+                "logicalType": "array",
+                "required": true,
+                "items": {
+                  "name": "items",
+                  "sourceType": "Shop.Dimensions",
+                  "logicalType": "object",
+                  "required": false
+                }
+              },
+              {
+                "name": "Parts",
+                "sourceType": "Collection(Edm.Int32)",
+                "logicalType": "array",
+                "required": true,
+                "items": {
+                  "name": "items",
+                  "sourceType": "Edm.Int32",
+                  "logicalType": "integer",
+                  "required": true
+                }
+              },
+              {
+                "name": "Pages",
+                "sourceType": "Edm.Int16",
+                "logicalType": "integer",
+                "required": true
+              }
+            ]
+          }
+        ],
+        "notes": [
+          "The entity set \"Elsewhere\" is left out: its type \"Other.Thing\" is not defined in the document."
+        ]
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "OData CSDL with objects: types names each entity type a table",
+      "file": "sources/shop.catalog.xml",
+      "input": "shop.csdl.xml",
+      "recipe": "odata",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Product",
+            "columns": [
+              {
+                "name": "ProductID",
+                "sourceType": "Edm.Int32",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Name",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": true,
+                "logicalTypeOptions": {
+                  "maxLength": 80
+                }
+              },
+              {
+                "name": "Notes",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Price",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 10,
+                  "scale": 2
+                }
+              },
+              {
+                "name": "Rating",
+                "sourceType": "Edm.Double",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "InStock",
+                "sourceType": "Edm.Boolean",
+                "logicalType": "boolean",
+                "required": false
+              },
+              {
+                "name": "Released",
+                "sourceType": "Edm.Date",
+                "logicalType": "date",
+                "required": false
+              },
+              {
+                "name": "Updated",
+                "sourceType": "Edm.DateTimeOffset",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "Opens",
+                "sourceType": "Edm.TimeOfDay",
+                "logicalType": "time",
+                "required": false
+              },
+              {
+                "name": "Reference",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Colour",
+                "sourceType": "Shop.Colour",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Size",
+                "sourceType": "Shop.Dimensions",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "Width",
+                    "sourceType": "Edm.Double",
+                    "logicalType": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "Unit",
+                    "sourceType": "Edm.String",
+                    "logicalType": "string",
+                    "required": false,
+                    "logicalTypeOptions": {
+                      "maxLength": 2
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "Tags",
+                "sourceType": "Collection(Edm.String)",
+                "logicalType": "array",
+                "required": true,
+                "items": {
+                  "name": "items",
+                  "sourceType": "Edm.String",
+                  "logicalType": "string",
+                  "required": false
+                }
+              },
+              {
+                "name": "Packs",
+                "sourceType": "Collection(Shop.Dimensions)",
+                "logicalType": "array",
+                "required": true,
+                "items": {
+                  "name": "items",
+                  "sourceType": "Shop.Dimensions",
+                  "logicalType": "object",
+                  "required": false
+                }
+              },
+              {
+                "name": "Parts",
+                "sourceType": "Collection(Edm.Int32)",
+                "logicalType": "array",
+                "required": true,
+                "items": {
+                  "name": "items",
+                  "sourceType": "Edm.Int32",
+                  "logicalType": "integer",
+                  "required": true
+                }
+              }
+            ]
+          },
+          {
+            "object": "Book",
+            "columns": [
+              {
+                "name": "ProductID",
+                "sourceType": "Edm.Int32",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Name",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": true,
+                "logicalTypeOptions": {
+                  "maxLength": 80
+                }
+              },
+              {
+                "name": "Notes",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Price",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 10,
+                  "scale": 2
+                }
+              },
+              {
+                "name": "Rating",
+                "sourceType": "Edm.Double",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "InStock",
+                "sourceType": "Edm.Boolean",
+                "logicalType": "boolean",
+                "required": false
+              },
+              {
+                "name": "Released",
+                "sourceType": "Edm.Date",
+                "logicalType": "date",
+                "required": false
+              },
+              {
+                "name": "Updated",
+                "sourceType": "Edm.DateTimeOffset",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "Opens",
+                "sourceType": "Edm.TimeOfDay",
+                "logicalType": "time",
+                "required": false
+              },
+              {
+                "name": "Reference",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Colour",
+                "sourceType": "Shop.Colour",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "Size",
+                "sourceType": "Shop.Dimensions",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "Width",
+                    "sourceType": "Edm.Double",
+                    "logicalType": "number",
+                    "required": true
+                  },
+                  {
+                    "name": "Unit",
+                    "sourceType": "Edm.String",
+                    "logicalType": "string",
+                    "required": false,
+                    "logicalTypeOptions": {
+                      "maxLength": 2
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "Tags",
+                "sourceType": "Collection(Edm.String)",
+                "logicalType": "array",
+                "required": true,
+                "items": {
+                  "name": "items",
+                  "sourceType": "Edm.String",
+                  "logicalType": "string",
+                  "required": false
+                }
+              },
+              {
+                "name": "Packs",
+                "sourceType": "Collection(Shop.Dimensions)",
+                "logicalType": "array",
+                "required": true,
+                "items": {
+                  "name": "items",
+                  "sourceType": "Shop.Dimensions",
+                  "logicalType": "object",
+                  "required": false
+                }
+              },
+              {
+                "name": "Parts",
+                "sourceType": "Collection(Edm.Int32)",
+                "logicalType": "array",
+                "required": true,
+                "items": {
+                  "name": "items",
+                  "sourceType": "Edm.Int32",
+                  "logicalType": "integer",
+                  "required": true
+                }
+              },
+              {
+                "name": "Pages",
+                "sourceType": "Edm.Int16",
+                "logicalType": "integer",
+                "required": true
+              }
+            ]
+          },
+          {
+            "object": "Category",
+            "columns": [
+              {
+                "name": "Code",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": true,
+                "logicalTypeOptions": {
+                  "maxLength": 8
+                },
+                "primaryKeyPosition": 2
+              },
+              {
+                "name": "Region",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": true,
+                "logicalTypeOptions": {
+                  "maxLength": 4
+                },
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Revision",
+                "sourceType": "Edm.Int64",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "Weight",
+                "sourceType": "Edm.Single",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "Stamp",
+                "sourceType": "Edm.DateTime",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "Rate",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 5,
+                  "scale": 0
+                }
+              },
+              {
+                "name": "Amount",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "scale": 0
+                }
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "OData CSDL with no entity set is refused",
+      "file": "sources/shop-metadata.xml",
+      "input": "empty.csdl.xml",
+      "refused": ["sources/shop-metadata.xml describes no entity sets."]
+    },
+    {
+      "name": "OData CSDL with no entity type is refused when the recipe names tables after types",
+      "file": "sources/shop.catalog.xml",
+      "input": "empty.csdl.xml",
+      "recipe": "odata",
+      "refused": ["sources/shop.catalog.xml describes no entity types."]
+    },
+    {
+      "name": "invalid XML is refused, saying only where",
+      "file": "sources/shop-metadata.xml",
+      "input": "invalid.csdl.xml",
+      "refused": ["sources/shop-metadata.xml is not valid XML at line 4, column 14."]
+    },
+    {
+      "name": "XML that is not closed is refused without a place",
+      "file": "sources/shop-metadata.xml",
+      "input": "unclosed.csdl.xml",
+      "refused": ["sources/shop-metadata.xml is not valid XML."]
+    },
+    {
+      "name": "a name rule's OData file whose root is not Edmx is refused",
+      "file": "sources/shop.catalog.xml",
+      "input": "other.xml",
+      "refused": [
+        "sources/shop.catalog.xml is not an OData CSDL document: its root element is not Edmx."
+      ],
+      "forbidden": ["ZZ-SECRET-42"],
+      "recipe": "odata"
+    },
+    {
+      "name": "XML that is not CSDL is not a file Ingestron reads",
+      "file": "sources/other.xml",
+      "input": "other.xml",
+      "refused": [
+        "sources/other.xml is not a file Ingestron reads: a columns file, an ODCS contract, OData CSDL, OpenAPI, JSON Schema, Avro, a schema registry response, a Salesforce describe, or a sample ending .csv, .json, .jsonl, .ndjson or .parquet."
+      ],
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "OpenAPI 3.1 YAML: object schemas are tables, $refs followed, required lists, formats, a schema reached again in the table left bare under its name, a type list with null, values never read",
+      "file": "sources/shop.yaml",
+      "input": "shop.openapi.yaml",
+      "expected": {
+        "reader": "openapi",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Address",
+            "columns": [
+              {
+                "name": "street",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": true,
+                "logicalTypeOptions": {
+                  "maxLength": 120
+                }
+              },
+              {
+                "name": "city",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          },
+          {
+            "object": "Customer",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "integer(int64)",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "name",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": true,
+                "logicalTypeOptions": {
+                  "maxLength": 80
+                }
+              },
+              {
+                "name": "email",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "balance",
+                "sourceType": "number(double)",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "active",
+                "sourceType": "boolean",
+                "logicalType": "boolean",
+                "required": false
+              },
+              {
+                "name": "born",
+                "sourceType": "string(date)",
+                "logicalType": "date",
+                "required": false
+              },
+              {
+                "name": "joined",
+                "sourceType": "string(date-time)",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "opens",
+                "sourceType": "string(time)",
+                "logicalType": "time",
+                "required": false
+              },
+              {
+                "name": "address",
+                "sourceType": "object",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "street",
+                    "sourceType": "string",
+                    "logicalType": "string",
+                    "required": true,
+                    "logicalTypeOptions": {
+                      "maxLength": 120
+                    }
+                  },
+                  {
+                    "name": "city",
+                    "sourceType": "string",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              },
+              {
+                "name": "billing",
+                "sourceType": "object",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "iban",
+                    "sourceType": "string",
+                    "logicalType": "string",
+                    "required": true
+                  },
+                  {
+                    "name": "bank",
+                    "sourceType": "Address",
+                    "logicalType": "object",
+                    "required": false
+                  }
+                ]
+              },
+              {
+                "name": "orders",
+                "sourceType": "array",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "sourceType": "object",
+                  "logicalType": "object",
+                  "required": false,
+                  "properties": [
+                    {
+                      "name": "number",
+                      "sourceType": "string",
+                      "logicalType": "string",
+                      "required": false
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "tags",
+                "sourceType": "array",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "sourceType": "string",
+                  "logicalType": "string",
+                  "required": false
+                }
+              },
+              {
+                "name": "attributes",
+                "sourceType": "object",
+                "logicalType": "object",
+                "required": false
+              },
+              {
+                "name": "parent",
+                "sourceType": "Customer",
+                "logicalType": "object",
+                "required": false
+              },
+              {
+                "name": "external",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "status",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          },
+          {
+            "object": "Order",
+            "columns": [
+              {
+                "name": "number",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          },
+          {
+            "object": "Maybe",
+            "columns": [
+              {
+                "name": "x",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "Swagger 2.0 JSON: definitions are tables",
+      "file": "sources/pets.json",
+      "input": "legacy.swagger.json",
+      "expected": {
+        "reader": "openapi",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Pet",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "integer(int32)",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "name",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "owner",
+                "sourceType": "object",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "name",
+                    "sourceType": "string",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "object": "Owner",
+            "columns": [
+              {
+                "name": "name",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "an OpenAPI document with no object schema is refused",
+      "file": "sources/shop.yaml",
+      "input": "flat.openapi.yaml",
+      "refused": ["sources/shop.yaml describes no object schemas."],
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a name rule's OpenAPI file that is not OpenAPI is refused",
+      "file": "sources/shop.catalog.json",
+      "input": "orders.json",
+      "refused": [
+        "sources/shop.catalog.json is not an OpenAPI document: it has no top-level openapi or swagger."
+      ],
+      "forbidden": ["ZZ-SECRET-42"],
+      "recipe": {
+        "from": "salesforce",
+        "set": {
+          "read": "openapi"
+        }
+      }
+    },
+    {
+      "name": "JSON Schema: one table named by its title, nested properties, a $ref, an array, values never read",
+      "file": "sources/shop/order.schema.json",
+      "input": "order.schema.json",
+      "connection": "shop",
+      "expected": {
+        "reader": "json-schema",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Order",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "integer",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "reference",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false,
+                "logicalTypeOptions": {
+                  "maxLength": 12
+                }
+              },
+              {
+                "name": "total",
+                "sourceType": "number",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "paid",
+                "sourceType": "boolean",
+                "logicalType": "boolean",
+                "required": false
+              },
+              {
+                "name": "placed",
+                "sourceType": "string(date-time)",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "customer",
+                "sourceType": "object",
+                "logicalType": "object",
+                "required": true,
+                "properties": [
+                  {
+                    "name": "name",
+                    "sourceType": "string",
+                    "logicalType": "string",
+                    "required": true
+                  },
+                  {
+                    "name": "address",
+                    "sourceType": "object",
+                    "logicalType": "object",
+                    "required": false,
+                    "properties": [
+                      {
+                        "name": "city",
+                        "sourceType": "string",
+                        "logicalType": "string",
+                        "required": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "lines",
+                "sourceType": "array",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "sourceType": "object",
+                  "logicalType": "object",
+                  "required": false,
+                  "properties": [
+                    {
+                      "name": "sku",
+                      "sourceType": "string",
+                      "logicalType": "string",
+                      "required": false
+                    },
+                    {
+                      "name": "qty",
+                      "sourceType": "integer",
+                      "logicalType": "integer",
+                      "required": false
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "status",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "JSON Schema: the import's object names the table",
+      "file": "sources/shop/order.schema.json",
+      "input": "order.schema.json",
+      "connection": "shop",
+      "object": "sales_order",
+      "expected": {
+        "reader": "json-schema",
+        "from": "document",
+        "tables": [
+          {
+            "object": "sales_order",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "integer",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "reference",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false,
+                "logicalTypeOptions": {
+                  "maxLength": 12
+                }
+              },
+              {
+                "name": "total",
+                "sourceType": "number",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "paid",
+                "sourceType": "boolean",
+                "logicalType": "boolean",
+                "required": false
+              },
+              {
+                "name": "placed",
+                "sourceType": "string(date-time)",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "customer",
+                "sourceType": "object",
+                "logicalType": "object",
+                "required": true,
+                "properties": [
+                  {
+                    "name": "name",
+                    "sourceType": "string",
+                    "logicalType": "string",
+                    "required": true
+                  },
+                  {
+                    "name": "address",
+                    "sourceType": "object",
+                    "logicalType": "object",
+                    "required": false,
+                    "properties": [
+                      {
+                        "name": "city",
+                        "sourceType": "string",
+                        "logicalType": "string",
+                        "required": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "lines",
+                "sourceType": "array",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "sourceType": "object",
+                  "logicalType": "object",
+                  "required": false,
+                  "properties": [
+                    {
+                      "name": "sku",
+                      "sourceType": "string",
+                      "logicalType": "string",
+                      "required": false
+                    },
+                    {
+                      "name": "qty",
+                      "sourceType": "integer",
+                      "logicalType": "integer",
+                      "required": false
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "status",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "JSON Schema without a title is named by the file, without its last extension",
+      "file": "sources/shop/untitled.schema.json",
+      "input": "untitled.schema.json",
+      "connection": "shop",
+      "expected": {
+        "reader": "json-schema",
+        "from": "document",
+        "tables": [
+          {
+            "object": "untitled.schema",
+            "columns": [
+              {
+                "name": "a",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "b",
+                "sourceType": "integer",
+                "logicalType": "integer",
+                "required": true
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "a JSON Schema with no properties is refused",
+      "file": "sources/shop/none.schema.json",
+      "input": "no-properties.schema.json",
+      "connection": "shop",
+      "refused": ["sources/shop/none.schema.json describes no properties."]
+    },
+    {
+      "name": "a name rule's JSON Schema file without $schema is refused",
+      "file": "sources/shop.catalog.json",
+      "input": "orders.json",
+      "refused": ["sources/shop.catalog.json is not a JSON Schema: it has no top-level $schema."],
+      "forbidden": ["ZZ-SECRET-42"],
+      "recipe": {
+        "from": "salesforce",
+        "set": {
+          "read": "json-schema"
+        }
+      }
+    },
+    {
+      "name": "Avro record: nullable unions, logical types, nested and named records, arrays, a map, a union of types, a record that contains itself",
+      "file": "sources/shop/order.avsc",
+      "input": "order.avsc",
+      "connection": "shop",
+      "expected": {
+        "reader": "avro",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Order",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "long",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "reference",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "status",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": true
+              },
+              {
+                "name": "total",
+                "sourceType": "decimal",
+                "logicalType": "number",
+                "required": true,
+                "logicalTypeOptions": {
+                  "precision": 12,
+                  "scale": 2
+                }
+              },
+              {
+                "name": "quantity",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "weight",
+                "sourceType": "float",
+                "logicalType": "number",
+                "required": true
+              },
+              {
+                "name": "paid",
+                "sourceType": "boolean",
+                "logicalType": "boolean",
+                "required": true
+              },
+              {
+                "name": "placed",
+                "sourceType": "timestamp-millis",
+                "logicalType": "timestamp",
+                "required": true
+              },
+              {
+                "name": "due",
+                "sourceType": "date",
+                "logicalType": "date",
+                "required": false
+              },
+              {
+                "name": "opens",
+                "sourceType": "time-millis",
+                "logicalType": "time",
+                "required": true
+              },
+              {
+                "name": "shipped",
+                "sourceType": "local-timestamp-micros",
+                "logicalType": "timestamp",
+                "required": true
+              },
+              {
+                "name": "uuid",
+                "sourceType": "uuid",
+                "logicalType": "string",
+                "required": true
+              },
+              {
+                "name": "payload",
+                "sourceType": "bytes",
+                "logicalType": "string",
+                "required": true
+              },
+              {
+                "name": "colour",
+                "sourceType": "enum",
+                "logicalType": "string",
+                "required": true
+              },
+              {
+                "name": "customer",
+                "sourceType": "record",
+                "logicalType": "object",
+                "required": true,
+                "properties": [
+                  {
+                    "name": "name",
+                    "sourceType": "string",
+                    "logicalType": "string",
+                    "required": true
+                  },
+                  {
+                    "name": "vip",
+                    "sourceType": "boolean",
+                    "logicalType": "boolean",
+                    "required": false
+                  }
+                ]
+              },
+              {
+                "name": "billing",
+                "sourceType": "Customer",
+                "logicalType": "object",
+                "required": true
+              },
+              {
+                "name": "lines",
+                "sourceType": "array",
+                "logicalType": "array",
+                "required": true,
+                "items": {
+                  "name": "items",
+                  "sourceType": "record",
+                  "logicalType": "object",
+                  "required": true,
+                  "properties": [
+                    {
+                      "name": "sku",
+                      "sourceType": "string",
+                      "logicalType": "string",
+                      "required": true
+                    },
+                    {
+                      "name": "qty",
+                      "sourceType": "int",
+                      "logicalType": "integer",
+                      "required": true
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "tags",
+                "sourceType": "array",
+                "logicalType": "array",
+                "required": true,
+                "items": {
+                  "name": "items",
+                  "sourceType": "string",
+                  "logicalType": "string",
+                  "required": true
+                }
+              },
+              {
+                "name": "notes",
+                "sourceType": "array",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "sourceType": "string",
+                  "logicalType": "string",
+                  "required": false
+                }
+              },
+              {
+                "name": "attributes",
+                "sourceType": "map",
+                "logicalType": "object",
+                "required": true
+              },
+              {
+                "name": "byRegion",
+                "sourceType": "map",
+                "logicalType": "object",
+                "required": true
+              },
+              {
+                "name": "home",
+                "sourceType": "record",
+                "logicalType": "object",
+                "required": true,
+                "properties": [
+                  {
+                    "name": "code",
+                    "sourceType": "string",
+                    "logicalType": "string",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "name": "amount",
+                "sourceType": "union",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "next",
+                "sourceType": "Order",
+                "logicalType": "object",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": ["The column Order.amount is a union of int, string; read as string."]
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "Avro record: the import's object names the table",
+      "file": "sources/shop/order.avsc",
+      "input": "order.avsc",
+      "connection": "shop",
+      "object": "orders",
+      "expected": {
+        "reader": "avro",
+        "from": "document",
+        "tables": [
+          {
+            "object": "orders",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "long",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "reference",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "status",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": true
+              },
+              {
+                "name": "total",
+                "sourceType": "decimal",
+                "logicalType": "number",
+                "required": true,
+                "logicalTypeOptions": {
+                  "precision": 12,
+                  "scale": 2
+                }
+              },
+              {
+                "name": "quantity",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "weight",
+                "sourceType": "float",
+                "logicalType": "number",
+                "required": true
+              },
+              {
+                "name": "paid",
+                "sourceType": "boolean",
+                "logicalType": "boolean",
+                "required": true
+              },
+              {
+                "name": "placed",
+                "sourceType": "timestamp-millis",
+                "logicalType": "timestamp",
+                "required": true
+              },
+              {
+                "name": "due",
+                "sourceType": "date",
+                "logicalType": "date",
+                "required": false
+              },
+              {
+                "name": "opens",
+                "sourceType": "time-millis",
+                "logicalType": "time",
+                "required": true
+              },
+              {
+                "name": "shipped",
+                "sourceType": "local-timestamp-micros",
+                "logicalType": "timestamp",
+                "required": true
+              },
+              {
+                "name": "uuid",
+                "sourceType": "uuid",
+                "logicalType": "string",
+                "required": true
+              },
+              {
+                "name": "payload",
+                "sourceType": "bytes",
+                "logicalType": "string",
+                "required": true
+              },
+              {
+                "name": "colour",
+                "sourceType": "enum",
+                "logicalType": "string",
+                "required": true
+              },
+              {
+                "name": "customer",
+                "sourceType": "record",
+                "logicalType": "object",
+                "required": true,
+                "properties": [
+                  {
+                    "name": "name",
+                    "sourceType": "string",
+                    "logicalType": "string",
+                    "required": true
+                  },
+                  {
+                    "name": "vip",
+                    "sourceType": "boolean",
+                    "logicalType": "boolean",
+                    "required": false
+                  }
+                ]
+              },
+              {
+                "name": "billing",
+                "sourceType": "Customer",
+                "logicalType": "object",
+                "required": true
+              },
+              {
+                "name": "lines",
+                "sourceType": "array",
+                "logicalType": "array",
+                "required": true,
+                "items": {
+                  "name": "items",
+                  "sourceType": "record",
+                  "logicalType": "object",
+                  "required": true,
+                  "properties": [
+                    {
+                      "name": "sku",
+                      "sourceType": "string",
+                      "logicalType": "string",
+                      "required": true
+                    },
+                    {
+                      "name": "qty",
+                      "sourceType": "int",
+                      "logicalType": "integer",
+                      "required": true
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "tags",
+                "sourceType": "array",
+                "logicalType": "array",
+                "required": true,
+                "items": {
+                  "name": "items",
+                  "sourceType": "string",
+                  "logicalType": "string",
+                  "required": true
+                }
+              },
+              {
+                "name": "notes",
+                "sourceType": "array",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "sourceType": "string",
+                  "logicalType": "string",
+                  "required": false
+                }
+              },
+              {
+                "name": "attributes",
+                "sourceType": "map",
+                "logicalType": "object",
+                "required": true
+              },
+              {
+                "name": "byRegion",
+                "sourceType": "map",
+                "logicalType": "object",
+                "required": true
+              },
+              {
+                "name": "home",
+                "sourceType": "record",
+                "logicalType": "object",
+                "required": true,
+                "properties": [
+                  {
+                    "name": "code",
+                    "sourceType": "string",
+                    "logicalType": "string",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "name": "amount",
+                "sourceType": "union",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "next",
+                "sourceType": "Order",
+                "logicalType": "object",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": ["The column orders.amount is a union of int, string; read as string."]
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "an Avro record with no fields is refused",
+      "file": "sources/shop/e.avsc",
+      "input": "no-fields.avsc",
+      "refused": ["sources/shop/e.avsc describes no fields."],
+      "forbidden": ["ZZ-SECRET-42"],
+      "connection": "shop"
+    },
+    {
+      "name": "a name rule's Avro file that is not a record is refused",
+      "file": "sources/shop.catalog.avsc",
+      "input": "enum.avsc",
+      "refused": [
+        "sources/shop.catalog.avsc is not an Avro schema: its top-level type is not record."
+      ],
+      "forbidden": ["ZZ-SECRET-42"],
+      "recipe": {
+        "from": "salesforce",
+        "set": {
+          "read": "avro"
+        }
+      }
+    },
+    {
+      "name": "a schema registry response with no schemaType is read with Avro, the table named by the import's object",
+      "file": "sources/kafka/orders-value.json",
+      "input": "registry-avro.json",
+      "connection": "kafka",
+      "object": "orders",
+      "expected": {
+        "reader": "avro",
+        "from": "document",
+        "tables": [
+          {
+            "object": "orders",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "long",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "note",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a schema registry response is named by the schema when the import gives no object",
+      "file": "sources/kafka/orders-value.json",
+      "input": "registry-avro.json",
+      "connection": "kafka",
+      "expected": {
+        "reader": "avro",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Order",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "long",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "note",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a schema registry response with schemaType AVRO is read with Avro",
+      "file": "sources/kafka/orders-value.json",
+      "input": "registry-avro-typed.json",
+      "connection": "kafka",
+      "object": "orders",
+      "expected": {
+        "reader": "avro",
+        "from": "document",
+        "tables": [
+          {
+            "object": "orders",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "long",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "note",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a schema registry response with schemaType JSON is read with JSON Schema, which needs no $schema",
+      "file": "sources/kafka/orders-value.json",
+      "input": "registry-json.json",
+      "connection": "kafka",
+      "object": "orders",
+      "expected": {
+        "reader": "json-schema",
+        "from": "document",
+        "tables": [
+          {
+            "object": "orders",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "integer",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "note",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a schema registry response is read by its schemaType whichever of avro and json-schema the recipe names",
+      "file": "sources/kafka.catalog.json",
+      "input": "registry-avro.json",
+      "recipe": {
+        "from": "salesforce",
+        "set": {
+          "read": "json-schema"
+        }
+      },
+      "object": "orders",
+      "expected": {
+        "reader": "json-schema",
+        "from": "catalog",
+        "tables": [
+          {
+            "object": "orders",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "long",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "note",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a Protobuf schema registry response is refused",
+      "file": "sources/kafka/orders-value.json",
+      "input": "registry-protobuf.json",
+      "refused": [
+        "Protobuf schemas are not read yet; save the topic's columns as a columns file instead."
+      ],
+      "forbidden": ["ZZ-SECRET-42"],
+      "connection": "kafka",
+      "object": "orders"
+    },
+    {
+      "name": "a schema registry response of another type is refused",
+      "file": "sources/kafka/orders-value.json",
+      "input": "registry-xml.json",
+      "refused": [
+        "sources/kafka/orders-value.json is a schema registry response of a type Ingestron does not read; it reads AVRO and JSON."
+      ],
+      "forbidden": ["ZZ-SECRET-42"],
+      "connection": "kafka",
+      "object": "orders"
+    },
+    {
+      "name": "a schema registry response whose schema is not JSON is refused",
+      "file": "sources/kafka/orders-value.json",
+      "input": "registry-broken.json",
+      "refused": ["sources/kafka/orders-value.json holds a schema that is not valid JSON."],
+      "forbidden": ["ZZ-SECRET-42"],
+      "connection": "kafka",
+      "object": "orders"
+    },
+    {
+      "name": "a schema registry response whose Avro schema is not a record is refused",
+      "file": "sources/kafka/orders-value.json",
+      "input": "registry-not-record.json",
+      "refused": [
+        "sources/kafka/orders-value.json is not an Avro schema: its top-level type is not record."
+      ],
+      "forbidden": ["ZZ-SECRET-42"],
+      "connection": "kafka",
+      "object": "orders"
+    },
+    {
+      "name": "Salesforce describe: the recipe's types, required from nillable, the id field as key, unknown types noted",
+      "file": "sources/crm/Account.json",
+      "input": "account.describe.json",
+      "connection": "crm",
+      "recipe": "salesforce",
+      "object": "Account",
+      "expected": {
+        "reader": "salesforce-describe",
+        "from": "catalog",
+        "tables": [
+          {
+            "object": "Account",
+            "columns": [
+              {
+                "name": "Id",
+                "sourceType": "id",
+                "logicalType": "string",
+                "required": true,
+                "logicalTypeOptions": {
+                  "maxLength": 18
+                },
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Name",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": true,
+                "logicalTypeOptions": {
+                  "maxLength": 255
+                }
+              },
+              {
+                "name": "Industry__c",
+                "sourceType": "picklist",
+                "logicalType": "string",
+                "required": false,
+                "logicalTypeOptions": {
+                  "maxLength": 255
+                }
+              },
+              {
+                "name": "IsActive__c",
+                "sourceType": "boolean",
+                "logicalType": "boolean",
+                "required": false
+              },
+              {
+                "name": "AnnualRevenue",
+                "sourceType": "double",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 18,
+                  "scale": 2
+                }
+              },
+              {
+                "name": "ParentId",
+                "sourceType": "reference",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "CreatedDate",
+                "sourceType": "datetime",
+                "logicalType": "string",
+                "required": true
+              },
+              {
+                "name": "Location__c",
+                "sourceType": "location",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": [
+          "Type \"id\" of Account.Id is not known; read as string.",
+          "Type \"picklist\" of Account.Industry__c is not known; read as string.",
+          "Type \"reference\" of Account.ParentId is not known; read as string.",
+          "Type \"datetime\" of Account.CreatedDate is not known; read as string.",
+          "Type \"location\" of Account.Location__c is not known; read as string."
+        ]
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "Salesforce describe: the recipe's types rules find each type",
+      "file": "sources/crm/Account.json",
+      "input": "account.describe.json",
+      "connection": "crm",
+      "recipe": {
+        "from": "salesforce",
+        "set": {
+          "types": [
+            {
+              "match": "^(id|picklist|reference|location)$",
+              "logicalType": "string"
+            },
+            {
+              "match": "^datetime$",
+              "logicalType": "timestamp"
+            },
+            {
+              "match": "^boolean$",
+              "logicalType": "boolean"
+            },
+            {
+              "match": "^double$",
+              "logicalType": "number"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "reader": "salesforce-describe",
+        "from": "catalog",
+        "tables": [
+          {
+            "object": "Account",
+            "columns": [
+              {
+                "name": "Id",
+                "sourceType": "id",
+                "logicalType": "string",
+                "required": true,
+                "logicalTypeOptions": {
+                  "maxLength": 18
+                },
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Name",
+                "sourceType": "string",
+                "logicalType": "string",
+                "required": true,
+                "logicalTypeOptions": {
+                  "maxLength": 255
+                }
+              },
+              {
+                "name": "Industry__c",
+                "sourceType": "picklist",
+                "logicalType": "string",
+                "required": false,
+                "logicalTypeOptions": {
+                  "maxLength": 255
+                }
+              },
+              {
+                "name": "IsActive__c",
+                "sourceType": "boolean",
+                "logicalType": "boolean",
+                "required": false
+              },
+              {
+                "name": "AnnualRevenue",
+                "sourceType": "double",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 18,
+                  "scale": 2
+                }
+              },
+              {
+                "name": "ParentId",
+                "sourceType": "reference",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "CreatedDate",
+                "sourceType": "datetime",
+                "logicalType": "timestamp",
+                "required": true
+              },
+              {
+                "name": "Location__c",
+                "sourceType": "location",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a JSON object with a name and fields is a sample without the Salesforce recipe, never a describe by its content",
+      "file": "sources/crm/thing.json",
+      "input": "fields-record.json",
+      "connection": "crm",
+      "object": "thing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "notes": [],
+        "tables": [
+          {
+            "object": "thing",
+            "columns": [
+              {
+                "name": "name",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "fields",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "string",
+                  "required": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a Salesforce describe with no fields is refused",
+      "file": "sources/crm/Empty.json",
+      "input": "empty.describe.json",
+      "refused": ["sources/crm/Empty.json describes no fields."],
+      "forbidden": ["ZZ-SECRET-42"],
+      "connection": "crm",
+      "recipe": "salesforce"
+    },
+    {
+      "name": "a name rule's Salesforce file that is not a describe is refused",
+      "file": "sources/crm.catalog.json",
+      "input": "orders.json",
+      "refused": [
+        "sources/crm.catalog.json is not a Salesforce describe: it has no name and fields."
+      ],
+      "forbidden": ["ZZ-SECRET-42"],
+      "recipe": "salesforce"
+    },
+    {
+      "name": "OData CSDL: a base type that is its own base, directly or through another, has each property once",
+      "file": "sources/loops.xml",
+      "input": "loops.csdl.xml",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Loops",
+            "columns": [
+              {
+                "name": "Id",
+                "sourceType": "Edm.Int32",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              }
+            ]
+          },
+          {
+            "object": "Pings",
+            "columns": [
+              {
+                "name": "PongId",
+                "sourceType": "Edm.Int32",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "PingId",
+                "sourceType": "Edm.Int32",
+                "logicalType": "integer",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "a CSDL document is read by content only when its name ends .xml or .edmx",
+      "file": "sources/shop-metadata.txt",
+      "input": "shop.csdl.xml",
+      "refused": [
+        "sources/shop-metadata.txt is not a file Ingestron reads: a columns file, an ODCS contract, OData CSDL, OpenAPI, JSON Schema, Avro, a schema registry response, a Salesforce describe, or a sample ending .csv, .json, .jsonl, .ndjson or .parquet."
+      ],
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "Avro: records are keyed by full name, a name is looked up in the namespace of the record that holds it, and a record is written in full once",
+      "file": "sources/shop/outer.avsc",
+      "input": "namespaces.avsc",
+      "connection": "shop",
+      "expected": {
+        "reader": "avro",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Outer",
+            "columns": [
+              {
+                "name": "z",
+                "sourceType": "record",
+                "logicalType": "object",
+                "required": true,
+                "properties": [
+                  {
+                    "name": "v",
+                    "sourceType": "string",
+                    "logicalType": "string",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "name": "y",
+                "sourceType": "record",
+                "logicalType": "object",
+                "required": true,
+                "properties": [
+                  {
+                    "name": "w",
+                    "sourceType": "int",
+                    "logicalType": "integer",
+                    "required": true
+                  }
+                ]
+              },
+              {
+                "name": "x",
+                "sourceType": "Item",
+                "logicalType": "object",
+                "required": true
+              },
+              {
+                "name": "w",
+                "sourceType": "Item",
+                "logicalType": "object",
+                "required": true
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "a JSON sample whose column is named schema is a sample, not a registry response",
+      "file": "sources/shop/dbs.json",
+      "input": "schemas.json",
+      "connection": "shop",
+      "object": "dbs",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "notes": [],
+        "tables": [
+          {
+            "object": "dbs",
+            "columns": [
+              {
+                "name": "schema",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "tables",
+                "logicalType": "integer",
+                "required": false
+              }
+            ]
+          }
+        ]
+      },
+      "forbidden": ["public"]
+    },
+    {
+      "name": "a CSV sample whose first cell starts with < is a sample, not OData",
+      "file": "sources/shop/orders.csv",
+      "input": "angle.csv",
+      "connection": "shop",
+      "object": "orders",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "notes": [],
+        "tables": [
+          {
+            "object": "orders",
+            "columns": [
+              {
+                "name": "<id>",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "name",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "OData CSDL: Scale=\"Variable\", \"variable\" or \"floating\" gives no scale, and a missing Scale is 0",
+      "file": "sources/org.xml",
+      "input": "variable.csdl.xml",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Accounts",
+            "columns": [
+              {
+                "name": "Stamp",
+                "sourceType": "Edm.Int64",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "AccountID",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Revenue",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "Credit",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 19
+                }
+              },
+              {
+                "name": "Limit",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 19,
+                  "scale": 4
+                }
+              },
+              {
+                "name": "Total",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 12
+                }
+              },
+              {
+                "name": "Share",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 5,
+                  "scale": 0
+                }
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "OData CSDL with objects: types leaves out an abstract entity type, but a type has the properties of its abstract base",
+      "file": "sources/org.catalog.xml",
+      "input": "variable.csdl.xml",
+      "recipe": "odata",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Account",
+            "columns": [
+              {
+                "name": "Stamp",
+                "sourceType": "Edm.Int64",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "AccountID",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Revenue",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "Credit",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 19
+                }
+              },
+              {
+                "name": "Limit",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 19,
+                  "scale": 4
+                }
+              },
+              {
+                "name": "Total",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 12
+                }
+              },
+              {
+                "name": "Share",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 5,
+                  "scale": 0
+                }
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a recipe's columnNames renames the columns of each table once, without case, and leaves nested fields alone",
+      "file": "sources/crm.catalog.xml",
+      "input": "lookups.csdl.xml",
+      "recipe": "lookups",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "account",
+            "columns": [
+              {
+                "name": "accountid",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "name",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": false,
+                "logicalTypeOptions": {
+                  "maxLength": 160
+                }
+              },
+              {
+                "name": "primarycontactid",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "OwningUser",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "a_value_b",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "revenue",
+                "sourceType": "Crm.Money",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "_unit_value",
+                    "sourceType": "Edm.Guid",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "object": "contact",
+            "columns": [
+              {
+                "name": "contactid",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "a file read without the recipe keeps its column names",
+      "file": "sources/crm.xml",
+      "input": "lookups.csdl.xml",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Accounts",
+            "columns": [
+              {
+                "name": "accountid",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "name",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": false,
+                "logicalTypeOptions": {
+                  "maxLength": 160
+                }
+              },
+              {
+                "name": "_primarycontactid_value",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "_OwningUser_VALUE",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "_a_value_b_value",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "revenue",
+                "sourceType": "Crm.Money",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "_unit_value",
+                    "sourceType": "Edm.Guid",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "object": "Contacts",
+            "columns": [
+              {
+                "name": "contactid",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "columnNames that give two columns of a table the same name is refused",
+      "file": "sources/crm.catalog.xml",
+      "input": "clash.csdl.xml",
+      "recipe": "lookups",
+      "refused": [
+        "sources/crm.catalog.xml: the recipe \"lookups\" gives two columns of the table \"clash\" the name \"x\"."
+      ]
+    },
+    {
+      "name": "a name rule's columns file is read without the recipe's columnNames",
+      "file": "sources/crm.columns.csv",
+      "input": "lookups.columns.csv",
+      "recipe": "lookups",
+      "expected": {
+        "reader": "columns",
+        "from": "columns",
+        "tables": [
+          {
+            "object": "t",
+            "columns": [
+              {
+                "name": "_a_value",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "b",
+                "sourceType": "int",
+                "logicalType": "integer",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    }
+  ]
+}

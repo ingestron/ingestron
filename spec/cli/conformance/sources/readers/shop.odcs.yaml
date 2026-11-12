@@ -1,0 +1,43 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: shop
+version: 1.0.0
+status: active
+schema:
+  - name: orders
+    physicalName: shop.orders
+    logicalType: object
+    properties:
+      - name: order_id
+        physicalName: ORDER_ID
+        logicalType: integer
+        physicalType: INT
+        required: true
+        primaryKey: true
+        primaryKeyPosition: 1
+      - name: total
+        logicalType: number
+        logicalTypeOptions: { precision: 18, scale: 2 }
+        physicalType: DECIMAL(18,2)
+      - name: note
+      - name: address
+        logicalType: object
+        properties:
+          - { name: city, logicalType: string, logicalTypeOptions: { maxLength: 80 } }
+      - name: tags
+        logicalType: array
+        items: { logicalType: string }
+      - name: line_no
+        logicalType: integer
+        primaryKey: true
+      - name: place
+        logicalType: geography
+  - name: customers
+    properties:
+      - { name: id, logicalType: integer, primaryKey: true }
+      - { name: code, logicalType: string, primaryKey: true, primaryKeyPosition: 3 }
+      - { name: region, logicalType: string, primaryKey: true }
+      - name: extra
+        logicalType: object
+        properties:
+          - { name: shape, logicalType: polygon }

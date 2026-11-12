@@ -185,7 +185,7 @@ describe("ingestron schemas, help and mistakes", () => {
   it("explains usage, and refuses unknown commands and options", () => {
     const { ingestron } = workspace();
     expect(ingestron("--help").output).toContain(
-      "Usage: ingestron <plan|apply|check|compare|contract|request|schemas|init|standard>",
+      "Usage: ingestron <plan|apply|check|compare|contract|request|schemas|init|standard|source>",
     );
     expect(ingestron("deploy").code).toBe(2);
     expect(ingestron("plan", "--environment", "dev").code).toBe(2);
@@ -198,5 +198,21 @@ describe("ingestron schemas, help and mistakes", () => {
       "  init      Create a project from a connection, a starter or a published standard.\n",
     );
     expect(help).toContain("  standard  Install or list published standards.\n");
+  });
+
+  it("lists source and the flags of source metadata in help", () => {
+    const { ingestron } = workspace();
+    const help = ingestron("--help").output;
+    expect(help).toMatch(
+      /\n {2}source {4}Request source metadata from its owners, or import the file they send\./,
+    );
+    for (const flag of [
+      "--connection <id>",
+      "--object <text>",
+      "--dry-run",
+      "--from-metadata",
+      "--needed",
+    ])
+      expect(help).toContain(`  ${flag}`);
   });
 });

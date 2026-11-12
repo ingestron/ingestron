@@ -194,6 +194,12 @@ importers:
       '@ingestron/standards':
         specifier: ^1.0.0
         version: 1.0.0
+      hyparquet:
+        specifier: 1.31.5
+        version: 1.31.5
+      txml:
+        specifier: 6.0.3
+        version: 6.0.3
       yaml:
         specifier: 2.9.1
         version: 2.9.1
@@ -1127,6 +1133,9 @@ packages:
   html-entities@2.6.0:
     resolution: {integrity: sha512-kig+rMn/QOVRvr7c86gQ8lWXq+Hkv6CbAH1hLu+RG338StTpE8Z0b44SDVaqVu7HGKf27frdmUYEs9hTUX/cLQ==}
 
+  hyparquet@1.31.5:
+    resolution: {integrity: sha512-KPVfaxW8xOiO2/4fjeiBfFNEXhGVw9tfcb9ha2iNZdJ3J/yBjEwIeAnTyyuhllFFTb9YO9wg0DfRAOnm6KCvBg==}
+
   ignore@5.3.2:
     resolution: {integrity: sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==}
     engines: {node: '>= 4'}
@@ -1464,6 +1473,10 @@ packages:
     resolution: {integrity: sha512-Yiex1Ovn8z2xPpOWckIiysV1SSyRMY9BkLF++q0yKiDxCqRhosKfMg3janKkiLBwZ5c/YryloKwGZcrEmtwxKw==}
     engines: {node: '>=18.0.0'}
     hasBin: true
+
+  txml@6.0.3:
+    resolution: {integrity: sha512-LpgQIn4huTMpHdBqo9zUYj0lxksvh5epthFh/DoZ4FAd868kkuz31rAzrs41MOPneAWfuSCbBa0+lwxT4p/ZQg==}
+    engines: {node: '>=18.0.0'}
 
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
@@ -2408,6 +2421,8 @@ snapshots:
 
   html-entities@2.6.0: {}
 
+  hyparquet@1.31.5: {}
+
   ignore@5.3.2: {}
 
   ignore@7.0.14: {}
@@ -2685,6 +2700,8 @@ snapshots:
       esbuild: 0.28.2
     optionalDependencies:
       fsevents: 2.3.3
+
+  txml@6.0.3: {}
 
   type-check@0.4.0:
     dependencies:

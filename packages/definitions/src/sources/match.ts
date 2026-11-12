@@ -5,9 +5,13 @@ import type { SourceMetadataDoc, SourceTableDoc } from "../documents/index.js";
 /** A part that is exactly one `${…}` reference: it matches anything. */
 const onlyReference = /^\$\{[^}]*\}$/;
 
-/** True for text that is exactly one `${…}` reference. */
-export function isReference(text: string): boolean {
-  return onlyReference.test(text);
+/**
+ * True for an object written only as references: one `${…}`, or several joined by a `.` that
+ * is outside any reference, such as `${values.schema}.${envvar:TABLE}`. A part with text as
+ * well, such as `dbo.${envvar:TABLE}` or `${a}${b}`, is not.
+ */
+export function onlyReferences(text: string): boolean {
+  return splitWritten(text).every((part) => onlyReference.test(part));
 }
 
 /**

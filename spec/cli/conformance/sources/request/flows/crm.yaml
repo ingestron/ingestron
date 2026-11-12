@@ -1,0 +1,7 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: crm
+source: crm
+tables:
+  accounts: { object: Account }
+  opportunities: { object: Opportunity }

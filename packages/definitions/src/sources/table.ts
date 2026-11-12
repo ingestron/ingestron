@@ -4,18 +4,22 @@ import type { Context } from "../context/index.js";
 import type { FlowDoc, SourceMetadataDoc, SourceTableDoc } from "../documents/index.js";
 import { writtenValue } from "../internal/index.js";
 import { holdsUnsetEnvvar } from "../diagnostics/index.js";
-import { isReference, matchObject } from "./match.js";
+import { matchObject, onlyReferences } from "./match.js";
 import { metadataTables } from "./metadata.js";
 
 /** What a flow table found in its connection's source metadata (specification section 12.3). */
 export interface TableMatch {
   /** The connection's document. */
   document: SourceMetadataDoc;
+  /** The file the document is in. */
+  file: string;
   /** The one table the object matches; none for no match, or for more than one. */
   entry?: SourceTableDoc;
   /**
-   * True when the object is written as one reference that is unset at planning: its name is
-   * not known, so it is never `SOURCE_TABLE_GONE` (specification section 12.6).
+   * True when the object is written as one reference, or only references, with at least one
+   * unset at planning: its name is not known, so it is never `SOURCE_TABLE_GONE` (section
+   * 12.6), and its `TABLE_NO_COLUMNS` (section 12.4) is at its `object`, a value that holds the
+   * unset reference, which section 1's rule for such values decides.
    */
   notKnown: boolean;
   /** True when more than one table matched, which `SOURCE_OBJECT_AMBIGUOUS` has reported. */
@@ -40,14 +44,10 @@ export function matchTable(
   const object = flow.value.tables[name]?.object;
   if (!found || object === undefined) return undefined;
   const document = found.document.value;
-  const pointer = `/tables/${name.replaceAll("~", "~0").replaceAll("/", "~1")}/object`;
-  const written = writtenValue(context.files, flow.file, pointer)?.value;
-  const matches = matchObject(
-    object,
-    typeof written === "string" ? written : object,
-    found.tables,
-    found.document.value.names,
-  );
+  const { file } = found.document;
+  const pointer = objectPointer(name);
+  const text = writtenObject(context, flow, name, object);
+  const matches = matchObject(object, text, found.tables, found.document.value.names);
   if (matches.length > 1) {
     context.reporter.error(
       "SOURCE_OBJECT_AMBIGUOUS",
@@ -55,9 +55,42 @@ export function matchTable(
       { document: flow, pointer },
       "Write more of the object's name, such as its schema, so that it matches one table.",
     );
-    return { document, ambiguous: true, notKnown: false };
+    return { document, file, ambiguous: true, notKnown: false };
   }
-  const text = typeof written === "string" ? written : object;
-  const notKnown = isReference(text) && holdsUnsetEnvvar(context.project, object);
-  return { document, ambiguous: false, notKnown, ...(matches[0] && { entry: matches[0] }) };
+  const notKnown = onlyReferences(text) && holdsUnsetEnvvar(context.project, object);
+  return { document, file, ambiguous: false, notKnown, ...(matches[0] && { entry: matches[0] }) };
+}
+
+/**
+ * True when the table's object is written only as references, at least one unset at planning,
+ * so its name is not known yet (specification sections 12.4 and 12.6). It needs no metadata:
+ * a table with no contract and no document for its connection is not known either.
+ */
+export function objectNotKnown(
+  context: Context,
+  flow: DefinitionDocument<FlowDoc>,
+  name: string,
+): boolean {
+  const object = flow.value.tables[name]?.object;
+  if (object === undefined || !holdsUnsetEnvvar(context.project, object)) return false;
+  return onlyReferences(writtenObject(context, flow, name, object));
+}
+
+/** The JSON Pointer to a flow table's `object`. */
+export function objectPointer(name: string): string {
+  return `/tables/${name.replaceAll("~", "~0").replaceAll("/", "~1")}/object`;
+}
+
+/**
+ * The object's text as written in the flow's file, so references stay as they are there;
+ * where the file cannot give it, the resolved text stands in.
+ */
+function writtenObject(
+  context: Context,
+  flow: DefinitionDocument<FlowDoc>,
+  name: string,
+  object: string,
+): string {
+  const written = writtenValue(context.files, flow.file, objectPointer(name))?.value;
+  return typeof written === "string" ? written : object;
 }

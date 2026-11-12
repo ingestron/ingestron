@@ -77,6 +77,7 @@ export {
   type FilterMatch,
   type GovernanceDoc,
   type SourceColumnDoc,
+  type SourceMetadataDoc,
   type SourceTableDoc,
 } from "./documents/index.js";
 
@@ -143,6 +144,7 @@ export {
   type SourceBefore,
   type SourceColumnBefore,
   type SourceDifference,
+  type SourceTable,
 } from "./sources/index.js";
 
 // Types from @ingestron/config that appear in this package's API, so a pack

@@ -1,0 +1,4 @@
+[
+  { "id": 1, "byCustomer": { "ZZ-SECRET-42": 3 } },
+  { "id": 2, "byCustomer": { "ZZ-OTHER": 1 } }
+]

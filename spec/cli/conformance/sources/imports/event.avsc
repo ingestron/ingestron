@@ -1,0 +1,38 @@
+{
+  "type": "record",
+  "name": "Event",
+  "doc": "ZZ-SECRET-42",
+  "fields": [
+    { "name": "id", "type": "long" },
+    {
+      "name": "customer",
+      "type": {
+        "type": "record",
+        "name": "Customer",
+        "fields": [
+          { "name": "name", "type": "string", "default": "ZZ-SECRET-42" },
+          {
+            "name": "address",
+            "type": {
+              "type": "record",
+              "name": "Address",
+              "fields": [{ "name": "city", "type": ["null", "string"] }]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "lines",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Line",
+          "fields": [{ "name": "sku", "type": "string" }]
+        }
+      }
+    },
+    { "name": "tags", "type": { "type": "array", "items": "string" } }
+  ]
+}

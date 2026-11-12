@@ -44,7 +44,12 @@ export function withReplaceMe(
   const found = replaceMeDiagnostics(files, project, severity);
   if (found.length === 0) return result;
   const diagnostics = [...result.diagnostics, ...found];
-  return severity === "error" ? { ok: false, diagnostics } : { ...result, diagnostics };
+  if (severity !== "error") return { ...result, diagnostics };
+  return {
+    ok: false,
+    diagnostics,
+    ...(result.sourceTables && { sourceTables: result.sourceTables }),
+  };
 }
 
 /**

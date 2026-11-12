@@ -1,0 +1,7 @@
+apiVersion: ingestron.io/v1
+kind: Standard
+id: retail
+packs: [databricks@2]
+layers:
+  - { name: bronze, does: raw }
+  - { name: silver, does: [check] }

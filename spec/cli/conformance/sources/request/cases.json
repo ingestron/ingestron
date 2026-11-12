@@ -1,0 +1,36 @@
+{
+  "description": "The source request (spec/cli/sources.md, section 4). This folder is a project with three connections: erp (sqlserver, its database given in metadata.with from a value of each environment), crm (salesforce by default, without the instanceUrl input) and landing (files, covered by sources/landing.yaml). Its recipes are in its own recipes/ folder. Each case runs the request for environment (none when left out, which resolves for the first environment project.yaml declares) and connection (none when left out), with no environment variables set; expected names the file holding the exact Markdown, and resolved says whether the definitions resolved.",
+  "requests": [
+    {
+      "name": "every connection a flow reads, for dev",
+      "environment": "dev",
+      "expected": "request.dev.md",
+      "resolved": true
+    },
+    {
+      "name": "a schema part that is an unset environment variable keeps {schemas} to fill in",
+      "environment": "test",
+      "expected": "request.test.md",
+      "resolved": true
+    },
+    {
+      "name": "one connection, for prod",
+      "environment": "prod",
+      "connection": "erp",
+      "expected": "request.prod.erp.md",
+      "resolved": true
+    },
+    {
+      "name": "an unknown connection",
+      "environment": "dev",
+      "connection": "nope",
+      "expected": "request.unknown-connection.md",
+      "resolved": false
+    },
+    {
+      "name": "no environment: resolved for dev, the first environment project.yaml declares, which the title names; the import lines carry no --env",
+      "expected": "request.default.md",
+      "resolved": true
+    }
+  ]
+}

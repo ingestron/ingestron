@@ -1711,13 +1711,16 @@ Each case in [conformance/](conformance/) gives `files` (the project), an
 optional `environment`, optional `envvars` and `missingEnvvars` (as in the
 config conformance cases), an optional `deployTime: true` (section 1.1), an
 optional `environmentsTogether: true` (section 7), an optional
-`replaceMe: error` (section 1), and
+`replaceMe: error` (section 1), an optional `sourceTables: true` (section
+12.7), and
 `expect`: `tables` (partial objects, in order,
 with `fullName` written as `catalog.schema.table`, and `null` at any key for
 a value the table does not have, such as `serve: null` for a step,
 `settings: { mode: null }` for a setting or `type: null` in a listed column), `products` (partial objects,
 in order), `standard` (a partial object), `platform`, `names`, `deployValues`, `previewFeatures` and
-`operations` (the model's, exactly) and `qualityResults`, or
+`operations` (the model's, exactly), `sourceTables` (the result's list of
+section 12.7, exactly, with or without a model; `null` when the result has
+none) and `qualityResults`, or
 `diagnostics` (matched in order on the fields given; `fixes` lists the fix
 titles, and `fixes: []` means the diagnostic has none; `subject` is matched
 on the keys given, and `subject: null` means the diagnostic has none),
@@ -1727,8 +1730,8 @@ are, each written like a diagnostic with the entry's `reason` and `entry`,
 `diagnostics` are what remain, and a case that gives none expects none, as
 before), and optionally
 `fixed`, as in the config conformance cases. A case that expects
-`diagnostics` also checks `tables`, `previewFeatures`, `operations` and
-`qualityResults` when it gives them.
+`diagnostics` also checks `tables`, `previewFeatures`, `operations`,
+`sourceTables` and `qualityResults` when it gives them.
 All cases use the
 data-only packs [conformance/pack.yaml](conformance/pack.yaml),
 [conformance/pack-bridge.yaml](conformance/pack-bridge.yaml),
@@ -1842,7 +1845,9 @@ The entries that section 12 adds are these, each from its schema:
 `logicalTypeOptions`, `required`, `primaryKeyPosition`, `properties` and
 `items`); a Connection's `metadata` (`from` and `with`); and the `sources`
 mapping of the Standard and of the Platform, with `breaking`. A flow table's
-`contract` is an entry that is not `required` (section 12.4).
+`contract` is an entry that is not `required` (section 12.4). The result's
+`sourceTables` (section 12.7) is made by resolving, not written in a
+document, so it has no entry.
 
 **Type words.** When the schema, its `$ref` followed, has an `anyOf` or a
 `oneOf`, the words are those of each of its items, each taken
@@ -2540,9 +2545,10 @@ descriptions, classifications, roles or quality.
 Section 12.1 defines the document, section 12.2 how a connection says where
 its metadata comes from, section 12.3 how a flow table finds its entry,
 section 12.4 what a table without a contract takes from it, section 12.5 when
-a table needs a contract nonetheless and section 12.6 how a contract is
-compared with it. Resolving needs no network, no source and no credentials:
-the metadata is a file of the project.
+a table needs a contract nonetheless, section 12.6 how a contract is
+compared with it and section 12.7 how resolving lists each flow table's
+entry for the tools that read it. Resolving needs no network, no source and
+no credentials: the metadata is a file of the project.
 
 ### 12.1 The document
 
@@ -2710,6 +2716,21 @@ and the hint is
 `Import the source's metadata (ingestron source request says how), or name a contract.`
 A table that needs a contract (section 12.5) has `CONTRACT_NEEDED` instead.
 
+A flow table whose `object` is written only as references, as section 12.3
+says (one reference, such as `${envvar:TABLE}`, or only references), of
+which at least one is unset at planning, has no known name, and so no known
+columns, until the value is set. Its `TABLE_NO_COLUMNS` is reported, with the
+same message and hint, at the table's `object` and not at its key, so that
+section 1's rule for a problem at a value that holds an unset reference
+decides what is shown: in an editor (`missingEnvvars: information`) the
+problem is left out, so that no error is shown for a table whose name is not
+yet known and the pack checks wait (section 1); resolving for deploy it is
+`DEPLOY_VALUE` at the `object` (section 1.1), since a deploy-time value cannot
+decide what a table is made of; and without either, the unset variable is
+`ENVVAR_MISSING`, an error that fails loading before resolving reaches the
+table. `CONTRACT_NEEDED` is unchanged: it does not depend on the name. This is
+the reasoning of "Not known" in section 12.6.
+
 ### 12.5 When a table needs a contract
 
 A flow table needs a contract when any of these is true:
@@ -2751,8 +2772,11 @@ holds of:
 The rule is evaluated with the rest of resolution, for the environment being
 planned: the same flow table may need a contract in one environment, whose
 platform manages access, and not in another. `CONTRACT_NEEDED` replaces
-`TABLE_NO_COLUMNS` and the columns of section 12.4. The hint is
-`Name a contract for the table with `contract`.`, whichever the reason.
+`TABLE_NO_COLUMNS` and the columns of section 12.4. Whichever the reason,
+the hint is, when the metadata has an entry for the table,
+``Draft one from the source metadata with `ingestron contract --from-metadata <flow>.<table>`, then name it with `contract`.``
+where `<flow>.<table>` is the flow's id and the table's key, and otherwise
+``Name a contract for the table with `contract`.``
 
 ### 12.6 Comparing
 
@@ -2829,8 +2853,9 @@ for `SOURCE_TABLE_GONE`, so that a team accepts one column of one table and not
 another. The feature is `(primary key)` so that a column named `key` is not
 mistaken for the key.
 
-**Not known.** A flow table whose `object` is written as one reference that is
-unset at planning, such as `${envvar:TABLE}`, is not compared and is never
+**Not known.** A flow table whose `object` is written as one reference, or only
+references (section 12.3), with at least one unset at planning, such as
+`${envvar:TABLE}`, is not compared and is never
 `SOURCE_TABLE_GONE`: its name is not known, so that it is gone would be false.
 Unset is reported as for any reference (section 1).
 
@@ -2872,6 +2897,46 @@ gives a `maxLength`, and its `logicalType` otherwise. A key is its columns
 joined with `, `, ordered as above.
 `<flow object>` is the flow table's `object`, resolved. Where a message names a
 column, `<column>` is the one the subject has.
+
+### 12.7 The source tables of the result
+
+The source request and contract drafting (CLI specification,
+[sources.md](../cli/sources.md)) need each flow table's metadata entry, and
+match nothing themselves. Resolved with the option `sourceTables: true`, the
+result of resolving lists, as `sourceTables`, one item for each flow table,
+in the order the flows are loaded (section 1), then in the order of the
+flow's table keys. The list is part of the result, beside the model and the
+diagnostics, and never of the model. Each item has:
+
+- `flow`: the flow's id;
+- `table`: the table's key;
+- `connection`: the flow's `source`;
+- `object`: the table's `object`, resolved for the environment being
+  planned, with a reference that is unset at planning written as it is;
+- `contract` (optional): the id of the contract the table names;
+- `needs` (optional): when the table needs a contract (section 12.5), the
+  reason, the `<reason>` of `CONTRACT_NEEDED`, whether or not the table
+  names one;
+- `entry` (optional): the one table of the connection's metadata that the
+  `object` matches (section 12.3); none when it matches none, or more than
+  one;
+- `names` and `file` (optional): the `names` and the file of the
+  connection's metadata document, when the connection has one.
+
+A table is listed whether or not it resolved: a table with
+`TABLE_NO_COLUMNS` or `CONTRACT_NEEDED` is listed like any other. With the
+option, the list is given whenever resolving reaches the flows, with or
+without a model: errors such as `TABLE_NO_COLUMNS`, `CONTRACT_NEEDED` and the
+breaking codes of section 12.6 leave no model, and they are what importing
+metadata and drafting contracts settle. It is not given when the project does
+not load, or when its standard, packs or platform cannot be settled, since
+resolving does not reach the flows and those errors are not ones an import or
+a draft settles. A table whose name another flow's table already has
+(`DUPLICATE_TABLE`, section 5) is not listed: the request and drafting refuse
+a project with that error anyway.
+
+Without the option, the result has no `sourceTables`. The option never
+changes the model, the diagnostics or anything built.
 
 ## Accepted warnings
 

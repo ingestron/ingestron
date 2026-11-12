@@ -1,0 +1,7 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: landing
+source: landing
+tables:
+  shipments: { object: shipments }
+  returns: { object: returns }

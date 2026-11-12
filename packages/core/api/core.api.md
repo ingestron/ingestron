@@ -12,6 +12,7 @@ import { OutputFolder } from '@ingestron/generate';
 import { Pack } from '@ingestron/definitions';
 import { Plan } from '@ingestron/generate';
 import { ResolvedModel } from '@ingestron/definitions';
+import { SourceDifference } from '@ingestron/definitions';
 import { SuppliedValue } from '@ingestron/definitions';
 
 // @public
@@ -21,7 +22,28 @@ export function builtInTemplates(): Template[];
 export function compareEnvironments(files: FileSource, a: string, b: string, options?: ProjectOptions): string;
 
 // @public
+export interface ContractDraft {
+    id: string;
+    path: string;
+    table: string;
+    text: string;
+}
+
+// @public
 export function contractFromSample(text: string, file: string, id: string): string;
+
+// @public
+export function draftContracts(files: FileSource, options?: DraftContractsOptions): {
+    drafts: ContractDraft[];
+    problems: string[];
+};
+
+// @public
+export interface DraftContractsOptions extends ProjectOptions {
+    environment?: string;
+    needed?: boolean;
+    tables?: string[];
+}
 
 // @public
 export function generateAll(files: FileSource, available: readonly Pack[], envvars: Readonly<Record<string, string | undefined>>, replaceMe?: "warning" | "error"): Generated;
@@ -70,7 +92,15 @@ export interface GeneratedOutputsOptions {
 }
 
 // @public
+export function importSource(input: SourceImportInput): SourceImport | {
+    refused: string[];
+};
+
+// @public
 export function installedKits(root?: string): Kit[];
+
+// @public
+export function installedSourceRecipes(root?: string): SourceRecipe[];
 
 // @public
 export interface Kit {
@@ -269,6 +299,9 @@ export function readKit(folder: string, root?: string): Kit;
 export function readSample(folder: string, kind: Sample["kind"]): Sample;
 
 // @public
+export function readSourceRecipe(text: string, file: string): SourceRecipe;
+
+// @public
 export interface Report {
     accepted?: AcceptedWarning[];
     diagnostics: AnyDiagnostic[];
@@ -307,6 +340,306 @@ export interface SampleFacts {
 
 // @public
 export function sampleFacts(folder: string): SampleFacts;
+
+// @public
+export interface SourceAsk {
+    access: string;
+    call?: string;
+    how?: string;
+    run?: string;
+    save: string;
+    who: string;
+}
+
+// @public
+export interface SourceChange {
+    breaking: boolean;
+    change: "added" | "removed" | "changed";
+    differences: SourceDifference[];
+    object: string;
+}
+
+// @public
+export function sourceChangesText(connection: string, changes: readonly SourceChange[], notes: readonly string[]): string;
+
+// @public
+export type SourceColumnsField = "table_catalog" | "table_schema" | "table_name" | "column_name" | "ordinal_position" | "data_type" | "is_nullable" | "primary_key_position";
+
+// @public
+export function sourceFileFor(path: string): {
+    connection: string;
+    object?: string;
+} | undefined;
+
+// @public
+export interface SourceImport {
+    changes: SourceChange[];
+    notes: string[];
+    text: string;
+}
+
+// @public
+export interface SourceImportInput {
+    at: string;
+    connection: string;
+    contents: string | Uint8Array;
+    current?: string;
+    environment?: string;
+    file: string;
+    object?: string;
+    recipe?: SourceRecipe;
+}
+
+// @public
+export function sourceOrigin(connection: {
+    id: string;
+    connector: string;
+    metadata?: {
+        from: string;
+        with?: Record<string, string>;
+    };
+}, recipes: Map<string, SourceRecipe>): {
+    recipe?: SourceRecipe;
+    inputs: Record<string, string>;
+    problems: string[];
+};
+
+// @public
+export type SourceReaderName = "columns" | "sample" | "odcs" | "odata" | "openapi" | "json-schema" | "avro" | "salesforce-describe";
+
+// @public
+export interface SourceRecipe {
+    ask: SourceAsk;
+    columnNames?: {
+        match: string;
+        to: string;
+    };
+    fields?: Partial<Record<SourceColumnsField, string>>;
+    file: string;
+    id: string;
+    inputs: Record<string, {
+        description: string;
+    }>;
+    key?: string[];
+    kind: "catalog" | "document" | "sample";
+    names?: {
+        parts: number;
+        caseSensitive: boolean;
+    };
+    objects?: "sets" | "types";
+    read: SourceReaderName;
+    rows?: string;
+    sources: {
+        url: string;
+        read: string;
+    }[];
+    title: string;
+    types: SourceTypeRule[];
+}
+
+// @public
+export function sourceRecipes(files?: FileSource, root?: string): Map<string, SourceRecipe>;
+
+// @public
+export const sourceRecipeSchema: {
+    $schema: string;
+    title: string;
+    type: string;
+    additionalProperties: boolean;
+    required: string[];
+    properties: {
+        id: {
+            type: string;
+            pattern: string;
+            description: string;
+        };
+        title: {
+            description: string;
+            type: string;
+        };
+        kind: {
+            enum: string[];
+            description: string;
+        };
+        inputs: {
+            type: string;
+            propertyNames: {
+                pattern: string;
+                not: {
+                    enum: string[];
+                };
+            };
+            additionalProperties: {
+                type: string;
+                additionalProperties: boolean;
+                required: string[];
+                properties: {
+                    description: {
+                        description: string;
+                        type: string;
+                    };
+                };
+            };
+            description: string;
+        };
+        ask: {
+            type: string;
+            additionalProperties: boolean;
+            required: string[];
+            properties: {
+                who: {
+                    description: string;
+                    type: string;
+                };
+                access: {
+                    description: string;
+                    type: string;
+                };
+                run: {
+                    description: string;
+                    type: string;
+                };
+                call: {
+                    description: string;
+                    type: string;
+                };
+                save: {
+                    type: string;
+                    pattern: string;
+                    description: string;
+                };
+                how: {
+                    description: string;
+                    type: string;
+                };
+            };
+        };
+        read: {
+            enum: SourceReaderName[];
+            description: string;
+        };
+        names: {
+            type: string;
+            additionalProperties: boolean;
+            required: string[];
+            properties: {
+                parts: {
+                    type: string;
+                    minimum: number;
+                    maximum: number;
+                };
+                caseSensitive: {
+                    type: string;
+                };
+            };
+            description: string;
+        };
+        types: {
+            type: string;
+            items: {
+                type: string;
+                additionalProperties: boolean;
+                required: string[];
+                properties: {
+                    match: {
+                        description: string;
+                        type: string;
+                    };
+                    logicalType: {
+                        enum: ("string" | "number" | "boolean" | "object" | "timestamp" | "array" | "date" | "integer" | "time")[];
+                    };
+                    options: {
+                        type: string;
+                        additionalProperties: {
+                            type: string[];
+                        };
+                        description: string;
+                    };
+                };
+            };
+            description: string;
+        };
+        rows: {
+            description: string;
+            type: string;
+        };
+        fields: {
+            type: string;
+            additionalProperties: boolean;
+            properties: {
+                [k: string]: {
+                    description: string;
+                    type: string;
+                };
+            };
+            description: string;
+        };
+        key: {
+            type: string;
+            items: {
+                type: string;
+            };
+            description: string;
+        };
+        columnNames: {
+            type: string;
+            additionalProperties: boolean;
+            required: string[];
+            properties: {
+                match: {
+                    description: string;
+                    type: string;
+                };
+                to: {
+                    description: string;
+                    type: string;
+                };
+            };
+            description: string;
+        };
+        objects: {
+            enum: string[];
+            description: string;
+        };
+        sources: {
+            type: string;
+            minItems: number;
+            items: {
+                type: string;
+                additionalProperties: boolean;
+                required: string[];
+                properties: {
+                    url: {
+                        type: string;
+                        pattern: string;
+                    };
+                    read: {
+                        type: string;
+                        pattern: string;
+                        description: string;
+                    };
+                };
+            };
+            description: string;
+        };
+    };
+};
+
+// @public
+export function sourceRequest(files: FileSource, environment?: string, options?: SourceRequestOptions): string;
+
+// @public
+export interface SourceRequestOptions extends ProjectOptions {
+    connection?: string;
+    recipes?: Map<string, SourceRecipe>;
+}
+
+// @public
+export interface SourceTypeRule {
+    logicalType: "string" | "date" | "timestamp" | "time" | "number" | "integer" | "object" | "array" | "boolean";
+    match: string;
+    options?: Record<string, string | number>;
+}
 
 // @public
 export interface Template {
@@ -368,6 +701,9 @@ export const templateSchema: {
 
 // @public
 export const templatesFolder: string;
+
+// @public
+export function withSourcesImport(projectYaml: string, documentPath: string): string | undefined;
 
 // (No @packageDocumentation comment for this package)
 

@@ -1,0 +1,14 @@
+# The shop's project.
+id: shop
+environments:
+  dev: { }
+# Every document the project loads.
+imports:
+    - standard.yaml
+    - "flows/*.yaml"
+    - sources/crm.yaml # the CRM's metadata
+    - sources/erp.yaml
+
+# The values every environment shares.
+values:
+  landing: /Volumes/main/landing/shop

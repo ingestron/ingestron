@@ -1,0 +1,7 @@
+{
+  "subject": "orders-value",
+  "version": 1,
+  "id": 20,
+  "schemaType": "XML",
+  "schema": "<order>ZZ-SECRET-42</order>"
+}

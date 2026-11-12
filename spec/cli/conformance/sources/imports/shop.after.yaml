@@ -1,0 +1,12 @@
+# Written by ingestron source import. Do not edit: import again to replace it.
+apiVersion: ingestron.io/v1
+kind: SourceMetadata
+id: shop
+connection: shop
+tables:
+  - object: Orders
+    captured: { at: 2026-11-12T12:00:00Z, from: assistant, file: sources/shop.assistant.csv }
+    columns:
+      - { name: OrderID, sourceType: varchar(20), logicalType: string, logicalTypeOptions: { maxLength: 20 }, required: false }
+      - { name: Amount, sourceType: "decimal(10,2)", logicalType: number, logicalTypeOptions: { precision: 10, scale: 2 }, required: false }
+      - { name: Notes, sourceType: varchar(500), logicalType: string, logicalTypeOptions: { maxLength: 500 }, required: false }

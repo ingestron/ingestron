@@ -1,0 +1,9 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: sales
+source: erp
+layer: silver
+tables:
+  orders: { object: "${values.erp_db}.dbo.Orders" }
+  invoices: { object: "${values.erp_db}.dbo.Invoices", contract: invoices }
+  returns: { object: "${values.erp_db}.dbo.Returns" }

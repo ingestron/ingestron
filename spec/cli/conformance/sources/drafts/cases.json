@@ -1,0 +1,94 @@
+{
+  "description": "Drafting contracts (spec/cli/sources.md, section 5). This folder is a project whose table sales.orders needs a contract (its layer does check) and has a catalog entry with a key and nested columns; landing.events has an entry captured from a sample; sales.returns needs a contract and has no entry; sales.invoices already names a contract. Each case drafts for environment dev with no environment variables set, naming tables or asking for those needed. expected holds the drafts in order, each with its table, path, id and the file in expected/ holding its exact text; problems holds the problems in order.",
+  "drafts": [
+    {
+      "name": "one table with a catalog entry: the key, required, options and nested columns are carried",
+      "tables": ["sales.orders"],
+      "drafts": [
+        {
+          "table": "sales.orders",
+          "path": "contracts/erp.orders.yaml",
+          "id": "erp.orders",
+          "text": "erp.orders.yaml"
+        }
+      ],
+      "problems": []
+    },
+    {
+      "name": "a table from a sample: no key, and the header says to add one",
+      "tables": ["landing.events"],
+      "drafts": [
+        {
+          "table": "landing.events",
+          "path": "contracts/landing.events.yaml",
+          "id": "landing.events",
+          "text": "landing.events.yaml"
+        }
+      ],
+      "problems": []
+    },
+    {
+      "name": "several tables, in the order given",
+      "tables": ["landing.events", "sales.orders"],
+      "drafts": [
+        {
+          "table": "landing.events",
+          "path": "contracts/landing.events.yaml",
+          "id": "landing.events",
+          "text": "landing.events.yaml"
+        },
+        {
+          "table": "sales.orders",
+          "path": "contracts/erp.orders.yaml",
+          "id": "erp.orders",
+          "text": "erp.orders.yaml"
+        }
+      ],
+      "problems": []
+    },
+    {
+      "name": "needed: only the table that needs a contract, names none and has an entry; the one without an entry is named",
+      "needed": true,
+      "drafts": [
+        {
+          "table": "sales.orders",
+          "path": "contracts/erp.orders.yaml",
+          "id": "erp.orders",
+          "text": "erp.orders.yaml"
+        }
+      ],
+      "problems": [
+        "\"sales.returns\" needs a contract but has no entry in the source metadata of \"erp\"; import it first (ingestron source request says how)."
+      ]
+    },
+    {
+      "name": "a table that is not a flow table lists every flow table, and the others are still drafted",
+      "tables": ["sales.nope", "sales.orders"],
+      "drafts": [
+        {
+          "table": "sales.orders",
+          "path": "contracts/erp.orders.yaml",
+          "id": "erp.orders",
+          "text": "erp.orders.yaml"
+        }
+      ],
+      "problems": [
+        "\"sales.nope\" is not a flow table. Flow tables: landing.events, sales.orders, sales.invoices, sales.returns."
+      ]
+    },
+    {
+      "name": "a table with no entry in the metadata",
+      "tables": ["sales.returns"],
+      "drafts": [],
+      "problems": [
+        "\"sales.returns\" has no entry in the source metadata of \"erp\"; import it first (ingestron source request says how)."
+      ]
+    },
+    {
+      "name": "a table that already names a contract",
+      "tables": ["sales.invoices"],
+      "drafts": [],
+      "problems": ["\"sales.invoices\" already names the contract \"invoices\"."]
+    }
+  ]
+}

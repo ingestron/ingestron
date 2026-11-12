@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="Org" Alias="O" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="Base" Abstract="true" OpenType="true">
+        <Property Name="Stamp" Type="Edm.Int64"/>
+      </EntityType>
+      <EntityType Name="Account" BaseType="O.Base">
+        <Key>
+          <PropertyRef Name="AccountID"/>
+        </Key>
+        <Property Name="AccountID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="Revenue" Type="Edm.Decimal" Scale="Variable"/>
+        <Property Name="Credit" Type="Edm.Decimal" Precision="19" Scale="variable"/>
+        <Property Name="Limit" Type="Edm.Decimal" Precision="19" Scale="4"/>
+        <Property Name="Total" Type="Edm.Decimal" Precision="12" Scale="Floating"/>
+        <Property Name="Share" Type="Edm.Decimal" Precision="5"/>
+        <Annotation Term="Core.Description" String="ZZ-SECRET-42"/>
+      </EntityType>
+      <EntityContainer Name="Container">
+        <EntitySet Name="Accounts" EntityType="Org.Account"/>
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

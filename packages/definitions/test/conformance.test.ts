@@ -27,6 +27,8 @@ interface Case {
   deployTime?: boolean;
   environmentsTogether?: boolean;
   replaceMe?: "warning" | "error";
+  /** True to resolve with the option that lists each flow table's source entry. */
+  sourceTables?: boolean;
   /** The paths each pack lists as `platformFields` in this case, by pack id. */
   platformFields?: Record<string, string[]>;
   files: Record<string, string>;
@@ -49,6 +51,8 @@ interface Case {
     previewFeatures?: Record<string, unknown>[];
     operations?: Record<string, unknown>;
     qualityResults?: boolean;
+    /** The result's list of source tables, exactly; `null` when the result has none. */
+    sourceTables?: Record<string, unknown>[] | null;
     diagnostics?: Record<string, unknown>[];
     /** The accepted warnings, each like a diagnostic with the entry's `reason` and `entry`. */
     accepted?: Record<string, unknown>[];
@@ -182,6 +186,7 @@ function resolveCase(testCase: Case) {
     ...(testCase.deployTime && { deployTime: true }),
     ...(testCase.environmentsTogether && { environmentsTogether: true }),
     ...(testCase.replaceMe && { replaceMe: testCase.replaceMe }),
+    ...(testCase.sourceTables && { sourceTables: true }),
   });
 }
 
@@ -203,6 +208,9 @@ describe("conformance", () => {
       checkSeverities([...result.diagnostics, ...result.accepted.map((item) => item.diagnostic)]);
       const { diagnostics, accepted } = testCase.expect;
       if (accepted) checkAccepted(result.accepted, accepted);
+      // With or without a model, so before either is judged.
+      if (testCase.expect.sourceTables !== undefined)
+        expect(result.sourceTables ?? null).toEqual(testCase.expect.sourceTables);
       // A case that expects only information still resolves, so its model can be checked too.
       if (diagnostics) checkBesideDiagnostics(result.model, testCase.expect);
       if (diagnostics) {

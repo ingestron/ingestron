@@ -1,0 +1,2 @@
+ERP,dbo,Customers,ZZ-SECRET-42,1,int,NO,1
+ERP,dbo,Customers,Name,2,nvarchar(200),YES,

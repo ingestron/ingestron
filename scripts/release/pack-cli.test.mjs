@@ -16,7 +16,9 @@ test(
   "packs a self-contained ingestron package that installs and runs",
   { timeout: 300_000 },
   async () => {
-    const tarball = await packCli();
+    // The installed @ingestron/standards has no recipes folder yet; the copy is of a fixture.
+    const recipes = join(repository, "spec/cli/conformance/sources/recipes");
+    const tarball = await packCli({ recipes });
     const entries = execFileSync("tar", ["-tzf", tarball], { encoding: "utf8" }).split("\n");
     for (const entry of [
       "package/LICENSE",
@@ -32,6 +34,8 @@ test(
       "package/kits/duckdb/local-medallion/2026-11-10/gitignore",
       "package/kits/duckdb/local-medallion/2026-11-10/published/.gitkeep",
       "package/kits/databricks/lakehouse-streaming/2026-11-10/kit.yaml",
+      "package/source-recipes/sqlserver.yaml",
+      "package/source-recipes/sample.yaml",
     ])
       assert.ok(entries.includes(entry), entry);
     assert.ok(entries.some((entry) => entry.startsWith("package/schemas/")));

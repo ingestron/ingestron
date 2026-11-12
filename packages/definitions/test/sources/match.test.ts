@@ -2,6 +2,7 @@
 // (specification section 12.3).
 import { describe, expect, it } from "vitest";
 import { matchObject } from "../../src/sources/index.js";
+import { onlyReferences } from "../../src/sources/match.js";
 import type { SourceTableDoc } from "../../src/documents/index.js";
 
 const table = (object: string): SourceTableDoc => ({
@@ -117,5 +118,20 @@ describe("matchObject without names", () => {
     expect(
       objects(matchObject("exports/orders.csv", "exports/orders.csv", dotted, undefined)),
     ).toEqual(["exports/orders.csv"]);
+  });
+});
+
+describe("onlyReferences", () => {
+  it("is true for one reference, or references joined by a dot outside them", () => {
+    expect(onlyReferences("${envvar:TABLE}")).toBe(true);
+    expect(onlyReferences("${values.schema}.${envvar:TABLE}")).toBe(true);
+    expect(onlyReferences("${values.a.b}")).toBe(true);
+  });
+
+  it("is false for text, alone or beside a reference", () => {
+    expect(onlyReferences("dbo.Customers")).toBe(false);
+    expect(onlyReferences("dbo.${envvar:TABLE}")).toBe(false);
+    expect(onlyReferences("${envvar:A}${envvar:B}")).toBe(false);
+    expect(onlyReferences("t_${envvar:TABLE}")).toBe(false);
   });
 });

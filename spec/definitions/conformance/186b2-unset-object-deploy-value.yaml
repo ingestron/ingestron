@@ -1,0 +1,34 @@
+description: "Resolved for deploy, a flow table with no contract whose object is only references that hold a deploy-time value has no known name: TABLE_NO_COLUMNS at the object is DEPLOY_VALUE there, as for any problem at a deploy-time value, so the table is not dropped silently."
+environment: dev
+deployTime: true
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    values: { schema: dbo }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [checked@1]
+  erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: erp
+    connector: checked
+    connectivity: public
+    settings: { path: /data/erp }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: erp
+    ingest: { uses: checked-read }
+    tables:
+      one: { object: "${envvar:TABLE}" }
+      several: { object: "${values.schema}.${envvar:TABLE}" }
+expect:
+  diagnostics:
+    - { code: DEPLOY_VALUE, severity: error, file: sales.yaml, line: 7 }
+    - { code: DEPLOY_VALUE, severity: error, file: sales.yaml, line: 8 }

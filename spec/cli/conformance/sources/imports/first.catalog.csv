@@ -1,0 +1,7 @@
+table_catalog,table_schema,table_name,column_name,ordinal_position,data_type,is_nullable,primary_key_position
+ERP,dbo,Shops,ShopID,1,int,NO,1
+ERP,dbo,Shops,Location,2,geography,YES,
+ERP,dbo,Customers,CustomerID,1,int,NO,1
+ERP,dbo,Customers,Name,2,nvarchar(200),YES,
+ERP,dbo,Customers,CreditLimit,3,"decimal(18,2)",YES,
+ERP,dbo,Legacy,LegacyID,1,int,NO,1

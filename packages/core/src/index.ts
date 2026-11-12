@@ -50,3 +50,32 @@ export {
 
 // Kits: published, dated standards.
 export { installedKits, kitSchema, parseKitSpec, readKit, type Kit } from "./kits/index.js";
+
+// Source recipes: how to get each kind of source's metadata.
+export {
+  installedSourceRecipes,
+  readSourceRecipe,
+  sourceOrigin,
+  sourceRecipeSchema,
+  sourceRecipes,
+  type SourceColumnsField,
+  type SourceAsk,
+  type SourceReaderName,
+  type SourceRecipe,
+  type SourceTypeRule,
+} from "./sources/index.js";
+
+// Importing source metadata: a file into a connection's document, and what it changed.
+export {
+  importSource,
+  sourceChangesText,
+  sourceFileFor,
+  withSourcesImport,
+  type SourceChange,
+  type SourceImport,
+  type SourceImportInput,
+} from "./sources/index.js";
+
+// The source request: what to ask for each connection's metadata, and how to import it.
+export { sourceRequest, type SourceRequestOptions } from "./sources/index.js";
+export { draftContracts, type ContractDraft, type DraftContractsOptions } from "./sources/index.js";

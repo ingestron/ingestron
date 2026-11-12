@@ -1,0 +1,32 @@
+[
+  {
+    "table_catalog": "ERP",
+    "table_schema": "dbo",
+    "table_name": "Customers",
+    "column_name": "CustomerID",
+    "ordinal_position": 1,
+    "data_type": "int",
+    "is_nullable": false,
+    "primary_key_position": 1
+  },
+  {
+    "table_catalog": "ERP",
+    "table_schema": "dbo",
+    "table_name": "Customers",
+    "column_name": "Name",
+    "ordinal_position": 2,
+    "data_type": "nvarchar(200)",
+    "is_nullable": "YES",
+    "primary_key_position": null
+  },
+  {
+    "table_catalog": "",
+    "table_schema": "",
+    "table_name": "Items",
+    "column_name": "Code",
+    "ordinal_position": "1",
+    "data_type": "varchar(10)",
+    "is_nullable": 0,
+    "primary_key_position": "1"
+  }
+]

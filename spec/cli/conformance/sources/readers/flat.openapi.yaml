@@ -1,0 +1,10 @@
+openapi: 3.0.3
+info:
+  title: Flat
+  version: "1.0"
+paths: {}
+components:
+  schemas:
+    Status:
+      type: string
+      enum: [ZZ-SECRET-42]

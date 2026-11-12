@@ -1,0 +1,68 @@
+{
+  "type": "record",
+  "name": "Order",
+  "namespace": "shop",
+  "doc": "ZZ-SECRET-42",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "reference", "type": ["null", "string"], "default": null },
+    { "name": "status", "type": "string", "default": "ZZ-SECRET-42" },
+    {
+      "name": "total",
+      "type": { "type": "bytes", "logicalType": "decimal", "precision": 12, "scale": 2 }
+    },
+    { "name": "quantity", "type": "int" },
+    { "name": "weight", "type": "float" },
+    { "name": "paid", "type": "boolean" },
+    { "name": "placed", "type": { "type": "long", "logicalType": "timestamp-millis" } },
+    { "name": "due", "type": ["null", { "type": "int", "logicalType": "date" }] },
+    { "name": "opens", "type": { "type": "int", "logicalType": "time-millis" } },
+    { "name": "shipped", "type": { "type": "long", "logicalType": "local-timestamp-micros" } },
+    { "name": "uuid", "type": { "type": "string", "logicalType": "uuid" } },
+    { "name": "payload", "type": "bytes" },
+    { "name": "colour", "type": { "type": "enum", "name": "Colour", "symbols": ["RED", "GREEN"] } },
+    {
+      "name": "customer",
+      "type": {
+        "type": "record",
+        "name": "Customer",
+        "fields": [
+          { "name": "name", "type": "string" },
+          { "name": "vip", "type": ["null", "boolean"] }
+        ]
+      }
+    },
+    { "name": "billing", "type": "Customer" },
+    {
+      "name": "lines",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Line",
+          "fields": [
+            { "name": "sku", "type": "string" },
+            { "name": "qty", "type": "int" }
+          ]
+        }
+      }
+    },
+    { "name": "tags", "type": { "type": "array", "items": "string" } },
+    { "name": "notes", "type": ["null", { "type": "array", "items": ["null", "string"] }] },
+    { "name": "attributes", "type": { "type": "map", "values": "string" } },
+    {
+      "name": "byRegion",
+      "type": {
+        "type": "map",
+        "values": {
+          "type": "record",
+          "name": "Region",
+          "fields": [{ "name": "code", "type": "string" }]
+        }
+      }
+    },
+    { "name": "home", "type": "Region" },
+    { "name": "amount", "type": ["int", "string", "null"] },
+    { "name": "next", "type": ["null", "Order"] }
+  ]
+}

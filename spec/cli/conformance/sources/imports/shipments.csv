@@ -1,0 +1,3 @@
+ShipmentID,OrderRef,Carrier,ShippedAt
+1,ZZ-SECRET-42,Swift Freight,2026-11-01T08:00:00Z
+2,ORD-0002,Blue Haulage,2026-11-02T09:15:00Z

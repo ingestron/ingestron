@@ -1,0 +1,7 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: landing
+source: landing
+layer: bronze
+tables:
+  events: { object: events }

@@ -1,0 +1,16 @@
+id: lookups
+title: OData service that names lookups _<name>_value
+kind: document
+inputs:
+  serviceRoot: { description: "The service's root URL, such as https://example.com/odata" }
+ask:
+  who: Someone who can call the service
+  access: Read access to the service's metadata
+  call: "{serviceRoot}/$metadata"
+  save: sources/{connection}.catalog.xml
+  how: With a browser, curl or Postman.
+read: odata
+objects: types
+columnNames: { match: "^_(.+)_value$", to: "$1" }
+sources:
+  - { url: "https://example.com/odata/lookups", read: 2026-11-12 }

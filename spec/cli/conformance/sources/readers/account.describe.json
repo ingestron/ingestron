@@ -1,0 +1,63 @@
+{
+  "name": "Account",
+  "label": "Account",
+  "custom": false,
+  "fields": [
+    {
+      "name": "Id",
+      "type": "id",
+      "nillable": false,
+      "length": 18,
+      "label": "Account ID"
+    },
+    {
+      "name": "Name",
+      "type": "string",
+      "nillable": false,
+      "length": 255,
+      "defaultValue": "ZZ-SECRET-42",
+      "precision": 0,
+      "scale": 0
+    },
+    {
+      "name": "Industry__c",
+      "type": "picklist",
+      "nillable": true,
+      "picklistValues": [
+        {
+          "value": "ZZ-SECRET-42",
+          "active": true
+        }
+      ],
+      "length": 255
+    },
+    {
+      "name": "IsActive__c",
+      "type": "boolean",
+      "nillable": true,
+      "length": 0
+    },
+    {
+      "name": "AnnualRevenue",
+      "type": "double",
+      "nillable": true,
+      "precision": 18,
+      "scale": 2
+    },
+    {
+      "name": "ParentId",
+      "type": "reference",
+      "nillable": true,
+      "referenceTo": ["Account"]
+    },
+    {
+      "name": "CreatedDate",
+      "type": "datetime",
+      "nillable": false
+    },
+    {
+      "name": "Location__c",
+      "type": "location"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+description: "A flow table with no contract whose object is written as one reference, or only references, with one unset at planning has no known name: its TABLE_NO_COLUMNS is reported at the object, a value that holds an unset reference, so in an editor it is left out and nothing but the unset variable is shown, and the pack's check, which a left-out problem stops, does not run."
+environment: dev
+envvars: {}
+missingEnvvars: information
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    values: { schema: dbo }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [checked@1]
+  erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: erp
+    connector: checked
+    connectivity: public
+    settings: { path: /data/erp }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: erp
+    ingest: { uses: checked-read }
+    tables:
+      one: { object: "${envvar:TABLE}" }
+      several: { object: "${values.schema}.${envvar:TABLE}" }
+expect:
+  diagnostics:
+    - { code: ENVVAR_MISSING, severity: information, file: sales.yaml, line: 7 }
+    - { code: ENVVAR_MISSING, severity: information, file: sales.yaml, line: 8 }
