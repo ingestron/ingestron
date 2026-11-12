@@ -50,3 +50,17 @@ export {
 
 // Kits: published, dated standards.
 export { installedKits, kitSchema, parseKitSpec, readKit, type Kit } from "./kits/index.js";
+
+// Source recipes: how to get each kind of source's metadata.
+export {
+  installedSourceRecipes,
+  readSourceRecipe,
+  sourceOrigin,
+  sourceRecipeSchema,
+  sourceRecipes,
+  type ColumnsField,
+  type SourceAsk,
+  type SourceReaderName,
+  type SourceRecipe,
+  type SourceTypeRule,
+} from "./sources/index.js";

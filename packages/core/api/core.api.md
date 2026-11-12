@@ -18,6 +18,9 @@ import { SuppliedValue } from '@ingestron/definitions';
 export function builtInTemplates(): Template[];
 
 // @public
+export type ColumnsField = "table_catalog" | "table_schema" | "table_name" | "column_name" | "ordinal_position" | "data_type" | "is_nullable" | "primary_key_position";
+
+// @public
 export function compareEnvironments(files: FileSource, a: string, b: string, options?: ProjectOptions): string;
 
 // @public
@@ -71,6 +74,9 @@ export interface GeneratedOutputsOptions {
 
 // @public
 export function installedKits(root?: string): Kit[];
+
+// @public
+export function installedSourceRecipes(root?: string): SourceRecipe[];
 
 // @public
 export interface Kit {
@@ -269,6 +275,9 @@ export function readKit(folder: string, root?: string): Kit;
 export function readSample(folder: string, kind: Sample["kind"]): Sample;
 
 // @public
+export function readSourceRecipe(text: string, file: string): SourceRecipe;
+
+// @public
 export interface Report {
     accepted?: AcceptedWarning[];
     diagnostics: AnyDiagnostic[];
@@ -307,6 +316,238 @@ export interface SampleFacts {
 
 // @public
 export function sampleFacts(folder: string): SampleFacts;
+
+// @public
+export interface SourceAsk {
+    access: string;
+    call?: string;
+    how?: string;
+    run?: string;
+    save: string;
+    who: string;
+}
+
+// @public
+export function sourceOrigin(connection: {
+    id: string;
+    connector: string;
+    metadata?: {
+        from: string;
+        with?: Record<string, string>;
+    };
+}, recipes: Map<string, SourceRecipe>): {
+    recipe?: SourceRecipe;
+    inputs: Record<string, string>;
+    problems: string[];
+};
+
+// @public
+export type SourceReaderName = "columns" | "sample" | "odcs" | "odata" | "openapi" | "json-schema" | "avro" | "salesforce-describe";
+
+// @public
+export interface SourceRecipe {
+    ask: SourceAsk;
+    fields?: Partial<Record<ColumnsField, string>>;
+    file: string;
+    id: string;
+    inputs: Record<string, {
+        description: string;
+    }>;
+    key?: string[];
+    kind: "catalog" | "document" | "sample";
+    names?: {
+        parts: number;
+        caseSensitive: boolean;
+    };
+    objects?: "sets" | "types";
+    read: SourceReaderName;
+    rows?: string;
+    sources: {
+        url: string;
+        read: string;
+    }[];
+    title: string;
+    types: SourceTypeRule[];
+}
+
+// @public
+export function sourceRecipes(files?: FileSource, root?: string): Map<string, SourceRecipe>;
+
+// @public
+export const sourceRecipeSchema: {
+    $schema: string;
+    title: string;
+    type: string;
+    additionalProperties: boolean;
+    required: string[];
+    properties: {
+        id: {
+            type: string;
+            pattern: string;
+            description: string;
+        };
+        title: {
+            description: string;
+            type: string;
+        };
+        kind: {
+            enum: string[];
+            description: string;
+        };
+        inputs: {
+            type: string;
+            propertyNames: {
+                pattern: string;
+                not: {
+                    enum: string[];
+                };
+            };
+            additionalProperties: {
+                type: string;
+                additionalProperties: boolean;
+                required: string[];
+                properties: {
+                    description: {
+                        description: string;
+                        type: string;
+                    };
+                };
+            };
+            description: string;
+        };
+        ask: {
+            type: string;
+            additionalProperties: boolean;
+            required: string[];
+            properties: {
+                who: {
+                    description: string;
+                    type: string;
+                };
+                access: {
+                    description: string;
+                    type: string;
+                };
+                run: {
+                    description: string;
+                    type: string;
+                };
+                call: {
+                    description: string;
+                    type: string;
+                };
+                save: {
+                    type: string;
+                    pattern: string;
+                    description: string;
+                };
+                how: {
+                    description: string;
+                    type: string;
+                };
+            };
+        };
+        read: {
+            enum: SourceReaderName[];
+            description: string;
+        };
+        names: {
+            type: string;
+            additionalProperties: boolean;
+            required: string[];
+            properties: {
+                parts: {
+                    type: string;
+                    minimum: number;
+                    maximum: number;
+                };
+                caseSensitive: {
+                    type: string;
+                };
+            };
+            description: string;
+        };
+        types: {
+            type: string;
+            items: {
+                type: string;
+                additionalProperties: boolean;
+                required: string[];
+                properties: {
+                    match: {
+                        description: string;
+                        type: string;
+                    };
+                    logicalType: {
+                        enum: ("string" | "number" | "boolean" | "object" | "timestamp" | "array" | "date" | "integer" | "time")[];
+                    };
+                    options: {
+                        type: string;
+                        additionalProperties: {
+                            type: string[];
+                        };
+                        description: string;
+                    };
+                };
+            };
+            description: string;
+        };
+        rows: {
+            description: string;
+            type: string;
+        };
+        fields: {
+            type: string;
+            additionalProperties: boolean;
+            properties: {
+                [k: string]: {
+                    description: string;
+                    type: string;
+                };
+            };
+            description: string;
+        };
+        key: {
+            type: string;
+            items: {
+                type: string;
+            };
+            description: string;
+        };
+        objects: {
+            enum: string[];
+            description: string;
+        };
+        sources: {
+            type: string;
+            minItems: number;
+            items: {
+                type: string;
+                additionalProperties: boolean;
+                required: string[];
+                properties: {
+                    url: {
+                        type: string;
+                        pattern: string;
+                    };
+                    read: {
+                        type: string;
+                        pattern: string;
+                        description: string;
+                    };
+                };
+            };
+            description: string;
+        };
+    };
+};
+
+// @public
+export interface SourceTypeRule {
+    logicalType: string;
+    match: string;
+    options?: Record<string, string | number>;
+}
 
 // @public
 export interface Template {

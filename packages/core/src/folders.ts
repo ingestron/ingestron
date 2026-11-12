@@ -20,3 +20,14 @@ export const templatesFolder: string = join(
  * @internal
  */
 export const bundledKitsFolder: string = join(dirname(fileURLToPath(import.meta.url)), "../kits");
+
+/**
+ * The `source-recipes/` folder beside `dist/`, where a release bundled into one file copies the
+ * `@ingestron/standards` package's `recipes` folder, since the bundle cannot resolve that
+ * package. It is not `recipes/`: the bundle already keeps the ADF pack's project recipes there.
+ * @internal
+ */
+export const bundledRecipesFolder: string = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "../source-recipes",
+);

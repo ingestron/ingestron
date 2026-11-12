@@ -1,0 +1,611 @@
+{
+  "description": "Source recipes (spec/cli/sources.md, section 1). valid: readSourceRecipe on recipes/<name>.yaml given as file, returns recipe. broken: each starts from the text of from (a fixture in this folder), applies text (the whole text instead) or edits (each pair replaces the first occurrence of the first string by the second), is read as file recipes/<from>.yaml, and must fail with the message: exactly error, or, with errorStarts, one that begins so (the rest is the YAML reader's or the regular expression's reason). catalog: installedSourceRecipes on this folder lists these ids. origins: sourceOrigin (spec section 1, \"A connection's recipe\") for a connection, over the recipes of this folder (recipes: catalog) or no recipes (recipes: none); expected gives the recipe's id or null, the inputs and the problems.",
+  "valid": [
+    {
+      "name": "sqlserver",
+      "file": "recipes/sqlserver.yaml",
+      "recipe": {
+        "inputs": {
+          "database": {
+            "description": "The database whose tables are loaded, such as ERP"
+          }
+        },
+        "types": [
+          {
+            "match": "^bit$",
+            "logicalType": "boolean"
+          },
+          {
+            "match": "^decimal\\((\\d+),(\\d+)\\)$",
+            "logicalType": "number",
+            "options": {
+              "precision": "$1",
+              "scale": "$2"
+            }
+          },
+          {
+            "match": "^varchar\\((\\d+)\\)$",
+            "logicalType": "string",
+            "options": {
+              "maxLength": "$1"
+            }
+          }
+        ],
+        "id": "sqlserver",
+        "title": "SQL Server",
+        "kind": "catalog",
+        "ask": {
+          "who": "Someone who can query the catalog views of the source database",
+          "access": "VIEW DEFINITION on the database",
+          "run": "SELECT c.TABLE_CATALOG AS table_catalog, c.TABLE_SCHEMA AS table_schema,\n       c.TABLE_NAME AS table_name, c.COLUMN_NAME AS column_name,\n       c.ORDINAL_POSITION AS ordinal_position, c.DATA_TYPE AS data_type,\n       c.IS_NULLABLE AS is_nullable\nFROM INFORMATION_SCHEMA.COLUMNS AS c\nWHERE c.TABLE_SCHEMA IN ({schemas})\n",
+          "save": "sources/{connection}.catalog.csv",
+          "how": "Run the query in a SQL client and export the result as CSV with a header row."
+        },
+        "read": "columns",
+        "names": {
+          "parts": 3,
+          "caseSensitive": false
+        },
+        "sources": [
+          {
+            "url": "https://example.com/sql-server/information-schema-columns",
+            "read": "2026-11-12"
+          }
+        ],
+        "file": "recipes/sqlserver.yaml"
+      }
+    },
+    {
+      "name": "salesforce",
+      "file": "recipes/salesforce.yaml",
+      "recipe": {
+        "inputs": {
+          "instanceUrl": {
+            "description": "The org's base URL, such as https://example.my.salesforce.com"
+          }
+        },
+        "types": [
+          {
+            "match": "^boolean$",
+            "logicalType": "boolean"
+          },
+          {
+            "match": "^double$",
+            "logicalType": "number"
+          }
+        ],
+        "id": "salesforce",
+        "title": "Salesforce",
+        "kind": "catalog",
+        "ask": {
+          "who": "A Salesforce administrator, or a user who can call the REST API",
+          "access": "API Enabled, and read access to each object",
+          "call": "{instanceUrl}/services/data/v62.0/sobjects/{object}/describe",
+          "save": "sources/{connection}/{object}.json",
+          "how": "With curl or Postman, using a bearer token for the org."
+        },
+        "read": "salesforce-describe",
+        "names": {
+          "parts": 1,
+          "caseSensitive": false
+        },
+        "sources": [
+          {
+            "url": "https://example.com/salesforce/describe",
+            "read": "2026-11-12"
+          }
+        ],
+        "file": "recipes/salesforce.yaml"
+      }
+    },
+    {
+      "name": "sample",
+      "file": "recipes/sample.yaml",
+      "recipe": {
+        "inputs": {},
+        "types": [],
+        "id": "sample",
+        "title": "A sample of what the source sends",
+        "kind": "sample",
+        "ask": {
+          "who": "Someone who can export a small sample from the source",
+          "access": "Read access to the data",
+          "save": "sources/{connection}/{object}.csv",
+          "how": "Export a few rows, with a header, as CSV, JSON, JSON Lines or Parquet."
+        },
+        "read": "sample",
+        "sources": [
+          {
+            "url": "https://example.com/files/samples",
+            "read": "2026-11-12"
+          }
+        ],
+        "file": "recipes/sample.yaml"
+      }
+    },
+    {
+      "name": "files-mapped",
+      "file": "recipes/files-mapped.yaml",
+      "recipe": {
+        "inputs": {
+          "instance": {
+            "description": "The instance name, such as example-dev"
+          },
+          "apiVersion": {
+            "description": "The version of the table API, such as v2"
+          }
+        },
+        "types": [],
+        "id": "files-mapped",
+        "title": "Mapped columns from a JSON result",
+        "kind": "catalog",
+        "ask": {
+          "who": "An administrator who can call the table API",
+          "access": "Read access to the dictionary tables",
+          "call": "https://{instance}.example.com/api/{apiVersion}/table/sys_dictionary",
+          "save": "sources/{connection}.columns.json"
+        },
+        "read": "columns",
+        "rows": "result",
+        "fields": {
+          "table_name": "name",
+          "column_name": "element",
+          "data_type": "internal_type",
+          "is_nullable": "!mandatory"
+        },
+        "key": ["sys_id"],
+        "sources": [
+          {
+            "url": "https://example.com/dictionary/api",
+            "read": "2026-11-12"
+          }
+        ],
+        "file": "recipes/files-mapped.yaml"
+      }
+    }
+  ],
+  "broken": [
+    {
+      "name": "not valid YAML",
+      "from": "sqlserver",
+      "text": "id: [sqlserver\n",
+      "errorStarts": "recipes/sqlserver.yaml: it is not valid YAML: "
+    },
+    {
+      "name": "not a mapping",
+      "from": "sqlserver",
+      "text": "- a\n- b\n",
+      "error": "recipes/sqlserver.yaml: it must be a list of keys and values, such as id: and kind:."
+    },
+    {
+      "name": "unknown key",
+      "from": "sqlserver",
+      "edits": [["kind: catalog\n", "kind: catalog\ncolour: red\n"]],
+      "error": "recipes/sqlserver.yaml: unknown key \"colour\". Check its spelling or remove it."
+    },
+    {
+      "name": "unknown key in ask",
+      "from": "sqlserver",
+      "edits": [["  save:", "  colour: red\n  save:"]],
+      "error": "recipes/sqlserver.yaml: unknown key \"colour\" in \"ask\". Check its spelling or remove it."
+    },
+    {
+      "name": "sources is missing",
+      "from": "sqlserver",
+      "edits": [
+        [
+          "sources:\n  - { url: \"https://example.com/sql-server/information-schema-columns\", read: 2026-11-12 }\n",
+          ""
+        ]
+      ],
+      "error": "recipes/sqlserver.yaml: \"sources\" is missing. Add it."
+    },
+    {
+      "name": "an unknown key is reported before a bad id",
+      "from": "sqlserver",
+      "edits": [["id: sqlserver\n", "id: Bad\ncolour: red\n"]],
+      "error": "recipes/sqlserver.yaml: unknown key \"colour\". Check its spelling or remove it."
+    },
+    {
+      "name": "title is not text",
+      "from": "sqlserver",
+      "edits": [["title: SQL Server", "title: [a, b]"]],
+      "error": "recipes/sqlserver.yaml: \"title\" must be text."
+    },
+    {
+      "name": "ask is not a mapping",
+      "from": "sqlserver",
+      "text": "id: sqlserver\ntitle: SQL Server\nkind: catalog\ninputs:\n  database: { description: \"The database whose tables are loaded, such as ERP\" }\nask: run it\nread: columns\nnames: { parts: 3, caseSensitive: false }\ntypes:\n  - { match: \"^bit$\", logicalType: boolean }\n  - {\n      match: \"^decimal\\\\((\\\\d+),(\\\\d+)\\\\)$\",\n      logicalType: number,\n      options: { precision: $1, scale: $2 },\n    }\n  - { match: \"^varchar\\\\((\\\\d+)\\\\)$\", logicalType: string, options: { maxLength: $1 } }\nsources:\n  - { url: \"https://example.com/sql-server/information-schema-columns\", read: 2026-11-12 }\n",
+      "error": "recipes/sqlserver.yaml: \"ask\" must be a list of keys and values, such as who: and access:."
+    },
+    {
+      "name": "ask.who is missing",
+      "from": "sqlserver",
+      "edits": [["  who: Someone who can query the catalog views of the source database\n", ""]],
+      "error": "recipes/sqlserver.yaml: \"ask.who\" is missing. Add it."
+    },
+    {
+      "name": "ask.access is not text",
+      "from": "sqlserver",
+      "edits": [["access: VIEW DEFINITION on the database", "access: [a]"]],
+      "error": "recipes/sqlserver.yaml: \"ask.access\" must be text."
+    },
+    {
+      "name": "types is not a list",
+      "from": "sqlserver",
+      "text": "id: sqlserver\ntitle: SQL Server\nkind: catalog\ninputs:\n  database: { description: \"The database whose tables are loaded, such as ERP\" }\nask:\n  who: Someone who can query the catalog views of the source database\n  access: VIEW DEFINITION on the database\n  run: |\n    SELECT c.TABLE_CATALOG AS table_catalog, c.TABLE_SCHEMA AS table_schema,\n           c.TABLE_NAME AS table_name, c.COLUMN_NAME AS column_name,\n           c.ORDINAL_POSITION AS ordinal_position, c.DATA_TYPE AS data_type,\n           c.IS_NULLABLE AS is_nullable\n    FROM INFORMATION_SCHEMA.COLUMNS AS c\n    WHERE c.TABLE_SCHEMA IN ({schemas})\n  save: sources/{connection}.catalog.csv\n  how: Run the query in a SQL client and export the result as CSV with a header row.\nread: columns\nnames: { parts: 3, caseSensitive: false }\ntypes: nothing\nsources:\n  - { url: \"https://example.com/sql-server/information-schema-columns\", read: 2026-11-12 }\n",
+      "error": "recipes/sqlserver.yaml: \"types\" must be a list."
+    },
+    {
+      "name": "an input has no description",
+      "from": "sqlserver",
+      "edits": [["\"The database whose tables are loaded, such as ERP\"", "5"]],
+      "error": "recipes/sqlserver.yaml: \"inputs.database.description\" must be text."
+    },
+    {
+      "name": "kind is not one of its values",
+      "from": "sqlserver",
+      "edits": [["kind: catalog", "kind: query"]],
+      "error": "recipes/sqlserver.yaml: \"kind\" must be one of catalog, document or sample."
+    },
+    {
+      "name": "read is not a reader",
+      "from": "sqlserver",
+      "edits": [["read: columns", "read: csv"]],
+      "error": "recipes/sqlserver.yaml: \"read\" must be one of columns, sample, odcs, odata, openapi, json-schema, avro or salesforce-describe."
+    },
+    {
+      "name": "objects is not one of its values",
+      "from": "sqlserver",
+      "edits": [["read: columns", "read: odata\nobjects: tables"]],
+      "error": "recipes/sqlserver.yaml: \"objects\" must be sets or types."
+    },
+    {
+      "name": "logicalType is not a logical type",
+      "from": "sqlserver",
+      "edits": [["logicalType: boolean", "logicalType: bool"]],
+      "error": "recipes/sqlserver.yaml: \"types[0].logicalType\" must be one of string, date, timestamp, time, number, integer, object, array or boolean."
+    },
+    {
+      "name": "names.parts is out of range",
+      "from": "sqlserver",
+      "edits": [["parts: 3", "parts: 5"]],
+      "error": "recipes/sqlserver.yaml: \"names.parts\" must be a whole number from 1 to 4."
+    },
+    {
+      "name": "names.caseSensitive is not true or false",
+      "from": "sqlserver",
+      "edits": [["caseSensitive: false", "caseSensitive: no"]],
+      "error": "recipes/sqlserver.yaml: \"names.caseSensitive\" must be true or false."
+    },
+    {
+      "name": "an option is not text or a number",
+      "from": "sqlserver",
+      "edits": [["precision: $1", "precision: [1]"]],
+      "error": "recipes/sqlserver.yaml: \"types[1].options.precision\" must be text or a number."
+    },
+    {
+      "name": "a key is not text",
+      "from": "files-mapped",
+      "edits": [["key: [sys_id]", "key: [[sys_id]]"]],
+      "error": "recipes/files-mapped.yaml: \"key\" must be a list of column names."
+    },
+    {
+      "name": "id has capitals",
+      "from": "sqlserver",
+      "edits": [["id: sqlserver", "id: SQLServer"]],
+      "error": "recipes/sqlserver.yaml: \"id\" must start with a lower-case letter and hold only lower-case letters, digits and \"-\"; \"SQLServer\" does not."
+    },
+    {
+      "name": "id is not the file's name",
+      "from": "sqlserver",
+      "edits": [["id: sqlserver", "id: other"]],
+      "error": "recipes/sqlserver.yaml: \"id\" is \"other\", but the file is named sqlserver.yaml. Rename the file, or change id to sqlserver."
+    },
+    {
+      "name": "an input is named object",
+      "from": "sqlserver",
+      "edits": [["  database:", "  object:"]],
+      "error": "recipes/sqlserver.yaml: the input name \"object\" is reserved. Use another name."
+    },
+    {
+      "name": "an input name has a capital first",
+      "from": "sqlserver",
+      "edits": [["  database:", "  Database:"]],
+      "error": "recipes/sqlserver.yaml: the input name \"Database\" must start with a lower-case letter and hold only letters, digits and \"_\"."
+    },
+    {
+      "name": "ask has run and call",
+      "from": "sqlserver",
+      "edits": [["  save: sources", "  call: https://example.com/x\n  save: sources"]],
+      "error": "recipes/sqlserver.yaml: \"ask\" has both run and call. Keep the one that fits."
+    },
+    {
+      "name": "a catalog recipe asks with neither",
+      "from": "salesforce",
+      "text": "id: salesforce\ntitle: Salesforce\nkind: catalog\ninputs:\n  instanceUrl: { description: \"The org's base URL, such as https://example.my.salesforce.com\" }\nask:\n  who: A Salesforce administrator, or a user who can call the REST API\n  access: API Enabled, and read access to each object\n  save: sources/{connection}/{object}.json\n  how: With curl or Postman, using a bearer token for the org.\nread: salesforce-describe\nnames: { parts: 1, caseSensitive: false }\ntypes:\n  - { match: \"^boolean$\", logicalType: boolean }\n  - { match: \"^double$\", logicalType: number }\nsources:\n  - { url: \"https://example.com/salesforce/describe\", read: 2026-11-12 }\n",
+      "error": "recipes/salesforce.yaml: \"ask\" needs run (a query) or call (a URL) for a catalog recipe."
+    },
+    {
+      "name": "a sample recipe asks with run",
+      "from": "sample",
+      "edits": [["  save:", "  run: SELECT 1\n  save:"]],
+      "error": "recipes/sample.yaml: \"ask\" must have neither run nor call for a sample recipe."
+    },
+    {
+      "name": "save is not under sources",
+      "from": "sqlserver",
+      "edits": [["save: sources/{connection}.catalog.csv", "save: \"{connection}.catalog.csv\""]],
+      "error": "recipes/sqlserver.yaml: \"ask.save\" must start with sources/."
+    },
+    {
+      "name": "rows with a reader that has none",
+      "from": "files-mapped",
+      "edits": [["read: columns", "read: odata"]],
+      "error": "recipes/files-mapped.yaml: \"rows\" is given only with the readers columns and sample; this recipe reads odata."
+    },
+    {
+      "name": "fields with another reader",
+      "from": "files-mapped",
+      "edits": [["read: columns", "read: sample"]],
+      "error": "recipes/files-mapped.yaml: \"fields\" is given only with the reader columns; this recipe reads sample."
+    },
+    {
+      "name": "key with another reader",
+      "from": "sqlserver",
+      "edits": [["read: columns", "read: sample\nkey: [id]"]],
+      "error": "recipes/sqlserver.yaml: \"key\" is given only with the reader columns; this recipe reads sample."
+    },
+    {
+      "name": "objects with another reader",
+      "from": "sqlserver",
+      "edits": [["read: columns", "read: columns\nobjects: sets"]],
+      "error": "recipes/sqlserver.yaml: \"objects\" is given only with the reader odata; this recipe reads columns."
+    },
+    {
+      "name": "fields names something that is not a field",
+      "from": "files-mapped",
+      "edits": [["  table_name: name\n", "  table_name: name\n  colour: x\n"]],
+      "error": "recipes/files-mapped.yaml: \"fields\" has the key \"colour\", which is not a field of the columns file. Its fields: table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position."
+    },
+    {
+      "name": "fields leaves out column_name",
+      "from": "files-mapped",
+      "edits": [["  column_name: element\n", ""]],
+      "error": "recipes/files-mapped.yaml: \"fields\" must map table_name, column_name and data_type; \"column_name\" is missing."
+    },
+    {
+      "name": "a match is not a regular expression",
+      "from": "sqlserver",
+      "edits": [["\"^bit$\"", "\"^(bit$\""]],
+      "errorStarts": "recipes/sqlserver.yaml: \"types[0].match\" is not a valid regular expression: "
+    },
+    {
+      "name": "sources is empty",
+      "from": "sqlserver",
+      "edits": [
+        [
+          "sources:\n  - { url: \"https://example.com/sql-server/information-schema-columns\", read: 2026-11-12 }\n",
+          "sources: []\n"
+        ]
+      ],
+      "error": "recipes/sqlserver.yaml: \"sources\" needs at least one entry, such as { url: https://example.com/docs, read: 2026-01-31 }."
+    },
+    {
+      "name": "a source URL is not https",
+      "from": "sqlserver",
+      "edits": [
+        ["https://example.com/sql-server/information-schema-columns", "http://example.com/docs"]
+      ],
+      "error": "recipes/sqlserver.yaml: \"sources[0].url\" must be an https:// URL; \"http://example.com/docs\" is not."
+    },
+    {
+      "name": "a source's read is not a date",
+      "from": "sqlserver",
+      "edits": [["read: 2026-11-12", "read: yesterday"]],
+      "error": "recipes/sqlserver.yaml: \"sources[0].read\" must be a real date written YYYY-MM-DD; \"yesterday\" is not."
+    },
+    {
+      "name": "a source's read is not a real day",
+      "from": "sqlserver",
+      "edits": [["read: 2026-11-12", "read: 2026-02-30"]],
+      "error": "recipes/sqlserver.yaml: \"sources[0].read\" must be a real date written YYYY-MM-DD; \"2026-02-30\" is not."
+    },
+    {
+      "name": "a source's read is a number",
+      "from": "sqlserver",
+      "edits": [["read: 2026-11-12", "read: 20261112"]],
+      "error": "recipes/sqlserver.yaml: \"sources[0].read\" must be a real date written YYYY-MM-DD; \"20261112\" is not."
+    }
+  ],
+  "origins": [
+    {
+      "name": "files has the sample recipe",
+      "connection": {
+        "id": "landing",
+        "connector": "files"
+      },
+      "recipes": "catalog",
+      "expected": {
+        "recipe": "sample",
+        "inputs": {},
+        "problems": []
+      }
+    },
+    {
+      "name": "sqlserver has the sqlserver recipe",
+      "connection": {
+        "id": "erp",
+        "connector": "sqlserver"
+      },
+      "recipes": "catalog",
+      "expected": {
+        "recipe": "sqlserver",
+        "inputs": {},
+        "problems": []
+      }
+    },
+    {
+      "name": "salesforce has the salesforce recipe",
+      "connection": {
+        "id": "crm",
+        "connector": "salesforce"
+      },
+      "recipes": "catalog",
+      "expected": {
+        "recipe": "salesforce",
+        "inputs": {},
+        "problems": []
+      }
+    },
+    {
+      "name": "kafka's recipe is not installed, which is no problem",
+      "connection": {
+        "id": "events",
+        "connector": "kafka"
+      },
+      "recipes": "catalog",
+      "expected": {
+        "recipe": null,
+        "inputs": {},
+        "problems": []
+      }
+    },
+    {
+      "name": "another connector has no recipe",
+      "connection": {
+        "id": "ledger",
+        "connector": "postgres"
+      },
+      "recipes": "catalog",
+      "expected": {
+        "recipe": null,
+        "inputs": {},
+        "problems": []
+      }
+    },
+    {
+      "name": "metadata names the recipe and gives its inputs",
+      "connection": {
+        "id": "erp",
+        "connector": "sqlserver",
+        "metadata": {
+          "from": "files-mapped",
+          "with": {
+            "instance": "example-dev",
+            "apiVersion": "v2"
+          }
+        }
+      },
+      "recipes": "catalog",
+      "expected": {
+        "recipe": "files-mapped",
+        "inputs": {
+          "instance": "example-dev",
+          "apiVersion": "v2"
+        },
+        "problems": []
+      }
+    },
+    {
+      "name": "metadata names a recipe that does not exist",
+      "connection": {
+        "id": "erp",
+        "connector": "sqlserver",
+        "metadata": {
+          "from": "mssql"
+        }
+      },
+      "recipes": "catalog",
+      "expected": {
+        "recipe": null,
+        "inputs": {},
+        "problems": [
+          "The connection \"erp\" names the recipe \"mssql\", which does not exist. Recipes: files-mapped, salesforce, sample, sqlserver."
+        ]
+      }
+    },
+    {
+      "name": "a recipe that does not exist when there are no recipes",
+      "connection": {
+        "id": "erp",
+        "connector": "sqlserver",
+        "metadata": {
+          "from": "sqlserver"
+        }
+      },
+      "recipes": "none",
+      "expected": {
+        "recipe": null,
+        "inputs": {},
+        "problems": [
+          "The connection \"erp\" names the recipe \"sqlserver\", which does not exist. Recipes: none."
+        ]
+      }
+    },
+    {
+      "name": "an input the recipe does not take, in the order given",
+      "connection": {
+        "id": "erp",
+        "connector": "sqlserver",
+        "metadata": {
+          "from": "files-mapped",
+          "with": {
+            "colour": "red",
+            "instance": "example-dev",
+            "size": "big"
+          }
+        }
+      },
+      "recipes": "catalog",
+      "expected": {
+        "recipe": "files-mapped",
+        "inputs": {
+          "instance": "example-dev"
+        },
+        "problems": [
+          "The recipe \"files-mapped\" takes no input \"colour\". Its inputs: instance, apiVersion.",
+          "The recipe \"files-mapped\" takes no input \"size\". Its inputs: instance, apiVersion."
+        ]
+      }
+    },
+    {
+      "name": "an input of a recipe that takes none",
+      "connection": {
+        "id": "landing",
+        "connector": "files",
+        "metadata": {
+          "from": "sample",
+          "with": {
+            "path": "x"
+          }
+        }
+      },
+      "recipes": "catalog",
+      "expected": {
+        "recipe": "sample",
+        "inputs": {},
+        "problems": ["The recipe \"sample\" takes no input \"path\". Its inputs: none."]
+      }
+    },
+    {
+      "name": "an input the connection does not give is no problem",
+      "connection": {
+        "id": "erp",
+        "connector": "sqlserver",
+        "metadata": {
+          "from": "sqlserver"
+        }
+      },
+      "recipes": "catalog",
+      "expected": {
+        "recipe": "sqlserver",
+        "inputs": {},
+        "problems": []
+      }
+    }
+  ],
+  "catalog": {
+    "order": ["files-mapped", "salesforce", "sample", "sqlserver"]
+  }
+}

@@ -2,7 +2,8 @@
 // data folders the packages read beside it, so it installs with no dependencies.
 // In the bundle, import.meta.url is dist/main.js, so "../schemas" and
 // "../templates" resolve to the copies at the package root. The bundle cannot
-// resolve @ingestron/standards, so its kits are copied to "../kits" too.
+// resolve @ingestron/standards, so its kits are copied to "../kits" too, and its source
+// recipes to "../source-recipes" ("../recipes" holds the ADF pack's project recipes).
 import { execFileSync } from "node:child_process";
 import { cpSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -13,12 +14,15 @@ import { thirdPartyNotices } from "./third-party-notices.mjs";
 const repository = join(import.meta.dirname, "../..");
 const notGenerated = (path) => !/\/(build|\.generated\.json)(\/|$)/.test(path);
 
+const standardsRecipes = "packages/core/node_modules/@ingestron/standards/recipes";
+
 const folders = [
   ["packages/definitions/schemas", "schemas"],
   ["packages/core/node_modules/@ingestron/pack-databricks/templates", "templates"],
   ["packages/core/project-templates", "project-templates"],
   ["packages/core/node_modules/@ingestron/pack-adf/recipes", "recipes"],
   ["packages/core/node_modules/@ingestron/standards/kits", "kits"],
+  [standardsRecipes, "source-recipes"],
 ];
 
 /**
@@ -86,8 +90,12 @@ function manifest(version) {
   };
 }
 
-/** Builds and packs the package; returns the tarball's absolute path. */
-export async function packCli({ outDir = join(repository, ".release") } = {}) {
+/**
+ * Builds and packs the package; returns the tarball's absolute path. The standards package's
+ * recipes folder is required; `recipes` names another (an absolute path), for a test while the
+ * installed package has none.
+ */
+export async function packCli({ outDir = join(repository, ".release"), recipes } = {}) {
   const stage = join(outDir, "ingestron");
   rmSync(stage, { recursive: true, force: true });
   // The CLI's version is a constant written from its package.json; refresh it before bundling.
@@ -110,7 +118,14 @@ export async function packCli({ outDir = join(repository, ".release") } = {}) {
   });
   writeFileSync(join(stage, "THIRD_PARTY_NOTICES"), thirdPartyNotices(metafile, repository));
   for (const [from, to] of folders)
-    cpSync(join(repository, from), join(stage, to), { recursive: true, filter: notGenerated });
+    cpSync(
+      from === standardsRecipes && recipes ? recipes : join(repository, from),
+      join(stage, to),
+      {
+        recursive: true,
+        filter: notGenerated,
+      },
+    );
   for (const file of ["LICENSE", "NOTICE"]) cpSync(join(repository, file), join(stage, file));
   cpSync(join(import.meta.dirname, "cli-readme.md"), join(stage, "README.md"));
   const { version } = JSON.parse(

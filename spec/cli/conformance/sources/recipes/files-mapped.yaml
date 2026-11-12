@@ -1,0 +1,21 @@
+id: files-mapped
+title: Mapped columns from a JSON result
+kind: catalog
+inputs:
+  instance: { description: "The instance name, such as example-dev" }
+  apiVersion: { description: "The version of the table API, such as v2" }
+ask:
+  who: An administrator who can call the table API
+  access: Read access to the dictionary tables
+  call: "https://{instance}.example.com/api/{apiVersion}/table/sys_dictionary"
+  save: sources/{connection}.columns.json
+read: columns
+rows: result
+fields:
+  table_name: name
+  column_name: element
+  data_type: internal_type
+  is_nullable: "!mandatory"
+key: [sys_id]
+sources:
+  - { url: "https://example.com/dictionary/api", read: 2026-11-12 }

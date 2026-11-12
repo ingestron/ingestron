@@ -27,8 +27,10 @@ the source's types map to logical types. Ingestron's own recipes are in the
 public `ingestron/standards` repository. They are the first of these folders
 that exists, as for kits ([kits.md](kits.md), "Where kits are found"):
 
-1. a `recipes` folder beside the folder that holds the running code, which a
-   release bundled into one file copies from the package;
+1. a `source-recipes` folder beside the folder that holds the running code,
+   which a release bundled into one file copies from the package's `recipes`
+   folder (it is not called `recipes`, which the bundle already uses for the
+   Azure Data Factory pack's project recipes);
 2. the `recipes` folder of `@ingestron/standards`, as `@ingestron/core`
    resolves the package.
 
@@ -45,7 +47,7 @@ id: sqlserver
 title: SQL Server
 kind: catalog
 inputs:
-  database: { description: The database whose tables are loaded, such as ERP }
+  database: { description: "The database whose tables are loaded, such as ERP" }
 ask:
   who: Someone who can query the catalog views of the source database
   access: VIEW DEFINITION on the database

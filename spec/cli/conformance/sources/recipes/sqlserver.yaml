@@ -1,0 +1,29 @@
+id: sqlserver
+title: SQL Server
+kind: catalog
+inputs:
+  database: { description: "The database whose tables are loaded, such as ERP" }
+ask:
+  who: Someone who can query the catalog views of the source database
+  access: VIEW DEFINITION on the database
+  run: |
+    SELECT c.TABLE_CATALOG AS table_catalog, c.TABLE_SCHEMA AS table_schema,
+           c.TABLE_NAME AS table_name, c.COLUMN_NAME AS column_name,
+           c.ORDINAL_POSITION AS ordinal_position, c.DATA_TYPE AS data_type,
+           c.IS_NULLABLE AS is_nullable
+    FROM INFORMATION_SCHEMA.COLUMNS AS c
+    WHERE c.TABLE_SCHEMA IN ({schemas})
+  save: sources/{connection}.catalog.csv
+  how: Run the query in a SQL client and export the result as CSV with a header row.
+read: columns
+names: { parts: 3, caseSensitive: false }
+types:
+  - { match: "^bit$", logicalType: boolean }
+  - {
+      match: "^decimal\\((\\d+),(\\d+)\\)$",
+      logicalType: number,
+      options: { precision: $1, scale: $2 },
+    }
+  - { match: "^varchar\\((\\d+)\\)$", logicalType: string, options: { maxLength: $1 } }
+sources:
+  - { url: "https://example.com/sql-server/information-schema-columns", read: 2026-11-12 }
