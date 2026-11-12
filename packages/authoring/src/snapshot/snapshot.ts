@@ -40,6 +40,7 @@ import {
   sourceFileAt,
   sourceRequest,
   type SourceImportEdit,
+  type SourceImportRefusal,
 } from "../sources/index.js";
 import { referenceAt, referenceForDocs, type ReferenceEntry } from "../reference/index.js";
 
@@ -216,13 +217,13 @@ export class ProjectSnapshot {
    * `sources/<connection>.yaml` and, when its imports change, `project.yaml` (read as the open
    * editor holds it). `file` is relative to the project, or an absolute path outside it; the
    * connection is `options.connection` or else the one the path names. Writes nothing; gives the
-   * reasons instead when the import stops.
+   * reasons instead when the import stops, with `needsObject` when a sample names no table.
    */
   importSource(
     file: string,
     contents: Uint8Array,
     options: { connection?: string; object?: string; environment?: string; at: string },
-  ): SourceImportEdit | { refused: string[] } {
+  ): SourceImportEdit | SourceImportRefusal {
     return importSource(this, file, contents, options);
   }
 

@@ -32,6 +32,23 @@ export interface SourceImportOptions {
   at: string;
 }
 
+/**
+ * Why an import stops.
+ * @public
+ */
+export interface SourceImportRefusal {
+  /** The reasons, as `ingestron source import` gives them. */
+  refused: string[];
+  /**
+   * True when the one reason is that the file, a sample of one table, names no table: the editor
+   * then asks for it and imports again with `object`.
+   */
+  needsObject?: true;
+}
+
+/** The sample reader's reason for a file whose table is not named; matched here, nowhere else. */
+const needsObjectReason = "Name the table this file describes with --object.";
+
 /** The path relative to the project; an absolute path outside the project as it is. */
 function projectPath(project: Project, file: string): string {
   return (isAbsolute(file) ? inProject(project.folder, file) : undefined) ?? file;
@@ -54,7 +71,7 @@ export function importSource(
   file: string,
   contents: Uint8Array,
   options: SourceImportOptions,
-): SourceImportEdit | { refused: string[] } {
+): SourceImportEdit | SourceImportRefusal {
   const path = projectPath(project, file);
   const connection = options.connection ?? sourceFileFor(path)?.connection;
   if (connection === undefined) return { refused: ["Name the connection this file describes."] };
@@ -67,7 +84,7 @@ export function importSource(
     ...(object !== undefined && { object }),
     ...(environment !== undefined && { environment }),
   });
-  if ("problems" in result) return { refused: result.problems };
+  if ("problems" in result) return refusal(result.problems);
   const { document, imported } = result;
   return {
     files: [
@@ -77,4 +94,10 @@ export function importSource(
     summary: sourceChangesText(connection, imported.changes, imported.notes),
     breaking: imported.changes.filter(({ breaking }) => breaking).length,
   };
+}
+
+/** The refusal, with `needsObject` when naming the table is all the import needs. */
+function refusal(refused: string[]): SourceImportRefusal {
+  const needsObject = refused.length === 1 && refused[0] === needsObjectReason;
+  return needsObject ? { refused, needsObject } : { refused };
 }

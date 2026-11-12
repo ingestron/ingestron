@@ -129,9 +129,7 @@ export class ProjectSnapshot {
         object?: string;
         environment?: string;
         at: string;
-    }): SourceImportEdit | {
-        refused: string[];
-    };
+    }): SourceImportEdit | SourceImportRefusal;
     moveSetting(file: string, text: string, offset: number, environment: string | undefined): QuickFix[];
     static open(folder: string, open?: ReadonlyMap<string, string>): ProjectSnapshot;
     problems(environment: string | undefined): Problem[];
@@ -246,6 +244,12 @@ export interface SourceImportEdit {
         text: string;
     }[];
     summary: string;
+}
+
+// @public
+export interface SourceImportRefusal {
+    needsObject?: true;
+    refused: string[];
 }
 
 // @public
