@@ -8,6 +8,7 @@ import { problems } from "../src/diagnostics/diagnostics.js";
 import { hoverAt } from "../src/hover/hover.js";
 import { compareEnvironments, platformRequest } from "../src/generation/platform-request.js";
 import { openProject, resolved, resolvedForDisplay } from "../src/project/project.js";
+import { sourceRequest } from "../src/sources/request.js";
 import { brokenPackMessage, breakPacks, mendPacks } from "./broken-pack.js";
 import { filledTemplates } from "./starters.js";
 
@@ -43,5 +44,9 @@ describe("a pack that cannot be loaded", () => {
     const project = openProject(retail, new Map());
     expect(platformRequest(project, "dev")).toContain(brokenPackMessage);
     expect(compareEnvironments(project, "dev", "prod")).toContain(brokenPackMessage);
+    const request = sourceRequest(project, "dev");
+    // What stops the request, as a code block, in place of the request.
+    expect(request.startsWith("```text\n") && request.endsWith("\n```\n")).toBe(true);
+    expect(request).toContain(`error  PACK_LOAD\n  ${brokenPackMessage}`);
   });
 });

@@ -97,9 +97,18 @@ interface Catalog {
 
 const catalogs = new WeakMap<Project, Catalog>();
 
-/** The error a recipe that breaks a rule gives; a system error (it has a `code`) is not one. */
-const isRuleError = (error: unknown): error is Error =>
-  error instanceof Error && !("code" in error);
+/**
+ * True for the error `readSourceRecipe` gives for a recipe that breaks a rule, which starts with
+ * the recipe's file and `: `: `file` for one of the project's, or any `.yaml` file for an
+ * installed one, wherever the recipes are installed. A system error (it has a `code`) and any
+ * other error, such as a mistake in the code, is not one, and is thrown on.
+ */
+function isRuleError(error: unknown, file?: string): error is Error {
+  if (!(error instanceof Error) || "code" in error) return false;
+  return file === undefined
+    ? /^[^\n]*\.yaml: /.test(error.message)
+    : error.message.startsWith(`${file}: `);
+}
 
 /** `readSourceRecipe`'s error for the project's recipe at `file`, as a problem; else undefined. */
 function brokenAt(project: Project, file: string): RecipeProblem | undefined {
@@ -107,7 +116,7 @@ function brokenAt(project: Project, file: string): RecipeProblem | undefined {
     readSourceRecipe(project.files.read(file) ?? "", file);
     return undefined;
   } catch (error) {
-    if (!isRuleError(error)) throw error;
+    if (!isRuleError(error, file)) throw error;
     const start = { line: 0, character: 0 };
     return {
       file,

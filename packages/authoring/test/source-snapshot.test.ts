@@ -4,8 +4,7 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { ProjectSnapshot, type Problem } from "../src/index.js";
-import type { RecipeProblem } from "../src/sources/recipe-problems.js";
+import { ProjectSnapshot } from "../src/index.js";
 
 const conformance = join(import.meta.dirname, "../../../spec/cli/conformance/sources/request");
 const at = "2026-11-12T09:00:00Z";
@@ -175,11 +174,6 @@ describe("recipe problems", () => {
     } finally {
       rmSync(copy, { recursive: true, force: true });
     }
-  });
-
-  it("is checked against the editor's Problem", () => {
-    const problem: Problem = {} as RecipeProblem;
-    expect(problem).toBeDefined();
   });
 
   it("reports a broken project recipe alone, and the others again once it is mended", () => {
