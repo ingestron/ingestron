@@ -1021,12 +1021,14 @@ given at most once.
 Imports `<file>`, a path relative to the current folder, read as bytes, into
 `sources/<connection>.yaml` (section 3). The project's documents are loaded,
 not resolved, so a project whose tables have no columns yet can be imported
-into. The load tolerates a value or an `${envvar:…}` reference that is set
-nowhere, as the request does, and selects no environment unless `--env` is
-given: the import needs only the project's connections, so the command that
-the request prints, which carries `--env` only when the request was asked for
-one, works as printed. `--env` also records the document's `environment`; without it
-none is recorded. Any other loading error stops it, written as `ingestron plan`
+into. The load tolerates an `${envvar:…}` reference that is set nowhere, as the
+request does. It needs only the project's connections, which are the same in
+every environment, so it loads for the environment `--env` names or, without
+`--env`, for the first environment `project.yaml` declares, and a project whose
+values differ by environment loads either way. The command that the request
+prints, which carries `--env` only when the request was asked for one, works
+as printed. `--env` also records the document's `environment`; without it none
+is recorded. Any other loading error stops it, written as `ingestron plan`
 writes it. The connection is a Connection of the project (else the message of
 section 4, "Resolving"), and its recipe is checked as section 1 says.
 
