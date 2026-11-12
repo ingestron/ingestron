@@ -77,16 +77,27 @@ export function checkReaderKeys(data: Data, check: Checker): void {
     check.fail(`"fields" must map table_name, column_name and data_type; "${missing}" is missing.`);
 }
 
-/** Rule 8: each `match` is a valid regular expression. */
-export function checkMatches(rules: SourceTypeRule[], check: Checker): void {
+/** Fails when `match` is not a regular expression, saying which key it is. */
+function checkMatch(match: string, path: string, check: Checker): void {
+  try {
+    new RegExp(match, "i");
+  } catch (error) {
+    check.fail(
+      `"${path}" is not a valid regular expression: ${(error as Error).message.split("\n")[0]}`,
+    );
+  }
+}
+
+/** Rule 8: each `match` is a valid regular expression, those of `types` first, then `columnNames`'s. */
+export function checkMatches(
+  rules: SourceTypeRule[],
+  columnNames: Data | undefined,
+  check: Checker,
+): void {
   for (const [index, rule] of rules.entries())
-    try {
-      new RegExp(rule.match, "i");
-    } catch (error) {
-      check.fail(
-        `"types[${index}].match" is not a valid regular expression: ${(error as Error).message.split("\n")[0]}`,
-      );
-    }
+    checkMatch(rule.match, `types[${index}].match`, check);
+  if (columnNames !== undefined)
+    checkMatch(columnNames.match as string, "columnNames.match", check);
 }
 
 function isRealDate(value: string): boolean {

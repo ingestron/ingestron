@@ -40,6 +40,12 @@ function optionalFields(data: Data): Partial<SourceRecipe> {
     ...(data.rows !== undefined && { rows: data.rows as string }),
     ...(data.fields !== undefined && { fields: { ...(data.fields as Data) } }),
     ...(data.key !== undefined && { key: [...(data.key as string[])] }),
+    ...(data.columnNames !== undefined && {
+      columnNames: {
+        match: (data.columnNames as Data).match as string,
+        to: (data.columnNames as Data).to as string,
+      },
+    }),
     ...(data.objects !== undefined && { objects: data.objects as "sets" | "types" }),
   };
 }
@@ -62,7 +68,7 @@ export function readSourceRecipe(text: string, file: string): SourceRecipe {
   checkAsk(data.ask as Data, data.kind as string, check);
   checkReaderKeys(data, check);
   const types = (data.types ?? []) as SourceTypeRule[];
-  checkMatches(types, check);
+  checkMatches(types, data.columnNames as Data | undefined, check);
   const sources = checkSources(data.sources as unknown[], check);
   return {
     id,

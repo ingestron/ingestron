@@ -29,7 +29,7 @@ describe("sourceRequestFor: problems", () => {
     const result = sourceRequestFor(files, "dev", { envvars: {}, recipes: recipesOf(files) });
     expect(result.resolved).toBe(false);
     problems(result.text, [
-      'The connection "crm" names the recipe "salesforce-api", which does not exist. Recipes: files-mapped, odata, salesforce, sample, sqlserver.',
+      'The connection "crm" names the recipe "salesforce-api", which does not exist. Recipes: files-mapped, lookups, odata, salesforce, sample, sqlserver.',
       'The recipe "sqlserver" takes no input "server". Its inputs: database.',
     ]);
   });

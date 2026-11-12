@@ -170,6 +170,7 @@ describe("sourceRecipes", () => {
     const recipes = sourceRecipes(memoryFiles({ "recipes/orders.yaml": own }), folder);
     expect([...recipes.keys()]).toEqual([
       "files-mapped",
+      "lookups",
       "odata",
       "orders",
       "salesforce",
@@ -185,7 +186,7 @@ describe("sourceRecipes", () => {
       "other/sample.yaml": "not: a recipe",
       "recipes/notes.txt": "not a recipe",
     });
-    expect(sourceRecipes(files, folder).size).toBe(5);
+    expect(sourceRecipes(files, folder).size).toBe(6);
   });
 
   it("refuses a broken project recipe even when no connection uses it", () => {

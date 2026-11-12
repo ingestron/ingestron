@@ -410,6 +410,10 @@ export type SourceReaderName = "columns" | "sample" | "odcs" | "odata" | "openap
 // @public
 export interface SourceRecipe {
     ask: SourceAsk;
+    columnNames?: {
+        match: string;
+        to: string;
+    };
     fields?: Partial<Record<ColumnsField, string>>;
     file: string;
     id: string;
@@ -574,6 +578,22 @@ export const sourceRecipeSchema: {
             type: string;
             items: {
                 type: string;
+            };
+            description: string;
+        };
+        columnNames: {
+            type: string;
+            additionalProperties: boolean;
+            required: string[];
+            properties: {
+                match: {
+                    description: string;
+                    type: string;
+                };
+                to: {
+                    description: string;
+                    type: string;
+                };
             };
             description: string;
         };

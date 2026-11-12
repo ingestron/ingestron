@@ -122,6 +122,24 @@ export const sourceRecipeSchema = {
       items: text,
       description: "With columns: the columns that form each table's primary key, in order.",
     },
+    columnNames: {
+      type: "object",
+      additionalProperties: false,
+      required: ["match", "to"],
+      properties: {
+        match: {
+          ...text,
+          description: "A regular expression, applied without case to the name of each column.",
+        },
+        to: {
+          ...text,
+          description:
+            "The new name; $1, $2 and so on are capture groups of match. A name that would be empty is kept.",
+        },
+      },
+      description:
+        "Renames a column the way the source's copy tools name it, such as _name_value to name.",
+    },
     objects: {
       enum: ["sets", "types"],
       description:

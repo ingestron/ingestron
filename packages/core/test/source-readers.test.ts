@@ -116,6 +116,31 @@ describe("readSourceFile: OData CSDL text", () => {
   });
 });
 
+describe("readSourceFile: columnNames", () => {
+  const csdl = `<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"><edmx:DataServices>
+    <Schema Namespace="N" xmlns="http://docs.oasis-open.org/odata/ns/edm"><EntityType Name="t">
+      <Property Name="_a_value" Type="Edm.Guid"/><Property Name="_b_x" Type="Edm.Guid"/>
+      <Property Name="c" Type="Edm.Guid"/></EntityType></Schema></edmx:DataServices></edmx:Edmx>`;
+  const names = (columnNames: { match: string; to: string }): unknown => {
+    const recipe = {
+      objects: "types",
+      read: "odata",
+      kind: "document",
+      columnNames,
+    } as SourceRecipe;
+    const result = readSourceFile({ file: "sources/x.catalog.xml", contents: csdl, recipe });
+    return "tables" in result ? result.tables[0]?.columns.map((column) => column.name) : result;
+  };
+
+  it("expands a group that matched nothing to nothing, and one past the last to nothing", () => {
+    expect(names({ match: "^_(x)?(.*)$", to: "$1-$2-$3." })).toEqual(["-a_value-.", "-b_x-.", "c"]);
+  });
+
+  it("keeps a name whose new name would be empty, and a name the rule does not match", () => {
+    expect(names({ match: "^_a_value$", to: "" })).toEqual(["_a_value", "_b_x", "c"]);
+  });
+});
+
 describe("readSourceFile: parsing", () => {
   const orders = readFileSync(join(conformance, "readers/orders.json"));
 

@@ -39,18 +39,26 @@ interface Walk {
 /** A property of the type or of an element, without its name or whether it is required. */
 type Shape = Omit<SourceColumnDoc, "name" | "required">;
 
+/** The `Scale` values that mean any scale. */
+const anyScale = new Set(["variable", "floating"]);
+
+/** An `Edm.Decimal`'s `precision` and `scale`; no scale for one that has any. */
+function decimalOptions(facets: XmlNode): Record<string, number> {
+  const precision = whole(attributeOf(facets, "Precision"));
+  const scale = attributeOf(facets, "Scale");
+  return {
+    ...(precision !== undefined && { precision }),
+    // `Variable` or `floating`, in any case, means any scale, which no whole number says.
+    ...(!anyScale.has(scale?.toLowerCase() ?? "") && { scale: whole(scale) ?? 0 }),
+  };
+}
+
 /** A property typed by an `Edm` primitive, with the facets that carry over. */
 function primitiveShape(type: string, logicalType: string, facets: XmlNode): Shape {
   const maxLength = type === "Edm.String" ? whole(attributeOf(facets, "MaxLength")) : undefined;
-  const precision = whole(attributeOf(facets, "Precision"));
-  const scale = attributeOf(facets, "Scale");
   const options =
     type === "Edm.Decimal"
-      ? {
-          ...(precision !== undefined && { precision }),
-          // `Variable`, in any case, means any scale, which no whole number says: it gives none.
-          ...(scale?.toLowerCase() !== "variable" && { scale: whole(scale) ?? 0 }),
-        }
+      ? decimalOptions(facets)
       : maxLength === undefined
         ? undefined
         : { maxLength };

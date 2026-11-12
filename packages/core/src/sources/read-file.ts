@@ -1,6 +1,7 @@
 // Choosing the reader for a file (spec/cli/sources.md, section 2.5).
 import type { SourceReaderName, SourceRecipe } from "./recipe.js";
 import { readers, documentReaders } from "./readers.js";
+import { renameColumns } from "./rename-columns.js";
 import {
   isRefused,
   type CapturedFrom,
@@ -44,6 +45,7 @@ function typesOnly(recipe: SourceRecipe | undefined): SourceRecipe | undefined {
   delete plain.rows;
   delete plain.fields;
   delete plain.key;
+  delete plain.columnNames;
   return plain;
 }
 
@@ -118,5 +120,7 @@ export function readSourceFile(input: {
   if ("refused" in chosen) return chosen;
   const { reader, from, input: given } = chosen;
   const outcome = readers[reader].read(given);
-  return isRefused(outcome) ? outcome : { reader, from, ...outcome };
+  if (isRefused(outcome)) return outcome;
+  const renamed = renameColumns(outcome.tables, given.recipe, file);
+  return "refused" in renamed ? renamed : { reader, from, ...outcome, tables: renamed };
 }

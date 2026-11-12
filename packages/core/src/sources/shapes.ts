@@ -10,18 +10,27 @@ const objectKinds = ["sets", "types"] as const;
 /** The keys of `ask`, in the order a recipe gives them. */
 export const askKeys = ["who", "access", "run", "call", "save", "how"];
 
+/** The keys of each entry of `types` and of `sources`. */
+function checkListKeys(data: Data, check: Checker): void {
+  for (const [index, rule] of listOf(data.types).entries())
+    if (isMapping(rule))
+      check.unknownKey(rule, ["match", "logicalType", "options"], `types[${index}]`);
+  for (const [index, entry] of listOf(data.sources).entries())
+    if (isMapping(entry)) check.unknownKey(entry, ["url", "read"], `sources[${index}]`);
+}
+
 /** Rule 2, the keys of the entries inside a recipe: none that is not one of theirs. */
 function checkInnerKeys(data: Data, check: Checker): void {
   if (isMapping(data.inputs))
     for (const [name, input] of Object.entries(data.inputs))
       if (isMapping(input)) check.unknownKey(input, ["description"], `inputs.${name}`);
   if (isMapping(data.ask)) check.unknownKey(data.ask, askKeys, "ask");
-  if (isMapping(data.names)) check.unknownKey(data.names, ["parts", "caseSensitive"], "names");
-  for (const [index, rule] of listOf(data.types).entries())
-    if (isMapping(rule))
-      check.unknownKey(rule, ["match", "logicalType", "options"], `types[${index}]`);
-  for (const [index, entry] of listOf(data.sources).entries())
-    if (isMapping(entry)) check.unknownKey(entry, ["url", "read"], `sources[${index}]`);
+  for (const [key, allowed] of [
+    ["names", ["parts", "caseSensitive"]],
+    ["columnNames", ["match", "to"]],
+  ] as const)
+    if (isMapping(data[key])) check.unknownKey(data[key], allowed, key);
+  checkListKeys(data, check);
 }
 
 /** Rule 2: no other key than the recipe's, and none of the required ones missing. */
@@ -69,6 +78,13 @@ function checkNames(names: unknown, check: Checker): void {
     check.fail('"names.caseSensitive" must be true or false.');
 }
 
+function checkColumnNames(columnNames: unknown, check: Checker): void {
+  if (columnNames === undefined) return;
+  const data = check.mapping(columnNames, "columnNames", "match: and to:");
+  for (const key of ["match", "to"])
+    check.text(check.required(data, key, "columnNames."), `columnNames.${key}`);
+}
+
 function checkMappedFields(fields: Data, check: Checker): void {
   for (const [field, value] of Object.entries(fields))
     if (typeof value !== "string" || value.replace(/^!/, "") === "")
@@ -98,6 +114,7 @@ export function checkShapes(data: Data, check: Checker): void {
   if (data.objects !== undefined) check.oneOf(data.objects, objectKinds, "objects");
   checkTypeRules(listOf(data.types), check);
   checkNames(data.names, check);
+  checkColumnNames(data.columnNames, check);
   checkMappedFields((data.fields ?? {}) as Data, check);
   if (listOf(data.key).some((column) => typeof column !== "string" || column === ""))
     check.fail('"key" must be a list of column names.');

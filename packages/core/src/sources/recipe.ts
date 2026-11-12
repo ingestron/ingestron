@@ -88,6 +88,11 @@ export interface SourceRecipe {
   fields?: Partial<Record<ColumnsField, string>>;
   /** With `columns`: the columns that form each table's primary key, in order. */
   key?: string[];
+  /**
+   * Renames each column of a table: `match` is a regular expression, applied without case to the
+   * name, and `to` the new name, with `$1`, `$2` and so on for the capture groups of `match`.
+   */
+  columnNames?: { match: string; to: string };
   /** With `odata`: `sets` names a table after its entity set, `types` after its entity type. */
   objects?: "sets" | "types";
   /** The vendor documentation the recipe comes from, each with the date it was read. */
