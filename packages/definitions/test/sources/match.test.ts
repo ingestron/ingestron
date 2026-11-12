@@ -2,7 +2,7 @@
 // (specification section 12.3).
 import { describe, expect, it } from "vitest";
 import { matchObject } from "../../src/sources/index.js";
-import { onlyReferences } from "../../src/sources/match.js";
+import { indexTables, onlyReferences } from "../../src/sources/match.js";
 import type { SourceTableDoc } from "../../src/documents/index.js";
 
 const table = (object: string): SourceTableDoc => ({
@@ -133,5 +133,49 @@ describe("onlyReferences", () => {
     expect(onlyReferences("dbo.${envvar:TABLE}")).toBe(false);
     expect(onlyReferences("${envvar:A}${envvar:B}")).toBe(false);
     expect(onlyReferences("t_${envvar:TABLE}")).toBe(false);
+  });
+});
+
+describe("matchObject with an index of the tables", () => {
+  const tables = [
+    table("ERP.dbo.Customers"),
+    table("CRM.dbo.Customers"),
+    table("ERP.dbo.Orders"),
+    table("Orders"),
+    table("ERP.dbo.orders"),
+  ];
+  const cases: [string, string][] = [
+    ["Customers", "Customers"],
+    ["dbo.CUSTOMERS", "dbo.CUSTOMERS"],
+    ["ERP.dbo.Orders", "ERP.dbo.Orders"],
+    ["orders", "orders"],
+    ["ERP.dbo.Orders", "${values.db}.dbo.Orders"],
+    ["ERP.dbo.Orders", "ERP.dbo.${values.table}"],
+    ["ERP.dbo.Orders", "${values.object}"],
+    ["dev.dbo.Orders", "${UNSET}.dbo.Orders"],
+    ["Missing", "Missing"],
+    ["x.ERP.dbo.Orders", "x.ERP.dbo.Orders"],
+    ["ERP.dbo.Orders", "ERP.dbo.O${values.rest}"],
+  ];
+
+  for (const names of [
+    { parts: 3, caseSensitive: false },
+    { parts: 3, caseSensitive: true },
+    undefined,
+  ]) {
+    it(`gives the matches it gives without one, in the same order (${JSON.stringify(names)})`, () => {
+      const index = indexTables(tables, names);
+      for (const [object, written] of cases)
+        expect(matchObject(object, written, tables, names, index), written).toEqual(
+          matchObject(object, written, tables, names),
+        );
+    });
+  }
+
+  it("keeps the full scan when the last part is a reference", () => {
+    const index = indexTables(tables, insensitive);
+    expect(
+      objects(matchObject("ERP.dbo.Orders", "ERP.dbo.${values.table}", tables, insensitive, index)),
+    ).toEqual(["ERP.dbo.Customers", "ERP.dbo.Orders", "ERP.dbo.orders"]);
   });
 });

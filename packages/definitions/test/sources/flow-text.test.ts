@@ -76,18 +76,41 @@ describe("a flow's text in one resolution", () => {
     expect(large.reads.get("sales.yaml")).toBe(small.reads.get("sales.yaml"));
   });
 
-  it("resolves 2,000 tables with source metadata in under 2 s", () => {
-    const files = memoryFiles(project(2000));
-    // The best of three, so that other test files running at the same time do not decide it.
-    const seconds = Math.min(
-      ...[1, 2, 3].map(() => {
-        const started = performance.now();
-        resolve(files);
-        return (performance.now() - started) / 1000;
-      }),
-    );
-    expect(seconds).toBeLessThan(2);
-  }, 20_000);
+  it.each([
+    [2000, 2],
+    [4000, 4],
+  ])(
+    "resolves %i tables with source metadata in under %i s",
+    (count, bound) => {
+      const files = memoryFiles(project(count));
+      // The best of three, so that other test files running at the same time do not decide it.
+      const seconds = Math.min(
+        ...[1, 2, 3].map(() => {
+          const started = performance.now();
+          resolve(files);
+          return (performance.now() - started) / 1000;
+        }),
+      );
+      expect(seconds).toBeLessThan(bound);
+    },
+    30_000,
+  );
+
+  it("compares every table when the last part of the flow's object is a reference", () => {
+    const flow = `apiVersion: ingestron.io/v1\nkind: Flow\nid: sales\nsource: erp\ntables:\n  one: { object: "ERP.dbo.\${values.t}" }\n`;
+    const files = project(3, flow);
+    files["project.yaml"] =
+      "id: retail\nenvironments: { dev: {} }\nvalues: { t: T1 }\nimports: ['*.yaml', 'sources/*.yaml']\n";
+    const result = resolveDefinitions(memoryFiles(files), {
+      packs: [pack],
+      environment: "dev",
+      envvars: {},
+      sourceTables: true,
+    });
+    // A last part that is a reference matches every table with the other parts: the full scan.
+    const ambiguous = result.diagnostics.find((item) => item.code === "SOURCE_OBJECT_AMBIGUOUS");
+    expect(ambiguous?.message).toContain("ERP.dbo.T0, ERP.dbo.T1, ERP.dbo.T2");
+  });
 
   it("is read again by the next resolution of the same files, so a changed text is never stale", () => {
     const { source, reads } = counted(project(3));

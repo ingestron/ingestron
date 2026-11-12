@@ -14,33 +14,73 @@ export function onlyReferences(text: string): boolean {
   return splitWritten(text).every((part) => onlyReference.test(part));
 }
 
+/** A document's tables by the last part of their `object` (the whole object without `names`). */
+export type TableIndex = Map<string, SourceTableDoc[]>;
+
+/** How a name's parts are compared: as written, or with case ignored. */
+function folder(names: SourceMetadataDoc["names"]): (text: string) => string {
+  return !names || names.caseSensitive ? (text) => text : (text) => text.toLowerCase();
+}
+
+/** The last part of an object, `parts` of them or not: the part every flow object must match. */
+function lastPart(object: string): string {
+  return object.slice(object.lastIndexOf(".") + 1);
+}
+
+/**
+ * The tables by the last part of their `object`, folded as `names` says, each list in the
+ * document's order. Without `names` the key is the whole `object`, with case. Made once for
+ * a document, it lets `matchObject` compare only the tables that can match.
+ */
+export function indexTables(
+  tables: SourceTableDoc[],
+  names: SourceMetadataDoc["names"],
+): TableIndex {
+  const fold = folder(names);
+  const index: TableIndex = new Map();
+  for (const table of tables) {
+    const key = names ? fold(lastPart(table.object)) : table.object;
+    const same = index.get(key);
+    if (same) same.push(table);
+    else index.set(key, [table]);
+  }
+  return index;
+}
+
 /**
  * Every table whose `object` the flow's object matches, in the order given. `object` is the
  * resolved text and `written` the same text as written, before any reference was replaced,
  * which says which parts are references. Without `names` the text must be equal. With
  * them, the parts split on `.` are compared from the right: a part that is only a
  * reference matches anything, a part the flow leaves out matches anything, and an object
- * with more parts than `names.parts` matches nothing.
+ * with more parts than `names.parts` matches nothing. With `index`, made by `indexTables`
+ * for these tables and names, only the tables whose last part equals the flow's are compared,
+ * unless the flow's last part is a reference, which matches every table: the result is the
+ * same as without it.
  */
 export function matchObject(
   object: string,
   written: string,
   tables: SourceTableDoc[],
   names: SourceMetadataDoc["names"],
+  index?: TableIndex,
 ): SourceTableDoc[] {
-  if (!names) return tables.filter((table) => table.object === object);
+  if (!names)
+    return index
+      ? [...(index.get(object) ?? [])]
+      : tables.filter((table) => table.object === object);
   const parts = partsOf(object, written);
   if (parts.length > names.parts) return [];
-  const same = names.caseSensitive
-    ? (left: string, right: string) => left === right
-    : (left: string, right: string) => left.toLowerCase() === right.toLowerCase();
-  return tables.filter((table) => {
+  const fold = folder(names);
+  const last = parts[parts.length - 1];
+  const candidates = index && last !== undefined ? (index.get(fold(last)) ?? []) : tables;
+  return candidates.filter((table) => {
     const theirs = table.object.split(".");
     return (
       parts.length <= theirs.length &&
-      parts.every((part, index) => {
-        const other = theirs[theirs.length - parts.length + index]!;
-        return part === undefined || same(part, other);
+      parts.every((part, at) => {
+        const other = theirs[theirs.length - parts.length + at]!;
+        return part === undefined || fold(part) === fold(other);
       })
     );
   });

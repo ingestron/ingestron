@@ -4,7 +4,7 @@ import type { Context } from "../context/index.js";
 import type { FlowDoc, SourceMetadataDoc, SourceTableDoc } from "../documents/index.js";
 import { writtenValue } from "../internal/index.js";
 import { holdsUnsetEnvvar } from "../diagnostics/index.js";
-import { matchObject, onlyReferences } from "./match.js";
+import { indexTables, matchObject, onlyReferences } from "./match.js";
 import { metadataTables } from "./metadata.js";
 
 /** What a flow table found in its connection's source metadata (specification section 12.3). */
@@ -47,7 +47,10 @@ export function matchTable(
   const { file } = found.document;
   const pointer = objectPointer(name);
   const text = writtenObject(context, flow, name, object);
-  const matches = matchObject(object, text, found.tables, found.document.value.names);
+  const { names } = found.document.value;
+  let index = context.tableIndexes.get(found.tables);
+  if (!index) context.tableIndexes.set(found.tables, (index = indexTables(found.tables, names)));
+  const matches = matchObject(object, text, found.tables, names, index);
   if (matches.length > 1) {
     context.reporter.error(
       "SOURCE_OBJECT_AMBIGUOUS",
