@@ -394,7 +394,10 @@ value is `string`. A value that is a record makes the column
 `logicalType: object`. Its keys are read as its fields only when the keys are
 names and not data. Take the records found at that place, the values of the
 column that are records (for the elements of a list, the records among all
-the elements). The keys are names when both of these hold:
+the elements). A record with no key, or only an empty one, counts as no
+record, as `null` does: it neither stops the other records from showing that
+their keys are shared nor makes any key optional. The keys are names when both
+of these hold:
 
 - the keys do not look like data: no key starts with a date,
   `^\d{4}-\d{2}-\d{2}`; none is a number, `^-?\d+(\.\d+)?$`; none is a
@@ -413,7 +416,8 @@ column of a sample is `required: false`).
 
 Otherwise the keys are data, such as counts by customer code or by date, as
 when each record has its own keys: the column is `object` without
-`properties`, and no key is written. An empty key is not a key (section 2).
+`properties`, and no key is written. So is a column whose records have no key.
+An empty key is not a key (section 2).
 
 A list makes the column `logicalType: array`, with its elements read as one
 column, its `items`, which is named `items`; the records among the elements

@@ -71,8 +71,37 @@ describe("a nested record's keys are fields only when the records share them", (
     ]);
   });
 
-  it("gives no fields when one of the records that share keys is empty", () => {
-    expect(fieldsOf(nested(["a"], ["a"], []))).toBeUndefined();
+  it("counts an empty record as no record, as null is", () => {
+    expect(fieldsOf(nested(["a"], ["a"], []))).toStrictEqual(["a"]);
+    expect(fieldsOf(nested([], ["a", "b"], ["a"], ["a", "b"]))).toStrictEqual(["a", "b"]);
+    expect(fieldsOf('[{"n":{"a":1}},{"n":{"a":2}},{"n":null}]')).toStrictEqual(["a"]);
+  });
+
+  it("gives no fields, and no empty list of them, when no record has a key", () => {
+    const column = (text: string): Column | undefined =>
+      columnsOf("sources/t.json", text).find((one) => one.name === "n");
+    for (const text of ['[{"n":{}}]', '[{"n":{}},{"n":{}}]', '[{"n":{"":1}}]'])
+      expect(column(text), text).not.toHaveProperty("properties");
+  });
+
+  it("gives a key named like a member of every object its own type, not required", () => {
+    const text = '[{"n":{"toString":1,"a":1}},{"n":{"toString":2,"a":2}},{"n":{"a":3}}]';
+    const [n] = columnsOf("sources/t.json", text) as (Column & { logicalType: string })[];
+    expect(n!.properties).toStrictEqual([
+      { name: "toString", logicalType: "integer", required: false },
+      { name: "a", logicalType: "integer", required: false },
+    ]);
+  });
+
+  it("reads a top-level key that some records leave out, whatever its name", () => {
+    const text = '[{"constructor":1,"__proto__":"x","valueOf":true},{"b":2}]';
+    const columns = columnsOf("sources/t.json", text) as (Column & { logicalType: string })[];
+    expect(columns.map((c) => [c.name, c.logicalType])).toStrictEqual([
+      ["constructor", "integer"],
+      ["__proto__", "string"],
+      ["valueOf", "boolean"],
+      ["b", "integer"],
+    ]);
   });
 
   it("keeps one record's keys, even when they look like data", () => {
@@ -104,6 +133,15 @@ describe("a nested record's keys are fields only when the records share them", (
     const rows = [{ n: { a: "ZZ-SECRET-42" } }, { n: { a: "ZZ-SECRET-43", b: "ZZ-SECRET-44" } }];
     const text = JSON.stringify(columnsOf("sources/t.json", JSON.stringify(rows)));
     expect(text).not.toContain("ZZ-SECRET");
+  });
+});
+
+describe("a JSON sample with integer-like keys nested too deeply for the order to be kept", () => {
+  it("is read as the file without them is, in the order JavaScript gives", () => {
+    const depth = 20000;
+    const text = `[${'{"1":'.repeat(depth)}0${"}".repeat(depth)}]`;
+    const columns = columnsOf("sources/t.json", text);
+    expect(columns[0]!.name).toBe("1");
   });
 });
 

@@ -1019,6 +1019,95 @@
       "forbidden": ["key001", "key050", "key101"]
     },
     {
+      "name": "JSON sample: an empty nested record counts as no record, so it does not stop the others sharing their keys",
+      "file": "sources/landing/empty.json",
+      "input": "nested-empty.json",
+      "object": "things",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "things",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "tag",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "n",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "a",
+                    "logicalType": "integer",
+                    "required": false
+                  }
+                ]
+              },
+              {
+                "name": "lone",
+                "logicalType": "object",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42", "ZZ-SECRET-43", "ZZ-SECRET-44"]
+    },
+    {
+      "name": "JSON sample: a key named like a member of every object is a field of its own, not required",
+      "file": "sources/landing/members.json",
+      "input": "nested-inherited.json",
+      "object": "members",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "members",
+            "columns": [
+              {
+                "name": "tag",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "n",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "toString",
+                    "logicalType": "integer",
+                    "required": false
+                  },
+                  {
+                    "name": "a",
+                    "logicalType": "integer",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42", "ZZ-SECRET-43", "ZZ-SECRET-44"]
+    },
+    {
       "name": "JSON sample: a nested record with the same keys in every record, in any order, keeps its properties",
       "file": "sources/landing/people.json",
       "input": "same-keys.json",
@@ -1667,6 +1756,17 @@
       "forbidden": ["2.5", "2026-01-01"]
     },
     {
+      "name": "a CSV sample whose first line is one number is refused in the singular, without quoting it",
+      "file": "sources/shop/h1.csv",
+      "input": "headerless-one.csv",
+      "object": "h1",
+      "connection": "shop",
+      "refused": [
+        "sources/shop/h1.csv has no header row: the first line has 1 field, which is a number or a date."
+      ],
+      "forbidden": ["42"]
+    },
+    {
       "name": "a CSV sample header may hold numbers beside a name",
       "file": "sources/shop/region.csv",
       "input": "region.csv",
@@ -2037,7 +2137,8 @@
           }
         ],
         "notes": []
-      }
+      },
+      "forbidden": ["1.0.0", "active", "v3.1.0"]
     },
     {
       "name": "an ODCS contract is found by its kind, not its name",
@@ -4699,7 +4800,8 @@
       "name": "a CSDL type with more than 16 base types is refused as nested too deeply",
       "file": "sources/chain.xml",
       "input": "deep-bases.csdl.xml",
-      "refused": ["sources/chain.xml is nested too deeply to read."]
+      "refused": ["sources/chain.xml is nested too deeply to read."],
+      "forbidden": ["T17", "T0", "Chain"]
     },
     {
       "name": "a CSDL document is read by content only when its name ends .xml or .edmx",

@@ -41,13 +41,17 @@ function sharedNames(records: Record<string, unknown>[], names: string[]): boole
   return counts.some((count) => count === records.length) && counts.every((count) => count >= 2);
 }
 
+/** True for a record with a key; one with none, or only an empty one, counts as no record. */
+const hasKey = (record: Record<string, unknown>): boolean =>
+  keysOf(record).some((key) => key !== "");
+
 function inferColumn(name: string, values: unknown[], depth: number): SourceColumnDoc {
   const present = values.filter((value) => value !== "" && value != null);
   const logicalType = typeOf(present);
   const column: SourceColumnDoc = { name, logicalType, required: false };
   if (depth >= maxNesting) return column;
   if (logicalType === "object") {
-    const records = present.filter(isRecord);
+    const records = present.filter(isRecord).filter(hasKey);
     const names = namesOf(records);
     if (sharedNames(records, names)) column.properties = columnsAt(records, names, depth + 1);
   }
@@ -63,7 +67,7 @@ function columnsAt(
   return names.map((name) =>
     inferColumn(
       name,
-      records.map((record) => record[name]),
+      records.map((record) => (Object.hasOwn(record, name) ? record[name] : undefined)),
       depth,
     ),
   );

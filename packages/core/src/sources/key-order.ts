@@ -91,8 +91,16 @@ const mayReorder = /"(?:0|[1-9]\d{0,9})"\s*:/;
 /**
  * The value of JSON text that is valid and has been parsed to `parsed`, with the order of every
  * record's integer-like keys kept for `keysOf`. The text is read again only when it may have such a
- * key.
+ * key,
+ * and not when it is nested too deeply to walk.
  */
 export function keepingOrder(text: string, parsed: unknown): unknown {
-  return mayReorder.test(text) ? new Reader(text).value() : parsed;
+  if (!mayReorder.test(text)) return parsed;
+  try {
+    return new Reader(text).value();
+  } catch (error) {
+    // Text nested deeper than the stack can walk keeps the order JavaScript gives.
+    if (error instanceof RangeError) return parsed;
+    throw error;
+  }
 }
