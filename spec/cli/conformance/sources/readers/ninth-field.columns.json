@@ -1,0 +1,12 @@
+[
+  {
+    "table_catalog": "ERP",
+    "table_schema": "dbo",
+    "table_name": "Customers",
+    "column_name": "CustomerID",
+    "ordinal_position": 1,
+    "data_type": "int",
+    "is_nullable": false,
+    "extra": "x"
+  }
+]

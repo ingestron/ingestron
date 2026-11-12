@@ -44,11 +44,26 @@ export function parseJson(
 }
 
 /** The value of YAML text (JSON is YAML too), or the refusal saying where it stopped. */
-export function parseYaml(text: string, file: string): { value: unknown } | Refused {
+export function parseYaml(text: string, file: string): ParseResult {
   const lines = new LineCounter();
-  const document = parseDocument(text, { lineCounter: lines });
+  const document = parseDocument(text, { lineCounter: lines, logLevel: "error" });
   const error = document.errors[0];
-  if (error === undefined) return { value: document.toJS() as unknown };
-  const at = error.linePos?.[0];
-  return notValid("YAML", file, at && { line: at.line, column: at.col });
+  if (error !== undefined) {
+    const at = error.linePos?.[0];
+    return notValid("YAML", file, at && { line: at.line, column: at.col });
+  }
+  try {
+    return { value: document.toJS() as unknown };
+  } catch {
+    return notValid("YAML", file);
+  }
+}
+
+/** A parsed file's value, or the refusal saying where parsing stopped. */
+export type ParseResult = { value: unknown } | Refused;
+
+/** Runs `parse` the first time it is called, and gives that result every time after. */
+export function once<T>(parse: () => T): () => T {
+  let done: { result: T } | undefined;
+  return () => (done ??= { result: parse() }).result;
 }

@@ -8,7 +8,7 @@ import {
   type Refused,
   type SourceRead,
 } from "./result.js";
-import { decodeText, extensionOf } from "./text.js";
+import { decodeText, extensionOf, once, parseJson, parseYaml } from "./text.js";
 
 /** A reader to try: what it is called, the rung its tables are from and what it is given. */
 interface Attempt {
@@ -97,7 +97,16 @@ export function readSourceFile(input: {
   const { file, contents, recipe, object, connection } = input;
   const bytes = typeof contents === "string" ? new TextEncoder().encode(contents) : contents;
   const text = extensionOf(file) === ".parquet" ? "" : decodeText(contents);
-  const base: ReaderInput = { file, bytes, text, ...(object !== undefined && { object }) };
+  const json = once(() => parseJson(text, file));
+  const yaml = once(() => parseYaml(text, file));
+  const base: ReaderInput = {
+    file,
+    bytes,
+    text,
+    json,
+    yaml,
+    ...(object !== undefined && { object }),
+  };
   const rule = nameRule(file, connection);
   const chosen =
     rule === undefined

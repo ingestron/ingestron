@@ -5,7 +5,8 @@ import { logicalTypes } from "./recipe.js";
 import { isRecord } from "./records.js";
 import type { Outcome, Reader, ReaderInput, Refused, SourceTableRead } from "./result.js";
 import { itemsName } from "./sample-columns.js";
-import { extensionOf, parseYaml } from "./text.js";
+import { extensionOf } from "./text.js";
+import { unknownTypeNote } from "./types.js";
 
 type Data = Record<string, unknown>;
 
@@ -15,61 +16,83 @@ function nameOf(entry: Data, fallback?: string): string | undefined {
   return fallback;
 }
 
-/** The key positions of the properties: each given, or the next free place for `primaryKey: true`. */
+/** The key positions of the properties: each given, or for `primaryKey: true` the next after the highest. */
 function keyPositions(properties: Data[]): (number | undefined)[] {
   const given = (property: Data): number | undefined => {
     const place = property.primaryKeyPosition;
     return typeof place === "number" && Number.isInteger(place) && place >= 1 ? place : undefined;
   };
-  const used = new Set(properties.flatMap((property) => given(property) ?? []));
-  let next = 1;
-  return properties.map((property) => {
-    if (property.primaryKey !== true) return undefined;
-    while (given(property) === undefined && used.has(next)) next += 1;
-    return given(property) ?? next++;
-  });
+  let next = Math.max(0, ...properties.map((property) => given(property) ?? 0)) + 1;
+  return properties.map((property) =>
+    property.primaryKey === true ? (given(property) ?? next++) : undefined,
+  );
 }
 
-function columnOf(property: Data, name: string, place?: number): SourceColumnDoc {
+/** What a property's reading needs besides the property: the table, and the notes to add to. */
+interface Context {
+  object: string;
+  notes: string[];
+}
+
+/** The property's logical type; one that is text and not known reads as string, with a note. */
+function logicalTypeOf(property: Data, path: string[], context: Context): string {
   const declared = property.logicalType;
-  const logicalType = logicalTypes.find((type) => type === declared) ?? "string";
+  if (typeof declared !== "string") return "string";
+  const known = logicalTypes.find((type) => type === declared);
+  if (known === undefined)
+    context.notes.push(unknownTypeNote(declared, context.object, path.join(".")));
+  return known ?? "string";
+}
+
+function columnOf(
+  property: Data,
+  path: string[],
+  context: Context,
+  place?: number,
+): SourceColumnDoc {
   return {
-    name,
+    name: path[path.length - 1]!,
     ...(typeof property.physicalType === "string" && { sourceType: property.physicalType }),
-    logicalType,
+    logicalType: logicalTypeOf(property, path, context),
     ...(isRecord(property.logicalTypeOptions) && {
       logicalTypeOptions: { ...property.logicalTypeOptions },
     }),
     required: property.required === true,
     ...(place !== undefined && { primaryKeyPosition: place }),
-    ...(Array.isArray(property.properties) && { properties: columnsOf(property.properties) }),
+    ...(Array.isArray(property.properties) && {
+      properties: columnsOf(property.properties, path, context),
+    }),
     ...(isRecord(property.items) && {
-      items: columnOf(property.items, nameOf(property.items, itemsName)!),
+      items: columnOf(property.items, [...path, nameOf(property.items, itemsName)!], context),
     }),
   };
 }
 
-function columnsOf(list: unknown[]): SourceColumnDoc[] {
+function columnsOf(list: unknown[], parents: string[], context: Context): SourceColumnDoc[] {
   const properties = list.filter(isRecord).filter((property) => nameOf(property) !== undefined);
   const places = keyPositions(properties);
-  return properties.map((property, at) => columnOf(property, nameOf(property)!, places[at]));
+  return properties.map((property, at) =>
+    columnOf(property, [...parents, nameOf(property)!], context, places[at]),
+  );
 }
 
 /** The contract in the file's text, undefined when it is not a data contract; or the refusal. */
 function contractOf(input: ReaderInput): { value: Data } | Refused | undefined {
-  const parsed = parseYaml(input.text, input.file);
+  const parsed = extensionOf(input.file) === ".json" ? input.json() : input.yaml();
   if ("refused" in parsed) return parsed;
   return isRecord(parsed.value) && parsed.value.kind === "DataContract"
     ? { value: parsed.value }
     : undefined;
 }
 
-function tablesOf(contract: Data): SourceTableRead[] {
+function tablesOf(contract: Data, notes: string[]): SourceTableRead[] {
   const entries = Array.isArray(contract.schema) ? contract.schema.filter(isRecord) : [];
   return entries.flatMap((entry) => {
     const object = nameOf(entry);
     const list = Array.isArray(entry.properties) ? entry.properties : [];
-    return object === undefined ? [] : [{ object, columns: columnsOf(list) }];
+    return object === undefined
+      ? []
+      : [{ object, columns: columnsOf(list, [], { object, notes }) }];
   });
 }
 
@@ -81,10 +104,11 @@ function read(input: ReaderInput): Outcome {
       refused: [`${input.file} is not an ODCS data contract: it has no kind: DataContract.`],
     };
   if ("refused" in contract) return contract;
-  const tables = tablesOf(contract.value);
+  const notes: string[] = [];
+  const tables = tablesOf(contract.value, notes);
   if (tables.length === 0)
     return { refused: [`${input.file} is a data contract with no schema entries.`] };
-  return { tables, notes: [] };
+  return { tables, notes };
 }
 
 /** True when the file is YAML or JSON with `kind: DataContract`. */

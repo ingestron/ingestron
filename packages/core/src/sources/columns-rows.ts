@@ -60,11 +60,19 @@ export class RowReader {
   read(record: Record<string, unknown>, n: number): ColumnRow | null | string {
     const column = this.text(record, "column_name");
     if (column === "") return null;
+    const table = this.text(record, "table_name");
+    const type = this.text(record, "data_type");
     const required = this.required(record);
     const ordinal = this.position(record, "ordinal_position");
     const keyPosition =
       this.recipe?.key === undefined ? this.position(record, "primary_key_position") : undefined;
-    const bad = [required, ordinal, keyPosition].find((value) => typeof value === "string");
+    const bad = [
+      table === "" ? "table_name is empty." : undefined,
+      type === "" ? "data_type is empty." : undefined,
+      required,
+      ordinal,
+      keyPosition,
+    ].find((value) => typeof value === "string");
     if (bad !== undefined) return `${this.file}, row ${n}: ${bad as string}`;
     return {
       object: ["table_catalog", "table_schema", "table_name"]
@@ -72,7 +80,7 @@ export class RowReader {
         .filter((part) => part !== "")
         .join("."),
       column,
-      type: this.text(record, "data_type"),
+      type,
       ...(typeof ordinal === "number" && { ordinal }),
       ...(typeof keyPosition === "number" && { keyPosition }),
       required: required === true,

@@ -19,12 +19,7 @@ function repeated<T>(values: T[]): T[] {
 }
 
 /** The reasons a table is refused, in the order the specification lists them. */
-function problems(
-  file: string,
-  object: string,
-  rows: ColumnRow[],
-  recipe?: SourceRecipe,
-): string[] {
+function problems(file: string, object: string, rows: ColumnRow[]): string[] {
   const table = `${file}: the table "${object}"`;
   const result = repeated(rows.map((row) => row.column)).map(
     (name) => `${table} lists the column "${name}" twice.`,
@@ -35,7 +30,7 @@ function problems(
   if (ordinals.length > 0 && ordinals.length < rows.length)
     result.push(`${table} gives ordinal_position to some columns and not others.`);
   const keys = rows.flatMap((row) => (row.keyPosition === undefined ? [] : [row.keyPosition]));
-  if (recipe?.key === undefined && repeated(keys).length > 0)
+  if (repeated(keys).length > 0)
     result.push(`${table} gives two columns the same primary_key_position.`);
   return result;
 }
@@ -64,7 +59,7 @@ function columnOf(
   const place = keyPosition(row, recipe);
   return {
     name: row.column,
-    ...(row.type !== "" && { sourceType: row.type }),
+    sourceType: row.type,
     logicalType: type?.logicalType ?? "string",
     ...(type?.logicalTypeOptions && { logicalTypeOptions: type.logicalTypeOptions }),
     required: row.required,
@@ -76,7 +71,7 @@ function columnOf(
 export function columnsTables(file: string, rows: ColumnRow[], recipe?: SourceRecipe): Outcome {
   if (rows.length === 0) return { refused: [`${file} lists no columns.`] };
   const grouped = group(rows);
-  const refused = [...grouped].flatMap(([object, own]) => problems(file, object, own, recipe));
+  const refused = [...grouped].flatMap(([object, own]) => problems(file, object, own));
   if (refused.length > 0) return { refused };
   const notes: string[] = [];
   const tables = [...grouped].map(([object, own]) => ({

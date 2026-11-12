@@ -16,9 +16,14 @@ function inferColumn(name: string, values: unknown[]): SourceColumnDoc {
   return column;
 }
 
-/** Each name found in the records, in the order first found, with its inferred column. */
-export function inferColumns(records: Record<string, unknown>[]): SourceColumnDoc[] {
-  const names = [...new Set(records.flatMap((record) => Object.keys(record)))];
+/**
+ * Each name found in the records, in the order first found, with its inferred column. `names`
+ * gives the order when the file does (a CSV header): an object keeps names such as `2023` first.
+ */
+export function inferColumns(
+  records: Record<string, unknown>[],
+  names = [...new Set(records.flatMap((record) => Object.keys(record)))],
+): SourceColumnDoc[] {
   return names.map((name) =>
     inferColumn(
       name,

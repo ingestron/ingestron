@@ -32,21 +32,23 @@ function annotationOf(element: SchemaElement): string | undefined {
   return /^U?INT_/.test(converted) ? "INTEGER" : converted;
 }
 
+/** The precision and scale of a decimal field; a scale the file does not give is 0. */
+function decimalOptions(element: SchemaElement): Record<string, number> {
+  const { precision, scale } =
+    element.logical_type?.type === "DECIMAL" ? element.logical_type : element;
+  return { ...(precision !== undefined && { precision }), scale: scale ?? 0 };
+}
+
 /** A field with a physical type: its annotation decides its type, else its physical type does. */
 function primitive(element: SchemaElement): Omit<SourceColumnDoc, "required"> {
   const annotation = annotationOf(element);
   const physical = element.type ?? "BYTE_ARRAY";
   const sourceType = annotation === undefined ? physical : `${physical}(${annotation})`;
   const logicalType = (annotation && byAnnotation[annotation]) ?? byPhysical[physical] ?? "string";
-  if (annotation !== "DECIMAL") return { name: element.name, sourceType, logicalType };
-  const { precision, scale } =
-    element.logical_type?.type === "DECIMAL" ? element.logical_type : element;
-  return {
-    name: element.name,
-    sourceType,
-    logicalType: "number",
-    logicalTypeOptions: { precision, scale },
-  };
+  const base = { name: element.name, sourceType, logicalType };
+  return annotation === "DECIMAL"
+    ? { ...base, logicalType: "number", logicalTypeOptions: decimalOptions(element) }
+    : base;
 }
 
 /** A field's shape, whatever its repetition. */
@@ -80,8 +82,7 @@ function columnOf(tree: SchemaTree): SourceColumnDoc {
 /** The columns of a Parquet file's schema, or the refusal when its footer cannot be read. */
 export function readParquet(input: ReaderInput): SourceColumnDoc[] | Refused {
   try {
-    const bytes = new Uint8Array(input.bytes);
-    const columns = parquetSchema(parquetMetadata(bytes)).children.map(columnOf);
+    const columns = parquetSchema(parquetMetadata(input.bytes)).children.map(columnOf);
     return columns.length === 0 ? { refused: [`${input.file} has no columns.`] } : columns;
   } catch {
     return { refused: [`${input.file} is not a Parquet file Ingestron can read.`] };

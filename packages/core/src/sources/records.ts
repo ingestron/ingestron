@@ -22,17 +22,15 @@ export function csvTable(text: string, limit = Infinity): CsvTable {
 }
 
 /**
- * True when a CSV file's first line can be a header: each name is at most 128 characters and is
- * not a number, date or other value of a type. A headerless file has a data row there, which is
- * never shown.
+ * True when no cell of a CSV file's first line could be a name: each is empty or a number (an
+ * integer with leading zeros too), a date, a timestamp or a boolean. A headerless file of such
+ * values has a data row there, which a refusal never quotes.
  */
-export function looksLikeHeader(names: string[]): boolean {
-  return names.every(
-    (name) =>
-      name.trim().length <= 128 &&
-      typeOf([name.trim()]) === "string" &&
-      !/^-?\d+$/.test(name.trim()),
-  );
+export function holdsNoName(cells: string[]): boolean {
+  return cells.every((cell) => {
+    const text = cell.trim();
+    return text === "" || typeOf([text]) !== "string" || /^-?\d+$/.test(text);
+  });
 }
 
 /** True for a JSON object that is not a list. */

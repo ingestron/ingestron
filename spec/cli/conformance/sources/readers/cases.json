@@ -531,7 +531,15 @@
       "file": "sources/erp.columns.csv",
       "input": "ninth-field.columns.csv",
       "refused": [
-        "sources/erp.columns.csv has the fields table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position, comment; a columns file has exactly: table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position."
+        "sources/erp.columns.csv has 1 other field; a columns file has exactly: table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position."
+      ]
+    },
+    {
+      "name": "a ninth key in a JSON columns file is refused the same way",
+      "file": "sources/erp.columns.json",
+      "input": "ninth-field.columns.json",
+      "refused": [
+        "sources/erp.columns.json lacks the field primary_key_position and has 1 other field; a columns file has exactly: table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position."
       ]
     },
     {
@@ -539,9 +547,21 @@
       "file": "sources/erp.columns.csv",
       "input": "headerless.columns.csv",
       "refused": [
-        "sources/erp.columns.csv has no header row: its first line is not a list of field names; a columns file has exactly: table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position."
+        "sources/erp.columns.csv lacks the fields table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position and has 8 other fields; a columns file has exactly: table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position."
       ],
       "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a row with an empty table_name is refused, naming only the row",
+      "file": "sources/erp.columns.csv",
+      "input": "empty-table.columns.csv",
+      "refused": ["sources/erp.columns.csv, row 2: table_name is empty."]
+    },
+    {
+      "name": "a row with an empty data_type is refused, naming only the row",
+      "file": "sources/erp.columns.csv",
+      "input": "empty-type.columns.csv",
+      "refused": ["sources/erp.columns.csv, row 2: data_type is empty."]
     },
     {
       "name": "an is_nullable that is not YES or NO is refused, row counted from 1 without the header",
@@ -1204,15 +1224,50 @@
       }
     },
     {
-      "name": "a headerless CSV sample is refused without quoting its first row",
+      "name": "a CSV sample whose first line is all numbers and dates is refused without quoting it",
       "file": "sources/shop/h.csv",
       "input": "headerless.csv",
       "object": "h",
       "connection": "shop",
       "refused": [
-        "sources/shop/h.csv has no header row: its first line is not a list of column names."
+        "sources/shop/h.csv has no header row: every field of its first line is a number, a date, a timestamp or a boolean."
       ],
-      "forbidden": ["ZZ-SECRET-42"]
+      "forbidden": ["2.5", "2026-01-01"]
+    },
+    {
+      "name": "a CSV sample header may hold numbers beside a name",
+      "file": "sources/shop/region.csv",
+      "input": "region.csv",
+      "object": "region",
+      "connection": "shop",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "notes": [],
+        "tables": [
+          {
+            "object": "region",
+            "columns": [
+              {
+                "name": "region",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "2023",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "2024",
+                "logicalType": "integer",
+                "required": false
+              }
+            ]
+          }
+        ]
+      },
+      "forbidden": ["north", "south"]
     },
     {
       "name": "an empty CSV has no columns",
@@ -1285,8 +1340,24 @@
                 "required": false
               },
               {
+                "name": "quantity",
+                "sourceType": "INT32(DECIMAL)",
+                "logicalType": "number",
+                "logicalTypeOptions": {
+                  "precision": 9,
+                  "scale": 0
+                },
+                "required": false
+              },
+              {
                 "name": "placed",
                 "sourceType": "INT64(TIMESTAMP)",
+                "logicalType": "timestamp",
+                "required": false
+              },
+              {
+                "name": "loaded",
+                "sourceType": "INT96",
                 "logicalType": "timestamp",
                 "required": false
               },
@@ -1294,6 +1365,12 @@
                 "name": "due",
                 "sourceType": "INT32(DATE)",
                 "logicalType": "date",
+                "required": false
+              },
+              {
+                "name": "opens",
+                "sourceType": "INT64(TIME)",
+                "logicalType": "time",
                 "required": false
               },
               {
@@ -1416,6 +1493,11 @@
                 "logicalType": "integer",
                 "required": false,
                 "primaryKeyPosition": 2
+              },
+              {
+                "name": "place",
+                "logicalType": "string",
+                "required": false
               }
             ]
           },
@@ -1426,12 +1508,39 @@
                 "name": "id",
                 "logicalType": "integer",
                 "required": false,
-                "primaryKeyPosition": 1
+                "primaryKeyPosition": 4
+              },
+              {
+                "name": "code",
+                "logicalType": "string",
+                "required": false,
+                "primaryKeyPosition": 3
+              },
+              {
+                "name": "region",
+                "logicalType": "string",
+                "required": false,
+                "primaryKeyPosition": 5
+              },
+              {
+                "name": "extra",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "shape",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
               }
             ]
           }
         ],
-        "notes": []
+        "notes": [
+          "Type \"geography\" of shop.orders.place is not known; read as string.",
+          "Type \"polygon\" of customers.extra.shape is not known; read as string."
+        ]
       }
     },
     {
@@ -1497,6 +1606,11 @@
                 "logicalType": "integer",
                 "required": false,
                 "primaryKeyPosition": 2
+              },
+              {
+                "name": "place",
+                "logicalType": "string",
+                "required": false
               }
             ]
           },
@@ -1507,12 +1621,39 @@
                 "name": "id",
                 "logicalType": "integer",
                 "required": false,
-                "primaryKeyPosition": 1
+                "primaryKeyPosition": 4
+              },
+              {
+                "name": "code",
+                "logicalType": "string",
+                "required": false,
+                "primaryKeyPosition": 3
+              },
+              {
+                "name": "region",
+                "logicalType": "string",
+                "required": false,
+                "primaryKeyPosition": 5
+              },
+              {
+                "name": "extra",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "shape",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
               }
             ]
           }
         ],
-        "notes": []
+        "notes": [
+          "Type \"geography\" of shop.orders.place is not known; read as string.",
+          "Type \"polygon\" of customers.extra.shape is not known; read as string."
+        ]
       }
     },
     {

@@ -2,6 +2,7 @@
 // spec/cli/sources.md, section 2.
 import type { SourceColumnDoc } from "@ingestron/definitions";
 import type { SourceReaderName, SourceRecipe } from "./recipe.js";
+import type { ParseResult } from "./text.js";
 
 /**
  * Where a table's columns came from, as a metadata document records it (`captured.from`).
@@ -49,6 +50,10 @@ export interface ReaderInput {
   bytes: Uint8Array;
   /** The text of the file, UTF-8 without a byte-order mark; empty for a Parquet file. */
   text: string;
+  /** The file's text as JSON, parsed the first time it is asked for and shared by every reader. */
+  json(): ParseResult;
+  /** The file's text as YAML, parsed the first time it is asked for. */
+  yaml(): ParseResult;
   /** The recipe, with the fields the reader may use. */
   recipe?: SourceRecipe;
   /** The table a reader of one table describes, when it is known. */

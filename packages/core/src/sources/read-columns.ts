@@ -2,10 +2,10 @@
 // each column of each table.
 import { RowReader, normal, sourceOf, type ColumnRow } from "./columns-rows.js";
 import { columnsTables } from "./columns-tables.js";
-import { csvTable, isRecord, looksLikeHeader, valueAt } from "./records.js";
+import { csvTable, isRecord, valueAt } from "./records.js";
 import { columnsFields, type SourceRecipe } from "./recipe.js";
 import type { Outcome, ReaderInput, Reader, Refused } from "./result.js";
-import { extensionOf, parseJson } from "./text.js";
+import { extensionOf } from "./text.js";
 
 const eight = columnsFields.join(", ");
 const required = ["table_name", "column_name", "data_type"] as const;
@@ -26,13 +26,26 @@ function matches(keys: string[], recipe: SourceRecipe | undefined): boolean {
   return recipe?.fields === undefined ? isColumnsFile(keys) : holdsMapped(keys, recipe);
 }
 
+/** The refusal for keys that are not the eight fields: those missing, and how many others there are. */
+function fieldsMessage(file: string, keys: string[]): string {
+  const names = keys.map(normal);
+  const missing = columnsFields.filter((field) => !names.includes(field));
+  const other = keys.length - (columnsFields.length - missing.length);
+  const plural = (count: number): string => (count === 1 ? "" : "s");
+  const parts = [
+    ...(missing.length > 0
+      ? [`lacks the field${plural(missing.length)} ${missing.join(", ")}`]
+      : []),
+    ...(other > 0 ? [`has ${other} other field${plural(other)}`] : []),
+  ];
+  return `${file} ${parts.join(" and ")}; a columns file has exactly: ${eight}.`;
+}
+
 /** The reasons the file's fields are not the ones to read (the first list of keys that breaks the rule). */
 function fieldProblems(file: string, keyLists: string[][], recipe?: SourceRecipe): string[] {
   if (recipe?.fields === undefined) {
     const found = keyLists.find((keys) => !isColumnsFile(keys));
-    return found === undefined
-      ? []
-      : [`${file} has the fields ${found.join(", ")}; a columns file has exactly: ${eight}.`];
+    return found === undefined ? [] : [fieldsMessage(file, found)];
   }
   const present = new Set(keyLists.flat().map(normal));
   return columnsFields.flatMap((field) => {
@@ -46,12 +59,6 @@ function fieldProblems(file: string, keyLists: string[][], recipe?: SourceRecipe
 function rowsOfCsv(input: ReaderInput): Record<string, unknown>[] | Refused {
   const { header, rows } = csvTable(input.text);
   if (header.length === 0) return { refused: [`${input.file} lists no columns.`] };
-  if (!looksLikeHeader(header))
-    return {
-      refused: [
-        `${input.file} has no header row: its first line is not a list of field names; a columns file has exactly: ${eight}.`,
-      ],
-    };
   const problems = fieldProblems(input.file, [header], input.recipe);
   if (problems.length > 0) return { refused: problems };
   return rows.map((row) =>
@@ -60,7 +67,7 @@ function rowsOfCsv(input: ReaderInput): Record<string, unknown>[] | Refused {
 }
 
 function rowsOfJson(input: ReaderInput): Record<string, unknown>[] | Refused {
-  const parsed = parseJson(input.text, input.file);
+  const parsed = input.json();
   if ("refused" in parsed) return parsed;
   const list = valueAt(parsed.value, input.recipe?.rows);
   if (!Array.isArray(list) || !list.every(isRecord))
@@ -96,11 +103,10 @@ function read(input: ReaderInput): Outcome {
 function accepts(input: ReaderInput): boolean {
   const extension = extensionOf(input.file);
   if (extension === ".csv") {
-    const { header } = csvTable(input.text, 1);
-    return looksLikeHeader(header) && matches(header, input.recipe);
+    return matches(csvTable(input.text, 1).header, input.recipe);
   }
   if (extension !== ".json") return false;
-  const parsed = parseJson(input.text, input.file);
+  const parsed = input.json();
   if ("refused" in parsed) return false;
   const first = (valueAt(parsed.value, input.recipe?.rows) as unknown[] | undefined)?.[0];
   return isRecord(first) && matches(Object.keys(first), input.recipe);

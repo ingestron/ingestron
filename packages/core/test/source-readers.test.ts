@@ -1,7 +1,7 @@
 // Source readers: the conformance cases in spec/cli/conformance/sources/readers/cases.json.
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { readSourceRecipe, type SourceRecipe } from "../src/sources/index.js";
 import { readSourceFile } from "../src/sources/read-file.js";
 
@@ -40,8 +40,8 @@ describe("readSourceFile: the conformance cases", () => {
         ...(item.object !== undefined && { object: item.object }),
         ...(item.connection !== undefined && { connection: item.connection }),
       });
-      if (item.refused) expect(result).toEqual({ refused: item.refused });
-      else expect(result).toEqual(item.expected);
+      if (item.refused) expect(result).toStrictEqual({ refused: item.refused });
+      else expect(result).toStrictEqual(item.expected);
       for (const text of item.forbidden ?? []) expect(JSON.stringify(result)).not.toContain(text);
     });
   }
@@ -59,11 +59,11 @@ describe("readSourceFile: the contents", () => {
     expect(result).toMatchObject({ tables: [{ object: "T", columns: [{ name: "a" }] }] });
   });
 
-  it("refuses a columns file that lacks fields, naming those found", () => {
+  it("refuses a columns file that lacks fields, naming those missing", () => {
     const result = readSourceFile({ file: "sources/t.columns.csv", contents: text });
     expect(result).toEqual({
       refused: [
-        "sources/t.columns.csv has the fields table_name, column_name, data_type; a columns file has exactly: table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position.",
+        "sources/t.columns.csv lacks the fields table_catalog, table_schema, ordinal_position, is_nullable, primary_key_position; a columns file has exactly: table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position.",
       ],
     });
   });
@@ -71,5 +71,35 @@ describe("readSourceFile: the contents", () => {
   it("takes a text sample's table from the import", () => {
     const result = readSourceFile({ file: "x/a.csv", contents: "a,b\n1,x\n", object: "t" });
     expect(result).toMatchObject({ reader: "sample", from: "sample", tables: [{ object: "t" }] });
+  });
+});
+
+describe("readSourceFile: parsing", () => {
+  const orders = readFileSync(join(conformance, "readers/orders.json"));
+
+  it("parses a JSON file once for every reader that looks at it", () => {
+    const parse = vi.spyOn(JSON, "parse");
+    const result = readSourceFile({
+      file: "sources/shop/orders.json",
+      contents: new Uint8Array(orders),
+      object: "orders",
+      connection: "shop",
+    });
+    expect(result).toMatchObject({ reader: "sample" });
+    expect(parse).toHaveBeenCalledTimes(1);
+    parse.mockRestore();
+  });
+
+  it("reads YAML without writing a warning for a tag it does not know", () => {
+    const warn = vi.spyOn(process, "emitWarning");
+    const result = readSourceFile({
+      file: "sources/x.odcs.yaml",
+      contents: "kind: DataContract\nschema: !unknown []\n",
+    });
+    expect(warn).not.toHaveBeenCalled();
+    expect(result).toStrictEqual({
+      refused: ["sources/x.odcs.yaml is a data contract with no schema entries."],
+    });
+    warn.mockRestore();
   });
 });

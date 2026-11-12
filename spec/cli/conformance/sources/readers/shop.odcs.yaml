@@ -30,6 +30,14 @@ schema:
       - name: line_no
         logicalType: integer
         primaryKey: true
+      - name: place
+        logicalType: geography
   - name: customers
     properties:
       - { name: id, logicalType: integer, primaryKey: true }
+      - { name: code, logicalType: string, primaryKey: true, primaryKeyPosition: 3 }
+      - { name: region, logicalType: string, primaryKey: true }
+      - name: extra
+        logicalType: object
+        properties:
+          - { name: shape, logicalType: polygon }
