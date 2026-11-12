@@ -45,3 +45,22 @@ export {
   versionProblem,
   withoutCredentials,
 } from "./kits/index.js";
+export {
+  assistantNames,
+  assistantQuestion,
+  guideFacts,
+  guideHash,
+  guideLine,
+  guideSection,
+  guideUpdate,
+  hasSourceGuide,
+  pointerFiles,
+  pointerUpdate,
+  readAssistantNames,
+  type AssistantName,
+  type GuideFacts,
+  type GuideOutput,
+  type GuideStandard,
+  type GuideUpdate,
+  type NoGuide,
+} from "./assistant/index.js";
