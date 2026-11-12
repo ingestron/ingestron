@@ -387,29 +387,43 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
 
 ### 2.4 Documents a source publishes
 
-- **OData** (`odata`): a CSDL document, XML whose root element is `Edmx`.
-  Each entity set is a table named after the set, or, with the recipe's
+- **OData** (`odata`): a CSDL document, XML whose root element is `Edmx`. A
+  file is read as OData by its content only when its name ends `.xml` or
+  `.edmx`; any other file is read as OData only as the reader of the
+  connection's recipe, or by the `.catalog.` name rule (section 2.5). Each
+  entity set is a table named after the set, or, with the recipe's
   `objects: types`, each entity type is a table named after the type. Each
   property is a column: `Nullable="false"` makes it required, and
-  `<Key>`'s `PropertyRef`s, in order, are the primary key. A complex type is
-  `object`, with its properties as `properties`, and `Collection(…)` is
-  `array`, with its element as `items`. Navigation properties are left out.
+  `<Key>`'s `PropertyRef`s, in order, are the primary key, whose columns are
+  required. A complex type is `object`, with its properties as `properties`,
+  and `Collection(…)` is `array`, with its element as `items`. A `Collection`
+  column is always required, and `Nullable="false"` makes its elements
+  required, so `items` is required. Navigation properties are left out. A
+  complex type's properties are written in full only the first time the type
+  is used in a table (the table's own entity type counts as used); each
+  later use is `object` without `properties`, and so is a use nested deeper
+  than 16 levels.
   `sourceType` is the property's `Type`. Types: `Edm.String` is `string`, with
   `MaxLength` as `maxLength` when it is a number; `Edm.Byte`, `Edm.SByte`,
   `Edm.Int16`, `Edm.Int32` and `Edm.Int64` are `integer`; `Edm.Decimal` is
-  `number`, with `Precision` and `Scale` when they are numbers; `Edm.Single`
+  `number`, with `Precision` when it is a number and `Scale`, which is 0 when
+  it is missing or is not a number; `Edm.Single`
   and `Edm.Double` are `number`; `Edm.Boolean` is `boolean`; `Edm.Date` is
   `date`; `Edm.DateTimeOffset` and `Edm.DateTime` are `timestamp`;
   `Edm.TimeOfDay` and `Edm.Time` are `time`; any other is `string`.
   A type with a `BaseType` has the properties of its base types first, and
-  their key when it gives none. An entity set whose type the document does
-  not define is left out. A document with no entity set (or, with
+  their key when it gives none; a type that is its own base type, directly or
+  through others, has each property once. An entity set whose type the
+  document does not define is left out, with the note
+  `The entity set "<set>" is left out: its type "<type>" is not defined in the document.`
+  A document with no entity set (or, with
   `objects: types`, no entity type) is refused:
   `<file> describes no entity sets.` (or `no entity types`).
 - **OpenAPI** (`openapi`): JSON or YAML with a top-level `openapi` (3.x) or
   `swagger` (2.0). Each schema of `components.schemas` (`definitions` in
-  Swagger 2.0) that is an object with `properties` is a table named by its
-  key. `$ref`s within the file are followed. A property in the schema's
+  Swagger 2.0) that is an object with `properties` (its `type` is `object`,
+  a list whose first type other than `"null"` is `object`, or missing) is a
+  table named by its key. `$ref`s within the file are followed. A property in the schema's
   `required` list is required. A document with no such schema is refused:
   `<file> describes no object schemas.`
 - **JSON Schema** (`json-schema`): JSON with a top-level `$schema`. It is one
@@ -417,12 +431,20 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
   name without its last extension. A property in the document's `required`
   list is required. A document with no `properties` is refused:
   `<file> describes no properties.`
-- **Avro** (`avro`): a schema whose top-level `type` is `record`. The record
+- **Avro** (`avro`): a schema whose top-level `type` is `record` and that has
+  a `fields` list. The record
   is one table, named by the import's `object`, else its `name`. Each field is
   a column; a union with `"null"` is not required, and any other field is.
   A nested record is `object`, with its fields as `properties`, and so is a
-  name that refers to a record defined elsewhere in the schema (a record
-  that contains itself has no `properties` where it repeats); an `array` is
+  name that refers to a record defined anywhere in the schema, including the
+  `values` of a `map`. A record's full name is its `name` when that holds a
+  `.`, else its `namespace` (its own, or that of the record it is in) and its
+  `name` joined with `.`; a name with no `.` is looked up in the namespace of
+  the record that holds the field, then without one. A record is written in
+  full only the first time in a table (the table's own record counts as the
+  first); wherever it appears again it is `object` without `properties`, with
+  its `name` as `sourceType`, and so is a record nested deeper than 16
+  levels. An `array` is
   `array`, with its element as `items`, which is required unless it is a
   union with `"null"`; a `map` is `object`. A union of two
   or more types other than `"null"` is `string`, with the note
@@ -437,8 +459,9 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
   `date`; `timestamp-millis`, `timestamp-micros` and the `local-timestamp-`
   forms are `timestamp`; `time-millis` and `time-micros` are `time`; any
   other is `string`.
-- **A schema registry's response**: a JSON mapping whose `schema` is text, as
-  a registry returns a subject's version. Its `schema` is read with Avro when
+- **A schema registry's response**: a JSON mapping whose `schema` is text and
+  that also has `subject`, `id` or `version`, as a registry returns a
+  subject's version. (A sample record with a text column `schema` is a sample.) Its `schema` is read with Avro when
   `schemaType` is missing or `AVRO`, and with JSON Schema when it is `JSON`.
   The readers `avro` and `json-schema` both accept it, and each reads it by
   its `schemaType`. `PROTOBUF` is refused:
@@ -449,12 +472,17 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
   `<file> holds a schema that is not valid JSON.` A JSON Schema in a response
   needs no `$schema`.
 - **Salesforce describe** (`salesforce-describe`): a JSON mapping with a
-  `name` and a list of `fields`, as an object's `describe` returns it. The
+  `name` and a list of `fields`, as an object's `describe` returns it. It is
+  read only as the reader of the connection's recipe, or by the `.catalog.`
+  name rule: no file is read as a describe by its content. The
   table is named by `name`. Each field is a column: `nillable: false` makes it
   required, and the field whose `type` is `id` is the primary key.
   `sourceType` is the field's `type`, and its logical type is found by the
-  rules of section 2.6. A describe with no field that has a `name` is
-  refused: `<file> describes no fields.`
+  rules of section 2.6, and where that gives `string`, a field's `length`
+  that is above 0 is its `maxLength`, and where it gives `number`, a
+  `precision` above 0 is its `precision`, with its `scale` (0 when missing),
+  unless the recipe's rule gave an option of the same name. A describe with no
+  field that has a `name` is refused: `<file> describes no fields.`
 
 When a recipe or a file's name chooses one of these readers and the file is not
 in its format, the reader refuses it:
@@ -477,8 +505,11 @@ its `format` after it in brackets when it has one, such as `string(date-time)`.
 A `type` that is a list is its first type other than `"null"`. A schema with
 no `type` is `object` when it has `properties`, `array` when it has `items`,
 and otherwise `string`, as is one whose `$ref` is not within the file. A
-schema that contains itself, by `$ref`, is `object` without `properties`
-where it repeats. `enum`, `default`, `example` and every other keyword are
+schema reached by `$ref` is written in full only the first time in a table
+(the table's own schema counts as the first); wherever it appears again it
+has its type, `object` or `array`, without `properties` or `items`, and the
+last part of the `$ref`, such as `Address`, as its `sourceType`. An object
+nested deeper than 16 levels has no `properties`. `enum`, `default`, `example` and every other keyword are
 not read, so no value of the data a schema describes reaches the metadata.
 
 ### 2.5 Choosing the reader
@@ -506,8 +537,9 @@ Any other file is read by the first of these that accepts it:
 1. the recipe's reader;
 2. the columns reader, when the file's fields are the columns file's;
 3. the ODCS reader, when the file has `kind: DataContract`;
-4. the readers of section 2.4, in the order listed, each when the file is in
-   its format;
+4. the readers of section 2.4 other than `salesforce-describe`, in the order
+   listed, each when the file is in its format (OData only for a `.xml` or
+   `.edmx` file, section 2.4);
 5. the sample reader, by the file's extension: `.csv`, `.json`, `.jsonl`,
    `.ndjson` or `.parquet`.
 

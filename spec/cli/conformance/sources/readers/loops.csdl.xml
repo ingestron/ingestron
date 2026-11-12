@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="Loops" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="Loop" BaseType="Loops.Loop">
+        <Key>
+          <PropertyRef Name="Id"/>
+        </Key>
+        <Property Name="Id" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="Ping" BaseType="Loops.Pong">
+        <Property Name="PingId" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="Pong" BaseType="Loops.Ping">
+        <Property Name="PongId" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityContainer Name="Container">
+        <EntitySet Name="Loops" EntityType="Loops.Loop"/>
+        <EntitySet Name="Pings" EntityType="Loops.Ping"/>
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

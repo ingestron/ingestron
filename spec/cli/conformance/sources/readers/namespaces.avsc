@@ -1,0 +1,42 @@
+{
+  "type": "record",
+  "name": "Outer",
+  "namespace": "a",
+  "fields": [
+    {
+      "name": "z",
+      "type": "Item"
+    },
+    {
+      "name": "y",
+      "type": {
+        "type": "record",
+        "name": "Item",
+        "namespace": "b",
+        "fields": [
+          {
+            "name": "w",
+            "type": "int"
+          }
+        ]
+      }
+    },
+    {
+      "name": "x",
+      "type": {
+        "type": "record",
+        "name": "Item",
+        "fields": [
+          {
+            "name": "v",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "w",
+      "type": "b.Item"
+    }
+  ]
+}

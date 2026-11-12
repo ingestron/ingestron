@@ -20,6 +20,7 @@
         <Property Name="Size" Type="Shop.Dimensions"/>
         <Property Name="Tags" Type="Collection(Edm.String)"/>
         <Property Name="Packs" Type="Collection(Shop.Dimensions)"/>
+        <Property Name="Parts" Type="Collection(Edm.Int32)" Nullable="false"/>
         <NavigationProperty Name="Category" Type="Shop.Category"/>
         <Annotation Term="Core.Description" String="ZZ-SECRET-42"/>
       </EntityType>
@@ -36,6 +37,8 @@
         <Property Name="Revision" Type="Edm.Int64"/>
         <Property Name="Weight" Type="Edm.Single"/>
         <Property Name="Stamp" Type="Edm.DateTime"/>
+        <Property Name="Rate" Type="Edm.Decimal" Precision="5"/>
+        <Property Name="Amount" Type="Edm.Decimal"/>
       </EntityType>
       <ComplexType Name="Dimensions">
         <Property Name="Width" Type="Edm.Double" Nullable="false"/>

@@ -46,6 +46,10 @@ components:
       type: object
       properties:
         number: { type: string }
+    Maybe:
+      type: [object, "null"]
+      properties:
+        x: { type: string }
     Status:
       type: string
       enum: [open]

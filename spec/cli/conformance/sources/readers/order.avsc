@@ -50,6 +50,18 @@
     { "name": "tags", "type": { "type": "array", "items": "string" } },
     { "name": "notes", "type": ["null", { "type": "array", "items": ["null", "string"] }] },
     { "name": "attributes", "type": { "type": "map", "values": "string" } },
+    {
+      "name": "byRegion",
+      "type": {
+        "type": "map",
+        "values": {
+          "type": "record",
+          "name": "Region",
+          "fields": [{ "name": "code", "type": "string" }]
+        }
+      }
+    },
+    { "name": "home", "type": "Region" },
     { "name": "amount", "type": ["int", "string", "null"] },
     { "name": "next", "type": ["null", "Order"] }
   ]
