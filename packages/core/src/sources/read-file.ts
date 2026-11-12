@@ -8,7 +8,7 @@ import {
   type Refused,
   type SourceRead,
 } from "./result.js";
-import { decodeText, extensionOf, once, parseJson, parseYaml } from "./text.js";
+import { decodeText, extensionOf, once, parseJson, parseXml, parseYaml } from "./text.js";
 
 /** A reader to try: what it is called, the rung its tables are from and what it is given. */
 interface Attempt {
@@ -99,25 +99,24 @@ export function readSourceFile(input: {
   const text = extensionOf(file) === ".parquet" ? "" : decodeText(contents);
   const json = once(() => parseJson(text, file));
   const yaml = once(() => parseYaml(text, file));
+  const xml = once(() => parseXml(text, file));
   const base: ReaderInput = {
     file,
     bytes,
     text,
     json,
     yaml,
+    xml,
     ...(object !== undefined && { object }),
   };
   const rule = nameRule(file, connection);
   const chosen =
     rule === undefined
-      ? attempts(base, recipe).find((attempt) => readers[attempt.reader]?.accepts(attempt.input))
+      ? attempts(base, recipe).find((attempt) => readers[attempt.reader].accepts(attempt.input))
       : forced(rule, base, recipe);
   if (chosen === undefined) return notRead(file);
   if ("refused" in chosen) return chosen;
   const { reader, from, input: given } = chosen;
-  const available = readers[reader];
-  if (available === undefined)
-    return { refused: [`${file} is read by the "${reader}" reader, which is not available yet.`] };
-  const outcome = available.read(given);
+  const outcome = readers[reader].read(given);
   return isRefused(outcome) ? outcome : { reader, from, ...outcome };
 }

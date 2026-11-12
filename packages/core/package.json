@@ -55,6 +55,7 @@
     "@ingestron/pack-synapse": "^2.2.0",
     "@ingestron/standards": "^1.0.0",
     "hyparquet": "1.31.5",
+    "txml": "6.0.3",
     "yaml": "2.9.1"
   },
   "devDependencies": {

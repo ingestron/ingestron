@@ -74,6 +74,48 @@ describe("readSourceFile: the contents", () => {
   });
 });
 
+describe("readSourceFile: OData CSDL text", () => {
+  const csdl = [
+    "\ufeff<?xml version='1.0'?>",
+    '<edmx:Edmx xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx">',
+    "<edmx:DataServices>",
+    '<edm:Schema Namespace="N" xmlns:edm="http://schemas.microsoft.com/ado/2008/09/edm">',
+    '<edm:EntityType Name="A&amp;B"><edm:Key><edm:PropertyRef Name="k"/></edm:Key>',
+    '<edm:Property Name="k" Type="Edm.Int32" Nullable="false"/></edm:EntityType>',
+    '<edm:EntityContainer Name="C"><edm:EntitySet Name="Sets" EntityType="N.A&amp;B"/></edm:EntityContainer>',
+    "</edm:Schema></edmx:DataServices></edmx:Edmx>",
+  ].join("\r\n");
+
+  it("reads prefixed elements, entities and a byte-order mark, with CRLF line ends", () => {
+    const result = readSourceFile({ file: "sources/x.xml", contents: csdl });
+    expect(result).toStrictEqual({
+      reader: "odata",
+      from: "document",
+      notes: [],
+      tables: [
+        {
+          object: "Sets",
+          columns: [
+            {
+              name: "k",
+              sourceType: "Edm.Int32",
+              logicalType: "integer",
+              required: true,
+              primaryKeyPosition: 1,
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("names an entity type as the document spells it when the recipe asks for types", () => {
+    const recipe = { objects: "types", read: "odata", kind: "document" } as SourceRecipe;
+    const result = readSourceFile({ file: "sources/x.catalog.xml", contents: csdl, recipe });
+    expect(result).toMatchObject({ tables: [{ object: "A&B" }] });
+  });
+});
+
 describe("readSourceFile: parsing", () => {
   const orders = readFileSync(join(conformance, "readers/orders.json"));
 

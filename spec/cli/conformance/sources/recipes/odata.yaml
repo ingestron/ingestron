@@ -1,0 +1,15 @@
+id: odata
+title: OData service
+kind: document
+inputs:
+  serviceRoot: { description: "The service's root URL, such as https://example.com/odata" }
+ask:
+  who: Someone who can call the service
+  access: Read access to the service's metadata
+  call: "{serviceRoot}/$metadata"
+  save: sources/{connection}.catalog.xml
+  how: With a browser, curl or Postman.
+read: odata
+objects: types
+sources:
+  - { url: "https://example.com/odata/csdl", read: 2026-11-12 }

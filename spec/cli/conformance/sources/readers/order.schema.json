@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Order",
+  "type": "object",
+  "required": ["id", "customer"],
+  "properties": {
+    "id": { "type": "integer" },
+    "reference": {
+      "type": "string",
+      "maxLength": 12,
+      "default": "ZZ-SECRET-42",
+      "examples": ["ZZ-SECRET-42"]
+    },
+    "total": { "type": "number" },
+    "paid": { "type": "boolean" },
+    "placed": { "type": "string", "format": "date-time" },
+    "customer": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "$ref": "#/$defs/address" }
+      }
+    },
+    "lines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": { "sku": { "type": "string" }, "qty": { "type": "integer" } }
+      }
+    },
+    "status": { "type": "string", "enum": ["ZZ-SECRET-42"], "const": "ZZ-SECRET-42" }
+  },
+  "$defs": {
+    "address": { "type": "object", "properties": { "city": { "type": "string" } } }
+  }
+}

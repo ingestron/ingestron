@@ -1,0 +1,6 @@
+{
+  "subject": "orders-value",
+  "version": 1,
+  "id": 22,
+  "schema": "{\"type\": \"string\"}"
+}

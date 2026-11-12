@@ -162,6 +162,37 @@
         ],
         "file": "recipes/files-mapped.yaml"
       }
+    },
+    {
+      "name": "odata",
+      "file": "recipes/odata.yaml",
+      "recipe": {
+        "inputs": {
+          "serviceRoot": {
+            "description": "The service's root URL, such as https://example.com/odata"
+          }
+        },
+        "types": [],
+        "id": "odata",
+        "title": "OData service",
+        "kind": "document",
+        "ask": {
+          "who": "Someone who can call the service",
+          "access": "Read access to the service's metadata",
+          "call": "{serviceRoot}/$metadata",
+          "save": "sources/{connection}.catalog.xml",
+          "how": "With a browser, curl or Postman."
+        },
+        "read": "odata",
+        "objects": "types",
+        "sources": [
+          {
+            "url": "https://example.com/odata/csdl",
+            "read": "2026-11-12"
+          }
+        ],
+        "file": "recipes/odata.yaml"
+      }
     }
   ],
   "broken": [
@@ -521,7 +552,7 @@
         "recipe": null,
         "inputs": {},
         "problems": [
-          "The connection \"erp\" names the recipe \"mssql\", which does not exist. Recipes: files-mapped, salesforce, sample, sqlserver."
+          "The connection \"erp\" names the recipe \"mssql\", which does not exist. Recipes: files-mapped, odata, salesforce, sample, sqlserver."
         ]
       }
     },
@@ -606,6 +637,6 @@
     }
   ],
   "catalog": {
-    "order": ["files-mapped", "salesforce", "sample", "sqlserver"]
+    "order": ["files-mapped", "odata", "salesforce", "sample", "sqlserver"]
   }
 }

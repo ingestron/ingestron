@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="Shop" Alias="S" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="Product">
+        <Key>
+          <PropertyRef Name="ProductID"/>
+        </Key>
+        <Property Name="ProductID" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="Name" Type="Edm.String" MaxLength="80" Nullable="false"/>
+        <Property Name="Notes" Type="Edm.String" MaxLength="max"/>
+        <Property Name="Price" Type="Edm.Decimal" Precision="10" Scale="2"/>
+        <Property Name="Rating" Type="Edm.Double"/>
+        <Property Name="InStock" Type="Edm.Boolean"/>
+        <Property Name="Released" Type="Edm.Date"/>
+        <Property Name="Updated" Type="Edm.DateTimeOffset"/>
+        <Property Name="Opens" Type="Edm.TimeOfDay"/>
+        <Property Name="Reference" Type="Edm.Guid"/>
+        <Property Name="Colour" Type="Shop.Colour"/>
+        <Property Name="Size" Type="Shop.Dimensions"/>
+        <Property Name="Tags" Type="Collection(Edm.String)"/>
+        <Property Name="Packs" Type="Collection(Shop.Dimensions)"/>
+        <NavigationProperty Name="Category" Type="Shop.Category"/>
+        <Annotation Term="Core.Description" String="ZZ-SECRET-42"/>
+      </EntityType>
+      <EntityType Name="Book" BaseType="Shop.Product">
+        <Property Name="Pages" Type="Edm.Int16" Nullable="false"/>
+      </EntityType>
+      <EntityType Name="Category">
+        <Key>
+          <PropertyRef Name="Region"/>
+          <PropertyRef Name="Code"/>
+        </Key>
+        <Property Name="Code" Type="Edm.String" MaxLength="8" Nullable="false"/>
+        <Property Name="Region" Type="Edm.String" MaxLength="4" Nullable="false"/>
+        <Property Name="Revision" Type="Edm.Int64"/>
+        <Property Name="Weight" Type="Edm.Single"/>
+        <Property Name="Stamp" Type="Edm.DateTime"/>
+      </EntityType>
+      <ComplexType Name="Dimensions">
+        <Property Name="Width" Type="Edm.Double" Nullable="false"/>
+        <Property Name="Unit" Type="Edm.String" MaxLength="2"/>
+      </ComplexType>
+      <EnumType Name="Colour">
+        <Member Name="Red" Value="0"/>
+      </EnumType>
+      <EntityContainer Name="Container">
+        <EntitySet Name="Products" EntityType="Shop.Product"/>
+        <EntitySet Name="Catalogue" EntityType="S.Category"/>
+        <EntitySet Name="Library" EntityType="Shop.Book"/>
+        <EntitySet Name="Elsewhere" EntityType="Other.Thing"/>
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

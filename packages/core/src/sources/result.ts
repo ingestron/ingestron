@@ -2,7 +2,7 @@
 // spec/cli/sources.md, section 2.
 import type { SourceColumnDoc } from "@ingestron/definitions";
 import type { SourceReaderName, SourceRecipe } from "./recipe.js";
-import type { ParseResult } from "./text.js";
+import type { ParseResult, XmlResult } from "./text.js";
 
 /**
  * Where a table's columns came from, as a metadata document records it (`captured.from`).
@@ -54,6 +54,8 @@ export interface ReaderInput {
   json(): ParseResult;
   /** The file's text as YAML, parsed the first time it is asked for. */
   yaml(): ParseResult;
+  /** The file's text as XML, parsed the first time it is asked for. */
+  xml(): XmlResult;
   /** The recipe, with the fields the reader may use. */
   recipe?: SourceRecipe;
   /** The table a reader of one table describes, when it is known. */

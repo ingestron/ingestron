@@ -197,6 +197,9 @@ importers:
       hyparquet:
         specifier: 1.31.5
         version: 1.31.5
+      txml:
+        specifier: 6.0.3
+        version: 6.0.3
       yaml:
         specifier: 2.9.1
         version: 2.9.1
@@ -1471,6 +1474,10 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
+  txml@6.0.3:
+    resolution: {integrity: sha512-LpgQIn4huTMpHdBqo9zUYj0lxksvh5epthFh/DoZ4FAd868kkuz31rAzrs41MOPneAWfuSCbBa0+lwxT4p/ZQg==}
+    engines: {node: '>=18.0.0'}
+
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
     engines: {node: '>= 0.8.0'}
@@ -2693,6 +2700,8 @@ snapshots:
       esbuild: 0.28.2
     optionalDependencies:
       fsevents: 2.3.3
+
+  txml@6.0.3: {}
 
   type-check@0.4.0:
     dependencies:

@@ -1,0 +1,7 @@
+{
+  "subject": "orders-value",
+  "version": 3,
+  "id": 18,
+  "schemaType": "JSON",
+  "schema": "{\"title\": \"Order\", \"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"note\": {\"type\": \"string\", \"default\": \"ZZ-SECRET-42\"}}}"
+}

@@ -1,0 +1,20 @@
+{
+  "swagger": "2.0",
+  "info": { "title": "Pets", "version": "1" },
+  "paths": {},
+  "definitions": {
+    "Pet": {
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "integer", "format": "int32" },
+        "name": { "type": "string", "default": "ZZ-SECRET-42" },
+        "owner": { "$ref": "#/definitions/Owner" }
+      }
+    },
+    "Owner": {
+      "type": "object",
+      "properties": { "name": { "type": "string" } }
+    },
+    "Tag": { "type": "string" }
+  }
+}

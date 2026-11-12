@@ -401,8 +401,11 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
   and `Edm.Double` are `number`; `Edm.Boolean` is `boolean`; `Edm.Date` is
   `date`; `Edm.DateTimeOffset` and `Edm.DateTime` are `timestamp`;
   `Edm.TimeOfDay` and `Edm.Time` are `time`; any other is `string`.
-  A document with no entity set (or, with `objects: types`, no entity type)
-  is refused: `<file> describes no entity sets.` (or `no entity types`).
+  A type with a `BaseType` has the properties of its base types first, and
+  their key when it gives none. An entity set whose type the document does
+  not define is left out. A document with no entity set (or, with
+  `objects: types`, no entity type) is refused:
+  `<file> describes no entity sets.` (or `no entity types`).
 - **OpenAPI** (`openapi`): JSON or YAML with a top-level `openapi` (3.x) or
   `swagger` (2.0). Each schema of `components.schemas` (`definitions` in
   Swagger 2.0) that is an object with `properties` is a table named by its
@@ -417,12 +420,18 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
 - **Avro** (`avro`): a schema whose top-level `type` is `record`. The record
   is one table, named by the import's `object`, else its `name`. Each field is
   a column; a union with `"null"` is not required, and any other field is.
-  A nested record is `object`, with its fields as `properties`; an `array` is
-  `array`, with its element as `items`; a `map` is `object`. A union of two
+  A nested record is `object`, with its fields as `properties`, and so is a
+  name that refers to a record defined elsewhere in the schema (a record
+  that contains itself has no `properties` where it repeats); an `array` is
+  `array`, with its element as `items`, which is required unless it is a
+  union with `"null"`; a `map` is `object`. A union of two
   or more types other than `"null"` is `string`, with the note
   `The column <object>.<column> is a union of <types>; read as string.`,
-  where `<types>` are the union's type names, joined with `, `. `sourceType` is
-  the field's `logicalType` when it has one, else its type's name. Types:
+  where `<types>` are the type names of the union other than `"null"`, joined
+  with `, `. `sourceType` is the field's `logicalType` when it has one, else
+  its type's name (`record`, `array`, `map`, `enum`, `fixed`, or `union` for
+  a union of two or more types). A record with no field is refused:
+  `<file> describes no fields.` Types:
   `int` and `long` are `integer`; `float` and `double` are `number`; `boolean`
   is `boolean`; `decimal` is `number`, with `precision` and `scale`; `date` is
   `date`; `timestamp-millis`, `timestamp-micros` and the `local-timestamp-`
@@ -431,14 +440,30 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
 - **A schema registry's response**: a JSON mapping whose `schema` is text, as
   a registry returns a subject's version. Its `schema` is read with Avro when
   `schemaType` is missing or `AVRO`, and with JSON Schema when it is `JSON`.
-  The readers `avro` and `json-schema` both accept it. `PROTOBUF` is refused:
+  The readers `avro` and `json-schema` both accept it, and each reads it by
+  its `schemaType`. `PROTOBUF` is refused:
   `Protobuf schemas are not read yet; save the topic's columns as a columns file instead.`
+  Any other `schemaType` is refused:
+  `<file> is a schema registry response of a type Ingestron does not read; it reads AVRO and JSON.`
+  A `schema` that is not valid JSON is refused:
+  `<file> holds a schema that is not valid JSON.` A JSON Schema in a response
+  needs no `$schema`.
 - **Salesforce describe** (`salesforce-describe`): a JSON mapping with a
   `name` and a list of `fields`, as an object's `describe` returns it. The
   table is named by `name`. Each field is a column: `nillable: false` makes it
   required, and the field whose `type` is `id` is the primary key.
   `sourceType` is the field's `type`, and its logical type is found by the
-  rules of section 2.6.
+  rules of section 2.6. A describe with no field that has a `name` is
+  refused: `<file> describes no fields.`
+
+When a recipe or a file's name chooses one of these readers and the file is not
+in its format, the reader refuses it:
+
+- OData: `<file> is not an OData CSDL document: its root element is not Edmx.`
+- OpenAPI: `<file> is not an OpenAPI document: it has no top-level openapi or swagger.`
+- JSON Schema: `<file> is not a JSON Schema: it has no top-level $schema.`
+- Avro: `<file> is not an Avro schema: its top-level type is not record.`
+- Salesforce describe: `<file> is not a Salesforce describe: it has no name and fields.`
 
 OpenAPI, JSON Schema and Avro state no key, so their tables have none.
 
@@ -449,6 +474,12 @@ is `object` with its `properties`, `array` is `array` with its `items`, and
 `string` is `string` (with `maxLength`), or `date`, `timestamp` or `time` for
 the formats `date`, `date-time` and `time`. `sourceType` is the `type`, with
 its `format` after it in brackets when it has one, such as `string(date-time)`.
+A `type` that is a list is its first type other than `"null"`. A schema with
+no `type` is `object` when it has `properties`, `array` when it has `items`,
+and otherwise `string`, as is one whose `$ref` is not within the file. A
+schema that contains itself, by `$ref`, is `object` without `properties`
+where it repeats. `enum`, `default`, `example` and every other keyword are
+not read, so no value of the data a schema describes reaches the metadata.
 
 ### 2.5 Choosing the reader
 
@@ -479,9 +510,6 @@ Any other file is read by the first of these that accepts it:
    its format;
 5. the sample reader, by the file's extension: `.csv`, `.json`, `.jsonl`,
    `.ndjson` or `.parquet`.
-
-A recipe that names a reader this release does not have has its files
-refused: `<file> is read by the "<reader>" reader, which is not available yet.`
 
 A file none accepts is refused:
 `<file> is not a file Ingestron reads: a columns file, an ODCS contract, OData CSDL, OpenAPI, JSON Schema, Avro, a schema registry response, a Salesforce describe, or a sample ending .csv, .json, .jsonl, .ndjson or .parquet.`

@@ -2,6 +2,8 @@
 // (spec/cli/sources.md, sections 2.1 and 2.2).
 import { csvRecords } from "../csv.js";
 import { typeOf } from "../sample-type.js";
+import type { ReaderInput } from "./result.js";
+import { extensionOf, type ParseResult } from "./text.js";
 
 /** A CSV file: its header's names as written, and each record's values. */
 export interface CsvTable {
@@ -46,4 +48,16 @@ export function valueAt(root: unknown, path: string | undefined): unknown {
     value = value[key];
   }
   return value;
+}
+
+/** The parsed JSON of a file named `.json` or `.avsc`, or undefined for any other file. */
+export function jsonOf(input: ReaderInput): ParseResult | undefined {
+  const extension = extensionOf(input.file);
+  return extension === ".json" || extension === ".avsc" ? input.json() : undefined;
+}
+
+/** The parsed JSON or YAML of a file, by its extension, or undefined for any other file. */
+export function documentOf(input: ReaderInput): ParseResult | undefined {
+  const extension = extensionOf(input.file);
+  return extension === ".yaml" || extension === ".yml" ? input.yaml() : jsonOf(input);
 }
