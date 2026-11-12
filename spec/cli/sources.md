@@ -404,9 +404,13 @@ of these hold:
   UUID, five groups of hexadecimal digits of 8, 4, 4, 4 and 12 digits, joined
   with `-`, in any case; none holds a character outside `[A-Za-z0-9_ $.-]`;
   and there are no more than 100 different keys;
-- the records show that the keys are shared, which is so when there is
-  exactly one record (it cannot show that they differ), or at least one key
-  is in every record and every key is in at least two of the records.
+- the records show that the keys are shared, which is so when the sample is
+  one record and exactly one record is found at that place (a sample of one
+  record cannot show that they differ), or, whatever the sample, when at
+  least one key is in every record found at that place and every key is in at
+  least two of them. In a sample of several records a single record, such as
+  `{ "n": { "ACME": 1 } }` beside records whose `n` is `null` or `{}`, shows
+  nothing, and its keys are not read as fields.
 
 Then the fields are the keys found in any of the records, in the order first
 found, and their types are merged as the types of the columns of the table

@@ -77,6 +77,18 @@ describe("a nested record's keys are fields only when the records share them", (
     expect(fieldsOf('[{"n":{"a":1}},{"n":{"a":2}},{"n":null}]')).toStrictEqual(["a"]);
   });
 
+  it("reads one record's keys as fields only in a sample of one record", () => {
+    const withOthers = (...others: string[]): string =>
+      `[{"n":{"ACME":1,"b":2}},${others.map((own) => `{"n":${own}}`).join(",")}]`;
+    expect(fieldsOf(withOthers("{}", "{}"))).toBeUndefined();
+    expect(fieldsOf(withOthers("null", "null"))).toBeUndefined();
+    expect(fieldsOf(withOthers('{"x":1}'))).toBeUndefined();
+    expect(fieldsOf('[{"n":{"a":1,"b":2}}]')).toStrictEqual(["a", "b"]);
+    expect(fieldsOf('[{"n":{"a":1}},{"n":{"a":2}},{"n":{}}]')).toStrictEqual(["a"]);
+    const nested = columnsOf("sources/t.json", '{"x":{"y":{"a":1}},"z":[{"a":1,"b":2}]}');
+    expect(nested[0]!.properties?.[0]?.properties?.map((c) => c.name)).toStrictEqual(["a"]);
+  });
+
   it("gives no fields, and no empty list of them, when no record has a key", () => {
     const column = (text: string): Column | undefined =>
       columnsOf("sources/t.json", text).find((one) => one.name === "n");

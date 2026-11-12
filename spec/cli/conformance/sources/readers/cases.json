@@ -1066,6 +1066,41 @@
       "forbidden": ["ZZ-SECRET-42", "ZZ-SECRET-43", "ZZ-SECRET-44"]
     },
     {
+      "name": "JSON sample: one record holding a nested record, beside records that hold none, shows nothing about its keys",
+      "file": "sources/landing/holder.json",
+      "input": "nested-one-holder.json",
+      "object": "holder",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "holder",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "empty",
+                "logicalType": "object",
+                "required": false
+              },
+              {
+                "name": "absent",
+                "logicalType": "object",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ACME", "ACME-CORP"]
+    },
+    {
       "name": "JSON sample: a key named like a member of every object is a field of its own, not required",
       "file": "sources/landing/members.json",
       "input": "nested-inherited.json",

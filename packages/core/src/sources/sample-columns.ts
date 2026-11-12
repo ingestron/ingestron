@@ -27,13 +27,18 @@ const dataKeys = [
 /**
  * True when the keys of the records are names that the records share, so that each is a field. They
  * are not when any looks like data, such as a date or a customer's code, or there are more than
- * 100; and the records show that the keys are shared only when there is one record, or a key is in
- * every record and every key is in at least two (spec/cli/sources.md, section 2.2).
+ * 100; and the records show that the keys are shared only when the sample is one record and holds
+ * one record here, or a key is in every record here and every key is in at least two of them
+ * (spec/cli/sources.md, section 2.2).
  */
-function sharedNames(records: Record<string, unknown>[], names: string[]): boolean {
+function sharedNames(
+  records: Record<string, unknown>[],
+  names: string[],
+  oneRecordSample: boolean,
+): boolean {
   if (names.length > mostKeys || names.some((key) => dataKeys.some((data) => data.test(key))))
     return false;
-  if (records.length === 1) return true;
+  if (oneRecordSample && records.length === 1) return true;
   const holding = new Map<string, number>();
   for (const record of records)
     for (const key of new Set(keysOf(record))) holding.set(key, (holding.get(key) ?? 0) + 1);
@@ -45,7 +50,12 @@ function sharedNames(records: Record<string, unknown>[], names: string[]): boole
 const hasKey = (record: Record<string, unknown>): boolean =>
   keysOf(record).some((key) => key !== "");
 
-function inferColumn(name: string, values: unknown[], depth: number): SourceColumnDoc {
+function inferColumn(
+  name: string,
+  values: unknown[],
+  depth: number,
+  single: boolean,
+): SourceColumnDoc {
   const present = values.filter((value) => value !== "" && value != null);
   const logicalType = typeOf(present);
   const column: SourceColumnDoc = { name, logicalType, required: false };
@@ -53,9 +63,11 @@ function inferColumn(name: string, values: unknown[], depth: number): SourceColu
   if (logicalType === "object") {
     const records = present.filter(isRecord).filter(hasKey);
     const names = namesOf(records);
-    if (sharedNames(records, names)) column.properties = columnsAt(records, names, depth + 1);
+    if (sharedNames(records, names, single))
+      column.properties = columnsAt(records, names, depth + 1, single);
   }
-  if (logicalType === "array") column.items = inferColumn(itemsName, present.flat(), depth + 1);
+  if (logicalType === "array")
+    column.items = inferColumn(itemsName, present.flat(), depth + 1, single);
   return column;
 }
 
@@ -63,12 +75,14 @@ function columnsAt(
   records: Record<string, unknown>[],
   names: string[],
   depth: number,
+  single: boolean,
 ): SourceColumnDoc[] {
   return names.map((name) =>
     inferColumn(
       name,
       records.map((record) => (Object.hasOwn(record, name) ? record[name] : undefined)),
       depth,
+      single,
     ),
   );
 }
@@ -86,5 +100,6 @@ export function inferColumns(
     records,
     names.filter((name) => name !== ""),
     0,
+    records.length === 1,
   );
 }

@@ -1,0 +1,5 @@
+[
+  { "id": 1, "empty": { "ACME": 1 }, "absent": { "ACME-CORP": 1 } },
+  { "id": 2, "empty": {}, "absent": null },
+  { "id": 3, "empty": {}, "absent": null }
+]
