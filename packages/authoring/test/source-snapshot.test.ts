@@ -4,7 +4,8 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { ProjectSnapshot } from "../src/index.js";
+import { ProjectSnapshot, type Problem } from "../src/index.js";
+import type { RecipeProblem } from "../src/sources/recipe-problems.js";
 
 const conformance = join(import.meta.dirname, "../../../spec/cli/conformance/sources/request");
 const at = "2026-11-12T09:00:00Z";
@@ -154,6 +155,57 @@ describe("recipe problems", () => {
       );
       const line = text.split("\n").findIndex((row) => row.includes("colour: blue"));
       expect(found[0]!.range.start).toEqual({ line, character: "    ".length });
+    } finally {
+      rmSync(copy, { recursive: true, force: true });
+    }
+  });
+
+  it("reports an input named like an Object property, at the key", () => {
+    const { copy, text } = withMetadata(
+      "metadata:\n  from: sqlserver\n  with:\n    database: ERP\n    toString: blue\n",
+    );
+    try {
+      const found = ProjectSnapshot.open(copy)
+        .problems("dev")
+        .filter(({ code }) => code === "SOURCE_RECIPE_INPUT");
+      expect(found).toHaveLength(1);
+      expect(found[0]!.message).toContain('takes no input "toString"');
+      const line = text.split("\n").findIndex((row) => row.includes("toString: blue"));
+      expect(found[0]!.range.start).toEqual({ line, character: "    ".length });
+    } finally {
+      rmSync(copy, { recursive: true, force: true });
+    }
+  });
+
+  it("is checked against the editor's Problem", () => {
+    const problem: Problem = {} as RecipeProblem;
+    expect(problem).toBeDefined();
+  });
+
+  it("reports a broken project recipe alone, and the others again once it is mended", () => {
+    const { copy } = withMetadata("metadata:\n  from: nope\n");
+    try {
+      const broken = "id: x\ntitle: [\n";
+      writeFileSync(join(copy, "recipes/x.yaml"), broken);
+      const codes = (snapshot: ProjectSnapshot) =>
+        snapshot.problems("dev").filter(({ code }) => code.startsWith("SOURCE_RECIPE_"));
+      const found = codes(ProjectSnapshot.open(copy));
+      expect(found).toHaveLength(1);
+      expect(found[0]).toMatchObject({
+        file: "recipes/x.yaml",
+        severity: "error",
+        code: "SOURCE_RECIPE_BROKEN",
+        range: { start: { line: 0, character: 0 } },
+      });
+      expect(found[0]!.message).toMatch(/^recipes\/x\.yaml: /);
+      const mended = readFileSync(join(copy, "recipes/sample.yaml"), "utf8").replace(
+        "id: sample",
+        "id: x",
+      );
+      const open = new Map([[join(copy, "recipes/x.yaml"), mended]]);
+      expect(codes(ProjectSnapshot.open(copy, open)).map(({ code }) => code)).toEqual([
+        "SOURCE_RECIPE_UNKNOWN",
+      ]);
     } finally {
       rmSync(copy, { recursive: true, force: true });
     }
