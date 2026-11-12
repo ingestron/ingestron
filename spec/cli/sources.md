@@ -198,6 +198,12 @@ section 12.2). The request and the import check it against the recipes:
   with the recipe's input names, in the order the recipe gives them, joined
   with `, `, or `none`.
 
+An editor that shows a project's problems MAY report these two itself, as the
+errors `SOURCE_RECIPE_UNKNOWN` (the first) and `SOURCE_RECIPE_INPUT` (the
+second), each with the message above, in the connection's document at
+`/metadata/from` and at `/metadata/with/<name>` of the input. `plan` and
+`check` do not report them.
+
 An input the recipe takes and the connection does not give is not an error:
 the request leaves its placeholder for the reader to fill in.
 
