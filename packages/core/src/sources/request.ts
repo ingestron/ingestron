@@ -1,11 +1,11 @@
 // The source request: for each connection a flow reads from, what to run, call or export to get
 // its metadata, the alternatives, where to save each file and the commands that import them
 // (spec/cli/sources.md, section 4). The editor shows the same text.
-import type { FileSource } from "@ingestron/config";
+import type { FileSource, Project } from "@ingestron/config";
 import { kinds, resolveDefinitions, type SourceTable } from "@ingestron/definitions";
 import type { ProjectOptions } from "../generation/index.js";
 import { packs } from "../packs/index.js";
-import { hostProject, problemsText } from "../request/index.js";
+import { hostProject, problemsText, resolving } from "../request/index.js";
 import { byCodePoint } from "./changes.js";
 import type { SourceRecipe } from "./recipe.js";
 import { sourceOrigin, sourceRecipes } from "./recipes.js";
@@ -21,9 +21,6 @@ export interface SourceRequestOptions extends ProjectOptions {
   /** The recipes to use; by default the installed ones and the project's own (`sourceRecipes`). */
   recipes?: Map<string, SourceRecipe>;
 }
-
-/** A connection, as its recipe is chosen. */
-type Connection = Parameters<typeof sourceOrigin>[0];
 
 /** The errors that do not stop the request, since the metadata it asks for settles them. */
 const settled = new Set([
@@ -66,15 +63,14 @@ export function sourceRequestFor(
   const name = environment ?? "default";
   const envvars = options.envvars ?? process.env;
   const { diagnostics, sourceTables = [] } = resolveDefinitions(files, {
-    missingEnvvars: "information",
+    ...resolving,
     sourceTables: true,
     packs: [...(options.packs ?? packs)],
     envvars,
     environment,
   });
   const project = hostProject(files, environment, envvars);
-  const connections = project?.all(kinds.connection).map(({ value }) => value);
-  const asked = askedFor(files, connections, sourceTables, options);
+  const asked = askedFor(files, project, sourceTables, options);
   const errors = diagnostics.filter(
     (diagnostic) => diagnostic.severity === "error" && !settled.has(diagnostic.code),
   );
@@ -112,16 +108,17 @@ function requestText(
 
 /**
  * What each section is given, and the problems that stop the request: an unknown connection, a
- * recipe that breaks a rule and each connection's recipe problems. When the project could not be
- * loaded, its connections are not known, and only its errors are shown.
+ * recipe that breaks a rule and the recipe problems of each connection the request covers. When
+ * the project could not be loaded, its connections are not known, and only its errors are shown.
  */
 function askedFor(
   files: FileSource,
-  connections: readonly Connection[] | undefined,
+  project: Project | undefined,
   sourceTables: readonly SourceTable[],
   options: SourceRequestOptions,
 ): { sections: SectionInput[]; problems: string[] } {
-  if (connections === undefined) return { sections: [], problems: [] };
+  if (project === undefined) return { sections: [], problems: [] };
+  const connections = project.all(kinds.connection).map(({ value }) => value);
   const problems: string[] = [];
   const ids = connections.map((connection) => connection.id).sort(byCodePoint);
   const { connection: named } = options;
@@ -141,9 +138,20 @@ function askedFor(
     const { recipe, inputs, problems: found } = sourceOrigin(connection, recipes);
     problems.push(...found);
     const tables = sourceTables.filter((table) => table.connection === connection.id);
-    return { connection: connection.id, tables, inputs, ...(recipe && { recipe }) };
+    const given = givenInputs(inputs, project.unsetEnvvars);
+    return { connection: connection.id, tables, inputs: given, ...(recipe && { recipe }) };
   });
   return { sections, problems };
+}
+
+/** The inputs given: one whose value holds an unset reference is not (section 1, "Placeholders"). */
+function givenInputs(
+  inputs: Record<string, string>,
+  unset: readonly string[],
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(inputs).filter(([, value]) => !unset.some((text) => value.includes(text))),
+  );
 }
 
 /** The installed recipes and the project's own; a broken one is a problem. */

@@ -52,8 +52,9 @@ export function platformRequest(
 /**
  * As an editor resolves: a variable set nowhere is not known yet. Every environment is
  * resolved together, so the request shows the generated files' mode (spec/cli/request.md).
+ * @internal
  */
-const resolving = {
+export const resolving = {
   missingEnvvars: "information",
   environmentsTogether: true,
 } as const;

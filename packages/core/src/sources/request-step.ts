@@ -18,8 +18,12 @@ export interface SectionInput {
   inputs: Record<string, string>;
 }
 
-const schemasText =
-  "the schemas to describe, each in single quotes and separated by commas, such as 'dbo', 'sales'";
+/** What to write for each placeholder the request fills in itself, when it cannot. */
+const leftText: Record<string, string> = {
+  schemas:
+    "the schemas to describe, each in single quotes and separated by commas, such as 'dbo', 'sales'",
+  object: "a table to describe, as a flow's object names it; do this once for each table",
+};
 
 /** The section for one connection. */
 export function sourceSection(input: SectionInput): SourceSection {
@@ -102,7 +106,7 @@ function fillIn(
     if (Object.hasOwn(values, name!) || left.has(name!)) continue;
     const input = Object.hasOwn(recipe.inputs, name!) ? recipe.inputs[name!] : undefined;
     if (input !== undefined) left.set(name!, input.description);
-    else if (name === "schemas") left.set(name, schemasText);
+    else if (Object.hasOwn(leftText, name!)) left.set(name!, leftText[name!]!);
   }
   if (left.size === 0) return [];
   const lines = [...left].map(([name, what]) => `- \`{${name}}\`: ${what}`);
@@ -133,13 +137,16 @@ function recipeStep(
   const schemas = schemasOf(recipe, objects);
   const values = { ...inputs, connection, ...(schemas !== undefined && { schemas }) };
   const asked = askedOf(recipe.ask);
-  const eachObject = [asked.text ?? "", save].some((text) => text.includes("{object}"));
+  // With no tables, {object} is left as written in the block and the save line.
+  const eachObject =
+    objects.length > 0 && [asked.text ?? "", save].some((text) => text.includes("{object}"));
   const parts = [header(recipe, values), asked.intro];
   if (eachObject) parts.push(...eachObjectList(asked.text, save, values, objects));
   else if (asked.text !== undefined)
     parts.push(`\`\`\`${asked.block}\n${fill(asked.text, values).replace(/\n+$/, "")}\n\`\`\``);
   if (how !== undefined) parts.push(fill(how, values));
-  parts.push(...fillIn(recipe, values, eachObject));
+  // In the list, each item fills {object}; only the block and save line leave it as written.
+  parts.push(...fillIn(recipe, eachObject ? { ...values, object: "" } : values, eachObject));
   if (eachObject)
     return { parts, saves: objects.map((object) => fill(save, { ...values, object })) };
   parts.push(`Save the ${asked.saved} as \`${fill(save, values)}\`.`);
@@ -158,7 +165,7 @@ function eachObjectList(
     const where = `\`${fill(save, filled)}\``;
     return asked === undefined ? `- ${where}` : `- \`${fill(asked, filled)}\`, saved as ${where}`;
   });
-  return items.length > 0 ? [items.join("\n")] : [];
+  return [items.join("\n")];
 }
 
 /** Who, the access and the recipe, naming a project recipe's file. */
