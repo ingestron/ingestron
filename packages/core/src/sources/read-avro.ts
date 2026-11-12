@@ -14,7 +14,7 @@ function read(input: ReaderInput): Outcome {
   return avroOutcome(input.file, parsed?.value, input.object);
 }
 
-/** True for a record schema or a schema registry response. */
+/** True for a record schema with a `fields` list, or a schema registry response. */
 function accepts(input: ReaderInput): boolean {
   if (registryResponse(input) !== undefined) return true;
   const parsed = jsonOf(input);
@@ -22,7 +22,8 @@ function accepts(input: ReaderInput): boolean {
     parsed !== undefined &&
     !("refused" in parsed) &&
     isRecord(parsed.value) &&
-    parsed.value.type === "record"
+    parsed.value.type === "record" &&
+    Array.isArray(parsed.value.fields)
   );
 }
 

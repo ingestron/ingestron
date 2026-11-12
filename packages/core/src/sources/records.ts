@@ -61,3 +61,6 @@ export function documentOf(input: ReaderInput): ParseResult | undefined {
   const extension = extensionOf(input.file);
   return extension === ".yaml" || extension === ".yml" ? input.yaml() : jsonOf(input);
 }
+
+/** The deepest level of nested fields a table gets in full; fields below it have no nested fields. */
+export const maxNesting = 16;

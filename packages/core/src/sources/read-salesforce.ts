@@ -18,6 +18,23 @@ function describeOf(input: ReaderInput): { value: Data } | { refused: string[] }
     : undefined;
 }
 
+/** A number above zero, or undefined. */
+function positive(value: unknown): number | undefined {
+  return typeof value === "number" && value > 0 ? value : undefined;
+}
+
+/**
+ * The options a string or a number gets from the field: its `length` as `maxLength`, or its
+ * `precision` and `scale`. An option the recipe's rule already gave is kept.
+ */
+function fieldOptions(field: Data, logicalType: string): Record<string, unknown> {
+  const length = positive(field.length);
+  const precision = positive(field.precision);
+  if (logicalType === "string" && length !== undefined) return { maxLength: length };
+  if (logicalType !== "number" || precision === undefined) return {};
+  return { precision, scale: typeof field.scale === "number" ? field.scale : 0 };
+}
+
 /** The column a field is: typed through the recipe, else the generic map, else string with a note. */
 function columnOf(
   field: Data & { name: string },
@@ -29,11 +46,13 @@ function columnOf(
   const known = sourceType === undefined ? undefined : logicalTypeOf(sourceType, recipe);
   if (sourceType !== undefined && known === undefined)
     notes.push(unknownTypeNote(sourceType, object, field.name));
+  const logicalType = known?.logicalType ?? "string";
+  const options = { ...fieldOptions(field, logicalType), ...known?.logicalTypeOptions };
   return {
     name: field.name,
     ...(sourceType !== undefined && { sourceType }),
-    logicalType: known?.logicalType ?? "string",
-    ...(known?.logicalTypeOptions && { logicalTypeOptions: known.logicalTypeOptions }),
+    logicalType,
+    ...(Object.keys(options).length > 0 && { logicalTypeOptions: options }),
     required: field.nillable === false,
   };
 }

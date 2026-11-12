@@ -73,14 +73,54 @@ export interface XmlNode {
 /** An XML file's top-level nodes, or the refusal saying where parsing stopped. */
 export type XmlResult = { value: XmlNode[] } | Refused;
 
-const markup = /<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<\?[\s\S]*?\?>|<![^>]*>/g;
-const tags = /<(\/?)[^\s/>]+((?:[^>"']|"[^"]*"|'[^']*')*)>/g;
+const markup: [string, string][] = [
+  ["<!--", "-->"],
+  ["<![CDATA[", "]]>"],
+  ["<?", "?>"],
+  ["<!", ">"],
+];
 
-/** True when every start tag is closed by the end of the text, which the parser does not check. */
+/** The index after the comment, CDATA section, instruction or declaration at `at`; -1 when it never ends; undefined for a tag. */
+function skipMarkup(text: string, at: number): number | undefined {
+  for (const [start, end] of markup) {
+    if (!text.startsWith(start, at)) continue;
+    const found = text.indexOf(end, at + start.length);
+    return found < 0 ? -1 : found + end.length;
+  }
+  return undefined;
+}
+
+/** The index after the tag at `at`; -1 when a `<` or the end of the text comes first. A quoted value may hold `>` or `<`. */
+function tagEnd(text: string, at: number): number {
+  let index = at + 1;
+  while (index < text.length) {
+    const char = text[index]!;
+    if (char === ">") return index + 1;
+    if (char === "<") return -1;
+    if (char === '"' || char === "'") {
+      const close = text.indexOf(char, index + 1);
+      if (close < 0) return -1;
+      index = close + 1;
+    } else index++;
+  }
+  return -1;
+}
+
+/**
+ * True when every start tag is closed by the end of the text and no `<` stands inside a tag, which
+ * the parser does not check. One pass over the text: each part of it is looked at once.
+ */
 function closesEveryTag(text: string): boolean {
   let open = 0;
-  for (const [, close, rest = ""] of text.replace(markup, "").matchAll(tags))
-    open += close ? -1 : rest.endsWith("/") ? 0 : 1;
+  let at = text.indexOf("<");
+  while (at >= 0) {
+    const skipped = skipMarkup(text, at);
+    const end = skipped ?? tagEnd(text, at);
+    if (end < 0) return false;
+    if (skipped === undefined) open += text[at + 1] === "/" ? -1 : text[end - 2] === "/" ? 0 : 1;
+    if (open < 0) return false;
+    at = text.indexOf("<", end);
+  }
   return open === 0;
 }
 

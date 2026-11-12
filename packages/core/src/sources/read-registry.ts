@@ -12,7 +12,8 @@ export function registryResponse(input: ReaderInput): Record<string, unknown> | 
   const parsed = jsonOf(input);
   if (parsed === undefined || "refused" in parsed) return undefined;
   const { value } = parsed;
-  return isRecord(value) && typeof value.schema === "string" ? value : undefined;
+  const keyed = isRecord(value) && ["subject", "id", "version"].some((key) => key in value);
+  return keyed && typeof value.schema === "string" ? value : undefined;
 }
 
 /** The table's name when the import gives none: the file's name without its last extension. */

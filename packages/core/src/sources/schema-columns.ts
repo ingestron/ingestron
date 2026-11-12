@@ -2,7 +2,7 @@
 // (spec/cli/sources.md, section 2.4). Only the schema's shape is read: no `enum`, `default`,
 // `example` or other keyword that could hold a value of the data.
 import type { SourceColumnDoc } from "@ingestron/definitions";
-import { isRecord } from "./records.js";
+import { isRecord, maxNesting } from "./records.js";
 import type { Outcome } from "./result.js";
 import { itemsName } from "./sample-columns.js";
 
@@ -44,22 +44,30 @@ function typeOf(schema: Data): string | undefined {
   return isRecord(schema.items) ? "array" : undefined;
 }
 
-/** The schema a node is, after following its `$ref`s, and the refs followed on the way. */
-function resolve(
-  node: unknown,
-  root: unknown,
-  trail: string[],
-): { schema: Data; trail: string[]; repeated: boolean } {
+/** The schema a node is after following its `$ref`s, and the name its first `$ref` gives it. */
+function resolve(node: unknown, root: unknown): { schema: Data; name?: string } {
   let schema = isRecord(node) ? node : {};
-  let followed = trail;
+  const followed: string[] = [];
   while (typeof schema.$ref === "string") {
     if (followed.includes(schema.$ref))
-      return { schema: { type: "object" }, trail, repeated: true };
-    followed = [...followed, schema.$ref];
+      return { schema: { type: "object" }, name: nameOf(followed) };
+    followed.push(schema.$ref);
     const target = pointerTarget(root, schema.$ref);
     schema = isRecord(target) ? target : {};
   }
-  return { schema, trail: followed, repeated: false };
+  return { schema, ...(followed.length > 0 && { name: nameOf(followed) }) };
+}
+
+/** The last part of the first `$ref` followed, such as `Address`. */
+function nameOf(followed: string[]): string {
+  const ref = followed[0]!;
+  return ref.slice(ref.lastIndexOf("/") + 1);
+}
+
+/** What reading one table needs: the document, and the schemas reached by `$ref` already written in full. */
+interface Walk {
+  root: unknown;
+  expanded: Set<Data>;
 }
 
 /** The logical type of a schema that is not an object or an array. */
@@ -74,38 +82,46 @@ function scalarOf(type: string | undefined, format: string | undefined, schema: 
   };
 }
 
-/** The properties of an object schema, or the items of an array schema. */
+/**
+ * The properties of an object schema, or the items of an array schema. A schema reached by `$ref`
+ * is written in full once per table, and nothing is written below the deepest level; each other
+ * use is bare, with the `$ref`'s name as its source type.
+ */
 function nestedOf(
-  type: string | undefined,
+  type: "object" | "array",
   schema: Data,
-  repeated: boolean,
-  root: unknown,
-  trail: string[],
-): Pick<SourceColumnDoc, "logicalType" | "properties" | "items"> | undefined {
-  if (type === "object") {
-    const properties = repeated ? [] : columnsOf(schema.properties, schema.required, root, trail);
-    return { logicalType: "object", ...(properties.length > 0 && { properties }) };
-  }
-  if (type !== "array") return undefined;
-  return {
-    logicalType: "array",
-    ...(isRecord(schema.items) && {
-      items: columnOf(itemsName, schema.items, false, root, trail),
-    }),
-  };
+  name: string | undefined,
+  walk: Walk,
+  depth: number,
+): Pick<SourceColumnDoc, "logicalType" | "sourceType" | "properties" | "items"> {
+  if ((name !== undefined && walk.expanded.has(schema)) || depth >= maxNesting)
+    return { logicalType: type, ...(name !== undefined && { sourceType: name }) };
+  if (name !== undefined) walk.expanded.add(schema);
+  if (type === "array")
+    return {
+      logicalType: "array",
+      ...(isRecord(schema.items) && {
+        items: columnOf(itemsName, schema.items, false, walk, depth + 1),
+      }),
+    };
+  const properties = columnsOf(schema.properties, schema.required, walk, depth + 1);
+  return { logicalType: "object", ...(properties.length > 0 && { properties }) };
 }
 
 function columnOf(
   name: string,
   node: unknown,
   required: boolean,
-  root: unknown,
-  trail: string[],
+  walk: Walk,
+  depth: number,
 ): SourceColumnDoc {
-  const { schema, trail: followed, repeated } = resolve(node, root, trail);
+  const { schema, name: refName } = resolve(node, walk.root);
   const type = typeOf(schema);
   const format = typeof schema.format === "string" ? schema.format : undefined;
-  const shape = nestedOf(type, schema, repeated, root, followed) ?? scalarOf(type, format, schema);
+  const shape =
+    type === "object" || type === "array"
+      ? nestedOf(type, schema, refName, walk, depth)
+      : scalarOf(type, format, schema);
   return {
     name,
     ...(type !== undefined && { sourceType: format === undefined ? type : `${type}(${format})` }),
@@ -115,17 +131,22 @@ function columnOf(
 }
 
 /** The columns of a schema's `properties`, each required when `required` lists it. */
-export function columnsOf(
+function columnsOf(
   properties: unknown,
   required: unknown,
-  root: unknown,
-  trail: string[],
+  walk: Walk,
+  depth: number,
 ): SourceColumnDoc[] {
   if (!isRecord(properties)) return [];
   const names = Array.isArray(required) ? required : [];
   return Object.entries(properties).map(([name, schema]) =>
-    columnOf(name, schema, names.includes(name), root, trail),
+    columnOf(name, schema, names.includes(name), walk, depth),
   );
+}
+
+/** The columns of a table: the schema's `properties`, in the document `root` that its `$ref`s name. */
+export function tableColumns(schema: Data, root: unknown): SourceColumnDoc[] {
+  return columnsOf(schema.properties, schema.required, { root, expanded: new Set([schema]) }, 0);
 }
 
 /** True for a schema that is an object with at least one property. */
@@ -134,7 +155,7 @@ export function describesProperties(schema: unknown): schema is Data {
     isRecord(schema) &&
     isRecord(schema.properties) &&
     Object.keys(schema.properties).length > 0 &&
-    (schema.type === undefined || schema.type === "object")
+    typeOf(schema) === "object"
   );
 }
 
@@ -142,8 +163,5 @@ export function describesProperties(schema: unknown): schema is Data {
 export function schemaOutcome(file: string, object: string, schema: Data): Outcome {
   if (!isRecord(schema.properties) || Object.keys(schema.properties).length === 0)
     return { refused: [`${file} describes no properties.`] };
-  return {
-    tables: [{ object, columns: columnsOf(schema.properties, schema.required, schema, []) }],
-    notes: [],
-  };
+  return { tables: [{ object, columns: tableColumns(schema, schema) }], notes: [] };
 }

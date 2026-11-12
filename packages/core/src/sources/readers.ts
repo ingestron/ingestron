@@ -23,11 +23,13 @@ export const readers: Record<SourceReaderName, Reader> = {
   "salesforce-describe": salesforceReader,
 };
 
-/** The readers of documents a source publishes, in the order section 2.5 tries them. */
+/**
+ * The readers of documents a source publishes that are read by their content, in the order section
+ * 2.5 tries them. A Salesforce describe is read only as the connection's recipe reader.
+ */
 export const documentReaders: readonly SourceReaderName[] = [
   "odata",
   "openapi",
   "json-schema",
   "avro",
-  "salesforce-describe",
 ];

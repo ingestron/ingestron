@@ -1,17 +1,23 @@
 // The table of an Avro record schema (spec/cli/sources.md, section 2.4). Only the schema's shape is
 // read: a field's `default`, `doc` and every other keyword that could hold a value are not.
 import type { SourceColumnDoc } from "@ingestron/definitions";
-import { isRecord } from "./records.js";
+import { isRecord, maxNesting } from "./records.js";
 import type { Outcome } from "./result.js";
 import { itemsName } from "./sample-columns.js";
 
 type Data = Record<string, unknown>;
 
-/** What reading a column needs besides the column: its table, the notes and the named types. */
-interface Context {
+/** The named types of a schema: each by its full name, with the namespace it is in. */
+interface Names {
+  named: Map<string, Data>;
+  spaces: Map<Data, string>;
+}
+
+/** What reading a column needs besides the column: its table, the notes, the named types and the records already written in full. */
+interface Context extends Names {
   object: string;
   notes: string[];
-  named: Map<string, Data>;
+  expanded: Set<Data>;
 }
 
 const byKind: Record<string, string> = {
@@ -32,23 +38,34 @@ function byLogical(logical: string): string | undefined {
   return /^time-/.test(logical) ? "time" : undefined;
 }
 
-/** Every record, enum and fixed the schema defines, by name and by full name. */
-function collectNamed(node: unknown, named: Map<string, Data>): void {
+/** The namespace and full name of a named type found in namespace `space`. */
+function fullNameOf(node: Data, space: string): { space: string; full: string } {
+  const name = node.name as string;
+  const dot = name.lastIndexOf(".");
+  const own = typeof node.namespace === "string" ? node.namespace : space;
+  const inside = dot >= 0 ? name.slice(0, dot) : own;
+  return { space: inside, full: dot >= 0 || inside === "" ? name : `${inside}.${name}` };
+}
+
+/** Every record, enum and fixed the schema defines, wherever it is: fields, items, map values and unions. */
+function collectNamed(node: unknown, space: string, names: Names): void {
   if (Array.isArray(node)) {
-    for (const branch of node) collectNamed(branch, named);
-  } else if (isRecord(node)) {
-    if (
-      ["record", "enum", "fixed"].includes(node.type as string) &&
-      typeof node.name === "string"
-    ) {
-      named.set(node.name, node);
-      if (typeof node.namespace === "string") named.set(`${node.namespace}.${node.name}`, node);
-    }
-    collectNamed(node.type, named);
-    collectNamed(node.items, named);
-    for (const field of Array.isArray(node.fields) ? node.fields : [])
-      if (isRecord(field)) collectNamed(field.type, named);
+    for (const branch of node) collectNamed(branch, space, names);
+    return;
   }
+  if (!isRecord(node)) return;
+  let inside = space;
+  if (["record", "enum", "fixed"].includes(node.type as string) && typeof node.name === "string") {
+    const found = fullNameOf(node, space);
+    inside = found.space;
+    names.named.set(found.full, node);
+    names.spaces.set(node, inside);
+  }
+  collectNamed(node.type, inside, names);
+  collectNamed(node.items, inside, names);
+  collectNamed(node.values, inside, names);
+  for (const field of Array.isArray(node.fields) ? node.fields : [])
+    if (isRecord(field)) collectNamed(field.type, inside, names);
 }
 
 /** The type name that stands for a branch of a union, in a note. */
@@ -61,12 +78,22 @@ function nameOf(branch: unknown): string {
 const isNull = (branch: unknown): boolean =>
   branch === "null" || (isRecord(branch) && branch.type === "null");
 
-/** The type a field gives, with a nested `{"type": ...}` and a name that refers to a record followed. */
-function definition(type: unknown, context: Context): Data | string {
+/** The named type a reference means: looked up in `space`, then without a namespace. */
+function lookup(name: string, space: string, names: Names): Data | undefined {
+  const qualified = name.includes(".") || space === "" ? name : `${space}.${name}`;
+  return names.named.get(qualified) ?? names.named.get(name);
+}
+
+/**
+ * The type a field gives, with a nested `{"type": ...}` followed and a name that refers to a record
+ * looked up in the namespace of the record `scope` that holds the field.
+ */
+function definition(type: unknown, context: Context, scope: Data): Data | string {
   let current = type;
   while (isRecord(current) && (isRecord(current.type) || Array.isArray(current.type)))
     current = current.type;
-  if (typeof current === "string") return context.named.get(current) ?? current;
+  if (typeof current === "string")
+    return lookup(current, context.spaces.get(scope) ?? "", context) ?? current;
   return isRecord(current) ? current : "string";
 }
 
@@ -91,17 +118,26 @@ function describe(shape: Data | string): Omit<SourceColumnDoc, "name" | "require
   };
 }
 
-/** The properties of a record, or the items of an array, with a record that repeats left bare. */
+/**
+ * The properties of a record, or the items of an array. A record is written in full once per
+ * table, and nothing is written below the deepest level; each other use is bare, with the record's
+ * name as its source type.
+ */
 function nestedOf(
   shape: Data,
   context: Context,
   path: string[],
-  trail: Data[],
-): Pick<SourceColumnDoc, "properties" | "items"> {
+  depth: number,
+  scope: Data,
+): Pick<SourceColumnDoc, "sourceType" | "properties" | "items"> {
   if (shape.type === "array")
-    return { items: columnOf(itemsName, shape.items, context, [...path, itemsName], trail) };
-  if (shape.type !== "record" || trail.includes(shape)) return {};
-  const properties = fieldsOf(shape, context, path, [...trail, shape]);
+    return {
+      items: columnOf(itemsName, shape.items, context, [...path, itemsName], depth + 1, scope),
+    };
+  if (shape.type !== "record") return {};
+  if (context.expanded.has(shape) || depth >= maxNesting) return { sourceType: String(shape.name) };
+  context.expanded.add(shape);
+  const properties = fieldsOf(shape, context, path, depth + 1);
   return properties.length > 0 ? { properties } : {};
 }
 
@@ -110,7 +146,8 @@ function columnOf(
   type: unknown,
   context: Context,
   path: string[],
-  trail: Data[],
+  depth: number,
+  scope: Data,
 ): SourceColumnDoc {
   const branches = Array.isArray(type) ? type : [type];
   const others = branches.filter((branch) => !isNull(branch));
@@ -122,21 +159,22 @@ function columnOf(
     );
     return { name, sourceType: "union", logicalType: "string", required };
   }
-  const shape = definition(others[0] ?? "null", context);
-  const nested = typeof shape === "string" ? {} : nestedOf(shape, context, path, trail);
+  const shape = definition(others[0] ?? "null", context, scope);
+  const nested = typeof shape === "string" ? {} : nestedOf(shape, context, path, depth, scope);
   return { name, ...describe(shape), required, ...nested };
 }
 
+/** The columns of a record's fields, at nesting level `depth`. */
 function fieldsOf(
   record: Data,
   context: Context,
   parents: string[],
-  trail: Data[],
+  depth: number,
 ): SourceColumnDoc[] {
   const fields = Array.isArray(record.fields) ? record.fields.filter(isRecord) : [];
   return fields.flatMap((field) =>
     typeof field.name === "string"
-      ? [columnOf(field.name, field.type, context, [...parents, field.name], trail)]
+      ? [columnOf(field.name, field.type, context, [...parents, field.name], depth, record)]
       : [],
   );
 }
@@ -148,16 +186,16 @@ export function avroOutcome(file: string, schema: unknown, object: string | unde
     schema.type !== "record" ||
     (object === undefined && typeof schema.name !== "string")
   )
-    return {
-      refused: [`${file} is not an Avro schema: its top-level type is not record.`],
-    };
+    return { refused: [`${file} is not an Avro schema: its top-level type is not record.`] };
   const context: Context = {
     object: object ?? (schema.name as string),
     notes: [],
     named: new Map(),
+    spaces: new Map(),
+    expanded: new Set([schema]),
   };
-  collectNamed(schema, context.named);
-  const columns = fieldsOf(schema, context, [], [schema]);
+  collectNamed(schema, "", context);
+  const columns = fieldsOf(schema, context, [], 0);
   if (columns.length === 0) return { refused: [`${file} describes no fields.`] };
   return { tables: [{ object: context.object, columns }], notes: context.notes };
 }
