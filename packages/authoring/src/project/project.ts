@@ -143,6 +143,8 @@ function resolve(
     envvars,
     missingEnvvars: "information",
     environmentsTogether: true,
+    // Each flow table with its source metadata entry, for completion and hovers; nothing else changes.
+    sourceTables: true,
   });
 }
 

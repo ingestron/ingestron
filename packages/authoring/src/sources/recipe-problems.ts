@@ -144,6 +144,11 @@ function catalogOf(project: Project): Catalog {
   return catalog;
 }
 
+/** The project's recipes by id, read once per snapshot; undefined while any recipe is broken. */
+export function catalogRecipes(project: Project): Map<string, SourceRecipe> | undefined {
+  return catalogOf(project).recipes;
+}
+
 /** The recipe problems of every connection in the project, for the environment. */
 export function recipeProblems(project: Project, environment: string | undefined): RecipeProblem[] {
   const { broken, recipes } = catalogOf(project);
