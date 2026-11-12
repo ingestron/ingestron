@@ -832,6 +832,193 @@
       "forbidden": ["ZZ-SECRET-42", "ZZ-OTHER"]
     },
     {
+      "name": "JSON sample: nested records that share a key keep the union of their keys as fields, none required",
+      "file": "sources/landing/address.json",
+      "input": "nested-optional.json",
+      "object": "customers",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "customers",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "address",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "city",
+                    "logicalType": "string",
+                    "required": false
+                  },
+                  {
+                    "name": "zip",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42", "ZZ-SECRET-43", "ZZ-SECRET-44", "ZZ-OTHER-1", "ZZ-OTHER-2"]
+    },
+    {
+      "name": "JSON sample: nested records with no key in common are a dictionary, written without properties",
+      "file": "sources/landing/stock.json",
+      "input": "nested-disjoint.json",
+      "object": "stock",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "stock",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "stock",
+                "logicalType": "object",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["alpha", "beta", "gamma", "delta"]
+    },
+    {
+      "name": "JSON sample: nested records whose keys each appear in only one record are a dictionary, written without properties",
+      "file": "sources/landing/seen.json",
+      "input": "nested-single-use.json",
+      "object": "seen",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "seen",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "stock",
+                "logicalType": "object",
+                "required": false
+              },
+              {
+                "name": "seen",
+                "logicalType": "object",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["common", "only-first", "only-second", "scarlet", "emerald", "indigo"]
+    },
+    {
+      "name": "JSON sample: nested records keyed by dates, numbers, ids or other characters are dictionaries, written without properties",
+      "file": "sources/landing/keyed.json",
+      "input": "nested-data-keys.json",
+      "object": "keyed",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "keyed",
+            "columns": [
+              {
+                "name": "byDay",
+                "logicalType": "object",
+                "required": false
+              },
+              {
+                "name": "byCode",
+                "logicalType": "object",
+                "required": false
+              },
+              {
+                "name": "byId",
+                "logicalType": "object",
+                "required": false
+              },
+              {
+                "name": "byPath",
+                "logicalType": "object",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": [
+        "2026-01-01",
+        "2026-01-02",
+        "100",
+        "200",
+        "3.5",
+        "0F8FAD5B",
+        "6ba7b810",
+        "north/east",
+        "south/west"
+      ]
+    },
+    {
+      "name": "JSON sample: a nested record with more than 100 different keys is a dictionary, written without properties",
+      "file": "sources/landing/wide.json",
+      "input": "nested-wide.json",
+      "object": "wide",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "wide",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "wide",
+                "logicalType": "object",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["key001", "key050", "key101"]
+    },
+    {
       "name": "JSON sample: a nested record with the same keys in every record, in any order, keeps its properties",
       "file": "sources/landing/people.json",
       "input": "same-keys.json",
@@ -1475,7 +1662,7 @@
       "object": "h",
       "connection": "shop",
       "refused": [
-        "sources/shop/h.csv has no header row: every field of its first line is a number, a date, a timestamp or a boolean."
+        "sources/shop/h.csv has no header row: the first line has 3 fields, 3 of them numbers or dates."
       ],
       "forbidden": ["2.5", "2026-01-01"]
     },
@@ -1786,6 +1973,70 @@
           "Type \"geography\" of shop.orders.place is not known; read as string.",
           "Type \"polygon\" of customers.extra.shape is not known; read as string."
         ]
+      }
+    },
+    {
+      "name": "an ODCS contract: key places count only properties with primaryKey, in each list of properties by itself",
+      "file": "sources/keyed.odcs.yaml",
+      "input": "keyed.odcs.yaml",
+      "expected": {
+        "reader": "odcs",
+        "from": "document",
+        "tables": [
+          {
+            "object": "events",
+            "columns": [
+              {
+                "name": "stray",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "day",
+                "logicalType": "date",
+                "required": false,
+                "primaryKeyPosition": 2
+              },
+              {
+                "name": "parts",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "stray",
+                    "logicalType": "integer",
+                    "required": false
+                  },
+                  {
+                    "name": "first",
+                    "logicalType": "string",
+                    "required": false,
+                    "primaryKeyPosition": 5
+                  },
+                  {
+                    "name": "second",
+                    "logicalType": "string",
+                    "required": false,
+                    "primaryKeyPosition": 4
+                  },
+                  {
+                    "name": "third",
+                    "logicalType": "string",
+                    "required": false,
+                    "primaryKeyPosition": 6
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": []
       }
     },
     {
@@ -2901,6 +3152,25 @@
       "input": "other.xml",
       "refused": [
         "sources/other.xml is not a file Ingestron reads: a columns file, an ODCS contract, OData CSDL, OpenAPI, JSON Schema, Avro, a schema registry response, a Salesforce describe, or a sample ending .csv, .json, .jsonl, .ndjson or .parquet."
+      ],
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a name rule's OData file whose root is Edmx outside the EDMX namespaces is refused",
+      "file": "sources/shop.catalog.xml",
+      "input": "edmx-elsewhere.xml",
+      "refused": [
+        "sources/shop.catalog.xml is not an OData CSDL document: its root element is not Edmx."
+      ],
+      "forbidden": ["ZZ-SECRET-42"],
+      "recipe": "odata"
+    },
+    {
+      "name": "XML whose root is Edmx outside the EDMX namespaces is not a file Ingestron reads",
+      "file": "sources/elsewhere.xml",
+      "input": "edmx-elsewhere.xml",
+      "refused": [
+        "sources/elsewhere.xml is not a file Ingestron reads: a columns file, an ODCS contract, OData CSDL, OpenAPI, JSON Schema, Avro, a schema registry response, a Salesforce describe, or a sample ending .csv, .json, .jsonl, .ndjson or .parquet."
       ],
       "forbidden": ["ZZ-SECRET-42"]
     },
@@ -4424,6 +4694,12 @@
         ],
         "notes": []
       }
+    },
+    {
+      "name": "a CSDL type with more than 16 base types is refused as nested too deeply",
+      "file": "sources/chain.xml",
+      "input": "deep-bases.csdl.xml",
+      "refused": ["sources/chain.xml is nested too deeply to read."]
     },
     {
       "name": "a CSDL document is read by content only when its name ends .xml or .edmx",

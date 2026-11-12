@@ -1,0 +1,18 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: keyed
+version: 1.0.0
+status: active
+schema:
+  - name: events
+    properties:
+      - { name: stray, logicalType: integer, primaryKeyPosition: 5 }
+      - { name: id, logicalType: integer, primaryKey: true }
+      - { name: day, logicalType: date, primaryKey: true }
+      - name: parts
+        logicalType: object
+        properties:
+          - { name: stray, logicalType: integer, primaryKeyPosition: 7 }
+          - { name: first, logicalType: string, primaryKey: true }
+          - { name: second, logicalType: string, primaryKey: true, primaryKeyPosition: 4 }
+          - { name: third, logicalType: string, primaryKey: true }

@@ -244,7 +244,8 @@ or an empty one, and an Avro field, a JSON Schema or OpenAPI property, a
 Salesforce field, an ODCS property or a Parquet field whose name is empty.
 
 A file nested too deeply for a reader to walk is refused, without quoting it:
-`<file> is nested too deeply to read.`
+`<file> is nested too deeply to read.` So is a CSDL document that has an entity
+or complex type with more than 16 base types, one inside the next.
 
 When the recipe that reads a file gives `columnNames` (section 1), the reader
 applies it to the name of each column of each table it reads, once all the
@@ -372,12 +373,13 @@ by the import (section 3).
   `<file> has no header row: <found>.` with `<found>` the text
   `the first line has <n> fields, <m> of them numbers or dates`, where `<n>`
   is the number of fields of the first line, empty ones included, and `<m>`
-  the number of them that are such a number, date, timestamp or boolean.
-  `fields` is `field` when `<n>` is 1. The message gives two counts and never
-  a name or a value of the line, since a file without a header has data
-  there. So `region,2023,2024` is a header. The test cannot tell a headerless
-  file whose first line holds some text from a header: its values become
-  column names, which is the rule of this section.
+  the number of them that are such a number, date, timestamp or boolean. When
+  `<n>` is 1 it is `the first line has 1 field, which is a number or a date`,
+  or `the first line has 1 field, which is empty`. The message gives counts
+  and never a name or a value of the line, since a file without a header has
+  data there. So `region,2023,2024` is a header. The test cannot tell a
+  headerless file whose first line holds some text from a header: its values
+  become column names, which is the rule of this section.
 - **JSON** is a list of records, or one record. With the recipe's `rows`, the
   records are the list at that path, so a saved API response that wraps its
   records, such as `{ "value": [...] }`, is read through its recipe.
@@ -407,8 +409,7 @@ Then the fields are the keys found in any of the records, in the order first
 found, and their types are merged as the types of the columns of the table
 are, from every record that has the key. A key that some of the records leave
 out is a field like any other, and none of the fields is `required` (every
-column of a sample is `required: false`). Records with some keys in common
-therefore give the union of their keys.
+column of a sample is `required: false`).
 
 Otherwise the keys are data, such as counts by customer code or by date, as
 when each record has its own keys: the column is `object` without
@@ -465,8 +466,11 @@ Each entry of `schema` is a table: its `object` is the entry's
 - `primaryKeyPosition` is the property's, for a property with
   `primaryKey: true` and a whole `primaryKeyPosition` from 1. A property with
   `primaryKey: true` and none takes the next positions, in the order of the
-  properties, counting from one more than the highest position the properties
-  of its table give (from 1 when none gives one);
+  properties, counting from one more than the highest position that the
+  properties with `primaryKey: true` give (from 1 when none gives one). Each
+  list of properties, a table's or one nested in a property, is numbered by
+  itself, and a `primaryKeyPosition` on a property without
+  `primaryKey: true` is ignored;
 - `sourceType` is the property's `physicalType`, when it has one;
 - nested `properties` and `items` are read the same way.
 
@@ -477,10 +481,13 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
 
 ### 2.4 Documents a source publishes
 
-- **OData** (`odata`): a CSDL document, XML whose root element is `Edmx`. A
-  file is read as OData by its content only when its name ends `.xml` or
-  `.edmx`; any other file is read as OData only as the reader of the
-  connection's recipe, or by the `.catalog.` name rule (section 2.5). Each
+- **OData** (`odata`): a CSDL document, XML whose root element is `Edmx` in an
+  EDMX namespace, `http://docs.oasis-open.org/odata/ns/edmx` (OData 4) or
+  `http://schemas.microsoft.com/ado/2007/06/edmx` (OData 2 and 3), whatever
+  prefix it is written with. A file is read as OData by its content only when
+  its name ends `.xml` or `.edmx`; any other file is read as OData only as the
+  reader of the connection's recipe, or by the `.catalog.` name rule
+  (section 2.5). Each
   entity set is a table named after the set, or, with the recipe's
   `objects: types`, each entity type that is not abstract (`Abstract="true"`)
   is a table named after the type. Each

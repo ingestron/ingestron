@@ -51,7 +51,7 @@ describe("readSourceFile: a type that is shared is written once per table", () =
         ? `<ComplexType Name="T24"><Property Name="a" Type="Edm.String"/></ComplexType>`
         : `<ComplexType Name="T${at}"><Property Name="a" Type="N.T${at + 1}"/><Property Name="b" Type="N.T${at + 1}"/></ComplexType>`,
     );
-    const csdl = `<edmx:Edmx xmlns:edmx="x"><edmx:DataServices><Schema Namespace="N">
+    const csdl = `<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"><edmx:DataServices><Schema Namespace="N">
       <EntityType Name="E"><Key><PropertyRef Name="Id"/></Key><Property Name="Id" Type="Edm.Int32"/><Property Name="t" Type="N.T0"/></EntityType>
       ${types.join("")}
       <EntityContainer Name="C"><EntitySet Name="Es" EntityType="N.E"/></EntityContainer>

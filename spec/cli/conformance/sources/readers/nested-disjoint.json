@@ -1,0 +1,4 @@
+[
+  { "id": 1, "stock": { "alpha": 1, "beta": 2 } },
+  { "id": 2, "stock": { "gamma": 3, "delta": 4 } }
+]

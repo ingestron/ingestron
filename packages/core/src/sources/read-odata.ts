@@ -139,12 +139,26 @@ function tableOf(object: string, type: XmlNode, model: Model): SourceTableRead {
   return { object, columns };
 }
 
+/** The namespaces of the EDMX envelope: OData 4's, and OData 2's and 3's. */
+const edmxNamespaces = [
+  "http://docs.oasis-open.org/odata/ns/edmx",
+  "http://schemas.microsoft.com/ado/2007/06/edmx",
+];
+
+/** True for an `Edmx` element whose prefix, or default namespace, is an EDMX namespace. */
+function isEdmx(node: XmlNode): boolean {
+  if (localName(node) !== "Edmx") return false;
+  const colon = node.tagName.indexOf(":");
+  const declared = attributeOf(node, colon < 0 ? "xmlns" : `xmlns:${node.tagName.slice(0, colon)}`);
+  return declared !== undefined && edmxNamespaces.includes(declared);
+}
+
 /** The document's root element, undefined when the file has none. */
 function rootOf(input: ReaderInput): XmlNode | { refused: string[] } {
   const parsed = input.xml();
   if ("refused" in parsed) return parsed;
   const root = parsed.value.find((node) => !/^[?!]/.test(node.tagName));
-  return root !== undefined && localName(root) === "Edmx"
+  return root !== undefined && isEdmx(root)
     ? root
     : {
         refused: [`${input.file} is not an OData CSDL document: its root element is not Edmx.`],
