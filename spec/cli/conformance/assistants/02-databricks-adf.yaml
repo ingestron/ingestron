@@ -1,0 +1,80 @@
+description: "Databricks and ADF: both packs, each action's allowed methods, its fixed settings with their values, and the top-level fixed keys. CLAUDE.md and the Copilot file are written whole."
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [databricks@2, adf@2]
+    ingest:
+      allowed: [adf-copy, files]
+    store:
+      allowed: [streaming-table]
+      fixed:
+        streaming-table: { cluster_by: auto }
+    fixed: { history: latest }
+command: assistant
+args: ["add", "claude,copilot"]
+expect:
+  exit: 0
+  lines:
+    - "AGENTS.md: written"
+    - "CLAUDE.md: written"
+    - ".github/copilot-instructions.md: written"
+  contains:
+    AGENTS.md:
+      - |
+        <!-- ingestron:begin guide 1. Ingestron writes this section and `ingestron apply` keeps it current. Write your own notes outside it, or delete both markers to make it yours. -->
+        # Working on this Ingestron project
+
+        This folder holds Ingestron definitions: YAML that generates the files the data platform deploys. Ingestron runs on this computer; it never connects to a source or a cloud.
+
+        ## This project
+
+        - Project `retail`. Environments: `dev`, `prod` (`project.yaml`).
+        - Standard `acme` in `standard.yaml`. Packs: `databricks@2`, `adf@2`.
+        - Definitions: the files `project.yaml` imports: `*.yaml`.
+        - Generated, one folder per pack: `build/databricks/` (every environment together), `build/adf/` (every environment together).
+
+        ## Rules
+
+        1. Change the definitions, never `build/`. Ingestron records each generated file in `.generated.json` and reports a hand edit as a conflict.
+        2. After a change, run `ingestron plan`. Fix every problem it reports, then show the user the plan before running `ingestron apply`. Then `ingestron check` must pass; CI should run it.
+        3. Work inside the standard. Do not edit `standard.yaml` to clear a problem; tell the user what the platform team would need to change.
+           - `ingest` allows `adf-copy`, `files`.
+           - `store` allows `streaming-table`.
+           - `store` fixes, for `streaming-table`: `cluster_by: auto`.
+           - Fixed for every table: `history`.
+        4. A value written `REPLACE_ME` is one only a person can give. Ask the user for it; never invent one. `ingestron check` fails while any is left.
+        5. Look settings up; do not guess. Each method's settings, types and defaults: https://docs.ingestron.io/docs/reference/packs, or run `ingestron schemas` and read `.ingestron/schemas/`. Error codes: https://docs.ingestron.io/docs/reference/errors.
+        6. Never write a password, token, key or connection string in any file. Use `${secret:name}` for a credential.
+        7. Values written `${envvar:NAME}` are not secrets. The `databricks@2` and `adf@2` output keeps them as values the deploying pipeline supplies. Do not read, print or commit `.env` files. `ingestron request` lists the values each environment needs. This project uses none.
+        8. Environments differ only in values, under `environments.<name>.values` in `project.yaml`. `plan`, `apply` and `check` always cover every environment; `ingestron compare --env <a> --env <b>` shows what differs.
+
+        ## Commands
+
+        - `ingestron plan`: problems and changes, with diffs. Writes nothing.
+        - `ingestron apply`: writes `build/`; never overwrites a hand edit.
+        - `ingestron check`: fails when `build/` is out of date. Writes nothing.
+        - `ingestron compare --env <a> --env <b>`: what differs after resolving.
+        - `ingestron request --env <name>`: what the platform team must provide.
+        - `ingestron contract <sample>`: drafts a contract from a CSV or JSON sample.
+        <!-- ingestron:end sha256:51a709fec785669226eb6113484c297df43fb1beb072e6764fe1dea8db483133 -->
+    CLAUDE.md:
+      - |
+        <!-- Ingestron: the project guide is in AGENTS.md. -->
+        @AGENTS.md
+    .github/copilot-instructions.md:
+      - |
+        See [AGENTS.md](../AGENTS.md) for this Ingestron project.
+
+        - Change the definitions, never the generated files: Ingestron reports a hand edit there as a conflict.
+        - After a change, follow AGENTS.md: run its plan command, fix every problem it reports, and show the user the plan before applying. Its check command must then pass.
+        - Never write a password, token, key or connection string in any file. Use `${secret:name}` for a credential.
+  absent:
+    AGENTS.md:
+      - "DuckDB reads them"
+      - "## Source metadata"

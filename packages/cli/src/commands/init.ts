@@ -5,6 +5,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { basename, join, relative, resolve } from "node:path";
 import { parse } from "yaml";
 import type { Options } from "../terminal/index.js";
+import { chosenAssistants, writeAssistantFiles } from "./assistant.js";
 import { generate } from "./generate.js";
 import { chooseProject } from "./init-choice.js";
 import { resolvedFiles, type Source } from "@ingestron/core/internal";
@@ -14,7 +15,12 @@ import type { Io } from "../terminal/index.js";
 import { packs } from "@ingestron/core";
 import { environmentReportsText } from "@ingestron/core/internal";
 import { nameProblem, projectId } from "@ingestron/core";
-import { ignoredText, writeScaffold, type Answers } from "@ingestron/core/internal";
+import {
+  ignoredText,
+  writeScaffold,
+  type Answers,
+  type AssistantName,
+} from "@ingestron/core/internal";
 import { kitFiles, kitTemplate } from "@ingestron/core/internal";
 import { kitSource, refuseNewer } from "./kit-source.js";
 import { standardSource, templateSource } from "./sources.js";
@@ -40,7 +46,9 @@ export function init(options: Options, io: Io): number {
         : chooseProject(options.init, asker(options, io));
     cleanups.push(source.done);
     const answers = gather(options, io, source, target, cleanups);
-    return create(options, io, target, source, answers);
+    // Asked last, after every other question.
+    const assistants = chosenAssistants(options.init, io);
+    return create(options, io, target, source, answers, assistants);
   } catch (error) {
     io.write(`${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
@@ -151,6 +159,7 @@ function create(
   target: string,
   source: Source,
   answers: Answers,
+  assistants: readonly AssistantName[],
 ): number {
   const { files, generated, kept } = prepare(options, io, target, source, answers);
   const result = writeScaffold(target, files);
@@ -162,8 +171,10 @@ function create(
   }
   const from = createdFrom(options, source);
   io.write(
-    `Created ${shown} from ${from} (${result.written.length} files)${ignoredText(result.ignored)}.\n\n`,
+    `Created ${shown} from ${from} (${result.written.length} files)${ignoredText(result.ignored)}.\n`,
   );
+  if (assistants.length > 0) writeAssistantFiles(target, assistants, "build", io);
+  io.write("\n");
   const plan = { command: "plan" as const, environments: [], diffs: false };
   const where = { definitions: target, out: join(target, "build") };
   const code = generate({ ...options, ...plan, ...where }, io, packs, generated);

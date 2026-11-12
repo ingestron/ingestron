@@ -1,4 +1,5 @@
 // The commands module: what the rest of the package uses.
+export { assistant } from "./assistant.js";
 export { compare } from "./compare-command.js";
 export { draftContract, draftFromMetadata } from "./contract-command.js";
 export { generate } from "./generate.js";

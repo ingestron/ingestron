@@ -70,8 +70,8 @@ carry the same source recipes and work without a repository checkout.
 ## Questions and values
 
 `init` asks only what picks the project: the starter (`--template`), the kit
-(`--kit`, section "Kits" below), or the connector, connectivity and route.
-Everything else has a default:
+(`--kit`, section "Kits" below), or the connector, connectivity and route; and,
+last, which assistant files to write (below). Everything else has a default:
 
 - the project id is the folder's name, as a valid id (`--name` gives another);
 - the environments are `dev` and `prod`, or a starter's or a kit's own
@@ -83,6 +83,15 @@ Everything else has a default:
 `template.yaml` MAY still list `questions`, for templates from elsewhere: they
 are never asked; `--set <value>=<text>` answers one, else its default is
 written to `values.<value>` in project.yaml. The built-in starters have none.
+
+`init` can also write the project guide that coding assistants read, and the
+files that point to it. `--assistant <names>` gives the names (a
+comma-separated list, or the flag repeated; the default is `none`). With a
+terminal and neither `--assistant` nor `--yes`, `init` asks for them last,
+after every other question. The [guide specification](assistants.md) says which
+files each name writes, what the guide says and how `plan` and `apply` keep it
+current. `ingestron assistant add <names>` writes the same files into an
+existing project.
 
 ### REPLACE_ME
 

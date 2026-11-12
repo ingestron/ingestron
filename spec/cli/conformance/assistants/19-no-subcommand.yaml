@@ -1,0 +1,13 @@
+description: "assistant with no sub-command is a usage mistake: nothing is written."
+files:
+  project.yaml: |
+    id: local
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+command: assistant
+expect:
+  exit: 2
+  lines:
+    - "assistant needs add <names>."
+  absent:
+    AGENTS.md: ~

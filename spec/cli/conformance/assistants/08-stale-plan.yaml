@@ -1,0 +1,110 @@
+description: "A section written for one environment while project.yaml now has two is stale: plan says it would change, and writes nothing."
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [fold@2, local@1]
+    store: { default: local-table }
+    ingest:
+      settings:
+        local-landed: { landing: ./samples }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: fold
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        description: One row per order.
+        properties:
+          - { name: id, logicalType: integer, primaryKey: true }
+  # The section was written when project.yaml had one environment, `dev`; its end marker's hash is its text's true hash, so it is current but stale, not edited.
+  # The hash is the SHA-256 of the text from the begin marker to the line before the end marker (read as LF), made with:
+  #     node -e 'const s=require("fs").readFileSync(0,"utf8");console.log(require("crypto").createHash("sha256").update(s.replace(/\r\n/g,"\n")).digest("hex"))'
+  AGENTS.md: |
+    # Team notes
+
+    Use British English in every message.
+
+    <!-- ingestron:begin guide 1. Ingestron writes this section and `ingestron apply` keeps it current. Write your own notes outside it, or delete both markers to make it yours. -->
+    # Working on this Ingestron project
+
+    This folder holds Ingestron definitions: YAML that generates the files the data platform deploys. Ingestron runs on this computer; it never connects to a source or a cloud.
+
+    ## This project
+
+    - Project `retail`. Environments: `dev` (`project.yaml`).
+    - Standard `acme` in `standard.yaml`. Packs: `fold@2`, `local@1`.
+    - Definitions: the files `project.yaml` imports: `*.yaml`.
+    - Generated, one folder per pack: `build/fold/` (every environment together), `build/local/` (a folder per environment).
+
+    ## Rules
+
+    1. Change the definitions, never `build/`. Ingestron records each generated file in `.generated.json` and reports a hand edit as a conflict.
+    2. After a change, run `ingestron plan`. Fix every problem it reports, then show the user the plan before running `ingestron apply`. Then `ingestron check` must pass; CI should run it.
+    3. Work inside the standard. Do not edit `standard.yaml` to clear a problem; tell the user what the platform team would need to change.
+    4. A value written `REPLACE_ME` is one only a person can give. Ask the user for it; never invent one. `ingestron check` fails while any is left.
+    5. Look settings up; do not guess. Each method's settings, types and defaults: https://docs.ingestron.io/docs/reference/packs, or run `ingestron schemas` and read `.ingestron/schemas/`. Error codes: https://docs.ingestron.io/docs/reference/errors.
+    6. Never write a password, token, key or connection string in any file. Use `${secret:name}` for a credential.
+    7. Values written `${envvar:NAME}` are not secrets. The `fold@2` and `local@1` output keeps them as values the deploying pipeline supplies. Do not read, print or commit `.env` files. `ingestron request` lists the values each environment needs. This project uses none.
+    8. Environments differ only in values, under `environments.<name>.values` in `project.yaml`. `plan`, `apply` and `check` always cover every environment; `ingestron compare --env <a> --env <b>` shows what differs.
+
+    ## Source metadata
+
+    - Connections: `shop`. Each one's source tables are described in `sources/<connection>.yaml`, which `ingestron source import` writes. Never edit that file: import again to replace it.
+    - `ingestron source request` says what to run or export at each source, and where to save it under `sources/`.
+    - A flow table needs a contract only where a person must say something the source cannot. `ingestron contract --from-metadata --needed` drafts the missing ones, for the user to review.
+
+    When the user gives you material no reader takes (a vendor's data dictionary, a spreadsheet, a PDF, inconsistent or deeply nested API responses, a description in an email), turn it into a columns file saved as `sources/<connection>.assistant.csv`:
+
+    - One row for each column, with these fields in order: `table_catalog`, `table_schema`, `table_name`, `column_name`, `ordinal_position`, `data_type`, `is_nullable` (`YES` or `NO`), `primary_key_position` (empty when the column is not in the key).
+    - Keep every table and column the material shows, custom ones included.
+    - Write a type you are unsure of as `string`, and never invent a key.
+    - Never copy a value from a row of data.
+    - Run `ingestron source import <connection> sources/<connection>.assistant.csv --dry-run` and fix what it reports before saying you are done.
+
+    ## Commands
+
+    - `ingestron plan`: problems and changes, with diffs. Writes nothing.
+    - `ingestron apply`: writes `build/`; never overwrites a hand edit.
+    - `ingestron check`: fails when `build/` is out of date. Writes nothing.
+    - `ingestron compare --env <a> --env <b>`: what differs after resolving.
+    - `ingestron request --env <name>`: what the platform team must provide.
+    - `ingestron contract <sample>`: drafts a contract from a CSV or JSON sample.
+    - `ingestron source request`: what to ask each source's owners for.
+    - `ingestron source import <connection> <file> --dry-run`: what a file of source metadata would change.
+    <!-- ingestron:end sha256:5188f2782f59e693f00b590cc8d790667c9af9f7fe4646a1a8d6fe9ba6db7211 -->
+
+    ## More notes
+
+    Ask before adding a pack.
+command: plan
+expect:
+  exit: 0
+  lines:
+    - "fold → build/fold (dev, prod)"
+    - "local → build/local (dev, prod)"
+    - "AGENTS.md: the Ingestron section would change"
+  unchanged:
+    - AGENTS.md

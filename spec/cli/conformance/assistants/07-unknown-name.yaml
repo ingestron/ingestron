@@ -1,0 +1,20 @@
+description: "A name that is not one of the six is a usage mistake: nothing is written, not even for the names that were right."
+files:
+  project.yaml: |
+    id: local
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: defaults
+    packs: [duckdb@2]
+command: assistant
+args: ["add", "copilot,gpt"]
+expect:
+  exit: 2
+  lines:
+    - 'Unknown assistant "gpt". Choose from copilot, claude, codex, cursor, agents or none.'
+  absent:
+    AGENTS.md: ~
+    .github/copilot-instructions.md: ~

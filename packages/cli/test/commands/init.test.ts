@@ -159,10 +159,11 @@ describe("ingestron init with flags", () => {
 });
 
 describe("ingestron init asks only what picks the project", () => {
-  it("asks for the source choices and nothing else", () => {
-    const { cwd, asked, ingestron } = session(["", "files", "public", "databricks"]);
+  it("asks for the source choices, then for the assistant files, and nothing else", () => {
+    const { cwd, asked, ingestron } = session(["", "files", "public", "databricks", ""]);
     expect(ingestron("init", "shop").code).toBe(0);
-    expect(asked).toHaveLength(4);
+    expect(asked).toHaveLength(5);
+    expect(asked[4]).toContain("assistant files");
     expect(asked[0]).toContain("Source category");
     expect(asked[1]).toContain("Connector");
     expect(asked[2]).toContain("Connectivity");
@@ -180,10 +181,11 @@ describe("ingestron init asks only what picks the project", () => {
     expect(readFileSync(join(cwd, "shop/flows/orders.yaml"), "utf8")).toContain("kind: Flow");
   });
 
-  it("asks nothing for a template, and takes the id from the folder", () => {
-    const { cwd, asked, ingestron } = session([]);
+  it("asks only for the assistant files for a template, and takes the id from the folder", () => {
+    const { cwd, asked, ingestron } = session([""]);
     expect(ingestron("init", "Shop-1", "--template", "minimal").code).toBe(0);
-    expect(asked).toEqual([]);
+    expect(asked).toHaveLength(1);
+    expect(asked[0]).toContain("assistant files");
     expect(parse(readFileSync(join(cwd, "Shop-1/project.yaml"), "utf8")).id).toBe("shop_1");
   });
 });

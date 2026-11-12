@@ -1,0 +1,92 @@
+// What the assistant command tests share: a temporary folder, the CLI run in it with a scripted
+// terminal, a small project and the files under a folder.
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join, relative } from "node:path";
+import { run } from "../src/index.js";
+import { generate } from "../src/commands/generate.js";
+import { readArgs, usage } from "../src/terminal/index.js";
+import { standIns, type Notice } from "./outputs-packs.js";
+
+export const temp = () => mkdtempSync(join(tmpdir(), "ingestron-assistant-"));
+
+/** Runs the CLI in `cwd`; `answers` are the replies of a terminal. */
+export function ingestron(cwd: string, args: string[], answers?: string[]) {
+  let output = "";
+  const asked: string[] = [];
+  const queue = answers && [...answers];
+  const code = run(args, {
+    cwd,
+    write: (text) => (output += text),
+    now: () => new Date("2026-11-13T09:00:00Z"),
+    ...(queue && {
+      ask: (question: string) => {
+        asked.push(question);
+        return queue.shift();
+      },
+    }),
+  });
+  return { code, output, asked };
+}
+
+export const files = {
+  "project.yaml": "id: local\nenvironments: { dev: {} }\nimports: ['*.yaml']\n",
+  "standard.yaml": "apiVersion: ingestron.io/v1\nkind: Standard\nid: defaults\npacks: [duckdb@2]\n",
+};
+
+/** A project folder with the files above and any more. */
+export function project(more: Record<string, string> = {}): string {
+  const folder = temp();
+  for (const [path, text] of Object.entries({ ...files, ...more })) {
+    mkdirSync(join(folder, path, ".."), { recursive: true });
+    writeFileSync(join(folder, path), text);
+  }
+  return folder;
+}
+
+export const read = (folder: string, path: string) => readFileSync(join(folder, path), "utf8");
+
+/** Every file under a folder, as paths relative to it. */
+export function listed(folder: string, under = folder): string[] {
+  return readdirSync(under).flatMap((entry) => {
+    const path = join(under, entry);
+    return statSync(path).isDirectory() ? listed(folder, path) : [relative(folder, path)];
+  });
+}
+
+/** Runs `fn` with the host environment holding `values`, and puts it back after. */
+export function withEnvironment<T>(values: Record<string, string> | undefined, fn: () => T): T {
+  const saved = { ...process.env };
+  Object.assign(process.env, values ?? {});
+  try {
+    return fn();
+  } finally {
+    for (const name of Object.keys(values ?? {}))
+      if (saved[name] === undefined) delete process.env[name];
+      else process.env[name] = saved[name];
+  }
+}
+
+/**
+ * Runs plan, apply or check with the stand-in packs of the output folder cases, as their runner
+ * does: the exit code and the output.
+ */
+export function runWithStandIns(
+  args: string[],
+  cwd: string,
+  notices?: Notice[],
+): { exit: number; output: string } {
+  const options = readArgs(args);
+  if (options === "help" || "mistake" in options)
+    return { exit: 2, output: `${options === "help" ? "" : options.mistake}\n\n${usage}` };
+  let output = "";
+  const exit = generate(options, { cwd, write: (t) => (output += t) }, standIns(notices));
+  return { exit, output };
+}

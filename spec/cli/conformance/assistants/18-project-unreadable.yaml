@@ -1,0 +1,13 @@
+description: "A project.yaml that does not parse has no guide: assistant add says so, writes nothing and exits 1."
+files:
+  project.yaml: |
+    id: [retail
+    imports: [
+command: assistant
+args: ["add", "agents"]
+expect:
+  exit: 1
+  lines:
+    - "No guide: project.yaml cannot be read."
+  absent:
+    AGENTS.md: ~

@@ -1,0 +1,14 @@
+description: "A project.yaml with no id has no guide: assistant add says so, writes nothing and exits 1."
+files:
+  project.yaml: |
+    environments: { dev: {} }
+    imports: ["*.yaml"]
+command: assistant
+args: ["add", "claude"]
+expect:
+  exit: 1
+  lines:
+    - "No guide: project.yaml has no id."
+  absent:
+    AGENTS.md: ~
+    CLAUDE.md: ~

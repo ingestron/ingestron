@@ -63,6 +63,7 @@ interface Flags {
   connection?: string | undefined;
   "from-metadata": boolean;
   needed: boolean;
+  assistant?: string[] | undefined;
 }
 
 /** The command's sub-command: what `source` or `contract --from-metadata` was asked. */
@@ -78,7 +79,18 @@ const owners: Record<string, string> = {
   "--connection": "source request",
   "--from-metadata": "contract",
   "--needed": "contract --from-metadata",
+  "--assistant": "init",
 };
+
+/** The flags of `source` that are given to a command they do not belong to, with the flag's name. */
+function misplacedSource(flags: Flags, source: Chosen["source"]): [string, boolean][] {
+  const importing = source?.action === "import";
+  return [
+    ["--dry-run", flags["dry-run"] && !importing],
+    ["--object", flags.object !== undefined && !importing],
+    ["--connection", flags.connection !== undefined && source?.action !== "request"],
+  ];
+}
 
 /** The first flag given to a command it does not belong to, as the mistake that says so; else none. */
 export function misplacedFlag(
@@ -86,13 +98,11 @@ export function misplacedFlag(
   flags: Flags,
   { source, fromMetadata }: Chosen,
 ): string | undefined {
-  const importing = source?.action === "import";
   const misplaced: [string, boolean][] = [
-    ["--dry-run", flags["dry-run"] && !importing],
-    ["--object", flags.object !== undefined && !importing],
-    ["--connection", flags.connection !== undefined && source?.action !== "request"],
+    ...misplacedSource(flags, source),
     ["--from-metadata", flags["from-metadata"] && command !== "contract"],
     ["--needed", flags.needed && !fromMetadata],
+    ["--assistant", flags.assistant !== undefined && command !== "init"],
   ];
   const flag = misplaced.find(([, wrong]) => wrong)?.[0];
   return flag === undefined ? undefined : `${flag} is only for ${owners[flag]}.`;
