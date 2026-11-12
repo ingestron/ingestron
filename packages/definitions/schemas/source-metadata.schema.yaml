@@ -118,6 +118,16 @@ $defs:
           - nvarchar(200)
       logicalType:
         enum: [string, date, timestamp, time, number, integer, object, array, boolean]
+        enumDescriptions:
+          - Text of any length.
+          - A calendar date, with no time of day.
+          - A date with a time of day.
+          - A time of day, with no date.
+          - A decimal or floating-point number.
+          - A whole number.
+          - A record with named fields, such as JSON or a nested structure.
+          - A list of values.
+          - True or false.
         description: The column's ODCS logical type.
       logicalTypeOptions:
         type: object

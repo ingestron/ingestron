@@ -91,6 +91,11 @@ function writtenObject(
   name: string,
   object: string,
 ): string {
-  const written = writtenValue(context.files, flow.file, objectPointer(name))?.value;
+  const written = writtenValue(
+    context.files,
+    flow.file,
+    objectPointer(name),
+    context.parsed,
+  )?.value;
   return typeof written === "string" ? written : object;
 }
