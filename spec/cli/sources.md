@@ -75,8 +75,8 @@ than those below is an error.
   source sends).
 - `inputs` (default none): a mapping from each input's name to
   `{ description }`, the text that says what to write for it. An input's name
-  is a lower-case letter followed by letters, digits and `_`, and is not
-  `connection`, `object` or `schemas`. A connection gives the values in
+  matches `^[a-z][a-zA-Z0-9_]*$` and is not `connection`, `object` or
+  `schemas`. A connection gives the values in
   `metadata.with`.
 - `ask`: what the request asks for:
   - `who`: who should do it;
@@ -118,10 +118,33 @@ than those below is an error.
   recipe's query, call and type rules come from: `url` an `https://` URL, and
   `read` the date it was read, `YYYY-MM-DD`, a real date written as text.
 
+`readSourceRecipe` checks the rules in this order and stops at the first that
+is broken, as `readKit` does ([kits.md](kits.md), "Rules"):
+
+1. The file is valid YAML and a mapping.
+2. No key other than those above, and none of the required ones missing.
+3. Each field has its shape: `title`, `ask`'s fields, `rows` and each
+   `description` are text; `inputs`, `ask`, `names` and `fields` are
+   mappings; `types`, `key` and `sources` are lists; `kind`, `read`,
+   `objects` and each `logicalType` are one of their values; `names` has
+   both `parts`, from 1 to 4, and `caseSensitive`, true or false.
+4. `id` matches its pattern and equals the file's name.
+5. Each input's name matches its pattern and is not one of the three
+   reserved names.
+6. `ask` has `run` or `call` as `kind` says, and `save` starts `sources/`.
+7. `rows`, `fields`, `key` and `objects` are given only with their readers;
+   each key of `fields` is a field of the columns file, and `fields` maps
+   `table_name`, `column_name` and `data_type`.
+8. Each `match` is a valid regular expression.
+9. `sources` has at least one entry; each `url` is an `https://` URL and each
+   `read` a real date, `YYYY-MM-DD`.
+
 Each rule has a conformance case in `conformance/sources/recipes/cases.json`
 with the exact message, which names the file and the rule broken, as
-`readKit`'s do. A recipe that breaks a rule stops the request and the import
-with its message.
+`readKit`'s do. The installed recipes and the project's are read whole,
+whichever a connection uses, so a recipe that breaks a rule stops the request
+and every import with its message, even when no connection uses it: a
+broken recipe is found at once, not when a connection first names it.
 
 ### Placeholders
 
@@ -150,7 +173,7 @@ section 12.2). The request and the import check it against the recipes:
 
 - a recipe that does not exist:
   `The connection "<id>" names the recipe "<from>", which does not exist. Recipes: <ids>.`
-  with every recipe id, in code-point order, joined with `, `;
+  with every recipe id, in code-point order, joined with `, `, or `none`;
 - an input the recipe does not take:
   `The recipe "<id>" takes no input "<name>". Its inputs: <names, or none>.`
   with the recipe's input names, in the order the recipe gives them, joined
@@ -169,13 +192,19 @@ keeps a value from a row.
 
 Text is read as UTF-8, and a byte-order mark at the start is dropped. A file
 that is not valid JSON, YAML or XML, where a reader needs one, is refused with
-`<file> is not valid <JSON|YAML|XML>: <reason>`, where the reason is the
-parser's own.
+`<file> is not valid JSON at line <line>, column <column>.`, and likewise
+`YAML` and `XML`, giving only where the parser stopped; when the parser gives
+no place, `<file> is not valid JSON.` (or `YAML`, `XML`). The parser's own
+message is never shown, since it may quote the file.
+
+No refusal and no note quotes a file's content, except the names of fields,
+tables and columns and the source's type names. A value in a row is never
+shown, so a refusal is as safe to print as the metadata itself.
 
 ### 2.1 The columns file
 
-The columns file is a table with one row per column and exactly these fields,
-in this order:
+The columns file is a table with one row per column and these eight fields,
+in the order shown here, which is the order the request asks for:
 
 | Field                  | Holds                                                                                            |
 | ---------------------- | ------------------------------------------------------------------------------------------------ |
@@ -192,16 +221,19 @@ It is CSV or JSON:
 
 - **CSV.** The first line is the header. Lines end in LF or CRLF. Fields are
   separated by `,`, or by `;` when the header holds `;` and no `,`. A field
-  MAY be in double quotes, with a quote inside written twice. Header names are
-  compared without case and without the spaces around them, so `TABLE_NAME`
-  is `table_name`.
+  MAY be in double quotes, with a quote inside written twice.
 - **JSON.** A list of records, or, with the recipe's `rows`, the list at that
-  path. Each record's keys are the fields, in any order.
+  path. Each record's keys are its fields.
 
-A file with other fields is refused, so that a query that returned rows is
-never imported by mistake:
+A file's fields are its header's names (CSV) or each record's keys (JSON),
+compared without case and without the spaces around them, so `TABLE_NAME` is
+`table_name`. Their order does not matter. Unless the recipe gives `fields`,
+the fields MUST be the eight, each once, and no other. A file with a field
+missing, a field twice or any other field is refused with one message, so
+that a query that returned rows is never imported by mistake:
 `<file> has the fields <found>; a columns file has exactly: table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position.`
-with the file's fields as found, joined with `, `.
+where `<found>` is the header's names, or the keys of the first record that
+breaks the rule, as written and in their order, joined with `, `.
 
 When the recipe gives `fields`, the result's fields are read through it
 instead, and other fields are ignored. A field the mapping leaves out takes
@@ -217,22 +249,33 @@ Each row is read so:
   `table_name`, joined with `.`.
 - A row with an empty `column_name` is skipped.
 - `is_nullable` is `YES`, `Y`, `true` or `1` for a column that can be null, and
-  `NO`, `N`, `false` or `0` for one that cannot, without case. `required` is
-  `true` when it cannot. Any other value is refused:
-  `<file>, row <n>: is_nullable is "<value>"; write YES or NO.`
-- `ordinal_position` and `primary_key_position` are whole numbers from 1, or
-  empty. Any other value is refused:
-  `<file>, row <n>: <field> is "<value>"; write a whole number from 1.`
-- The columns of a table are ordered by `ordinal_position`, and, when it is
-  empty, keep the file's order.
+  `NO`, `N`, `false` or `0` for one that cannot, without case. In JSON it MAY
+  also be `true` or `false`, or the number `1` or `0`. `required` is `true`
+  when it cannot. Any other value is refused:
+  `<file>, row <n>: is_nullable is not YES or NO.`
+- `ordinal_position` and `primary_key_position` are whole numbers from 1, as
+  text or, in JSON, as numbers, or empty. Any other value is refused:
+  `<file>, row <n>: <field> is not a whole number from 1.`
+- The columns of a table are ordered by `ordinal_position`, and, when none
+  has one, keep the file's order.
 - A column's `primaryKeyPosition` is its `primary_key_position`. When the
   recipe gives `key`, a table's key is instead the columns of `key` it has, in
   `key`'s order, numbered from 1, and `primary_key_position` is not read.
 - `sourceType` is `data_type` as written, without the spaces around it. Its
   logical type is found by the rules of section 2.6.
 
-A table that lists the same column twice is refused:
-`<file>: the table "<object>" lists the column "<column>" twice.`
+`<n>` counts the file's records from 1, the header not counted. A table is
+refused, naming it, when:
+
+- it lists the same column twice:
+  `<file>: the table "<object>" lists the column "<column>" twice.`;
+- two of its columns have the same `ordinal_position`:
+  `<file>: the table "<object>" gives two columns the same ordinal_position.`;
+- some of its columns have an `ordinal_position` and others have none:
+  `<file>: the table "<object>" gives ordinal_position to some columns and not others.`;
+- two of its columns have the same `primary_key_position`:
+  `<file>: the table "<object>" gives two columns the same primary_key_position.`
+
 A file with no column is refused: `<file> lists no columns.`
 
 ### 2.2 Samples
@@ -262,25 +305,30 @@ the types and are then dropped.
 
 From Parquet, each field of the schema is a column: `required` is `true` for a
 `REQUIRED` field; a group is `object`, with its fields as `properties`; a
-`LIST` is `array`, with its element as `items`. Types:
+`LIST` is `array`, with its element as `items`. A field's logical annotation
+(`DATE`, `TIMESTAMP`, `TIME`, `DECIMAL`, `STRING`, `INTEGER`) decides its type
+when it has one, whatever its physical type, so an `INT32` field annotated
+`DATE` is `date`. Then:
 
-| Parquet                                   | Logical type                           |
-| ----------------------------------------- | -------------------------------------- |
-| `BOOLEAN`                                 | `boolean`                              |
-| `INT32`, `INT64`, an `INTEGER` annotation | `integer`                              |
-| `FLOAT`, `DOUBLE`                         | `number`                               |
-| a `DECIMAL` annotation                    | `number`, with `precision` and `scale` |
-| `DATE`                                    | `date`                                 |
-| `TIMESTAMP`                               | `timestamp`                            |
-| `TIME`                                    | `time`                                 |
-| `BYTE_ARRAY` with `STRING`, and any other | `string`                               |
+| Parquet                                    | Logical type                           |
+| ------------------------------------------ | -------------------------------------- |
+| `BOOLEAN`                                  | `boolean`                              |
+| `INT32`, `INT64`, an `INTEGER` annotation  | `integer`                              |
+| `FLOAT`, `DOUBLE`                          | `number`                               |
+| a `DECIMAL` annotation                     | `number`, with `precision` and `scale` |
+| `DATE`                                     | `date`                                 |
+| `TIMESTAMP`, and the physical type `INT96` | `timestamp`                            |
+| `TIME`                                     | `time`                                 |
+| `BYTE_ARRAY` with `STRING`, and any other  | `string`                               |
 
 `sourceType` is the field's physical type, with its annotation after it in
 brackets when it has one, such as `INT32(DATE)`. A Parquet file has no key.
 
-A sample is refused when it has no columns: `<file> has no columns.`, or when
+A sample is refused when it has no columns: `<file> has no columns.`; when
 its JSON is not records:
-`<file> holds no records: a JSON sample is a list of records, or one record.`
+`<file> holds no records: a JSON sample is a list of records, or one record.`;
+or when its Parquet footer cannot be read:
+`<file> is not a Parquet file Ingestron can read.`
 
 ### 2.3 ODCS contracts
 
@@ -325,13 +373,17 @@ A contract with no `schema` entries is refused:
   `<file> describes no object schemas.`
 - **JSON Schema** (`json-schema`): JSON with a top-level `$schema`. It is one
   table, named by the import's `object`, else its `title`, else the file's
-  name without its last extension. A document with no `properties` is
-  refused: `<file> describes no properties.`
+  name without its last extension. A property in the document's `required`
+  list is required. A document with no `properties` is refused:
+  `<file> describes no properties.`
 - **Avro** (`avro`): a schema whose top-level `type` is `record`. The record
   is one table, named by the import's `object`, else its `name`. Each field is
   a column; a union with `"null"` is not required, and any other field is.
   A nested record is `object`, with its fields as `properties`; an `array` is
-  `array`, with its element as `items`; a `map` is `object`. `sourceType` is
+  `array`, with its element as `items`; a `map` is `object`. A union of two
+  or more types other than `"null"` is `string`, with the note
+  `The column <object>.<column> is a union of <types>; read as string.`,
+  where `<types>` are the union's type names, joined with `, `. `sourceType` is
   the field's `logicalType` when it has one, else its type's name. Types:
   `int` and `long` are `integer`; `float` and `double` are `number`; `boolean`
   is `boolean`; `decimal` is `number`, with `precision` and `scale`; `date` is
@@ -350,6 +402,8 @@ A contract with no `schema` entries is refused:
   `sourceType` is the field's `type`, and its logical type is found by the
   rules of section 2.6.
 
+OpenAPI, JSON Schema and Avro state no key, so their tables have none.
+
 The readers of typed formats (Parquet, ODCS, OData, OpenAPI, JSON Schema and
 Avro) map their types themselves, as above. In OpenAPI and JSON Schema,
 `integer` is `integer`, `number` is `number`, `boolean` is `boolean`, `object`
@@ -360,15 +414,22 @@ its `format` after it in brackets when it has one, such as `string(date-time)`.
 
 ### 2.5 Choosing the reader
 
-The file's name decides first, as the request names files (section 4):
+The file's name decides first, as the request names files (section 4), by
+its last two extensions:
 
-- a name that holds `.columns.` or `.assistant.` is read as a columns file
-  only, with the recipe's `types` but without its `rows`, `fields` and
-  `key`;
-- a name that holds `.odcs.` is read as an ODCS document only;
-- a name that holds `.catalog.` is read by the recipe's reader only, with
-  every field of the recipe. Without a recipe it is refused:
+- a name that ends `.columns.<ext>` or `.assistant.<ext>` is read as a
+  columns file only, with the recipe's `types` but without its `rows`,
+  `fields` and `key`;
+- a name that ends `.odcs.<ext>` is read as an ODCS document only;
+- a name that ends `.catalog.<ext>` is read by the recipe's reader only,
+  with every field of the recipe. Without a recipe it is refused:
   `<file> is a catalog result, but no recipe was given to read it.`
+
+The name rule never applies to a file under `sources/<connection>/`, for the
+connection being imported: that path names one object (section 3), whatever
+its name holds. So `sources/shop/shop.catalog.Products.csv` and
+`sources/erp/information_schema.columns.csv` are files of the objects
+`shop.catalog.Products` and `information_schema.columns`.
 
 Any other file is read by the first of these that accepts it:
 
@@ -388,7 +449,7 @@ The reader and the file's name give each table's `captured.from`:
 - the recipe's reader read the file: the recipe's `kind`, `catalog`,
   `document` or `sample`;
 - the columns reader read it: `columns`, or `assistant` when the file's name
-  holds `.assistant.`;
+  ends `.assistant.<ext>`;
 - the ODCS reader, or a reader of section 2.4 without the recipe: `document`;
 - otherwise: `sample`.
 
@@ -456,14 +517,18 @@ Tables are the same when their `object`s are equal, compared without case
 when the document's `names.caseSensitive` is `false`, and with case
 otherwise.
 
-- An import whose tables are `captured.from: catalog`, of a file that is not
-  under `sources/<connection>/`, reads the whole source. It removes every
-  table of the document whose `captured.from` is `catalog`, so a table
-  dropped at the source disappears. Then it adds its own tables, each
-  replacing a table of another rung with the same `object`.
-- Any other import, a catalog file of one object under
-  `sources/<connection>/` (such as one Salesforce `describe`) included, adds
-  its tables or replaces the same ones, and keeps every other table.
+- An import reads the whole source when the connection's recipe is a
+  `catalog` recipe, the recipe's reader read the file, that reader reads
+  many tables (`columns`, `odata`, `openapi` or `odcs`), and the file is not
+  under `sources/<connection>/`. It removes every table of the document whose
+  `captured.from` is `catalog`, so a table dropped at the source disappears.
+  Then it adds its own tables, each replacing a table of another rung with
+  the same `object`.
+- Any other import adds its tables or replaces the same ones, and keeps every
+  other table. So does a catalog file read by a reader of one table
+  (`salesforce-describe`, `avro`, `json-schema` or `sample`), such as one
+  Salesforce `describe`, wherever the file is: it replaces only its own
+  object.
 
 ### The document
 
@@ -473,8 +538,9 @@ The new document has:
 - `environment`: `--env`'s value, else the current document's, else none;
 - `names`: the recipe's, else the current document's, else none;
 - `tables`: each with `captured` of `at` (the time of the import, as
-  `YYYY-MM-DDTHH:MM:SSZ` in UTC), `from` (section 2.5), `recipe` (the
-  recipe's id, when its reader read the file) and `file` (the file's path
+  `YYYY-MM-DDTHH:MM:SSZ` in UTC), `from` (section 2.5), `recipe` (the id of
+  the connection's recipe, whenever the import is given one, since its
+  `types` then apply; left out otherwise) and `file` (the file's path
   relative to the project's folder, or its name when it is outside it).
 
 It is written so that a new import shows as a small diff:
@@ -528,16 +594,20 @@ the new one, and gives one change for each table that differs:
 - `added`: a table the old document did not have. It is compatible.
 - `removed`: a table the old document had and the new one does not. Only a
   catalog import removes a table (above), and a removed table is breaking.
-- `changed`: a table in both whose columns differ. Its differences are those
-  `compareSourceColumns` gives, with the old table as the side compared and
-  the new as the source: section 12.6 of the definitions specification,
-  between two metadata tables instead of a contract and a table. Columns are
-  matched by `name`, with case unless the document's `names.caseSensitive` is
-  `false`. Only names are compared (new and gone columns) when either table
-  is `captured.from: sample` or `assistant`. A key is compared only when both
+- `changed`: a table in both for which `compareSourceColumns` gives at least
+  one difference, with the old table as the side compared and the new as
+  the source: section 12.6 of the definitions specification, between two
+  metadata tables instead of a contract and a table. Columns are matched by
+  `name`, with case unless the document's `names.caseSensitive` is `false`.
+  Only names are compared (new and gone columns) when either table is
+  `captured.from: sample` or `assistant`. A key is compared only when both
   tables give one. A change is breaking when any of its differences is.
 
-A table whose columns are the same is no change, whatever its `captured`.
+A table in both for which `compareSourceColumns` gives no difference is no
+change, whatever its `captured` or any other field, though its new text is
+still written. A table's differences are in the order `compareSourceColumns`
+gives them: the old table's columns in order, then the new columns in
+order, then the key.
 
 The changes are in order of `object`, in code-point order. Their text is:
 
@@ -592,8 +662,10 @@ ready to send to whoever can reach the source.
 
 The definitions are resolved for the environment (`default` when none is
 given) as for the platform request ([request.md](request.md), "Resolving"),
-with `missingEnvvars: information`, and with the model's source tables
-(definitions specification, section 12.7). These errors do not stop it,
+with `missingEnvvars: information`, and with `sourceTables: true`, so that
+the result lists each flow table's metadata entry (definitions
+specification, section 12.7) with or without a model. These errors do not
+stop it,
 because the metadata the request asks for is what settles them:
 `TABLE_NO_COLUMNS`, `CONTRACT_NEEDED`, `SOURCE_COLUMN_GONE`,
 `SOURCE_TYPE_CHANGED`, `SOURCE_NULLABLE`, `SOURCE_KEY_CHANGED` and
@@ -604,9 +676,11 @@ breaks a rule, and a connection's recipe problems (section 1). The request is
 then the title `# Source request (<environment>)`, the note "The definitions
 have problems; fix them first:", and each error in a `text` code block,
 written as `ingestron plan` writes a problem, as the platform request writes
-them. An unknown connection and a recipe's problems are written in the same
-block, each on a line of its own, after the definitions' errors. An unknown
-connection is
+them. Warnings and information are left out. An unknown connection and a
+recipe's problems are written in the same block, each on a line of its own,
+after the definitions' errors. A pack that cannot be loaded gives the
+`PACK_LOAD` error and the exit code 2, as for every command
+([output folders](outputs.md), section 4). An unknown connection is
 `"<id>" is not a connection of the project. Connections: <ids>.`
 with every connection id, in code-point order, joined with `, `, or `none`.
 
@@ -628,8 +702,10 @@ The connection's tables are its flows' tables. Each `object` is resolved for
 the environment; a reference that is unset is written as it is, as
 `${envvar:NAME}`. The schemas are, for a recipe whose `names.parts` is 2 or
 more, the part of each object second from the right, each once, in
-code-point order. When any object has fewer than two parts, or that part holds
-an unset reference, the schemas are not known.
+code-point order. When the connection has no flow tables (as for a
+`--connection` that no flow reads from), when any object has fewer than two
+parts, or when that part holds an unset reference, the schemas are not
+known: `{schemas}` stays a placeholder, never an empty list.
 
 **Covered.** When the connection's flows read at least one table and the
 metadata has an entry for each, the section is:
@@ -672,9 +748,13 @@ Save the result as `<save>`.
 - A `sample` recipe has neither: the step says `Save a sample of each table:`.
 - When `run`, `call` or `save` holds `{object}`, the block and the save line
   are replaced by a list with one item for each table, in the order of the
-  flows and their tables, each `object` once:
-  ``- `<run or call, filled>`, saved as `<save, filled>` ``, or, for a
-  `sample` recipe, ``- `<save, filled>` ``.
+  flows and their tables, each `object` once, as below. A `sample` recipe's
+  item is the save path alone.
+
+  ```markdown
+  - `<run or call, filled>`, saved as `<save, filled>`
+  ```
+
 - Every placeholder is filled where its value is known (section 1). The
   list after `Fill in before use:` names, in the order they first appear,
   each that is not: an input the connection does not give, with the input's
@@ -722,17 +802,21 @@ sections, and, for a connection with no recipe, its columns file. With
 
 `draftContracts` drafts an ODCS contract for a flow table from its metadata
 entry, so that a table that needs a contract (definitions specification,
-section 12.5) has one to review. It reads the model's source tables
-(section 12.7) and writes nothing.
+section 12.5) has one to review. It resolves with `sourceTables: true` and
+reads the result's source tables (definitions specification, section 12.7),
+with or without a model, and writes nothing.
 
 The tables are those named, as `<flow>.<table>` (the flow's id and the
 table's key), in the order given; or, with `needed`, every table that needs a
-contract, names none and has a metadata entry, in the order of the model's
-source tables. A named table is refused with one of these, and the others
-are still drafted:
+contract, names none and has a metadata entry, in the order of the source
+tables. With `needed`, a table that needs a contract and names none
+but has no metadata entry is named:
+`"<flow>.<table>" needs a contract but has no entry in the source metadata of "<connection>"; import it first (ingestron source request says how).`
+A named table is refused with one of these, and the others are still
+drafted:
 
 - `"<flow>.<table>" is not a flow table. Flow tables: <list>.`, with every
-  flow table as `<flow>.<table>`, in the order of the model's source tables,
+  flow table as `<flow>.<table>`, in the order of the source tables,
   joined with `, `;
 - `"<flow>.<table>" has no entry in the source metadata of "<connection>"; import it first (ingestron source request says how).`;
 - `"<flow>.<table>" already names the contract "<id>".`
@@ -829,9 +913,11 @@ of its own, and nothing is written.
 Drafts the contracts of the tables named, one or more, or with `--needed` of
 every table that needs one (section 5), for the environment `--env` names.
 For each draft, in order, it prints `Wrote <path>.` or, when the file exists,
-`Skipped <path>: it already exists.`; then, for each draft,
-`Add to <flow>.<table>: contract: <id>`; then each problem. With `--needed`
-and nothing to draft, it prints `No table needs a contract drafted.`
+`Skipped <path>: it already exists.`; then, for each draft, a skipped one
+included, `Add to <flow>.<table>: contract: <id>`; then each problem
+(section 5). With `--needed` and nothing to draft and no problem, it prints
+`No table needs a contract drafted.` It exits 1 when there is any problem,
+and 0 otherwise: a skipped file alone is not a problem.
 
 `ingestron contract <sample>` is unchanged.
 
