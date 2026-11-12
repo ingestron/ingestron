@@ -1,33 +1,36 @@
 // How the import writes one value in YAML (spec/cli/sources.md, section 3, "The document"): plain
 // when YAML reads it back as the same value, else in double quotes; lists and mappings in flow
 // style, on one line.
-import { parse } from "yaml";
+import { parseDocument } from "yaml";
 import { isRecord } from "./records.js";
 
 /** Where a value is written: after `key: ` in a block mapping, or inside `{ … }` or `[ … ]`. */
 export type YamlPlace = "block" | "flow";
 
 /**
- * Text that is plain in every place, unless YAML reads it as true, false or null: it starts with
+ * Text that is plain in every place, unless a YAML tool reads it as another value: it starts with
  * a letter, so it is not a number, and holds no space, `,`, `:`, `#` or bracket of a flow list.
  */
 const simple = /^[A-Za-z_][A-Za-z0-9_.()/-]*$/;
-const keywords = /^(true|false|null)$/i;
+const keywords = /^(true|false|null|yes|no|on|off|y|n)$/i;
 
 /** Characters YAML does not allow as they are in a double-quoted value. */
 const unprintable = /[\u007f-\u0084\u0086-\u009f\ufffe\uffff]/g;
 
-/** True when the text, written plain in that place, reads back as the same text. */
+/**
+ * True when the text, written plain in that place, reads back as the same text without a syntax
+ * error. The words YAML 1.1 reads as booleans (`yes`, `no`, `on`, `off`, `y`, `n`), as well as
+ * `true`, `false` and `null`, are quoted, in any case.
+ */
 function readsBack(text: string, place: YamlPlace): boolean {
-  if (simple.test(text) && !keywords.test(text)) return true;
+  if (keywords.test(text)) return false;
+  if (simple.test(text)) return true;
   if (text === "" || /[\r\n]/.test(text)) return false;
   const source = place === "flow" ? `{ k: ${text} }` : `k: ${text}\n`;
-  try {
-    const value: unknown = parse(source, { logLevel: "silent" });
-    return isRecord(value) && Object.keys(value).length === 1 && value.k === text;
-  } catch {
-    return false;
-  }
+  const document = parseDocument(source, { logLevel: "silent" });
+  if (document.errors.length > 0) return false;
+  const value: unknown = document.toJS();
+  return isRecord(value) && Object.keys(value).length === 1 && value.k === text;
 }
 
 /** Text in double quotes, with JSON's escapes and `\u` for what YAML does not allow as it is. */

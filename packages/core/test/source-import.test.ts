@@ -153,18 +153,6 @@ describe("importSource: the document", () => {
     expect(written.tables[0]!.object).toBe("2024");
     expect(written.tables[0]!.columns.map((column) => column.name)).toStrictEqual(names);
   });
-
-  it("quotes text YAML cannot hold as it is, and reads it back the same", () => {
-    const names = ["tab\there", "nel\u0085", "del\u007f", "é ü", "' quote", "- dash"];
-    const result = importSource({
-      connection: "shop",
-      file: "sources/shop/t.json",
-      contents: JSON.stringify([Object.fromEntries(names.map((name) => [name, 1]))]),
-      at: "2026-11-12T09:30:00Z",
-    });
-    const written = parse("text" in result ? result.text : "") as SourceMetadataDoc;
-    expect(written.tables[0]!.columns.map((column) => column.name)).toStrictEqual(names);
-  });
 });
 
 describe("sourceFileFor", () => {

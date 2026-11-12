@@ -122,12 +122,18 @@ function draftOf(table: SourceTable, entry: SourceTableDoc): ContractDraft {
 const hasKey = (entry: SourceTableDoc): boolean =>
   entry.captured.from !== "sample" && entry.captured.from !== "assistant";
 
+/** The text with its line breaks written as `\n` and `\r`, so that it stays on a comment's line. */
+const oneLine = (text: string): string =>
+  text.replace(/[\r\n\u2028\u2029]/g, (found) =>
+    found === "\n" ? "\\n" : found === "\r" ? "\\r" : `\\u${found.charCodeAt(0).toString(16)}`,
+  );
+
 /** The draft: the comment, then the contract's keys in order, ending with a line break. */
 function draftText(table: SourceTable, entry: SourceTableDoc, id: string): string {
   const keyed = hasKey(entry);
   const { from, at } = entry.captured;
   const lines = [
-    `# Drafted from "${entry.object}" in ${table.file ?? ""} (${from}, captured ${at.slice(0, 10)}).`,
+    `# Drafted from "${oneLine(entry.object)}"${table.file === undefined ? "" : ` in ${oneLine(table.file)}`} (${from}, captured ${at.slice(0, 10)}).`,
     keyed
       ? "# Review the types, required columns and key, then add descriptions, classifications and checks."
       : "# Review the types and required columns, then add the key, descriptions, classifications and checks.",

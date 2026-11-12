@@ -665,9 +665,12 @@ It is written so that a new import shows as a small diff:
   `properties` or `items` is a block mapping of the same keys, then
   `properties`, a list of columns written the same way, or `items`, one
   column.
-- A value is written plain when YAML reads it back as the same value, and in
-  double quotes otherwise, as `"decimal(18,2)"`, whose comma would end the
-  value inside a flow mapping.
+- A value is written plain when YAML reads it back as the same value without
+  a syntax error, and in double quotes otherwise, as `"decimal(18,2)"`, whose
+  comma would end the value inside a flow mapping, or `"@x"`, which YAML
+  cannot start a plain value with. The words `true`, `false`, `null`, `yes`,
+  `no`, `on`, `off`, `y` and `n`, in any case, are always quoted, since a tool
+  that reads YAML 1.1 would read them as another value.
 - Lines are never wrapped. The text ends with a line break.
 
 <!-- prettier-ignore -->
@@ -963,7 +966,9 @@ It starts with a comment that says where it came from and what to add:
 # Review the types, required columns and key, then add descriptions, classifications and checks.
 ```
 
-where `<file>` is the metadata document's file. For a table from a sample or
+where `<file>` is the metadata document's file. A line break in the object or
+the file is written as `\n` or `\r`, so that the comment stays on its line.
+For a table from a sample or
 an assistant, the second line is
 `# Review the types and required columns, then add the key, descriptions, classifications and checks.`
 The draft is in block style, its keys in the order above and each property's
