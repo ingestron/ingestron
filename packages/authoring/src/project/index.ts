@@ -19,6 +19,7 @@ export {
   itemIndex,
   keyPath,
   offsetAt,
+  pointerOf,
   positionAt,
   rangeOf,
   spotAt,

@@ -1,5 +1,5 @@
 // One completion suggestion, as every completion source returns it.
-import type { QuickFix } from "./fixes.js";
+import type { QuickFix } from "./quick-fix.js";
 
 /**
  * One suggestion.
