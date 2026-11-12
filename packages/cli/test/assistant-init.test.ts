@@ -49,10 +49,20 @@ describe("init", () => {
   };
 
   it("writes the same files as before without --assistant", () => {
-    const list = without();
-    expect(list).not.toContain("AGENTS.md");
-    expect(list).not.toContain("CLAUDE.md");
-    expect(list.filter((path) => !path.startsWith("build/")).length).toBe(12);
+    expect(without()).toEqual([
+      ".gitignore",
+      "README.md",
+      "connections/shop.yaml",
+      "contracts/customer_totals.yaml",
+      "contracts/orders.yaml",
+      "flows/orders.yaml",
+      "platform.yaml",
+      "project.yaml",
+      "published/.gitkeep",
+      "samples/orders.csv",
+      "standard.yaml",
+      "transforms/customer_totals.yaml",
+    ]);
   });
 
   it("writes only the files the names ask for, directly after the Created line", () => {

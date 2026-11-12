@@ -2,8 +2,17 @@
 // AGENTS.md and the files that point a tool at it (spec/cli/assistants.md, sections 2 and 5). The
 // text, the facts and every message are @ingestron/core's; this reads the files, calls it, writes
 // and prints. A file that is not a regular file is never written to or through.
-import { lstatSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve, sep } from "node:path";
+import {
+  closeSync,
+  constants,
+  lstatSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { join, relative, resolve, sep } from "node:path";
 import { nodeFiles } from "@ingestron/config";
 import {
   assistantQuestion,
@@ -36,11 +45,72 @@ function look(folder: string, path: string): Found {
   return { state: "file", text: readFileSync(join(folder, ...parts), "utf8") };
 }
 
-/** Writes `text` to `path` in `folder`, making its folder when there is none. */
-function put(folder: string, path: string, text: string): void {
-  const file = join(folder, ...path.split("/"));
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, text, "utf8");
+/** The errors of `open` that mean the path is no longer what the check found. */
+const changed = new Set(["EEXIST", "ELOOP", "EISDIR", "ENOTDIR"]);
+
+/**
+ * Writes `text` to the file at `file`, never through a link, even one made after the check: a new
+ * file is created exclusively, and an existing one is opened without following a link. False when
+ * the path turned out to be something else; the file is then left as it is.
+ */
+export function writeSafely(file: string, text: string, exists: boolean): boolean {
+  const flags = exists
+    ? constants.O_WRONLY | constants.O_TRUNC | constants.O_NOFOLLOW
+    : constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL;
+  let descriptor: number;
+  try {
+    descriptor = openSync(file, flags, 0o666);
+  } catch (error) {
+    if (changed.has((error as NodeJS.ErrnoException).code ?? "")) return false;
+    throw error;
+  }
+  try {
+    writeFileSync(descriptor, text, "utf8");
+  } finally {
+    closeSync(descriptor);
+  }
+  return true;
+}
+
+/**
+ * Writes `text` to `path` in `folder`, making `.github` with a plain mkdir when there is none.
+ * False when the path is not a place to write.
+ */
+function put(folder: string, path: string, text: string, exists: boolean): boolean {
+  const parts = path.split("/");
+  if (parts.length > 1) {
+    const parent = join(folder, ...parts.slice(0, -1));
+    try {
+      mkdirSync(parent);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+      if (!lstatSync(parent).isDirectory()) return false;
+    }
+  }
+  return writeSafely(join(folder, ...parts), text, exists);
+}
+
+/** The kinds of outcome `guideLine` has a line for. */
+type Outcome = Parameters<typeof guideLine>[1];
+
+/** Writes AGENTS.md: the section new, appended, replaced or left; the outcome to report. */
+function writeAgents(folder: string, section: string): Outcome {
+  const found = look(folder, "AGENTS.md");
+  if (found.state === "other") return "not-regular";
+  const exists = found.state === "file";
+  const update = guideUpdate(exists ? found.text : undefined, section, true);
+  const refused = "text" in update && !put(folder, "AGENTS.md", update.text, exists);
+  return refused ? "not-regular" : update.kind;
+}
+
+/** Writes one file that points a tool at AGENTS.md; the outcome to report. */
+function writePointer(folder: string, path: string, text: string): Outcome {
+  const found = look(folder, path);
+  if (found.state === "other") return "not-regular";
+  const exists = found.state === "file";
+  const update = pointerUpdate(path, exists ? found.text : undefined, text);
+  const refused = update.kind !== "current" && !put(folder, path, update.text, exists);
+  return refused ? "not-regular" : update.kind;
 }
 
 /**
@@ -59,33 +129,15 @@ export function writeAssistantFiles(
     io.write(`${facts.noGuide}\n`);
     return false;
   }
-  let regular = true;
-  const say = (file: string, kind: Parameters<typeof guideLine>[1]) => {
-    io.write(`${guideLine(file, kind, "write")}\n`);
-    if (kind === "not-regular") regular = false;
-  };
-  const agents = look(folder, "AGENTS.md");
-  if (agents.state === "other") say("AGENTS.md", "not-regular");
-  else {
-    const update = guideUpdate(
-      agents.state === "file" ? agents.text : undefined,
-      guideSection(facts),
-      true,
-    );
-    if ("text" in update) put(folder, "AGENTS.md", update.text);
-    say("AGENTS.md", update.kind as Parameters<typeof guideLine>[1]);
-  }
-  for (const { path, text } of pointerFiles(names)) {
-    const found = look(folder, path);
-    if (found.state === "other") {
-      say(path, "not-regular");
-      continue;
-    }
-    const update = pointerUpdate(path, found.state === "file" ? found.text : undefined, text);
-    if (update.kind !== "current") put(folder, path, update.text);
-    say(path, update.kind);
-  }
-  return regular;
+  const outcomes: [string, Outcome][] = [
+    ["AGENTS.md", writeAgents(folder, guideSection(facts))],
+    ...pointerFiles(names).map(({ path, text }): [string, Outcome] => [
+      path,
+      writePointer(folder, path, text),
+    ]),
+  ];
+  for (const [file, outcome] of outcomes) io.write(`${guideLine(file, outcome, "write")}\n`);
+  return outcomes.every(([, outcome]) => outcome !== "not-regular");
 }
 
 /** The output folder as the guide writes it: relative to the project folder, with `/` separators. */

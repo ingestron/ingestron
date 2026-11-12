@@ -35,6 +35,8 @@ interface Case {
 
 const cases = join(import.meta.dirname, "../../../spec/cli/conformance/assistants");
 const commands = new Set(["init", "assistant"]);
+/** The keys of `expect` that spec/cli/assistants.md, section 7, defines. */
+const keys = ["exit", "lines", "block", "contains", "absent", "absentLines", "unchanged"];
 
 /** Runs the case's command in a folder that is the working folder and the project folder. */
 function runCase(testCase: Case): { folder: string; exit: number; output: string } {
@@ -105,6 +107,7 @@ describe("assistant guide conformance", () => {
   for (const name of mine) {
     const testCase = parse(readFileSync(join(cases, name), "utf8")) as Case;
     it(`${name}: ${testCase.description}`, () => {
+      expect(Object.keys(testCase.expect).filter((key) => !keys.includes(key))).toEqual([]);
       const { folder, exit, output } = runCase(testCase);
       expect(exit, output).toBe(testCase.expect.exit);
       checkOutput(output, testCase.expect);
