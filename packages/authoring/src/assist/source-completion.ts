@@ -2,10 +2,11 @@
 // the column names in a flow table's checks and in a contract's properties, a connection's
 // `metadata.from` and the keys of its `metadata.with`. Only names, types, counts, dates and the
 // recipes' own words are shown: never a value from a source's rows, which no document holds.
-import type { SourceColumnDoc, SourceTable, SourceTableDoc } from "@ingestron/definitions";
-import { documentOf, flowFacts, idsOf, writtenKeys, type Place } from "../navigation/index.js";
-import { resolved, type Project } from "../project/index.js";
+import type { SourceColumnDoc, SourceTable } from "@ingestron/definitions";
+import { flowFacts, writtenKeys, type Place } from "../navigation/index.js";
+import type { Project } from "../project/index.js";
 import { catalogRecipes } from "../sources/index.js";
+import { metadataTables, sourceTablesAt } from "./source-tables.js";
 import type { Suggestion } from "./suggestion.js";
 
 /**
@@ -21,10 +22,14 @@ export function sourceValues(
   return valuesAt(project, place, environment)?.map((item) => ({ ...item, replaceFrom }));
 }
 
-/** The offset where the value typed so far on the cursor's line starts, after any opening quote. */
+/**
+ * The offset where the value typed so far on the cursor's line starts, after any opening quote:
+ * all of it after the key, spaces included. `placeAt` takes a line whose value has a space, such
+ * as `object: Order D`, for a key, so no value is offered there yet.
+ */
 function valueStart({ before }: Place): number {
   const line = before.slice(before.lastIndexOf("\n") + 1);
-  const typed = /^\s*(?:-\s+)?[\w.-]+:\s*(\S*)$/.exec(line)?.[1] ?? "";
+  const typed = /^\s*(?:-\s+)?[\w.-]+:\s*(.*)$/.exec(line)?.[1] ?? "";
   return before.length - typed.replace(/^["']/, "").length;
 }
 
@@ -37,7 +42,7 @@ function valuesAt(
   const where = path.join("/");
   if (kind === "Connection") return where === "metadata/from" ? recipeIds(project) : undefined;
   if (kind === "Flow")
-    return /^tables\/[^/]+\/object$/.test(where) ? objects(project, place) : undefined;
+    return /^tables\/[^/]+\/object$/.test(where) ? objects(project, place, environment) : undefined;
   if (kind === "DataContract") return contractColumns(project, place, environment);
   return undefined;
 }
@@ -96,9 +101,13 @@ function checkColumns(
 }
 
 /** The objects of the flow's connection's metadata document, with their columns and capture date. */
-function objects(project: Project, place: Place): Suggestion[] | undefined {
+function objects(
+  project: Project,
+  place: Place,
+  environment: string | undefined,
+): Suggestion[] | undefined {
   const source = flowFacts(project, place).source;
-  const tables = source ? metadataTables(project, source) : [];
+  const tables = source ? metadataTables(project, place, source, environment) : [];
   if (tables.length === 0) return undefined;
   return tables.map((table) => {
     const count = table.columns.length;
@@ -110,19 +119,6 @@ function objects(project: Project, place: Place): Suggestion[] | undefined {
       detail: date ? `${columns}, captured ${date}` : columns,
     };
   });
-}
-
-/** The tables of the metadata document of a connection; none when it has no document. */
-function metadataTables(project: Project, connection: string): SourceTableDoc[] {
-  for (const id of idsOf(project, "SourceMetadata")) {
-    const document = documentOf(project, "SourceMetadata", id);
-    if (document?.connection !== connection || !Array.isArray(document.tables)) continue;
-    return (document.tables as (SourceTableDoc | null)[]).filter(
-      (table): table is SourceTableDoc =>
-        typeof table?.object === "string" && Array.isArray(table.columns),
-    );
-  }
-  return [];
 }
 
 /** Each recipe of the catalog, with its title; undefined while a recipe is broken. */
@@ -147,41 +143,6 @@ function tableOf(
   return sourceTablesAt(project, place, environment).find(
     (item) => item.flow === flow && item.table === key,
   );
-}
-
-/**
- * Every flow table with its metadata entry. A value not yet typed (`check:`, `name:`) is null,
- * which the schema refuses, and a project that does not load lists nothing; so when it does not
- * load, it is resolved again with a placeholder at the cursor, as a first letter would make it.
- */
-function sourceTablesAt(
-  project: Project,
-  place: Place,
-  environment: string | undefined,
-): SourceTable[] {
-  const listed = resolved(project, environment).sourceTables;
-  if (listed) return listed;
-  return resolved(typedOver(project, place), environment).sourceTables ?? [];
-}
-
-const typedProjects = new WeakMap<Project, Map<string, Project>>();
-
-/** The project with a placeholder written at the cursor, once per project snapshot, file and offset. */
-function typedOver(project: Project, place: Place): Project {
-  let byPlace = typedProjects.get(project);
-  if (!byPlace) typedProjects.set(project, (byPlace = new Map()));
-  const at = place.before.length;
-  const key = `${place.file}:${at}`;
-  let found = byPlace.get(key);
-  if (!found) {
-    const text = `${place.text.slice(0, at)}${place.before.endsWith(":") ? " " : ""}_${place.text.slice(at)}`;
-    const files = {
-      ...project.files,
-      read: (path: string) => (path === place.file ? text : project.files.read(path)),
-    };
-    byPlace.set(key, (found = { ...project, files }));
-  }
-  return found;
 }
 
 /** A column as a suggestion, with the type the source gives it (else the logical type). */

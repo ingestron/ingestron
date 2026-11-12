@@ -132,14 +132,18 @@ export const files: Record<string, string> = {
 };
 
 let folder = "";
-/** Writes the project to a temporary folder for the tests of the file that calls it. */
-export function useSourceProject(): void {
+/**
+ * Writes the project to a temporary folder for the tests of the file that calls it, and gives
+ * `created` the folder.
+ */
+export function useSourceProject(created?: (folder: string) => void): void {
   beforeAll(() => {
     folder = mkdtempSync(join(tmpdir(), "source-completion-"));
     for (const [path, text] of Object.entries(files)) {
       mkdirSync(dirname(join(folder, path)), { recursive: true });
       writeFileSync(join(folder, path), text);
     }
+    created?.(folder);
   });
   afterAll(() => rmSync(folder, { recursive: true, force: true }));
 }

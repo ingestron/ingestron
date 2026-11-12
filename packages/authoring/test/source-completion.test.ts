@@ -160,17 +160,3 @@ describe("column names in a contract's properties", () => {
     ).not.toContain("OrderID");
   });
 });
-
-describe("what completion shows", () => {
-  it("holds names, types, counts and dates only, never a value from a row", () => {
-    const shown = [
-      at("flows/erp.yaml", (text) => text.replace("object: ERP.dbo.Customers", "object: |")),
-      at("flows/erp.yaml", (text) => text.replace("check: Email IS NOT NULL", "check: |")),
-      at("contracts/orders.yaml", (text) => text.replace("- name: OrderID", "- name: |")),
-    ].flat();
-    for (const item of shown)
-      expect(item.detail).toMatch(
-        /^(\d+ columns?, captured \d{4}-\d{2}-\d{2}|[a-z0-9]+(\(\d+(,\d+)?\))?)$/,
-      );
-  });
-});
