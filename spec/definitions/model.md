@@ -995,12 +995,18 @@ operations are not judged below.
 **A table with no contract.** A table whose columns come from source metadata
 (section 12.4) is judged against those columns, and its messages name the
 metadata where they would name the contract, since the id of its model
-contract is not one a person wrote. In each message above, `of contract "<id>"`
-becomes `of "<object>" in the source metadata` and `in contract "<id>"` becomes
-`in the source metadata of "<object>"`, with the `object` of its metadata
-entry, and in the hint of `CLEANSE_COLUMN`, `Use a column the contract lists:`
-becomes `Use a column the source metadata lists:`. So the message of
-`CLEANSE_COLUMN` is `"<column>" is not a column of "<object>" in the source metadata.`
+contract is not one a person wrote. Every message above names the `object` of
+the table's metadata entry first and the source metadata after it, in the order
+that `CLEANSE_COLUMN` has: `of contract "<id>"` becomes
+`of "<object>" in the source metadata`, and `in contract "<id>"` becomes
+`in "<object>" in the source metadata`. In the hint of `CLEANSE_COLUMN`,
+`Use a column the contract lists:` becomes
+`Use a column the source metadata lists:`. So the message of `CLEANSE_COLUMN` is
+`"<column>" is not a column of "<object>" in the source metadata.` and that of
+`CLEANSE_TYPE` for `trim` is
+`"trim" works on text, and "<column>" is <type> in "<object>" in the source metadata.`
+The `CLEANSE_TYPE` message for `timezone` (section 6.3) changes in the same
+way.
 
 **Not applied.** The step that keeps the table (section 11.7) judges each
 operation for the intent path `cleanse.trim`, `cleanse.empty`, `cleanse.map`,
@@ -1036,15 +1042,15 @@ It happens after cleansing and before the row checks. It needs the layer's
 `deduplicating` as the thing written), and:
 
 - `DEDUPLICATE_KEY`, an error at `cleanse.deduplicate`, when the table has
-  no primary key, from its contract or, when it names none, from its source
-  metadata (section 12.4): `"<table>" has no primary key, so deduplicate cannot
-tell which rows belong together.` The hint depends on where the table's
-  columns come from. For a table with a contract it is
-  ``Mark the key columns `primaryKey: true` in contract "<id>".``
+  no key that says which rows belong together: its contract marks none or,
+  when it names no contract, its source metadata (section 12.4) gives none:
+  `"<table>" has no primary key, so deduplicate cannot tell which rows belong together.`
+  The hint depends on where the table's columns come from. For a table with a
+  contract it is ``Mark the key columns `primaryKey: true` in contract "<id>".``
   For a table with no contract, so that its columns come from source metadata,
   it names the metadata alone, since its contract's `id` is not one a person
-  wrote (section 12.4): ``Give the key columns a `primaryKeyPosition` in the source metadata of "<object>", or name a contract that marks them.``,
-  with the `object` of its metadata entry.
+  wrote (section 12.4), with the `object` of its metadata entry:
+  ``Give the key columns a `primaryKeyPosition` in the source metadata of "<object>", or name a contract that marks them.``
 - `DEDUPLICATE_MODE`, when the table is stored by a step (a table that ends at
   the landed files, or that an ingest step writes, has none). It is judged first
   by how the store step keeps rows, then by the table's resolved `history`
@@ -1712,26 +1718,34 @@ optional `environment`, optional `envvars` and `missingEnvvars` (as in the
 config conformance cases), an optional `deployTime: true` (section 1.1), an
 optional `environmentsTogether: true` (section 7), an optional
 `replaceMe: error` (section 1), an optional `sourceTables: true` (section
-12.7), and
-`expect`: `tables` (partial objects, in order,
-with `fullName` written as `catalog.schema.table`, and `null` at any key for
-a value the table does not have, such as `serve: null` for a step,
-`settings: { mode: null }` for a setting or `type: null` in a listed column), `products` (partial objects,
-in order), `standard` (a partial object), `platform`, `names`, `deployValues`, `previewFeatures` and
-`operations` (the model's, exactly), `sourceTables` (the result's list of
-section 12.7, exactly, with or without a model; `null` when the result has
-none) and `qualityResults`, or
-`diagnostics` (matched in order on the fields given; `fixes` lists the fix
-titles, and `fixes: []` means the diagnostic has none; `subject` is matched
-on the keys given, and `subject: null` means the diagnostic has none),
-`accepted` (the accepted warnings, in order and matched as `diagnostics`
-are, each written like a diagnostic with the entry's `reason` and `entry`,
-`{ file, line }`, beside it; `accepted: []` means nothing was accepted; the
-`diagnostics` are what remain, and a case that gives none expects none, as
-before), and optionally
-`fixed`, as in the config conformance cases. A case that expects
-`diagnostics` also checks `tables`, `previewFeatures`, `operations`,
+12.7), and `expect`.
+
+`expect` gives either `tables` and the other results below, or `diagnostics`:
+
+- `tables` are partial objects, in order, with `fullName` written as
+  `catalog.schema.table`. `null` at any key stands for a value the table does
+  not have, such as `serve: null` for a step, `settings: { mode: null }` for
+  a setting or `type: null` in a listed column.
+- `products` are partial objects, in order. `standard` is a partial object.
+- `platform`, `names`, `deployValues`, `previewFeatures` and `operations` are
+  the model's, exactly.
+- `sourceTables` is the result's list of section 12.7, exactly, with or
+  without a model, and `null` when the result has none.
+- `qualityResults`.
+- `diagnostics` are matched in order on the fields given. `fixes` lists the
+  fix titles, and `fixes: []` means the diagnostic has none. `subject` is
+  matched on the keys given, and `subject: null` means the diagnostic has
+  none.
+- `accepted` are the accepted warnings, in order and matched as `diagnostics`
+  are, each written like a diagnostic with the entry's `reason` and `entry`,
+  `{ file, line }`, beside it. `accepted: []` means nothing was accepted. The
+  `diagnostics` are what remain, and a case that gives none expects none, as
+  before.
+
+A case MAY also give `fixed`, as in the config conformance cases. A case that
+expects `diagnostics` also checks `tables`, `previewFeatures`, `operations`,
 `sourceTables` and `qualityResults` when it gives them.
+
 All cases use the
 data-only packs [conformance/pack.yaml](conformance/pack.yaml),
 [conformance/pack-bridge.yaml](conformance/pack-bridge.yaml),
@@ -2650,25 +2664,46 @@ A flow table's `object`, resolved for the environment being planned, is
 matched with the `object` of each table of its connection's metadata:
 
 - **With `names`.** The flow's `object` is split on `.` as it is written,
-  before any reference is replaced, and the parts are compared with the
-  metadata's from the right. A part that is exactly one `${…}` reference
-  matches anything, whatever its value and whether or not the reference is
-  set (an `${envvar:…}` that is unset at planning included). Any other part is
-  compared after its references are replaced, a part that mixes text and a
-  reference as well; a part the flow leaves out is not compared and matches
-  anything. When every written part is such a reference (the whole `object`
-  is one reference, such as `${values.table}`, or only references), none is a
-  wildcard: the parts are taken from the resolved text instead, so a variable
-  that holds the whole object matches its value and not every table, and a
-  reference that is unset at planning then matches nothing, and is not
-  `SOURCE_TABLE_GONE` either, since its name is not known (section 12.6). Case is compared
-  when `names.caseSensitive` is `true`, and ignored otherwise. A flow's `object` with more parts than `names.parts` matches
-  nothing, deliberately, so the table then has no entry (`TABLE_NO_COLUMNS`
-  in section 12.4, or `SOURCE_TABLE_GONE` in section 12.6 where catalog tables
-  exist). So `dbo.Customers`, `${values.erp_db}.dbo.Customers` and
+  before any reference is replaced, and its parts are compared with the
+  metadata's from the right:
+  - A part that is exactly one `${…}` reference matches anything, whatever
+    its value and whether or not the reference is set (an `${envvar:…}` that
+    is unset at planning included).
+  - Any other part is compared after its references are replaced, a part
+    that mixes text and a reference as well.
+  - A part the flow leaves out is not compared and matches anything.
+  - A value that is put in a part does not make more parts: a value that
+    holds `.` stays inside its part and is not split again. A part of the
+    metadata's `object` never holds `.`, so a part that mixes text and a
+    reference whose value holds `.` matches nothing, and a part that is
+    exactly one such reference still matches anything. The one exception is
+    below.
+  - When every written part is such a reference (the whole `object` is one
+    reference, such as `${values.table}`, or only references), none is a
+    wildcard: the parts are taken from the resolved text instead, so a
+    variable that holds the whole object matches its value and not every
+    table. A reference that is unset at planning then matches nothing, and is
+    not `SOURCE_TABLE_GONE` either, since its name is not known (section
+    12.6). This is where a value that holds `.` is split, as the resolved text
+    is.
+  - Case is compared when `names.caseSensitive` is `true`, and ignored
+    otherwise.
+  - A flow's `object` with more parts than `names.parts` matches nothing,
+    deliberately, so the table then has no entry (`TABLE_NO_COLUMNS` in
+    section 12.4, or `SOURCE_TABLE_GONE` in section 12.6 where catalog tables
+    exist). So does a metadata `object` with fewer parts than the flow's: a
+    table written `ERP.dbo.Customers` does not match a metadata table written
+    `dbo.Customers`, since the flow names a database that the metadata
+    does not. A metadata table with more parts than the flow's matches when
+    the parts the flow gives are equal to its last ones.
+
+  So `dbo.Customers`, `${values.erp_db}.dbo.Customers` and
   `ERP.dbo.Customers` all match `ERP.dbo.Customers`, and an environment's
   database with another name shares the one document.
-- **Without `names`.** The text must be equal, with case.
+
+- **Without `names`.** The text must be equal, with case. The `object` is not
+  split, so a flow's `ERP.dbo.Customers` does not match a metadata table
+  written `dbo.Customers`, and `dbo.Customers` does not match `dbo.customers`.
 
 More than one match is `SOURCE_OBJECT_AMBIGUOUS`, an error at the table's
 `object`: `"<object>" matches more than one table of the source metadata for "<connection>": <objects>.`
@@ -2773,21 +2808,28 @@ The rule is evaluated with the rest of resolution, for the environment being
 planned: the same flow table may need a contract in one environment, whose
 platform manages access, and not in another. `CONTRACT_NEEDED` replaces
 `TABLE_NO_COLUMNS` and the columns of section 12.4. Whichever the reason,
-the hint is, when the metadata has an entry for the table,
-``Draft one from the source metadata with `ingestron contract --from-metadata <flow>.<table>`, then name it with `contract`.``
-where `<flow>.<table>` is the flow's id and the table's key, and otherwise
-``Name a contract for the table with `contract`.``
+the hint is, when the metadata has an entry for the table:
+
+```text
+Draft one from the source metadata with `ingestron contract --from-metadata <flow>.<table>`, then name it with `contract`.
+```
+
+where `<flow>.<table>` is the flow's id and the table's key, and otherwise:
+
+```text
+Name a contract for the table with `contract`.
+```
 
 ### 12.6 Comparing
 
 During resolution, for each flow table with a `contract` whose connection has
 a metadata entry for it (section 12.3), the contract's columns are compared
-with the entry's; a flow table with a `contract` and no entry is compared
-only as `SOURCE_TABLE_GONE` says, below. A contract's column is matched with a metadata column by
-its `physicalName`, else its `name`, compared with case when
-`names.caseSensitive` is `true` or the document has no `names`, and without it
-otherwise. A flow table with no contract is
-not compared: its columns are the metadata's.
+with the entry's. A flow table with a `contract` and no entry is compared
+only as `SOURCE_TABLE_GONE` says, below. A contract's column is matched with a
+metadata column by its `physicalName`, else its `name`, compared with case
+when `names.caseSensitive` is `true` or the document has no `names`, and
+without it otherwise. A flow table with no contract is not compared: its
+columns are the metadata's.
 
 | Difference                                                           | Code                  | Kind       |
 | -------------------------------------------------------------------- | --------------------- | ---------- |
@@ -2800,19 +2842,18 @@ not compared: its columns are the metadata's.
 | A flow table whose `object` a catalog import does not list           | `SOURCE_TABLE_GONE`   | breaking   |
 
 **Types.** The metadata's `logicalType` is compared with the contract
-property's `logicalType`; a property that gives none is not compared for type.
-A source type _fits_ the contract's when each of its values is also a value
-of the contract's: a type fits itself; `integer` fits `number`; `number`
-fits `string`; `date` fits `timestamp`; and any type fits `string`, which
-makes `integer` fit `string` as well. `object` and `array` fit only
-themselves. For `number`, with the
-metadata's `precision` and `scale` as `p_src` and `s_src` and the contract's as
-`p_con` and `s_con`, the source type fits only when `s_src ≤ s_con` and
-`p_src − s_src ≤ p_con − s_con`; for `string`, with `maxLength`, when
-`max_src ≤ max_con`. Each option is compared only when both sides give it. A
-side that gives a `precision` and no `scale` has a `scale` of 0, and the rule
-on `p − s` needs both sides' precisions. So a side that gives no `precision`
-is never the reason a type does not fit. A
+property's `logicalType`; a property that gives none is not compared for
+type. A source type _fits_ the contract's when each of its values is also a
+value of the contract's: a type fits itself; `integer` fits `number`;
+`number` fits `string`; `date` fits `timestamp`; and any type fits `string`,
+which makes `integer` fit `string` as well. `object` and `array` fit only
+themselves. For `number`, with the metadata's `precision` and `scale` as
+`p_src` and `s_src` and the contract's as `p_con` and `s_con`, the source
+type fits only when `s_src ≤ s_con` and `p_src − s_src ≤ p_con − s_con`; for
+`string`, with `maxLength`, when `max_src ≤ max_con`. Each option is compared
+only when both sides give it. A side that gives a `precision` and no `scale`
+has a `scale` of 0, and the rule on `p − s` needs both sides' precisions, so
+a side that gives no `precision` is never the reason a type does not fit. A
 type that fits but is not the same, in its `logicalType` or in those options,
 is `SOURCE_TYPE_FITS`, information; a type that does not fit is
 `SOURCE_TYPE_CHANGED`. The message of `SOURCE_TYPE_CHANGED` and of

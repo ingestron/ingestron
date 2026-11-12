@@ -873,6 +873,48 @@
       }
     },
     {
+      "name": "JSON sample: a sample with one record keeps the fields of its nested record, which are plain names",
+      "file": "sources/landing/one.json",
+      "input": "one-record.json",
+      "object": "one",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "one",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "address",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "street",
+                    "logicalType": "string",
+                    "required": false
+                  },
+                  {
+                    "name": "city",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["1 High Street", "Leeds"]
+    },
+    {
       "name": "JSON sample: an empty key is not a column, at any depth",
       "file": "sources/landing/events.json",
       "input": "unnamed.json",

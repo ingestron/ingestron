@@ -202,9 +202,11 @@ other `<…>` is filled in.
   ``- Project `<id>`. Environments: none (`project.yaml`).``
 - **The standard line.** The standard is the first `Standard` document among
   the imported files. The files are the union of those the patterns of
-  `imports` match, each once, in code-point order of their paths, as the
-  definitions loader orders them (config specification, section 2), whatever
-  the order of the patterns. Its line is
+  `imports` match, each once, in the order of a JavaScript string sort of their
+  paths (UTF-16 code units, which is code-point order except for characters
+  outside the Basic Multilingual Plane), as the definitions loader orders them
+  (config specification, section 2), whatever the order of the patterns. Its
+  line is
   ``- Standard `<id>` in `<file>`<origin>. Packs: `<pack>`, `<pack>`.``, with
   `<file>` its path, and the packs as its `packs` field writes them.
   `<origin>` is, in this order of preference:
@@ -268,8 +270,8 @@ The items are, in this order:
 Rule 8 has one sentence that depends on the environments: when at least one
 environment has `runs-on`, its first sentence reads ``Environments differ only
 in values, under `environments.<name>.values` in `project.yaml`, and in
-`runs-on`.``; otherwise it is as shown above. The `<, and in `runs-on`>` of the
-template is that part.
+`runs-on`.``; otherwise it is as shown above. The part of the template
+written ``<, and in `runs-on`>`` is that part.
 
 Rule 7 has two sentences that depend on the packs:
 
@@ -341,10 +343,11 @@ line, from this closed set:
 
 - A new section is appended to an existing user's `AGENTS.md` after one blank
   line, in the file's line ending (section 3: decided by its first line). A
-  file that does not end with a line ending gets one first. Everything already in the file stays byte for byte. A stale section
-  is replaced in place, from the start of its begin-marker line to the end of
-  its end-marker line, in the file's line ending, and the rest of the file stays
-  byte for byte.
+  file that does not end with a line ending gets one first. Everything
+  already in the file stays byte for byte. A stale section is replaced in
+  place, from the start of its begin-marker line to the end of its end-marker
+  line, in the file's line ending, and the rest of the file stays byte for
+  byte.
 - `CLAUDE.md` gets its two lines appended, each on a line of its own, in the
   file's line endings. `.github/copilot-instructions.md` gets its whole text
   appended after one blank line. A new `.github` folder is made only when
@@ -362,8 +365,9 @@ line, from this closed set:
   with `O_CREAT|O_EXCL`, which is given the original file's mode and renamed
   over the target. Just before the rename the target is looked at again
   without following a link, and it is replaced only if it is still a regular
-  file. A file the user cannot write to is not replaced. A write that fails leaves the original as it was and removes the
-  temporary file. A new file is created with `O_CREAT|O_EXCL` directly.
+  file. A file the user cannot write to is not replaced. A write that fails
+  leaves the original as it was and removes the temporary file. A new file is
+  created with `O_CREAT|O_EXCL` directly.
 
 **`init`.** `init --assistant <names>` writes the files after the project's
 files and before its plan: it prints each file's line directly after its
@@ -424,8 +428,10 @@ from the project as it is now, with `<out>` the folder given by `--out`.
 - Neither `CLAUDE.md` nor `.github/copilot-instructions.md` is read or
   rewritten: they hold no facts.
 
-The source request (the [source metadata specification](sources.md), section 4) offers one more alternative when the project's `AGENTS.md` holds an
-Ingestron section that has the `## Source metadata` part.
+The source request offers one more alternative when the project's `AGENTS.md`
+holds an Ingestron section that has the `## Source metadata` part: the
+[source metadata specification](sources.md), section 4, gives the rule and the
+item's text.
 
 ## 7. Conformance
 

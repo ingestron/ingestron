@@ -139,14 +139,18 @@ is broken, as `readKit` does ([kits.md](kits.md), "Rules"):
 2. No key other than those above, and none of the required ones missing.
 3. Each field has its shape: `title`, `ask`'s fields, `rows`, `columnNames`'
    `match` and `to`, and each `description` are text; `inputs`, `ask`,
-   `names`, `fields` and `columnNames` are mappings; `types`, `key` and `sources` are lists; `kind`, `read`,
-   `objects` and each `logicalType` are one of their values; `names` has
-   both `parts`, from 1 to 4, and `caseSensitive`, true or false;
-   `columnNames` has both `match` and `to`.
+   `names`, `fields` and `columnNames` are mappings; `types`, `key` and
+   `sources` are lists; `kind`, `read`, `objects` and each `logicalType` are
+   one of their values; `names` has both `parts`, from 1 to 4, and
+   `caseSensitive`, true or false; `columnNames` has both `match` and `to`.
 4. `id` matches its pattern and equals the file's name.
 5. Each input's name matches its pattern and is not one of the three
    reserved names.
-6. `ask` has `run` or `call` as `kind` says, and `save` starts `sources/`.
+6. `ask` has `run` or `call` as `kind` says, `save` starts `sources/`, and
+   `save` holds `{object}` when `run` or `call` does:
+   `<file>: save must hold {object} when run or call does, so that each table is saved to its own file.`
+   A step that is written once for each table (section 4) would otherwise
+   save every table to one path.
 7. `rows`, `fields`, `key` and `objects` are given only with their readers;
    each key of `fields` is a field of the columns file, and `fields` maps
    `table_name`, `column_name` and `data_type`.
@@ -168,7 +172,8 @@ The text of `ask` MAY hold these placeholders, which the request fills in:
 
 - `{connection}`: the connection's id;
 - `{object}`: one table's `object`, as the flow writes it, resolved. A step
-  that holds it is written once for each table (section 4);
+  that holds it is written once for each table (section 4), so a recipe whose
+  `run` or `call` holds it MUST hold it in `save` too (section 1, rule 6);
 - `{schemas}`: the schemas the connection's flow tables read (section 4), each
   as a single-quoted SQL literal, joined with `, `, such as `'dbo', 'sales'`;
 - `{<input>}`: the value the connection gives for that input. A value that
@@ -361,13 +366,18 @@ by the import (section 3).
 
 - **CSV** is read as the columns file is (section 2.1). Its header gives the
   column names, in order. A name that is empty is left out. The first line is
-  refused as a header, with `<file> has no header row: every field of its first line is a number, a date, a timestamp or a boolean.`,
-  only when no field of it could be a name: each is empty or, as
-  `ingestron contract <sample>` reads values, a number (an integer with
-  leading zeros too), a date, a timestamp or a boolean. So `region,2023,2024`
-  is a header, and the message never quotes the line. The test cannot tell a
-  headerless file whose first line holds some text from a header: its values
-  become column names, which is the rule of this section.
+  refused as a header, only when no field of it could be a name: each is empty
+  or, as `ingestron contract <sample>` reads values, a number (an integer with
+  leading zeros too), a date, a timestamp or a boolean. The refusal is
+  `<file> has no header row: <found>.` with `<found>` the text
+  `the first line has <n> fields, <m> of them numbers or dates`, where `<n>`
+  is the number of fields of the first line, empty ones included, and `<m>`
+  the number of them that are such a number, date, timestamp or boolean.
+  `fields` is `field` when `<n>` is 1. The message gives two counts and never
+  a name or a value of the line, since a file without a header has data
+  there. So `region,2023,2024` is a header. The test cannot tell a headerless
+  file whose first line holds some text from a header: its values become
+  column names, which is the rule of this section.
 - **JSON** is a list of records, or one record. With the recipe's `rows`, the
   records are the list at that path, so a saved API response that wraps its
   records, such as `{ "value": [...] }`, is read through its recipe.
@@ -379,14 +389,35 @@ found. A column's logical type is the narrowest that every non-empty value
 fits, as `ingestron contract <sample>` infers it: `integer`, `number`,
 `boolean`, `date`, `timestamp`, else `string`; a column with no non-empty
 value is `string`. A value that is a record makes the column
-`logicalType: object`, with the record's fields as its `properties`, read the
-same way, when every record of the column has the same set of fields, in any
-order. When the sets differ between records, the record is a dictionary keyed
-by values, such as counts by customer code, and its keys are data: the column
-is `object` without `properties`, so no key is written. (A sample with one
-record keeps its fields: it cannot show that they differ.) A list makes the
-column `logicalType: array`, with its elements read as one column, its
-`items`, which is named `items`. A column nested deeper than 16 levels has no
+`logicalType: object`, with the fields of the records found there as its
+`properties`, read the same way: the fields are the keys found in any of the
+records, in the order first found, and their types are merged as the types of
+the columns of the table are, from every record that has the key. A key that
+some of the records leave out is a field like any other, and none of the
+fields is `required` (every column of a sample is `required: false`). Records
+with different keys therefore give the union of their keys.
+
+A record is read as a map instead, when its keys are data and not names, such
+as counts by customer code or by date: the column is then `object` without
+`properties`, and no key is written. The keys found in the records of the
+column are data when any of these holds:
+
+- a key starts with a date, `^\d{4}-\d{2}-\d{2}`;
+- a key is a number, `^-?\d+(\.\d+)?$`;
+- a key is a UUID, five groups of hexadecimal digits of 8, 4, 4, 4 and 12
+  digits, joined with `-`, in any case;
+- a key holds a character outside `[A-Za-z0-9_ $.-]`;
+- there are more than 100 different keys.
+
+This is decided for the keys of all the records of the column together. A
+sample with one record is decided by its keys in the same way, so the keys of
+one record that read as plain names, such as `street` and `city`, are fields,
+and the keys of one record that are dates are not. An empty key is not a key
+(section 2).
+
+A list makes the column `logicalType: array`, with its elements read as one
+column, its `items`, which is named `items`; the records among the elements
+are read together, as above. A column nested deeper than 16 levels has no
 `properties` or `items`. Every column has `required: false` and no
 `primaryKeyPosition`, and no `sourceType`. The values are read only to find
 the types and are then dropped.
@@ -409,8 +440,9 @@ when it has one, whatever its physical type, so an `INT32` field annotated
 | `TIME`                                     | `time`                                 |
 | `BYTE_ARRAY` with `STRING`, and any other  | `string`                               |
 
-A `DECIMAL` field that gives no scale has a `scale` of 0. `sourceType` is the field's physical type, with its annotation after it in
-brackets when it has one, such as `INT32(DATE)`. A Parquet file has no key.
+A `DECIMAL` field that gives no scale has a `scale` of 0. `sourceType` is the
+field's physical type, with its annotation after it in brackets when it has
+one, such as `INT32(DATE)`. A Parquet file has no key.
 
 A sample is refused when it has no columns: `<file> has no columns.`; when
 its JSON is not records:
@@ -427,8 +459,8 @@ Each entry of `schema` is a table: its `object` is the entry's
 - `name` is the property's `physicalName`, else its `name`;
 - `logicalType`, `logicalTypeOptions` and `required` are the property's;
   a property with no `logicalType` is `string`, and so is one whose
-  `logicalType` is text that is not one of the logical types a recipe's `types` may give (section 1),
-  with the note `Type "<logicalType>" of <object>.<column> is not known; read as string.`,
+  `logicalType` is text that is not one of the logical types a recipe's
+  `types` may give (section 1), with the note `Type "<logicalType>" of <object>.<column> is not known; read as string.`,
   where `<column>` is the property's name, after the names of the properties
   it is nested in, joined with `.`;
 - `primaryKeyPosition` is the property's, for a property with
@@ -523,8 +555,8 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
   other is `string`.
 - **A schema registry's response**: a JSON mapping whose `schema` is text and
   that also has `subject`, `id` or `version`, as a registry returns a
-  subject's version. (A sample record with a text column `schema` is a sample.) Its `schema` is read with Avro when
-  `schemaType` is missing or `AVRO`, and with JSON Schema when it is `JSON`.
+  subject's version. (A sample record with a text column `schema` is a
+  sample.) Its `schema` is read with Avro when `schemaType` is missing or `AVRO`, and with JSON Schema when it is `JSON`.
   The readers `avro` and `json-schema` both accept it, and each reads it by
   its `schemaType`. `PROTOBUF` is refused:
   `Protobuf schemas are not read yet; save the topic's columns as a columns file instead.`
@@ -571,8 +603,9 @@ schema reached by `$ref` is written in full only the first time in a table
 (the table's own schema counts as the first); wherever it appears again it
 has its type, `object` or `array`, without `properties` or `items`, and the
 last part of the `$ref`, such as `Address`, as its `sourceType`. An object
-nested deeper than 16 levels has no `properties`. `enum`, `default`, `example` and every other keyword are
-not read, so no value of the data a schema describes reaches the metadata.
+nested deeper than 16 levels has no `properties`. `enum`, `default`,
+`example` and every other keyword are not read, so no value of the data a
+schema describes reaches the metadata.
 
 ### 2.5 Choosing the reader
 
@@ -926,7 +959,8 @@ Save the result as `<save>`.
 - A project recipe's line is ``- Recipe: <title> (`<id>`, from `recipes/<id>.yaml`)``.
 - With `call` instead of `run`, `Run this query:` is `Call this URL:` and the
   block is a `text` block. `how`, when the recipe gives it, is a paragraph
-  after the block, without the line breaks and spaces at its start and end. `Save the result as` is `Save the response as`.
+  after the block, without the line breaks and spaces at its start and end.
+  `Save the result as` is `Save the response as`.
 - A `sample` recipe has neither: the step says `Save a sample of each table:`.
 - When `run`, `call` or `save` holds `{object}`, the block and the save line
   are replaced by a list with one item for each table, in the order of the
