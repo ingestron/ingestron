@@ -26,3 +26,4 @@ export { sourceChangesText, type SourceChange } from "./changes.js";
 export { importSource, type SourceImport, type SourceImportInput } from "./import.js";
 export { withSourcesImport } from "./imports.js";
 export { sourceFileFor } from "./paths.js";
+export { sourceRequest, sourceRequestFor, type SourceRequestOptions } from "./request.js";

@@ -75,3 +75,6 @@ export {
   type SourceImport,
   type SourceImportInput,
 } from "./sources/index.js";
+
+// The source request: what to ask for each connection's metadata, and how to import it.
+export { sourceRequest, type SourceRequestOptions } from "./sources/index.js";

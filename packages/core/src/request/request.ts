@@ -78,7 +78,11 @@ export function requestFor(
     environment,
   });
   const name = environment ?? "default";
-  if (!model) return { text: unresolved(name, diagnostics), resolved: false };
+  if (!model)
+    return {
+      text: problemsText(`# Platform request (${name})`, errorsOf(diagnostics)),
+      resolved: false,
+    };
   const project = hostProject(files, environment, envvars);
   const capabilities = packCapabilities(available);
   const notKnown = whatIsNotKnown(project, model);
@@ -101,24 +105,37 @@ export function requestFor(
   return { text, resolved: true };
 }
 
+/** The errors among the diagnostics; warnings and information are left out. */
+function errorsOf(diagnostics: readonly AnyDiagnostic[]): AnyDiagnostic[] {
+  return diagnostics.filter((diagnostic) => diagnostic.severity === "error");
+}
+
 /**
- * The request when an error stops it: the note and each error as `ingestron plan` writes a
- * problem. The request resolves with each set variable's value, so its errors may not be
- * plan's (spec/cli/request.md).
+ * A request that an error stops: the title, the note and each error as `ingestron plan` writes
+ * a problem, then each of `lines` on a line of its own. The request resolves with each set
+ * variable's value, so its errors may not be plan's (spec/cli/request.md).
+ * @internal
  */
-function unresolved(name: string, diagnostics: readonly AnyDiagnostic[]): string {
-  const errors = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
+export function problemsText(
+  title: string,
+  errors: readonly AnyDiagnostic[],
+  lines: readonly string[] = [],
+): string {
+  const problems = [...(errors.length > 0 ? [formatDiagnostics(errors)] : []), ...lines];
   return [
-    `# Platform request (${name})`,
+    title,
     "The definitions have problems; fix them first:",
-    `\`\`\`text\n${formatDiagnostics(errors)}\n\`\`\``,
+    `\`\`\`text\n${problems.join("\n")}\n\`\`\``,
   ]
     .join("\n\n")
     .concat("\n");
 }
 
-/** The project as the host's values resolve it, a variable set nowhere not yet known. */
-function hostProject(
+/**
+ * The project as the host's values resolve it, a variable set nowhere not yet known.
+ * @internal
+ */
+export function hostProject(
   files: FileSource,
   environment: string | undefined,
   envvars: Readonly<Record<string, string | undefined>>,

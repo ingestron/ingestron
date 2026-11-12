@@ -1,0 +1,20 @@
+# The source request's conformance project: three connections, each asked for differently.
+id: retail
+environments:
+  dev:
+    values:
+      erp_db: ERP_DEV
+      erp_sales: sales
+  test:
+    values:
+      erp_db: ERP_TEST
+      erp_sales: ${envvar:ERP_SALES_SCHEMA}
+  prod:
+    values:
+      erp_db: ERP
+      erp_sales: sales
+imports:
+  - standard.yaml
+  - connections/*.yaml
+  - flows/*.yaml
+  - sources/landing.yaml

@@ -1,0 +1,7 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: erp
+source: erp
+tables:
+  customers: { object: "${values.erp_db}.dbo.Customers" }
+  orders: { object: "${values.erp_db}.${values.erp_sales}.Orders" }

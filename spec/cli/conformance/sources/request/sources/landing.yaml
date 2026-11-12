@@ -1,0 +1,15 @@
+apiVersion: ingestron.io/v1
+kind: SourceMetadata
+id: landing
+connection: landing
+tables:
+  - object: returns
+    captured: { at: 2026-11-10T14:00:00Z, from: sample, file: sources/landing/returns.csv }
+    columns:
+      - { name: return_id, sourceType: integer, logicalType: integer, required: true }
+      - { name: reason, sourceType: text, logicalType: string, required: false }
+  - object: shipments
+    captured: { at: 2026-11-11T09:30:00Z, from: sample, file: sources/landing/shipments.parquet }
+    columns:
+      - { name: shipment_id, sourceType: INT64, logicalType: integer, required: true }
+      - { name: shipped_at, sourceType: TIMESTAMP, logicalType: timestamp, required: false }

@@ -1,0 +1,18 @@
+id: salesforce
+title: Salesforce
+kind: catalog
+inputs:
+  instanceUrl: { description: "The org's base URL, such as https://example.my.salesforce.com" }
+ask:
+  who: A Salesforce administrator, or a user who can call the REST API
+  access: API Enabled, and read access to each object
+  call: "{instanceUrl}/services/data/v62.0/sobjects/{object}/describe"
+  save: sources/{connection}/{object}.json
+  how: With curl or Postman, using a bearer token for the org.
+read: salesforce-describe
+names: { parts: 1, caseSensitive: false }
+types:
+  - { match: "^boolean$", logicalType: boolean }
+  - { match: "^double$", logicalType: number }
+sources:
+  - { url: "https://example.com/salesforce/describe", read: 2026-11-12 }

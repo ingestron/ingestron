@@ -1,0 +1,11 @@
+apiVersion: ingestron.io/v1
+kind: Connection
+id: erp
+connector: sqlserver
+connectivity: workspace
+settings:
+  uc_connection: erp_connection
+metadata:
+  from: sqlserver
+  with:
+    database: ${values.erp_db}

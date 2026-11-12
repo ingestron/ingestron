@@ -585,6 +585,15 @@ export const sourceRecipeSchema: {
 };
 
 // @public
+export function sourceRequest(files: FileSource, environment?: string, options?: SourceRequestOptions): string;
+
+// @public
+export interface SourceRequestOptions extends ProjectOptions {
+    connection?: string;
+    recipes?: Map<string, SourceRecipe>;
+}
+
+// @public
 export interface SourceTypeRule {
     logicalType: string;
     match: string;
