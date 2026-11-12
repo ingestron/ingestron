@@ -5,7 +5,7 @@ import { packs } from "@ingestron/core";
 import { parse } from "yaml";
 import { placeAt } from "../navigation/index.js";
 import { settingsAt } from "./fields.js";
-import { positioned, type QuickFix } from "./fixes.js";
+import { positioned, type QuickFix } from "./quick-fix.js";
 import { openProject, resolved, type Project } from "../project/index.js";
 import { spotAt } from "../project/index.js";
 

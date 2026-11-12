@@ -2,7 +2,7 @@
 // (specification section 12.3).
 import { describe, expect, it } from "vitest";
 import { matchObject } from "../../src/sources/index.js";
-import { onlyReferences } from "../../src/sources/match.js";
+import { indexTables, onlyReferences, type TableIndex } from "../../src/sources/match.js";
 import type { SourceTableDoc } from "../../src/documents/index.js";
 
 const table = (object: string): SourceTableDoc => ({
@@ -133,5 +133,75 @@ describe("onlyReferences", () => {
     expect(onlyReferences("dbo.${envvar:TABLE}")).toBe(false);
     expect(onlyReferences("${envvar:A}${envvar:B}")).toBe(false);
     expect(onlyReferences("t_${envvar:TABLE}")).toBe(false);
+  });
+});
+
+describe("matchObject with an index of the tables", () => {
+  const tables = [
+    table("ERP.dbo.Customers"),
+    table("CRM.dbo.Customers"),
+    table("ERP.dbo.Orders"),
+    table("Orders"),
+    table("ERP.dbo.orders"),
+  ];
+  const cases: [string, string][] = [
+    ["Customers", "Customers"],
+    ["dbo.CUSTOMERS", "dbo.CUSTOMERS"],
+    ["ERP.dbo.Orders", "ERP.dbo.Orders"],
+    ["orders", "orders"],
+    ["ERP.dbo.Orders", "${values.db}.dbo.Orders"],
+    ["ERP.dbo.Orders", "ERP.dbo.${values.table}"],
+    ["ERP.dbo.Orders", "${values.object}"],
+    ["dev.dbo.Orders", "${UNSET}.dbo.Orders"],
+    ["Missing", "Missing"],
+    ["x.ERP.dbo.Orders", "x.ERP.dbo.Orders"],
+    ["ERP.dbo.Orders", "ERP.dbo.O${values.rest}"],
+  ];
+
+  for (const names of [
+    { parts: 3, caseSensitive: false },
+    { parts: 3, caseSensitive: true },
+    undefined,
+  ]) {
+    it(`gives the matches it gives without one, in the same order (${JSON.stringify(names)})`, () => {
+      const index = indexTables(tables, names);
+      for (const [object, written] of cases)
+        expect(matchObject(object, written, tables, names, index), written).toEqual(
+          matchObject(object, written, tables, names),
+        );
+    });
+  }
+
+  it("compares about one table for each object, not every table", () => {
+    const count = 1000;
+    let compared = 0;
+    /** A table that counts each read of its object, as each comparison reads it once. */
+    const counted = (object: string): SourceTableDoc =>
+      Object.defineProperty(table(object), "object", {
+        get: () => {
+          compared += 1;
+          return object;
+        },
+      });
+    const many = Array.from({ length: count }, (_, n) => counted(`ERP.dbo.T${n}`));
+    const matchAll = (names: typeof insensitive | undefined, index?: TableIndex) => {
+      compared = 0;
+      for (let n = 0; n < count; n += 1)
+        expect(matchObject(`ERP.dbo.T${n}`, `ERP.dbo.T${n}`, many, names, index)).toHaveLength(1);
+      return compared;
+    };
+    for (const names of [insensitive, undefined]) {
+      const index = indexTables(many, names);
+      expect(matchAll(names, index)).toBeLessThanOrEqual(count);
+      // Without the index every object is compared with every table.
+      expect(matchAll(names)).toBe(count * count);
+    }
+  });
+
+  it("keeps the full scan when the last part is a reference", () => {
+    const index = indexTables(tables, insensitive);
+    expect(
+      objects(matchObject("ERP.dbo.Orders", "ERP.dbo.${values.table}", tables, insensitive, index)),
+    ).toEqual(["ERP.dbo.Customers", "ERP.dbo.Orders", "ERP.dbo.orders"]);
   });
 });

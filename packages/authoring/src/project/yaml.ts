@@ -23,7 +23,8 @@ export interface Position {
   character: number;
 }
 
-const pointerOf = (segments: string[]) =>
+/** The JSON Pointer of the keys and indexes in `segments`, each with `~` and `/` escaped. */
+export const pointerOf = (segments: string[]): string =>
   segments.map((segment) => `/${segment.replaceAll("~", "~0").replaceAll("/", "~1")}`).join("");
 
 /** The deepest key or value at the offset, if any. */

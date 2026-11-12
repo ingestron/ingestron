@@ -124,6 +124,12 @@ export class ProjectSnapshot {
     generatedFiles(environment: string | undefined): Files;
     generatedLenses(file: string, text: string, environment: string | undefined): GeneratedLens[];
     hoverAt(file: string, text: string, offset: number, environment: string | undefined, options?: HoverOptions): string | undefined;
+    importSource(file: string, contents: Uint8Array, options: {
+        connection?: string;
+        object?: string;
+        environment?: string;
+        at: string;
+    }): SourceImportEdit | SourceImportRefusal;
     moveSetting(file: string, text: string, offset: number, environment: string | undefined): QuickFix[];
     static open(folder: string, open?: ReadonlyMap<string, string>): ProjectSnapshot;
     problems(environment: string | undefined): Problem[];
@@ -141,6 +147,11 @@ export class ProjectSnapshot {
     renameProblem(file: string, offset: number, name: string): string | undefined;
     replaceMeHelp(file: string, pointer: string, environment: string | undefined): ReplaceMeHelp | undefined;
     request(environment: string | undefined): string;
+    sourceFileAt(file: string): {
+        connection: string;
+        object?: string;
+    } | undefined;
+    sourceRequest(environment: string | undefined, connection?: string): string;
     symbols(): ProjectSymbol[];
 }
 
@@ -226,6 +237,22 @@ export interface ReplaceMeHelp {
 }
 
 // @public
+export interface SourceImportEdit {
+    breaking: number;
+    files: {
+        file: string;
+        text: string;
+    }[];
+    summary: string;
+}
+
+// @public
+export interface SourceImportRefusal {
+    needsObject?: true;
+    refused: string[];
+}
+
+// @public
 export interface Suggestion {
     afterDash?: boolean;
     // (undocumented)
@@ -240,6 +267,7 @@ export interface Suggestion {
     // (undocumented)
     label: string;
     preselect?: boolean;
+    replaceFrom?: number;
     retrigger?: boolean;
     snippet?: string;
 }

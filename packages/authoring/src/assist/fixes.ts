@@ -1,25 +1,13 @@
 // Quick fixes: the fixes the definitions give for the problems at a place,
 // as text edits with line and character positions.
-import { fixEdits, type Fix } from "@ingestron/config";
 import { parse } from "yaml";
 import { problems, type Problem } from "../diagnostics/index.js";
 import type { Project } from "../project/index.js";
+import { draftContractFixes } from "./source-fix.js";
+import { positioned, type QuickFix } from "./quick-fix.js";
 import { plainText, skeletons } from "./skeletons.js";
 import { occurrences } from "../navigation/index.js";
-import { offsetAt, positionAt, type Position } from "../project/index.js";
-
-/**
- * One quick fix: its title, the problem it solves, and edits that may span files.
- * @public
- */
-export interface QuickFix {
-  title: string;
-  /** The problem it solves; absent for a refactoring, such as moving a setting. */
-  problem?: { code: string; line: number };
-  edits: { file: string; range: { start: Position; end: Position }; text: string }[];
-  /** A new file to write, for a link to a document that does not exist yet. */
-  create?: { file: string; text: string };
-}
+import { offsetAt, type Position } from "../project/index.js";
 
 /**
  * The fixes for the problems in `file` whose lines meet `at`.
@@ -42,20 +30,11 @@ export function quickFixes(
       })),
     )
     .filter((fix) => fix.edits.length > 0);
-  return [...edited, ...here.flatMap((problem) => createFixes(project, problem))];
-}
-
-/** A fix's text edits, at line and character positions. */
-export function positioned(project: Project, fix: Fix): QuickFix["edits"] {
-  const read = (path: string) => project.files.read(path);
-  return fixEdits(fix, read).map(({ file, start, end, text }) => {
-    const source = read(file) ?? "";
-    return {
-      file,
-      range: { start: positionAt(source, start), end: positionAt(source, end) },
-      text,
-    };
-  });
+  return [
+    ...edited,
+    ...here.flatMap((problem) => createFixes(project, problem)),
+    ...here.flatMap((problem) => draftContractFixes(project, environment, problem)),
+  ];
 }
 
 /** Folders for the kinds a link can name, where a new document is written. */

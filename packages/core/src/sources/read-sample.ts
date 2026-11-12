@@ -75,6 +75,8 @@ function columnsOf(input: ReaderInput): SourceColumnDoc[] | Refused {
 
 /** Reads the sample's columns as the table the import names. */
 function read(input: ReaderInput): Outcome {
+  // The editor's importSource (packages/authoring) matches this text exactly to ask for the
+  // table: change both together.
   if (input.object === undefined)
     return { refused: ["Name the table this file describes with --object."] };
   const columns = columnsOf(input);

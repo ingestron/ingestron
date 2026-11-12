@@ -5,7 +5,7 @@ import { stepsNotKnown, targetOf } from "../project/index.js";
 import { generatedFiles, generatedForTable } from "../generation/index.js";
 import { documentsOf, resolvedForDisplay, type Project } from "../project/index.js";
 import { holdsSecret } from "../project/index.js";
-import { resolveText } from "../navigation/index.js";
+import { kindOf, resolveText } from "../navigation/index.js";
 import { allSpots, positionAt, rangeOf } from "../project/index.js";
 
 /**
@@ -43,6 +43,7 @@ export function annotationsIn(
   environment: string | undefined,
 ): Annotation[] {
   return [
+    ...sourceNotice(text),
     ...variables(project, file, text, environment),
     ...tablesIn(project, file, text, environment).map(({ line, table }) => ({
       line,
@@ -73,6 +74,18 @@ export function generatedLenses(
       (item) => item.path,
     ),
   }));
+}
+
+/** The notice on the first line of a metadata document, which the import writes and replaces. */
+function sourceNotice(text: string): Annotation[] {
+  return kindOf(text) === "SourceMetadata"
+    ? [
+        {
+          line: 0,
+          label: "Written by ingestron source import. Do not edit: import again to replace it.",
+        },
+      ]
+    : [];
 }
 
 /** A reference to a secret or an environment variable: what it stands for is never shown. */

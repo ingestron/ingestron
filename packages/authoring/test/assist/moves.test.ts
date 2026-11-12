@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { QuickFix } from "../../src/assist/fixes.js";
+import type { QuickFix } from "../../src/assist/quick-fix.js";
 import { moveSetting } from "../../src/assist/moves.js";
 import { openProject } from "../../src/project/project.js";
 import { offsetAt } from "../../src/project/yaml.js";

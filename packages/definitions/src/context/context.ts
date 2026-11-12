@@ -3,7 +3,13 @@
 // and the reporter.
 import type { DefinitionDocument, FileSource, Project } from "@ingestron/config";
 import { aboutTable, type Reporter } from "../diagnostics/index.js";
-import { kinds, type PlatformDoc, type StandardDoc } from "../documents/index.js";
+import {
+  kinds,
+  type PlatformDoc,
+  type SourceTableDoc,
+  type StandardDoc,
+} from "../documents/index.js";
+import type { ParsedFiles } from "../internal/index.js";
 import type { Action, Pack, PackInfo } from "../pack/index.js";
 
 /** Shared by the resolution steps. */
@@ -11,6 +17,16 @@ export interface Context {
   project: Project;
   /** The project's files, for fixes that move a value exactly as it is written. */
   files: FileSource;
+  /**
+   * The project's files as parsed for this resolution, each read once however many of its
+   * values are asked for. A context lives for one resolution, so it never holds a stale text.
+   */
+  parsed: ParsedFiles;
+  /**
+   * Each source metadata document's tables by last name part, made the first time a flow
+   * table is matched against them and kept for this resolution, by the document's tables.
+   */
+  tableIndexes: Map<SourceTableDoc[], Map<string, SourceTableDoc[]>>;
   /** The packs the standard names, in its order. */
   packs: PackInfo[];
   /** Every pack that could be named, for fixes that add one. */
@@ -61,6 +77,8 @@ export function createContext(
   return {
     project,
     files,
+    parsed: new Map(),
+    tableIndexes: new Map(),
     packs,
     available,
     pack: combine(packs),

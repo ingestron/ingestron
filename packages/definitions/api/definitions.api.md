@@ -699,6 +699,7 @@ export const referenceKinds: {
     readonly Connection: KindDefinition<ConnectionDoc>;
     readonly Flow: KindDefinition<FlowDoc>;
     readonly Transform: KindDefinition<TransformDoc>;
+    readonly SourceMetadata: KindDefinition<SourceMetadataDoc>;
     readonly DataContract: KindDefinition<ContractDoc>;
 };
 

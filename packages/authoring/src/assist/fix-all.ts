@@ -1,7 +1,7 @@
 // Fix all: every problem of one code fixed by one action, each with its first
 // fix, and an edit that several problems share made once.
 import { problems } from "../diagnostics/index.js";
-import { positioned, type QuickFix } from "./fixes.js";
+import { positioned, type QuickFix } from "./quick-fix.js";
 import type { Project } from "../project/index.js";
 
 /**

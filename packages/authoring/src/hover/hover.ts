@@ -8,6 +8,7 @@ import { referenceAround, referenceValue } from "../navigation/index.js";
 import { explainField, methodText, type HoverOptions } from "./explain.js";
 import { intentText } from "./intent-text.js";
 import { from } from "./origin-text.js";
+import { sourceColumnsText } from "./source-hover.js";
 import { explainReplaceMe } from "./replace-me.js";
 import { methodAt, methodInfo } from "../assist/index.js";
 import { resolvedForDisplay, type Project } from "../project/index.js";
@@ -32,7 +33,8 @@ export function hoverAt(
   const reference = referenceAround(text, offset);
   const resolvedTo = reference && referenceValue(project, reference, environment);
   const rest = explainAt(project, file, text, offset, environment, options);
-  return resolvedTo ? [resolvedTo, rest].filter(Boolean).join("\n\n") : rest;
+  const columns = sourceColumnsText(project, text, offset, environment);
+  return [resolvedTo, rest, columns].filter(Boolean).join("\n\n") || undefined;
 }
 
 function explainAt(

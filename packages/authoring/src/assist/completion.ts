@@ -17,6 +17,7 @@ import { movedSettingsLast } from "./moved-settings.js";
 import type { Suggestion } from "./suggestion.js";
 import { inputCompletions } from "./inputs.js";
 import { valueHelp } from "./value-help.js";
+import { sourceTyped, sourceValues } from "./source-completion.js";
 
 export type { Suggestion } from "./suggestion.js";
 
@@ -39,6 +40,8 @@ export function completionsAt(
   if (/^\s*\w*$/.test(text)) return skeletons(project, file);
   const place = placeAt(file, text, offset);
   if (place.path[0] === "naming" && /\{\{\s*\w*$/.test(before)) return patternNames();
+  const typed = sourceTyped(project, place, environment);
+  if (typed) return typed;
   return place.part === "key"
     ? newKeys(project, place, environment)
     : values(project, place, environment);
@@ -98,6 +101,8 @@ function valueCompletions(
   environment: string | undefined,
 ): Suggestion[] {
   const { kind, path } = place;
+  const source = sourceValues(project, place, environment);
+  if (source) return source;
   const link = Object.values(kinds)
     .filter((item) => item.kind === kind)
     .flatMap((item) => Object.entries(item.links ?? {}))

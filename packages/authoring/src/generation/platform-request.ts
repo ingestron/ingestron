@@ -23,6 +23,6 @@ export function compareEnvironments(project: Project, a: string, b: string): str
 }
 
 /** The PACK_LOAD error, as a code block in place of the document. */
-function stopped(problem: AnyDiagnostic): string {
+export function stopped(problem: AnyDiagnostic): string {
   return `\`\`\`text\n${formatDiagnostics([problem])}\n\`\`\`\n`;
 }

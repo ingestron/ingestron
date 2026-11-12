@@ -56,6 +56,7 @@ export const referenceKinds = {
   Connection: kinds.connection,
   Flow: kinds.flow,
   Transform: kinds.transform,
+  SourceMetadata: kinds.sourceMetadata,
   DataContract: kinds.contract,
 } as const;
 

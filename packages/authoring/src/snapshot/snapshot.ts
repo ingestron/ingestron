@@ -35,6 +35,13 @@ import {
   type TextPlace,
 } from "../navigation/index.js";
 import { openProject, type Position, type Project } from "../project/index.js";
+import {
+  importSource,
+  sourceFileAt,
+  sourceRequest,
+  type SourceImportEdit,
+  type SourceImportRefusal,
+} from "../sources/index.js";
 import { referenceAt, referenceForDocs, type ReferenceEntry } from "../reference/index.js";
 
 /**
@@ -186,6 +193,38 @@ export class ProjectSnapshot {
   /** The request as Markdown for the environment, as `ingestron request` prints it. */
   request(environment: string | undefined): string {
     return platformRequest(this, environment);
+  }
+
+  /**
+   * The source request as Markdown for the environment, as `ingestron source request` prints it,
+   * for one connection when it is given.
+   */
+  sourceRequest(environment: string | undefined, connection?: string): string {
+    return sourceRequest(this, environment, connection);
+  }
+
+  /**
+   * The connection (and, for a file under `sources/<connection>/`, the object) a file saved where
+   * the source request says belongs to; undefined for a metadata document and a path outside
+   * `sources/`.
+   */
+  sourceFileAt(file: string): { connection: string; object?: string } | undefined {
+    return sourceFileAt(this, file);
+  }
+
+  /**
+   * What importing `contents`, the bytes of `file`, writes: whole texts for
+   * `sources/<connection>.yaml` and, when its imports change, `project.yaml` (read as the open
+   * editor holds it). `file` is relative to the project, or an absolute path outside it; the
+   * connection is `options.connection` or else the one the path names. Writes nothing; gives the
+   * reasons instead when the import stops, with `needsObject` when a sample names no table.
+   */
+  importSource(
+    file: string,
+    contents: Uint8Array,
+    options: { connection?: string; object?: string; environment?: string; at: string },
+  ): SourceImportEdit | SourceImportRefusal {
+    return importSource(this, file, contents, options);
   }
 
   /** Every file apply writes that the environment uses, at its path under build/, or what stops plan. */
