@@ -1021,9 +1021,21 @@ given at most once.
 Imports `<file>`, a path relative to the current folder, read as bytes, into
 `sources/<connection>.yaml` (section 3). The project's documents are loaded,
 not resolved, so a project whose tables have no columns yet can be imported
-into; a loading error stops it, written as `ingestron plan` writes it. The
-connection is a Connection of the project (else the message of section 4,
-"Resolving"), and its recipe is checked as section 1 says.
+into. The load tolerates a value or an `${envvar:…}` reference that is set
+nowhere, as the request does, and selects no environment unless `--env` is
+given: the import needs only the project's connections, so the command that
+the request prints, which carries `--env` only when the request was asked for
+one, works as printed. `--env` also records the document's `environment`; without it
+none is recorded. Any other loading error stops it, written as `ingestron plan`
+writes it. The connection is a Connection of the project (else the message of
+section 4, "Resolving"), and its recipe is checked as section 1 says.
+
+A file that is not there, or is not a file, is refused: `There is no file <file>.`
+`<file>` is written as it was given.
+
+`source import` takes the connection and the file and nothing more. With fewer
+or more arguments, it is a usage mistake whose message is `source import takes a
+connection and a file, such as: source import erp sources/erp.catalog.csv.`
 
 It writes `sources/<connection>.yaml` and, when it adds the import, `project.yaml`,
 then prints the changes' text (section 3), then
@@ -1045,12 +1057,23 @@ included, `Add to <flow>.<table>: contract: <id>`; then each problem
 `No table needs a contract drafted.` It exits 1 when there is any problem,
 and 0 otherwise: a skipped file alone is not a problem.
 
+`--env` is given at most once.
+
 `ingestron contract <sample>` is unchanged.
 
 ### Exit codes
 
-| Code | When                                                                                                                                                                                                  |
-| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0    | Done, a dry run that would write included. Breaking changes do not change it.                                                                                                                         |
-| 1    | A refusal; an unknown connection, flow table or recipe; definitions that cannot be loaded; or definitions with errors that stop the command (section 4, "Resolving").                                 |
-| 2    | A usage mistake: `source` without `request` or `import`, `import` without both arguments, `--env` more than once on `source`, or `--from-metadata` with neither a table nor `--needed`, or with both. |
+| Code | When                                                                                                                                                                                                                                                                                                         |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 0    | Done, a dry run that would write included. Breaking changes do not change it.                                                                                                                                                                                                                                |
+| 1    | A refusal; an unknown connection, flow table or recipe; definitions that cannot be loaded; or definitions with errors that stop the command (section 4, "Resolving").                                                                                                                                        |
+| 2    | A usage mistake: `source` without `request` or `import`, `import` without both arguments or with more, `--env` more than once on `source` or on `contract --from-metadata`, `--from-metadata` with neither a table nor `--needed`, or with both, or a flag given to a command it does not belong to (below). |
+
+### Flags
+
+Each flag of this section belongs to one command: `--dry-run` and `--object`
+to `source import`; `--connection` to `source request`; `--from-metadata` to
+`contract`; and `--needed` to `contract --from-metadata`. Given to any other
+command, or `--needed` without `--from-metadata`, it is a usage mistake,
+`<flag> is only for <command>.` (`--dry-run is only for source import.`,
+`--needed is only for contract --from-metadata.`).
