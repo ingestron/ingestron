@@ -87,7 +87,6 @@ describe("unsafe facts", () => {
     expect(section.split("\n").filter((line) => line.startsWith("<!-- ingestron:"))).toHaveLength(
       2,
     );
-    // eslint-disable-next-line no-control-regex
     expect(section.replace(/\n/g, "")).not.toMatch(/[\u0000-\u001f\u007f]/);
   });
 

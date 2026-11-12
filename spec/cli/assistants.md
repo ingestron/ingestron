@@ -235,8 +235,6 @@ other `<…>` is filled in.
 
 ### The rules
 
-Rule 2 ends `Then `ingestron check` must pass; CI should run it.`.
-
 Rule 3 is written as the first two sentences alone when the project has no
 standard document, and with the items when it has. With no standard it reads
 exactly:
@@ -364,7 +362,7 @@ line, from this closed set:
   with `O_CREAT|O_EXCL`, which is given the original file's mode and renamed
   over the target. Just before the rename the target is looked at again
   without following a link, and it is replaced only if it is still a regular
-  file. A write that fails leaves the original as it was and removes the
+  file. A file the user cannot write to is not replaced. A write that fails leaves the original as it was and removes the
   temporary file. A new file is created with `O_CREAT|O_EXCL` directly.
 
 **`init`.** `init --assistant <names>` writes the files after the project's

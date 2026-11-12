@@ -10,7 +10,6 @@ const listed = 20;
 const valuesUpTo = 8;
 
 /** A fact with each line ending and other control character (U+0000 to U+001F, U+007F) as a space. */
-// eslint-disable-next-line no-control-regex
 const safe = (text: string): string => text.replace(/[\u0000-\u001f\u007f]/g, " ");
 
 /**
