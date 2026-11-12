@@ -10,6 +10,8 @@ describe("importSource: the document's YAML", () => {
     const names = [
       "123",
       "@x",
+      "*x",
+      "*",
       "%x",
       "`x",
       "#x",

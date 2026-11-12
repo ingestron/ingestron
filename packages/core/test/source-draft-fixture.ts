@@ -42,6 +42,8 @@ export function propertyOf(column: Column): Record<string, unknown> {
 /** Names that need care in YAML: indicators, comments, numbers, and the words read as other values. */
 export const awkward = [
   "@x",
+  "*x",
+  "*",
   "%x",
   "`x",
   "#x",

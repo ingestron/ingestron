@@ -27,10 +27,15 @@ function readsBack(text: string, place: YamlPlace): boolean {
   if (simple.test(text)) return true;
   if (text === "" || /[\r\n]/.test(text)) return false;
   const source = place === "flow" ? `{ k: ${text} }` : `k: ${text}\n`;
-  const document = parseDocument(source, { logLevel: "silent" });
-  if (document.errors.length > 0) return false;
-  const value: unknown = document.toJS();
-  return isRecord(value) && Object.keys(value).length === 1 && value.k === text;
+  try {
+    const document = parseDocument(source, { logLevel: "silent" });
+    if (document.errors.length > 0) return false;
+    // An alias with no anchor (`*x`) is no error until it is read, and then it throws.
+    const value: unknown = document.toJS();
+    return isRecord(value) && Object.keys(value).length === 1 && value.k === text;
+  } catch {
+    return false;
+  }
 }
 
 /** Text in double quotes, with JSON's escapes and `\u` for what YAML does not allow as it is. */
