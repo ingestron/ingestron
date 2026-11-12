@@ -22,6 +22,11 @@ describe("a connection's metadata.from", () => {
     );
   });
 
+  it("replaces the recipe id typed so far", () => {
+    const items = at("connections/erp.yaml", (text) => text.replace("from: acme", "from: ac|"));
+    expect(items[0]?.replaceFrom).toBe(files["connections/erp.yaml"]!.indexOf("from: acme") + 6);
+  });
+
   it("offers no recipe while a project recipe is broken", () => {
     const items = at("connections/erp.yaml", (text) => text.replace("from: acme", "from: |"), {
       "recipes/bad.yaml": "id: bad\n",

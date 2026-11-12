@@ -8,8 +8,27 @@ import { resolved, type Project } from "../project/index.js";
 import { catalogRecipes } from "../sources/index.js";
 import type { Suggestion } from "./suggestion.js";
 
-/** The value being typed at `place`, from the metadata or the catalog; undefined for any other place. */
+/**
+ * The value being typed at `place`, from the metadata or the catalog; undefined for any other
+ * place. Each replaces the whole value typed so far, whatever dots or slashes it holds.
+ */
 export function sourceValues(
+  project: Project,
+  place: Place,
+  environment: string | undefined,
+): Suggestion[] | undefined {
+  const replaceFrom = valueStart(place);
+  return valuesAt(project, place, environment)?.map((item) => ({ ...item, replaceFrom }));
+}
+
+/** The offset where the value typed so far on the cursor's line starts, after any opening quote. */
+function valueStart({ before }: Place): number {
+  const line = before.slice(before.lastIndexOf("\n") + 1);
+  const typed = /^\s*(?:-\s+)?[\w.-]+:\s*(\S*)$/.exec(line)?.[1] ?? "";
+  return before.length - typed.replace(/^["']/, "").length;
+}
+
+function valuesAt(
   project: Project,
   place: Place,
   environment: string | undefined,
@@ -145,19 +164,24 @@ function sourceTablesAt(
   return resolved(typedOver(project, place), environment).sourceTables ?? [];
 }
 
-/** The project with a placeholder written at the cursor, in the file being edited. */
+const typedProjects = new WeakMap<Project, Map<string, Project>>();
+
+/** The project with a placeholder written at the cursor, once per project snapshot, file and offset. */
 function typedOver(project: Project, place: Place): Project {
+  let byPlace = typedProjects.get(project);
+  if (!byPlace) typedProjects.set(project, (byPlace = new Map()));
   const at = place.before.length;
-  const text = `${place.text.slice(0, at)}${place.before.endsWith(":") ? " " : ""}_${place.text.slice(at)}`;
-  const { files } = project;
-  return {
-    ...project,
-    files: {
-      list: () => files.list(),
-      read: (path) => (path === place.file ? text : files.read(path)),
-      size: (path) => (path === place.file ? Buffer.byteLength(text) : files.size?.(path)),
-    },
-  };
+  const key = `${place.file}:${at}`;
+  let found = byPlace.get(key);
+  if (!found) {
+    const text = `${place.text.slice(0, at)}${place.before.endsWith(":") ? " " : ""}_${place.text.slice(at)}`;
+    const files = {
+      ...project.files,
+      read: (path: string) => (path === place.file ? text : project.files.read(path)),
+    };
+    byPlace.set(key, (found = { ...project, files }));
+  }
+  return found;
 }
 
 /** A column as a suggestion, with the type the source gives it (else the logical type). */

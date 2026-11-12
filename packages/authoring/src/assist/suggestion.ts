@@ -18,6 +18,12 @@ export interface Suggestion {
   insertText?: string;
   /** The documentation page and anchor that explain it. */
   docs?: string;
+  /**
+   * Where the inserted text starts replacing, as an offset in the file's text, up to the cursor.
+   * Without it the editor replaces the word before the cursor, which stops at `.` and `/`; set for
+   * values that may hold them, such as `ERP.dbo.Customers`.
+   */
+  replaceFrom?: number;
   /** Offered straight after a list's `-`: insert after it rather than replace it. */
   afterDash?: boolean;
   /** Ask for suggestions again once inserted, such as the keys on a new line. */

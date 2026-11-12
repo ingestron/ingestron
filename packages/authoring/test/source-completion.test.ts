@@ -27,6 +27,23 @@ describe("a flow table's object", () => {
     });
   });
 
+  it("replaces the whole value typed so far, dots included", () => {
+    const flow = files["flows/erp.yaml"]!;
+    const start = flow.indexOf("object: ERP.dbo.Customers") + "object: ".length;
+    const items = at("flows/erp.yaml", (text) =>
+      text.replace("object: ERP.dbo.Customers", "object: ERP.d|"),
+    );
+    expect(items.map((item) => item.replaceFrom)).toEqual([start, start, start]);
+    const tight = at("flows/erp.yaml", (text) =>
+      text.replace("object: ERP.dbo.Customers", "object:|"),
+    );
+    expect(tight[0]?.replaceFrom).toBe(start - 1);
+    const quoted = at("flows/erp.yaml", (text) =>
+      text.replace("object: ERP.dbo.Customers", 'object: "ERP.d|'),
+    );
+    expect(quoted[0]?.replaceFrom).toBe(start + 1);
+  });
+
   it("leaves the usual suggestions when the connection has no metadata document", () => {
     const items = at(
       "flows/erp.yaml",

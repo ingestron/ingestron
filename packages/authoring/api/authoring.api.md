@@ -263,6 +263,7 @@ export interface Suggestion {
     // (undocumented)
     label: string;
     preselect?: boolean;
+    replaceFrom?: number;
     retrigger?: boolean;
     snippet?: string;
 }
