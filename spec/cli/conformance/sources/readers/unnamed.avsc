@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "name": "Event",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "", "type": "string" },
+    {
+      "name": "detail",
+      "type": {
+        "type": "record",
+        "name": "Detail",
+        "fields": [
+          { "name": "", "type": "int" },
+          { "name": "kind", "type": "string" }
+        ]
+      }
+    }
+  ]
+}

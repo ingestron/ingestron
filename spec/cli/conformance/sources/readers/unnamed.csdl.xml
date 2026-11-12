@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="Shop" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="Event">
+        <Key>
+          <PropertyRef Name="Id"/>
+        </Key>
+        <Property Name="Id" Type="Edm.Int32" Nullable="false"/>
+        <Property Type="Edm.String"/>
+        <Property Name="" Type="Edm.String"/>
+        <Property Name="Detail" Type="Shop.Detail"/>
+      </EntityType>
+      <ComplexType Name="Detail">
+        <Property Type="Edm.Int32"/>
+        <Property Name="Kind" Type="Edm.String"/>
+      </ComplexType>
+      <EntityContainer Name="Container">
+        <EntitySet Name="Events" EntityType="Shop.Event"/>
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

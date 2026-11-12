@@ -220,6 +220,15 @@ No refusal and no note quotes a file's content, except the names of fields,
 tables and columns and the source's type names. A value in a row is never
 shown, so a refusal is as safe to print as the metadata itself.
 
+A column with no name, or an empty one, is left out by every reader, at any
+depth: an empty field of a CSV header, an empty key of a JSON record, a row of
+the columns file with an empty `column_name`, an OData property with no `Name`
+or an empty one, and an Avro field, a JSON Schema or OpenAPI property, a
+Salesforce field, an ODCS property or a Parquet field whose name is empty.
+
+A file nested too deeply for a reader to walk is refused, without quoting it:
+`<file> is nested too deeply to read.`
+
 When the recipe that reads a file gives `columnNames` (section 1), the reader
 applies it to the name of each column of each table it reads, once all the
 tables are read, so that a source's naming quirk is in its recipe and not in a
@@ -252,8 +261,10 @@ in the order shown here, which is the order the request asks for:
 It is CSV or JSON:
 
 - **CSV.** The first line is the header. Lines end in LF or CRLF. Fields are
-  separated by `,`, or by `;` when the header holds `;` and no `,`. A field
-  MAY be in double quotes, with a quote inside written twice.
+  separated by `,`, `;` or a tab, whichever the header line holds most often;
+  on a tie, the first of them in that order, so `,` when it holds none. This
+  is the rule `ingestron contract <sample>` reads a CSV file by. A field MAY
+  be in double quotes, with a quote inside written twice.
 - **JSON.** A list of records, or, with the recipe's `rows`, the list at that
   path. Each record's keys are its fields.
 
@@ -357,8 +368,14 @@ fits, as `ingestron contract <sample>` infers it: `integer`, `number`,
 `boolean`, `date`, `timestamp`, else `string`; a column with no non-empty
 value is `string`. A value that is a record makes the column
 `logicalType: object`, with the record's fields as its `properties`, read the
-same way; a list makes it `logicalType: array`, with its elements read as one
-column, its `items`, which is named `items`. Every column has `required: false` and no
+same way, when every record of the column has the same set of fields, in any
+order. When the sets differ between records, the record is a dictionary keyed
+by values, such as counts by customer code, and its keys are data: the column
+is `object` without `properties`, so no key is written. (A sample with one
+record keeps its fields: it cannot show that they differ.) A list makes the
+column `logicalType: array`, with its elements read as one column, its
+`items`, which is named `items`. A column nested deeper than 16 levels has no
+`properties` or `items`. Every column has `required: false` and no
 `primaryKeyPosition`, and no `sourceType`. The values are read only to find
 the types and are then dropped.
 
@@ -478,7 +495,8 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
   its `name` as `sourceType`, and so is a record nested deeper than 16
   levels. An `array` is
   `array`, with its element as `items`, which is required unless it is a
-  union with `"null"`; a `map` is `object`. A union of two
+  union with `"null"`, and an array nested deeper than 16 levels has no
+  `items`; a `map` is `object`. A union of two
   or more types other than `"null"` is `string`, with the note
   `The column <object>.<column> is a union of <types>; read as string.`,
   where `<types>` are the type names of the union other than `"null"`, joined
@@ -643,7 +661,9 @@ A reader that reads one table (a sample, JSON Schema, Avro) takes its
    JSON Schema and Avro then name the table themselves (section 2.4).
 
 The path is the file's path relative to the project's folder, written with
-`/`. A file outside the project's folder takes nothing from its path.
+`/`; a `\` in it, as Windows writes a path, is read as `/`. A file outside the
+project's folder, given by an absolute path (`/`, `\` or a drive such as `C:`
+first) or a path with a `..` part, takes nothing from its path.
 
 ### What an import replaces
 
@@ -675,7 +695,8 @@ The new document has:
   `YYYY-MM-DDTHH:MM:SSZ` in UTC), `from` (section 2.5), `recipe` (the id of
   the connection's recipe, whenever the import is given one, since its
   `types` then apply; left out otherwise) and `file` (the file's path
-  relative to the project's folder, or its name when it is outside it).
+  relative to the project's folder, written with `/`, or only its name, the
+  last part of the path, when it is outside it).
 
 It is written so that a new import shows as a small diff:
 
@@ -801,8 +822,12 @@ ready to send to whoever can reach the source.
 
 ### Resolving
 
-The definitions are resolved for the environment (`default` when none is
-given) as for the platform request ([request.md](request.md), "Resolving"),
+The definitions are resolved for the environment given, else for the first
+environment `project.yaml` declares, as the import loads (section 6), so that
+a project whose values differ by environment resolves without one; when
+`project.yaml` declares none, for no environment, named `default`. The request
+names the environment it was resolved for in its title. They are resolved as
+for the platform request ([request.md](request.md), "Resolving"),
 with `missingEnvvars: information` and `environmentsTogether: true`, and with
 `sourceTables: true`, so that
 the result lists each flow table's metadata entry (definitions
@@ -817,7 +842,8 @@ Any other error stops it, and so do an unknown `--connection`, a recipe that
 breaks a rule, and a connection's recipe problems (section 1). Recipe
 problems are checked for the connections the request covers: each a flow
 reads from, or the one `--connection` names. The request is
-then the title `# Source request (<environment>)`, the note "The definitions
+then the title `# Source request (<environment>)`, with the environment it
+was resolved for, the note "The definitions
 have problems; fix them first:", and each error in a `text` code block,
 written as `ingestron plan` writes a problem, as the platform request writes
 them. Warnings and information are left out. An unknown connection and a
@@ -830,8 +856,8 @@ with every connection id, in code-point order, joined with `, `, or `none`.
 
 ### Layout
 
-The title is `# Source request: <project id> (<environment>)`. Then this
-paragraph:
+The title is `# Source request: <project id> (<environment>)`, with the
+environment it was resolved for. Then this paragraph:
 
 ```markdown
 Ingestron needs to know what each source table looks like: its columns, their types and its key. Only names and types are needed, never rows of real data. Save each file where this request says.
@@ -888,7 +914,7 @@ Save the result as `<save>`.
 - A project recipe's line is ``- Recipe: <title> (`<id>`, from `recipes/<id>.yaml`)``.
 - With `call` instead of `run`, `Run this query:` is `Call this URL:` and the
   block is a `text` block. `how`, when the recipe gives it, is a paragraph
-  after the block. `Save the result as` is `Save the response as`.
+  after the block, without the line breaks and spaces at its start and end. `Save the result as` is `Save the response as`.
 - A `sample` recipe has neither: the step says `Save a sample of each table:`.
 - When `run`, `call` or `save` holds `{object}`, the block and the save line
   are replaced by a list with one item for each table, in the order of the
@@ -944,14 +970,24 @@ A file saved as one of the alternatives is imported the same way, with its own p
 ````
 
 with one line for each file the recipes' steps save, in the order of the
-sections, and, for a connection with no recipe, its columns file. With
-`--env`, each line ends `--env <environment>`.
+sections, and, for a connection with no recipe, its columns file. When the
+request was given an environment, each line ends `--env <environment>`;
+without one, the lines carry no `--env`, and the import loads for the same
+first environment (section 6). Each word of a line that holds any character
+other than a letter, a digit, `.`, `_`, `/` or `-` is written in single
+quotes, with a `'` inside written `'\''`, so that a shell (`sh`) reads it as
+one word, as written: an object left as `{object}`, or one holding an unset
+reference, gives `'sources/crm/${envvar:CRM_OBJECT}.json'`.
 
 ## 5. Drafting contracts
 
 `draftContracts` drafts an ODCS contract for a flow table from its metadata
 entry, so that a table that needs a contract (definitions specification,
-section 12.5) has one to review. It resolves with `sourceTables: true` and
+section 12.5) has one to review. It resolves for the environment given, else
+for the first environment `project.yaml` declares (none when it declares
+none), as the request does (section 4), so that the command in
+`CONTRACT_NEEDED`'s hint, which gives no environment, works as printed. It
+resolves with `sourceTables: true` and
 reads the result's source tables (definitions specification, section 12.7),
 with or without a model, and writes nothing.
 
@@ -1042,8 +1078,8 @@ Each works on the project in `--definitions` (default `.`).
 ### `ingestron source request [--connection <id>] [--env <name>]`
 
 Prints the source request (section 4) for the environment `--env` names, or
-for no particular environment (`default`). It writes nothing. `--env` is
-given at most once.
+for the first environment `project.yaml` declares (`default` when it declares
+none). It writes nothing. `--env` is given at most once.
 
 ### `ingestron source import <connection> <file> [--object <text>] [--env <name>] [--dry-run]`
 
@@ -1080,7 +1116,8 @@ of its own, and nothing is written.
 ### `ingestron contract --from-metadata <flow>.<table>` and `ingestron contract --from-metadata --needed [--env <name>]`
 
 Drafts the contracts of the tables named, one or more, or with `--needed` of
-every table that needs one (section 5), for the environment `--env` names.
+every table that needs one (section 5), for the environment `--env` names, or
+for the first environment `project.yaml` declares.
 For each draft, in order, it prints `Wrote <path>.` or, when the file exists,
 `Skipped <path>: it already exists.`; then, for each draft, a skipped one
 included, `Add to <flow>.<table>: contract: <id>`; then each problem

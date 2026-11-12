@@ -735,7 +735,7 @@
       "forbidden": ["ZZ-SECRET-42", "hello", "00123", "10.50"]
     },
     {
-      "name": "JSON sample with nested records and lists",
+      "name": "JSON sample with nested records and lists: a record whose fields differ between records has no properties",
       "file": "sources/shop/orders.json",
       "input": "orders.json",
       "object": "orders",
@@ -756,24 +756,7 @@
               {
                 "name": "customer",
                 "logicalType": "object",
-                "required": false,
-                "properties": [
-                  {
-                    "name": "name",
-                    "logicalType": "string",
-                    "required": false
-                  },
-                  {
-                    "name": "city",
-                    "logicalType": "string",
-                    "required": false
-                  },
-                  {
-                    "name": "vip",
-                    "logicalType": "boolean",
-                    "required": false
-                  }
-                ]
+                "required": false
               },
               {
                 "name": "tags",
@@ -819,6 +802,260 @@
       "forbidden": ["ZZ-SECRET-42", "Leeds", "X1"]
     },
     {
+      "name": "JSON sample: a nested record whose keys differ between records is a dictionary keyed by values, written without properties",
+      "file": "sources/landing/sales.json",
+      "input": "by-customer.json",
+      "object": "sales",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "sales",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "byCustomer",
+                "logicalType": "object",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42", "ZZ-OTHER"]
+    },
+    {
+      "name": "JSON sample: a nested record with the same keys in every record, in any order, keeps its properties",
+      "file": "sources/landing/people.json",
+      "input": "same-keys.json",
+      "object": "people",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "people",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "address",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "street",
+                    "logicalType": "string",
+                    "required": false
+                  },
+                  {
+                    "name": "city",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "JSON sample: an empty key is not a column, at any depth",
+      "file": "sources/landing/events.json",
+      "input": "unnamed.json",
+      "object": "events",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "events",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "detail",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "kind",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "CSV sample separated by tabs: the header line holds more tabs than commas or semicolons",
+      "file": "sources/landing/orders.csv",
+      "input": "tabbed.csv",
+      "object": "orders",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "orders",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "amount",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "placed",
+                "logicalType": "date",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "Avro: a field with an empty name is not a column, at any depth",
+      "file": "sources/events.avsc",
+      "input": "unnamed.avsc",
+      "expected": {
+        "reader": "avro",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Event",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "long",
+                "logicalType": "integer",
+                "required": true
+              },
+              {
+                "name": "detail",
+                "sourceType": "record",
+                "logicalType": "object",
+                "required": true,
+                "properties": [
+                  {
+                    "name": "kind",
+                    "sourceType": "string",
+                    "logicalType": "string",
+                    "required": true
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "JSON Schema: a property with an empty name is not a column, at any depth",
+      "file": "sources/event.schema.json",
+      "input": "unnamed.schema.json",
+      "expected": {
+        "reader": "json-schema",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Event",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "integer",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "detail",
+                "sourceType": "object",
+                "logicalType": "object",
+                "properties": [
+                  {
+                    "name": "kind",
+                    "sourceType": "string",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ],
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "OData: a property with no Name, or an empty one, is not a column, in an entity type or a complex type",
+      "file": "sources/shop.xml",
+      "input": "unnamed.csdl.xml",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Events",
+            "columns": [
+              {
+                "name": "Id",
+                "sourceType": "Edm.Int32",
+                "logicalType": "integer",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Detail",
+                "sourceType": "Shop.Detail",
+                "logicalType": "object",
+                "properties": [
+                  {
+                    "name": "Kind",
+                    "sourceType": "Edm.String",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ],
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
       "name": "JSON lines sample, with an empty line",
       "file": "sources/shop/orders.jsonl",
       "input": "orders.jsonl",
@@ -840,24 +1077,7 @@
               {
                 "name": "customer",
                 "logicalType": "object",
-                "required": false,
-                "properties": [
-                  {
-                    "name": "name",
-                    "logicalType": "string",
-                    "required": false
-                  },
-                  {
-                    "name": "city",
-                    "logicalType": "string",
-                    "required": false
-                  },
-                  {
-                    "name": "vip",
-                    "logicalType": "boolean",
-                    "required": false
-                  }
-                ]
+                "required": false
               },
               {
                 "name": "tags",
@@ -923,24 +1143,7 @@
               {
                 "name": "customer",
                 "logicalType": "object",
-                "required": false,
-                "properties": [
-                  {
-                    "name": "name",
-                    "logicalType": "string",
-                    "required": false
-                  },
-                  {
-                    "name": "city",
-                    "logicalType": "string",
-                    "required": false
-                  },
-                  {
-                    "name": "vip",
-                    "logicalType": "boolean",
-                    "required": false
-                  }
-                ]
+                "required": false
               },
               {
                 "name": "tags",
