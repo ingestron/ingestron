@@ -921,6 +921,7 @@ export interface ResolveOptions {
     missingEnvvars?: "error" | "information";
     packs: PackInfo[];
     replaceMe?: "warning" | "error";
+    sourceTables?: boolean;
 }
 
 // @public
@@ -932,6 +933,7 @@ export interface ResolveResult {
     model?: ResolvedModel;
     // (undocumented)
     ok: boolean;
+    sourceTables?: SourceTable[];
 }
 
 // @public
@@ -1058,6 +1060,39 @@ export interface SourceDifference {
 }
 
 // @public
+export interface SourceMetadataDoc {
+    // (undocumented)
+    connection: string;
+    // (undocumented)
+    environment?: string;
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    names?: {
+        parts: number;
+        caseSensitive: boolean;
+    };
+    // (undocumented)
+    tables: SourceTableDoc[];
+}
+
+// @public
+export interface SourceTable {
+    connection: string;
+    contract?: string;
+    entry?: SourceTableDoc;
+    file?: string;
+    flow: string;
+    names?: {
+        parts: number;
+        caseSensitive: boolean;
+    };
+    needs?: string;
+    object: string;
+    table: string;
+}
+
+// @public
 export interface SourceTableDoc {
     // (undocumented)
     captured: {
@@ -1156,7 +1191,6 @@ export interface TargetDifference {
 // dist/documents/documents.d.ts:186:5 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
 // dist/documents/documents.d.ts:187:5 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
 // dist/documents/documents.d.ts:188:5 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:189:5 - (ae-forgotten-export) The symbol "SourceMetadataDoc" needs to be exported by the entry point index.d.ts
 // dist/documents/documents.d.ts:190:5 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
 // dist/documents/documents.d.ts:192:5 - (ae-forgotten-export) The symbol "ProductDoc" needs to be exported by the entry point index.d.ts
 

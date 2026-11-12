@@ -12,6 +12,8 @@ import type { Diagnostic, Reporter, Source } from "../diagnostics/index.js";
 import { checkDeployValues, deployValuesOf, resolutionReporter } from "../context/index.js";
 import { kinds } from "../documents/index.js";
 import { flowTables } from "./flows.js";
+import { outcome } from "./outcome.js";
+import type { SourceTable } from "../sources/index.js";
 import { documentFiles, withPlaceholders } from "../internal/index.js";
 import { withReplaceMe } from "./replace-me.js";
 import { checkGovernance } from "../platform/index.js";
@@ -66,6 +68,11 @@ export interface ResolveOptions {
    * `ingestron check` resolves, so CI fails until it is written (specification section 1).
    */
   replaceMe?: "warning" | "error";
+  /**
+   * True to list each flow table with the source metadata entry its object matches, as the
+   * result's `sourceTables` (specification section 12.7). It changes nothing else.
+   */
+  sourceTables?: boolean;
 }
 
 /**
@@ -92,6 +99,12 @@ export interface ResolveResult {
    * Accepted warnings). Absent when there are none.
    */
   acceptAtBuild?: AcceptAtBuild[];
+  /**
+   * With the option `sourceTables`, one item for each flow table, in the order the flows are
+   * loaded and then the order of their table keys, whether or not the table resolved, and
+   * with or without a model (specification section 12.7). Absent without the option.
+   */
+  sourceTables?: SourceTable[];
 }
 
 /** A result before the accepted warnings are taken out of it. */
@@ -120,22 +133,7 @@ function loadOptions(options: ResolveOptions) {
 export function resolveDefinitions(files: FileSource, options: ResolveOptions): ResolveResult {
   checkPlatformFields(options.packs);
   const loaded = resolveProject(files, { ...loadOptions(options), envvars: options.envvars ?? {} });
-  const resolution = withPlaceholders(
-    files,
-    loaded.ok
-      ? withReplaceMe(
-          files,
-          loaded.project,
-          options,
-          resolveLoaded(loaded.project, options, files, [
-            ...loaded.diagnostics,
-            ...runsOnProblems(files, loaded.project, options.packs),
-          ]),
-        )
-      : { ok: false, diagnostics: loaded.diagnostics },
-    documentFiles(files, loaded.project?.documents),
-  );
-  return acceptWarnings(files, loaded.ok ? loaded.project : undefined, resolution);
+  return resolveLoadedProject(files, loaded, options);
 }
 
 /**
@@ -148,7 +146,15 @@ export function resolveDefinitions(files: FileSource, options: ResolveOptions): 
 export function loadDefinitions(folder: string, options: ResolveOptions): ResolveResult {
   checkPlatformFields(options.packs);
   const loaded = loadProject(folder, loadOptions(options));
-  const files = nodeFiles(folder);
+  return resolveLoadedProject(nodeFiles(folder), loaded, options);
+}
+
+/** What loading a project gave, resolved (when it loaded), with its placeholders and accepted warnings. */
+function resolveLoadedProject(
+  files: FileSource,
+  loaded: ReturnType<typeof resolveProject>,
+  options: ResolveOptions,
+): ResolveResult {
   const resolution = withPlaceholders(
     files,
     loaded.ok
@@ -186,7 +192,8 @@ function resolveLoaded(
   checkGrants(context);
   checkZoneNames(context);
   const namer = createNamer(context);
-  const flows = flowTables(context, namer);
+  const sourceTables = options.sourceTables ? [] : undefined;
+  const flows = flowTables(context, namer, sourceTables);
   const tables = [...flows, ...transformTables(context, namer, flows)];
   checkDuplicateNames(context, tables, (table) => originOf(context, table));
   recordOutputs(context, tables);
@@ -206,9 +213,7 @@ function resolveLoaded(
   // The pack checks see the model the packs get, before the deploy-time values are listed.
   if (built) runPackCheck(context, built);
   const model = built && deployTime ? { ...built, deployValues: deployValuesOf(project) } : built;
-  return model && !reporter.failed()
-    ? { ok: true, model, diagnostics: reporter.diagnostics }
-    : { ok: false, diagnostics: reporter.diagnostics };
+  return outcome(reporter, model, sourceTables);
 }
 
 /** Each table's contract and the pack that keeps the table (specification section 6). */

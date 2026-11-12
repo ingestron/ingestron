@@ -1,6 +1,9 @@
 // The shapes of a `SourceMetadata` document, which mirror source-metadata.schema.yaml.
 
-/** A `SourceMetadata` document: what one connection's source holds (specification section 12.1). */
+/**
+ * A `SourceMetadata` document: what one connection's source holds (specification section 12.1).
+ * @public
+ */
 export interface SourceMetadataDoc {
   id: string;
   connection: string;
