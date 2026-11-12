@@ -230,12 +230,27 @@ It is CSV or JSON:
 A file's fields are its header's names (CSV) or each record's keys (JSON),
 compared without case and without the spaces around them, so `TABLE_NAME` is
 `table_name`. Their order does not matter. Unless the recipe gives `fields`,
-the fields MUST be the eight, each once, and no other. A file with a field
-missing, a field twice or any other field is refused with one message, so
-that a query that returned rows is never imported by mistake:
-`<file> has the fields <found>; a columns file has exactly: table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position.`
-where `<found>` is the header's names, or the keys of the first record that
-breaks the rule, as written and in their order, joined with `, `.
+the fields MUST be the eight, each once, and no other. A file that breaks
+this is refused with one message, so that a query that returned rows is never
+imported by mistake. The message names the expected fields that are missing
+and counts the others, and never quotes a name it does not know, since a file
+without a header has data in its first line:
+
+- `<file> lacks the fields <missing> and has <n> other fields; a columns file has exactly: table_catalog, table_schema, table_name, column_name, ordinal_position, data_type, is_nullable, primary_key_position.`
+  when some are missing and there are others;
+- `<file> lacks the fields <missing>; a columns file has exactly: ...` when
+  some are missing and there are no others;
+- `<file> has <n> other fields; a columns file has exactly: ...` when none is
+  missing.
+
+`<missing>` is the missing fields in the order of the table above, joined with
+`, `. `<n>` is the number of fields of the header (or of the first record that
+breaks the rule) that are not the first of one of the eight, so a field that
+is not one of them and a field that comes twice each count. `field` is `field`
+for 1 and `fields` otherwise, in both places, and `lacks the field` is used
+for one missing field. A JSON file that is not a list of records, or that has
+no list at the recipe's `rows`, is refused:
+`<file> holds no records: a JSON columns file is a list of records.`
 
 When the recipe gives `fields`, the result's fields are read through it
 instead, and other fields are ignored. A field the mapping leaves out takes
@@ -249,7 +264,12 @@ Each row is read so:
 
 - The table's `object` is its non-empty `table_catalog`, `table_schema` and
   `table_name`, joined with `.`.
-- A row with an empty `column_name` is skipped.
+- A row with an empty `column_name` is skipped. A row with an empty
+  `table_name` or an empty `data_type` is refused, and a refusal names only
+  the row: `<file>, row <n>: table_name is empty.` or
+  `<file>, row <n>: data_type is empty.` A row is refused for the first of its
+  problems, checked in the order `table_name`, `data_type`, `is_nullable`,
+  `ordinal_position`, `primary_key_position`.
 - `is_nullable` is `YES`, `Y`, `true` or `1` for a column that can be null, and
   `NO`, `N`, `false` or `0` for one that cannot, without case. In JSON it MAY
   also be `true` or `false`, or the number `1` or `0`. `required` is `true`
@@ -287,7 +307,14 @@ A sample is a data file the source sends: CSV, JSON, JSON lines (`.jsonl` or
 by the import (section 3).
 
 - **CSV** is read as the columns file is (section 2.1). Its header gives the
-  column names, in order.
+  column names, in order. A name that is empty is left out. The first line is
+  refused as a header, with `<file> has no header row: every field of its first line is a number, a date, a timestamp or a boolean.`,
+  only when no field of it could be a name: each is empty or, as
+  `ingestron contract <sample>` reads values, a number (an integer with
+  leading zeros too), a date, a timestamp or a boolean. So `region,2023,2024`
+  is a header, and the message never quotes the line. The test cannot tell a
+  headerless file whose first line holds some text from a header: its values
+  become column names, which is the rule of this section.
 - **JSON** is a list of records, or one record. With the recipe's `rows`, the
   records are the list at that path, so a saved API response that wraps its
   records, such as `{ "value": [...] }`, is read through its recipe.
@@ -301,7 +328,7 @@ fits, as `ingestron contract <sample>` infers it: `integer`, `number`,
 value is `string`. A value that is a record makes the column
 `logicalType: object`, with the record's fields as its `properties`, read the
 same way; a list makes it `logicalType: array`, with its elements read as one
-column, its `items`. Every column has `required: false` and no
+column, its `items`, which is named `items`. Every column has `required: false` and no
 `primaryKeyPosition`, and no `sourceType`. The values are read only to find
 the types and are then dropped.
 
@@ -323,7 +350,7 @@ when it has one, whatever its physical type, so an `INT32` field annotated
 | `TIME`                                     | `time`                                 |
 | `BYTE_ARRAY` with `STRING`, and any other  | `string`                               |
 
-`sourceType` is the field's physical type, with its annotation after it in
+A `DECIMAL` field that gives no scale has a `scale` of 0. `sourceType` is the field's physical type, with its annotation after it in
 brackets when it has one, such as `INT32(DATE)`. A Parquet file has no key.
 
 A sample is refused when it has no columns: `<file> has no columns.`; when
@@ -340,14 +367,23 @@ Each entry of `schema` is a table: its `object` is the entry's
 
 - `name` is the property's `physicalName`, else its `name`;
 - `logicalType`, `logicalTypeOptions` and `required` are the property's;
-  a property with no `logicalType` is `string`;
+  a property with no `logicalType` is `string`, and so is one whose
+  `logicalType` is text that is not one of the logical types a recipe's `types` may give (section 1),
+  with the note `Type "<logicalType>" of <object>.<column> is not known; read as string.`,
+  where `<column>` is the property's name, after the names of the properties
+  it is nested in, joined with `.`;
 - `primaryKeyPosition` is the property's, for a property with
-  `primaryKey: true`;
+  `primaryKey: true` and a whole `primaryKeyPosition` from 1. A property with
+  `primaryKey: true` and none takes the next positions, in the order of the
+  properties, counting from one more than the highest position the properties
+  of its table give (from 1 when none gives one);
 - `sourceType` is the property's `physicalType`, when it has one;
 - nested `properties` and `items` are read the same way.
 
 A contract with no `schema` entries is refused:
-`<file> is a data contract with no schema entries.`
+`<file> is a data contract with no schema entries.` A file read as an ODCS
+document by its name (section 2.5) that does not have `kind: DataContract` is
+refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
 
 ### 2.4 Documents a source publishes
 
@@ -428,7 +464,8 @@ its last two extensions:
   `<file> is a catalog result, but no recipe was given to read it.`
 
 The name rule never applies to a file under `sources/<connection>/`, for the
-connection being imported: that path names one object (section 3), whatever
+connection being imported (when the connection is not given, a file under any
+`sources/<folder>/`): that path names one object (section 3), whatever
 its name holds. So `sources/shop/shop.catalog.Products.csv` and
 `sources/erp/information_schema.columns.csv` are files of the objects
 `shop.catalog.Products` and `information_schema.columns`.
@@ -442,6 +479,9 @@ Any other file is read by the first of these that accepts it:
    its format;
 5. the sample reader, by the file's extension: `.csv`, `.json`, `.jsonl`,
    `.ndjson` or `.parquet`.
+
+A recipe that names a reader this release does not have has its files
+refused: `<file> is read by the "<reader>" reader, which is not available yet.`
 
 A file none accepts is refused:
 `<file> is not a file Ingestron reads: a columns file, an ODCS contract, OData CSDL, OpenAPI, JSON Schema, Avro, a schema registry response, a Salesforce describe, or a sample ending .csv, .json, .jsonl, .ndjson or .parquet.`

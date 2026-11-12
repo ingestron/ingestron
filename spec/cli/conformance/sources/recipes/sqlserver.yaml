@@ -10,8 +10,16 @@ ask:
     SELECT c.TABLE_CATALOG AS table_catalog, c.TABLE_SCHEMA AS table_schema,
            c.TABLE_NAME AS table_name, c.COLUMN_NAME AS column_name,
            c.ORDINAL_POSITION AS ordinal_position, c.DATA_TYPE AS data_type,
-           c.IS_NULLABLE AS is_nullable
+           c.IS_NULLABLE AS is_nullable, k.ORDINAL_POSITION AS primary_key_position
     FROM INFORMATION_SCHEMA.COLUMNS AS c
+    LEFT JOIN (
+      SELECT u.TABLE_CATALOG, u.TABLE_SCHEMA, u.TABLE_NAME, u.COLUMN_NAME, u.ORDINAL_POSITION
+      FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS u
+      JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS t
+        ON t.CONSTRAINT_NAME = u.CONSTRAINT_NAME AND t.TABLE_SCHEMA = u.TABLE_SCHEMA
+      WHERE t.CONSTRAINT_TYPE = 'PRIMARY KEY'
+    ) AS k ON k.TABLE_CATALOG = c.TABLE_CATALOG AND k.TABLE_SCHEMA = c.TABLE_SCHEMA
+          AND k.TABLE_NAME = c.TABLE_NAME AND k.COLUMN_NAME = c.COLUMN_NAME
     WHERE c.TABLE_SCHEMA IN ({schemas})
   save: sources/{connection}.catalog.csv
   how: Run the query in a SQL client and export the result as CSV with a header row.

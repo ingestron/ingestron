@@ -37,7 +37,7 @@
         "ask": {
           "who": "Someone who can query the catalog views of the source database",
           "access": "VIEW DEFINITION on the database",
-          "run": "SELECT c.TABLE_CATALOG AS table_catalog, c.TABLE_SCHEMA AS table_schema,\n       c.TABLE_NAME AS table_name, c.COLUMN_NAME AS column_name,\n       c.ORDINAL_POSITION AS ordinal_position, c.DATA_TYPE AS data_type,\n       c.IS_NULLABLE AS is_nullable\nFROM INFORMATION_SCHEMA.COLUMNS AS c\nWHERE c.TABLE_SCHEMA IN ({schemas})\n",
+          "run": "SELECT c.TABLE_CATALOG AS table_catalog, c.TABLE_SCHEMA AS table_schema,\n       c.TABLE_NAME AS table_name, c.COLUMN_NAME AS column_name,\n       c.ORDINAL_POSITION AS ordinal_position, c.DATA_TYPE AS data_type,\n       c.IS_NULLABLE AS is_nullable, k.ORDINAL_POSITION AS primary_key_position\nFROM INFORMATION_SCHEMA.COLUMNS AS c\nLEFT JOIN (\n  SELECT u.TABLE_CATALOG, u.TABLE_SCHEMA, u.TABLE_NAME, u.COLUMN_NAME, u.ORDINAL_POSITION\n  FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS u\n  JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS t\n    ON t.CONSTRAINT_NAME = u.CONSTRAINT_NAME AND t.TABLE_SCHEMA = u.TABLE_SCHEMA\n  WHERE t.CONSTRAINT_TYPE = 'PRIMARY KEY'\n) AS k ON k.TABLE_CATALOG = c.TABLE_CATALOG AND k.TABLE_SCHEMA = c.TABLE_SCHEMA\n      AND k.TABLE_NAME = c.TABLE_NAME AND k.COLUMN_NAME = c.COLUMN_NAME\nWHERE c.TABLE_SCHEMA IN ({schemas})\n",
           "save": "sources/{connection}.catalog.csv",
           "how": "Run the query in a SQL client and export the result as CSV with a header row."
         },
@@ -143,7 +143,7 @@
           "who": "An administrator who can call the table API",
           "access": "Read access to the dictionary tables",
           "call": "https://{instance}.example.com/api/{apiVersion}/table/sys_dictionary",
-          "save": "sources/{connection}.columns.json"
+          "save": "sources/{connection}.catalog.json"
         },
         "read": "columns",
         "rows": "result",
@@ -233,7 +233,7 @@
     {
       "name": "types is not a list",
       "from": "sqlserver",
-      "text": "id: sqlserver\ntitle: SQL Server\nkind: catalog\ninputs:\n  database: { description: \"The database whose tables are loaded, such as ERP\" }\nask:\n  who: Someone who can query the catalog views of the source database\n  access: VIEW DEFINITION on the database\n  run: |\n    SELECT c.TABLE_CATALOG AS table_catalog, c.TABLE_SCHEMA AS table_schema,\n           c.TABLE_NAME AS table_name, c.COLUMN_NAME AS column_name,\n           c.ORDINAL_POSITION AS ordinal_position, c.DATA_TYPE AS data_type,\n           c.IS_NULLABLE AS is_nullable\n    FROM INFORMATION_SCHEMA.COLUMNS AS c\n    WHERE c.TABLE_SCHEMA IN ({schemas})\n  save: sources/{connection}.catalog.csv\n  how: Run the query in a SQL client and export the result as CSV with a header row.\nread: columns\nnames: { parts: 3, caseSensitive: false }\ntypes: nothing\nsources:\n  - { url: \"https://example.com/sql-server/information-schema-columns\", read: 2026-11-12 }\n",
+      "text": "id: sqlserver\ntitle: SQL Server\nkind: catalog\ninputs:\n  database: { description: \"The database whose tables are loaded, such as ERP\" }\nask:\n  who: Someone who can query the catalog views of the source database\n  access: VIEW DEFINITION on the database\n  run: |\n    SELECT c.TABLE_CATALOG AS table_catalog, c.TABLE_SCHEMA AS table_schema,\n           c.TABLE_NAME AS table_name, c.COLUMN_NAME AS column_name,\n           c.ORDINAL_POSITION AS ordinal_position, c.DATA_TYPE AS data_type,\n           c.IS_NULLABLE AS is_nullable, k.ORDINAL_POSITION AS primary_key_position\n    FROM INFORMATION_SCHEMA.COLUMNS AS c\n    LEFT JOIN (\n      SELECT u.TABLE_CATALOG, u.TABLE_SCHEMA, u.TABLE_NAME, u.COLUMN_NAME, u.ORDINAL_POSITION\n      FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS u\n      JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS t\n        ON t.CONSTRAINT_NAME = u.CONSTRAINT_NAME AND t.TABLE_SCHEMA = u.TABLE_SCHEMA\n      WHERE t.CONSTRAINT_TYPE = 'PRIMARY KEY'\n    ) AS k ON k.TABLE_CATALOG = c.TABLE_CATALOG AND k.TABLE_SCHEMA = c.TABLE_SCHEMA\n          AND k.TABLE_NAME = c.TABLE_NAME AND k.COLUMN_NAME = c.COLUMN_NAME\n    WHERE c.TABLE_SCHEMA IN ({schemas})\n  save: sources/{connection}.catalog.csv\n  how: Run the query in a SQL client and export the result as CSV with a header row.\nread: columns\nnames: { parts: 3, caseSensitive: false }\ntypes: nothing\nsources:\n  - { url: \"https://example.com/sql-server/information-schema-columns\", read: 2026-11-12 }\n",
       "error": "recipes/sqlserver.yaml: \"types\" must be a list."
     },
     {
