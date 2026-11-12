@@ -66,8 +66,10 @@ function inferColumn(
     if (sharedNames(records, names, single))
       column.properties = columnsAt(records, names, depth + 1, single);
   }
-  if (logicalType === "array")
-    column.items = inferColumn(itemsName, present.flat(), depth + 1, single);
+  if (logicalType === "array") {
+    const elements = present.flat();
+    column.items = inferColumn(itemsName, elements, depth + 1, single && elements.length <= 1);
+  }
   return column;
 }
 

@@ -1101,6 +1101,94 @@
       "forbidden": ["ACME", "ACME-CORP"]
     },
     {
+      "name": "JSON sample: in a list of several elements, one record holding a nested record shows nothing about its keys",
+      "file": "sources/landing/lists.json",
+      "input": "nested-one-holder-list.json",
+      "object": "lists",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "lists",
+            "columns": [
+              {
+                "name": "pairs",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "object",
+                  "required": false,
+                  "properties": [
+                    {
+                      "name": "m",
+                      "logicalType": "object",
+                      "required": false
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "bare",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "object",
+                  "required": false
+                }
+              },
+              {
+                "name": "solo",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "object",
+                  "required": false,
+                  "properties": [
+                    {
+                      "name": "name",
+                      "logicalType": "integer",
+                      "required": false
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "shared",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "object",
+                  "required": false,
+                  "properties": [
+                    {
+                      "name": "m",
+                      "logicalType": "object",
+                      "required": false,
+                      "properties": [
+                        {
+                          "name": "a",
+                          "logicalType": "integer",
+                          "required": false
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ACME", "ACME-CORP"]
+    },
+    {
       "name": "JSON sample: a key named like a member of every object is a field of its own, not required",
       "file": "sources/landing/members.json",
       "input": "nested-inherited.json",

@@ -89,6 +89,20 @@ describe("a nested record's keys are fields only when the records share them", (
     expect(nested[0]!.properties?.[0]?.properties?.map((c) => c.name)).toStrictEqual(["a"]);
   });
 
+  it("reads one record's keys in a one-record sample only when no list on the way has two elements", () => {
+    const itemsOf = (text: string): Column | undefined =>
+      (columnsOf("sources/t.json", text)[0] as Column & { items?: Column }).items;
+    const mOf = (text: string): Column | undefined =>
+      itemsOf(text)?.properties?.find((column) => column.name === "m");
+    expect(mOf('[{"n":[{"m":{"ACME":1}},{"m":{}}]}]')).not.toHaveProperty("properties");
+    expect(itemsOf('[{"n":[{"ACME":1},{}]}]')).not.toHaveProperty("properties");
+    expect(itemsOf('[{"n":[{"ACME":1},null]}]')).not.toHaveProperty("properties");
+    expect(names(itemsOf('[{"n":[{"ACME":1}]}]')?.properties)).toStrictEqual(["ACME"]);
+    expect(names(mOf('[{"n":[{"m":{"a":1}},{"m":{"a":2}}]}]')?.properties)).toStrictEqual(["a"]);
+    expect(mOf('[{"n":[{"m":{"a":1}},{"m":{"b":2}}]}]')).not.toHaveProperty("properties");
+    expect(names(mOf('[{"n":[{"m":{"ACME":1}}]}]')?.properties)).toStrictEqual(["ACME"]);
+  });
+
   it("gives no fields, and no empty list of them, when no record has a key", () => {
     const column = (text: string): Column | undefined =>
       columnsOf("sources/t.json", text).find((one) => one.name === "n");
