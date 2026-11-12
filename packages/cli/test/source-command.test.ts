@@ -3,7 +3,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { fixture, read, sourceProject } from "./source-projects.js";
+import { fixture, read, sourceProject, withCatalog } from "./source-projects.js";
 
 const expected = (name: string) => read(fixture("request"), name);
 
@@ -45,10 +45,21 @@ describe("ingestron source request", () => {
     expect(output).toBe(expected("request.unknown-connection.md"));
   });
 
-  it("is for no particular environment without --env, and exits 1 when the definitions have problems", () => {
+  it("without --env, is for the first environment project.yaml declares, which its title names", () => {
     const { code, output } = sourceProject("request").ingestron("source", "request");
-    expect(code).toBe(1);
+    expect(code).toBe(0);
     expect(output).toBe(expected("request.default.md"));
+  });
+
+  it("prints import lines that work as printed, without --env", () => {
+    const { folder, ingestron } = withCatalog();
+    const printed = ingestron("source", "request").output;
+    const line = printed.split("\n").find((text) => text.includes(" erp sources/erp.catalog.csv"));
+    expect(line).toBe("ingestron source import erp sources/erp.catalog.csv");
+    const { code, output } = ingestron(...line!.split(" ").slice(1));
+    expect(code).toBe(0);
+    expect(output).toContain("Wrote sources/erp.yaml.\n");
+    expect(existsSync(join(folder, "sources/erp.yaml"))).toBe(true);
   });
 
   it("writes nothing", () => {

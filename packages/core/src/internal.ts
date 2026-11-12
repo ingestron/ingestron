@@ -12,7 +12,12 @@ export {
 export { tableFacts } from "./compare/index.js";
 export { requestFor } from "./request/index.js";
 export { lineage, passports } from "./passport/index.js";
-export { notAConnection, sourceRequestFor } from "./sources/index.js";
+export {
+  sourceImportFor,
+  sourceRequestFor,
+  type SourceImportRequest,
+  type SourceImportResult,
+} from "./sources/index.js";
 export {
   applySet,
   composableRecipe,

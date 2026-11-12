@@ -58,7 +58,7 @@ function shapeOf(tree: SchemaTree): Omit<SourceColumnDoc, "required"> {
   const annotation = annotationOf(element);
   if (annotation === "MAP") return { name: element.name, logicalType: "object" };
   if (annotation !== "LIST")
-    return { name: element.name, logicalType: "object", properties: children.map(columnOf) };
+    return { name: element.name, logicalType: "object", properties: columnsOf(children) };
   const repeated = children[0]!;
   const inner = repeated.children.length === 1 ? repeated.children[0]! : undefined;
   const items = inner
@@ -79,10 +79,15 @@ function columnOf(tree: SchemaTree): SourceColumnDoc {
   return { ...shape, required: tree.element.repetition_type === "REQUIRED" };
 }
 
+/** The fields as columns; a field with an empty name is not a column. */
+function columnsOf(fields: SchemaTree[]): SourceColumnDoc[] {
+  return fields.filter((field) => field.element.name !== "").map(columnOf);
+}
+
 /** The columns of a Parquet file's schema, or the refusal when its footer cannot be read. */
 export function readParquet(input: ReaderInput): SourceColumnDoc[] | Refused {
   try {
-    const columns = parquetSchema(parquetMetadata(input.bytes)).children.map(columnOf);
+    const columns = columnsOf(parquetSchema(parquetMetadata(input.bytes)).children);
     return columns.length === 0 ? { refused: [`${input.file} has no columns.`] } : columns;
   } catch {
     return { refused: [`${input.file} is not a Parquet file Ingestron can read.`] };

@@ -4,10 +4,10 @@ import type { SourceTable } from "@ingestron/definitions";
 import { byCodePoint } from "./changes.js";
 import type { SourceAsk, SourceRecipe } from "./recipe.js";
 
-/** A connection's section, and the import of each file it asks to be saved, as `<connection> <file>`. */
+/** A connection's section, and the import of each file it asks to be saved, as `[<connection>, <file>]`. */
 export interface SourceSection {
   text: string;
-  imports: string[];
+  imports: [string, string][];
 }
 
 /** One connection, its flows' tables and its recipe, with the inputs it gives the recipe. */
@@ -38,7 +38,7 @@ export function sourceSection(input: SectionInput): SourceSection {
         "No recipe describes this source. Send one of these:",
         alternatives(connection, objects, true),
       ].join("\n\n"),
-      imports: [`${connection} sources/${connection}.columns.csv`],
+      imports: [[connection, `sources/${connection}.columns.csv`]],
     };
   const step = recipeStep({ ...input, recipe }, objects);
   return {
@@ -47,7 +47,7 @@ export function sourceSection(input: SectionInput): SourceSection {
       ...step.parts,
       `### If that cannot be done\n\n${alternatives(connection, objects, recipe.kind !== "sample")}`,
     ].join("\n\n"),
-    imports: step.saves.map((file) => `${connection} ${file}`),
+    imports: step.saves.map((file): [string, string] => [connection, file]),
   };
 }
 
@@ -144,7 +144,7 @@ function recipeStep(
   if (eachObject) parts.push(...eachObjectList(asked.text, save, values, objects));
   else if (asked.text !== undefined)
     parts.push(`\`\`\`${asked.block}\n${fill(asked.text, values).replace(/\n+$/, "")}\n\`\`\``);
-  if (how !== undefined) parts.push(fill(how, values));
+  if (how !== undefined) parts.push(fill(how, values).trim());
   // In the list, each item fills {object}; only the block and save line leave it as written.
   parts.push(...fillIn(recipe, eachObject ? { ...values, object: "" } : values, eachObject));
   if (eachObject)

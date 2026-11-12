@@ -6,13 +6,13 @@ import type { ParseResult, XmlResult } from "./text.js";
 
 /**
  * Where a table's columns came from, as a metadata document records it (`captured.from`).
- * @public
+ * @internal
  */
 export type CapturedFrom = "catalog" | "document" | "sample" | "columns" | "assistant";
 
 /**
  * One table a reader found: its `object` and its columns.
- * @public
+ * @internal
  */
 export interface SourceTableRead {
   object: string;
@@ -21,7 +21,7 @@ export interface SourceTableRead {
 
 /**
  * What a reader read from one file.
- * @public
+ * @internal
  */
 export interface SourceRead {
   /** The reader that read the file. */

@@ -31,11 +31,23 @@ export function byCodePoint(left: string, right: string): number {
   return a.length - b.length;
 }
 
-/** How two objects are the same: with case, or without it when the source ignores case. */
-export function sameName(caseSensitive: boolean): (left: string, right: string) => boolean {
-  return caseSensitive
-    ? (left, right) => left === right
-    : (left, right) => left.toLowerCase() === right.toLowerCase();
+/**
+ * The key two objects share when they are the same table: the object itself, or in lower case when
+ * the source ignores case.
+ */
+export function nameKey(caseSensitive: boolean): (object: string) => string {
+  return caseSensitive ? (object) => object : (object) => object.toLowerCase();
+}
+
+/** The tables by their objects' key; the first of two with the same key is kept. */
+export function byObject<T extends { object: string }>(
+  tables: readonly T[],
+  key: (object: string) => string,
+): Map<string, T> {
+  const found = new Map<string, T>();
+  for (const table of tables)
+    if (!found.has(key(table.object))) found.set(key(table.object), table);
+  return found;
 }
 
 /** An earlier table as `compareSourceColumns` takes it: its columns, and its key in order. */
@@ -82,17 +94,15 @@ export function sourceChanges(
   after: readonly SourceTableDoc[],
   caseSensitive: boolean,
 ): SourceChange[] {
-  const same = sameName(caseSensitive);
+  const key = nameKey(caseSensitive);
+  const earlier = byObject(before, key);
+  const later = byObject(after, key);
   const changes = after.flatMap((table) => {
-    const change = changeOf(
-      before.find((old) => same(old.object, table.object)),
-      table,
-      caseSensitive,
-    );
+    const change = changeOf(earlier.get(key(table.object)), table, caseSensitive);
     return change ? [change] : [];
   });
   for (const old of before)
-    if (!after.some((table) => same(table.object, old.object)))
+    if (!later.has(key(old.object)))
       changes.push({ object: old.object, change: "removed", breaking: true, differences: [] });
   return changes.sort((a, b) => byCodePoint(a.object, b.object));
 }

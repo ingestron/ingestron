@@ -48,11 +48,12 @@ export function isDocumentOf(file: string, connection: string): boolean {
 }
 
 /**
- * The path the import records and reads by: relative to the project's folder, without a leading
- * `./`; a path that leaves the folder (absolute, or with a `..` part) is only the file's name.
+ * The path the import records and reads by: relative to the project's folder, written with `/`
+ * (a Windows `\` too) and without a leading `./`; a path that leaves the folder (absolute, a
+ * drive such as `C:` included, or with a `..` part) is only the file's name.
  */
 export function projectPath(file: string): string {
-  const parts = file.split("/").filter((part) => part !== "." && part !== "");
-  const outside = file.startsWith("/") || parts.includes("..");
+  const parts = file.split(/[\\/]/).filter((part) => part !== "." && part !== "");
+  const outside = /^([\\/]|[A-Za-z]:)/.test(file) || parts.includes("..");
   return outside ? (parts.at(-1) ?? file) : parts.join("/");
 }

@@ -139,9 +139,9 @@ function columnsOf(
 ): SourceColumnDoc[] {
   if (!isRecord(properties)) return [];
   const names = Array.isArray(required) ? required : [];
-  return Object.entries(properties).map(([name, schema]) =>
-    columnOf(name, schema, names.includes(name), walk, depth),
-  );
+  return Object.entries(properties)
+    .filter(([name]) => name !== "")
+    .map(([name, schema]) => columnOf(name, schema, names.includes(name), walk, depth));
 }
 
 /** The columns of a table: the schema's `properties`, in the document `root` that its `$ref`s name. */
@@ -149,19 +149,19 @@ export function tableColumns(schema: Data, root: unknown): SourceColumnDoc[] {
   return columnsOf(schema.properties, schema.required, { root, expanded: new Set([schema]) }, 0);
 }
 
-/** True for a schema that is an object with at least one property. */
+/** True for a schema that is an object with at least one named property. */
 export function describesProperties(schema: unknown): schema is Data {
   return (
     isRecord(schema) &&
     isRecord(schema.properties) &&
-    Object.keys(schema.properties).length > 0 &&
+    Object.keys(schema.properties).some((name) => name !== "") &&
     typeOf(schema) === "object"
   );
 }
 
 /** The table of a JSON Schema document: its `properties` as columns. */
 export function schemaOutcome(file: string, object: string, schema: Data): Outcome {
-  if (!isRecord(schema.properties) || Object.keys(schema.properties).length === 0)
-    return { refused: [`${file} describes no properties.`] };
-  return { tables: [{ object, columns: tableColumns(schema, schema) }], notes: [] };
+  const columns = tableColumns(schema, schema);
+  if (columns.length === 0) return { refused: [`${file} describes no properties.`] };
+  return { tables: [{ object, columns }], notes: [] };
 }

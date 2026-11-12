@@ -31,7 +31,7 @@ describe("sourceRequestFor: placeholders left to fill in", () => {
       ].join("\n\n"),
     );
     expect(text).toContain(
-      "```sh\ningestron source import support sources/support/{object}.json --env dev\n```",
+      "```sh\ningestron source import support 'sources/support/{object}.json' --env dev\n```",
     );
   });
 
@@ -53,5 +53,34 @@ describe("sourceRequestFor: placeholders left to fill in", () => {
       "Fill in before use:\n\n- `{database}`: The database whose tables are loaded, such as ERP\n\nSave the result",
     );
     expect(text).not.toContain("ERP_DATABASE");
+  });
+
+  it("quotes each word of an import line that holds more than letters, digits, ., _, / and -, for sh", () => {
+    const files = project({
+      "flows/crm.yaml": expected("flows/crm.yaml")
+        .replace("object: Account }", 'object: "Account\'s" }')
+        .replace("object: Opportunity }", 'object: "${envvar:CRM_OBJECT}" }'),
+    });
+    const { text } = request(files);
+    expect(text).toContain(
+      [
+        "ingestron source import crm 'sources/crm/Account'\\''s.json' --env dev",
+        "ingestron source import crm 'sources/crm/${envvar:CRM_OBJECT}.json' --env dev",
+        "ingestron source import erp sources/erp.catalog.csv --env dev",
+      ].join("\n"),
+    );
+  });
+
+  it("writes the recipe's how without the line breaks at its end, so no blank lines are doubled", () => {
+    const files = project({
+      "recipes/salesforce.yaml": expected("recipes/salesforce.yaml").replace(
+        "how: With curl or Postman, using a bearer token for the org.",
+        "how: |\n    With curl or Postman.\n\n    Use a bearer token for the org.\n",
+      ),
+    });
+    const { text } = request(files);
+    expect(text).toContain(
+      "With curl or Postman.\n\nUse a bearer token for the org.\n\nFill in before use:",
+    );
   });
 });

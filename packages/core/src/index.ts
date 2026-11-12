@@ -58,7 +58,7 @@ export {
   sourceOrigin,
   sourceRecipeSchema,
   sourceRecipes,
-  type ColumnsField,
+  type SourceColumnsField,
   type SourceAsk,
   type SourceReaderName,
   type SourceRecipe,

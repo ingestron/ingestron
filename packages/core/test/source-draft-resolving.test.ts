@@ -19,6 +19,13 @@ describe("draftContracts: resolving", () => {
     expect(draftContracts(project(), { ...host, needed: true }).drafts).toHaveLength(1);
   });
 
+  it("without an environment, resolves for the first one project.yaml declares, whose values it needs", () => {
+    const named = draftContracts(project(), { ...host, tables: ["sales.orders"] });
+    const result = draftContracts(project(), { envvars: {}, tables: ["sales.orders"] });
+    expect(result.problems).toEqual([]);
+    expect(result).toEqual(named);
+  });
+
   it("stops at an error the metadata does not settle, written as plan writes it", () => {
     const broken = project({ "flows/landing.yaml": "kind: Flow\nid: landing\nsource: nowhere\n" });
     const result = draftContracts(broken, { ...host, tables: ["sales.orders"] });

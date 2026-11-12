@@ -3,7 +3,7 @@
 import type { Checker, Data } from "./check.js";
 import {
   columnsFields,
-  type ColumnsField,
+  type SourceColumnsField,
   type SourceReaderName,
   type SourceTypeRule,
 } from "./recipe.js";
@@ -68,7 +68,7 @@ export function checkReaderKeys(data: Data, check: Checker): void {
   if (data.fields === undefined) return;
   const fields = data.fields as Data;
   for (const key of Object.keys(fields))
-    if (!columnsFields.includes(key as ColumnsField))
+    if (!columnsFields.includes(key as SourceColumnsField))
       check.fail(
         `"fields" has the key "${key}", which is not a field of the columns file. Its fields: ${columnsFields.join(", ")}.`,
       );

@@ -19,9 +19,6 @@ import { SuppliedValue } from '@ingestron/definitions';
 export function builtInTemplates(): Template[];
 
 // @public
-export type ColumnsField = "table_catalog" | "table_schema" | "table_name" | "column_name" | "ordinal_position" | "data_type" | "is_nullable" | "primary_key_position";
-
-// @public
 export function compareEnvironments(files: FileSource, a: string, b: string, options?: ProjectOptions): string;
 
 // @public
@@ -366,6 +363,9 @@ export interface SourceChange {
 export function sourceChangesText(connection: string, changes: readonly SourceChange[], notes: readonly string[]): string;
 
 // @public
+export type SourceColumnsField = "table_catalog" | "table_schema" | "table_name" | "column_name" | "ordinal_position" | "data_type" | "is_nullable" | "primary_key_position";
+
+// @public
 export function sourceFileFor(path: string): {
     connection: string;
     object?: string;
@@ -414,7 +414,7 @@ export interface SourceRecipe {
         match: string;
         to: string;
     };
-    fields?: Partial<Record<ColumnsField, string>>;
+    fields?: Partial<Record<SourceColumnsField, string>>;
     file: string;
     id: string;
     inputs: Record<string, {
@@ -636,7 +636,7 @@ export interface SourceRequestOptions extends ProjectOptions {
 
 // @public
 export interface SourceTypeRule {
-    logicalType: string;
+    logicalType: "string" | "date" | "timestamp" | "time" | "number" | "integer" | "object" | "array" | "boolean";
     match: string;
     options?: Record<string, string | number>;
 }

@@ -11,6 +11,7 @@ import {
 import type { ProjectOptions } from "../generation/index.js";
 import { packs } from "../packs/index.js";
 import { resolving } from "../request/index.js";
+import { sourceEnvironment } from "./environment.js";
 import { stoppingErrors } from "./request.js";
 import { yamlText, yamlValue } from "./yaml-value.js";
 
@@ -41,7 +42,10 @@ export interface DraftContractsOptions extends ProjectOptions {
    * one that has no entry. Used when `tables` is not given.
    */
   needed?: boolean;
-  /** The environment to resolve for; by default no particular environment, as `plan` does. */
+  /**
+   * The environment to resolve for; by default the first environment project.yaml declares, as the
+   * source request resolves, or none when it declares none.
+   */
   environment?: string;
 }
 
@@ -63,7 +67,7 @@ export function draftContracts(
     sourceTables: true,
     packs: [...(options.packs ?? packs)],
     envvars: options.envvars ?? process.env,
-    environment: options.environment,
+    environment: sourceEnvironment(files, options.environment).environment,
   });
   const errors = stoppingErrors(diagnostics);
   if (errors.length > 0)

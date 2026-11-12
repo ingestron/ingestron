@@ -1,5 +1,16 @@
 // CSV text as records (RFC 4180), shared by `ingestron contract <sample>` and the source readers.
 
+/**
+ * The delimiter of CSV text: whichever of `,`, `;` and tab its first line holds most often, the
+ * first of them on a tie, so `,` when it holds none.
+ */
+export function csvDelimiter(text: string): string {
+  const line = text.slice(0, text.search(/\r?\n|$/));
+  return [",", ";", "\t"].reduce((best, candidate) =>
+    line.split(candidate).length > line.split(best).length ? candidate : best,
+  );
+}
+
 /** RFC 4180 records: quoted fields may hold the delimiter, line breaks and "" for a quote. */
 export function csvRecords(text: string, delimiter: string, limit: number): string[][] {
   const reader = new CsvReader(delimiter);

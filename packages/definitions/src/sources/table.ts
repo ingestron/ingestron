@@ -18,7 +18,8 @@ export interface TableMatch {
   /**
    * True when the object is written as one reference, or only references, with at least one
    * unset at planning: its name is not known, so it is never `SOURCE_TABLE_GONE` (section
-   * 12.6) and has no `TABLE_NO_COLUMNS` (section 12.4).
+   * 12.6), and its `TABLE_NO_COLUMNS` (section 12.4) is at its `object`, a value that holds the
+   * unset reference, which section 1's rule for such values decides.
    */
   notKnown: boolean;
   /** True when more than one table matched, which `SOURCE_OBJECT_AMBIGUOUS` has reported. */

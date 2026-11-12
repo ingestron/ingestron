@@ -1,5 +1,5 @@
 // One record of a columns file, read into a column's facts (spec/cli/sources.md, section 2.1).
-import type { ColumnsField, SourceRecipe } from "./recipe.js";
+import type { SourceColumnsField, SourceRecipe } from "./recipe.js";
 
 /** What one record says about one column. */
 export interface ColumnRow {
@@ -24,7 +24,7 @@ export function normal(name: string): string {
 
 /** The result's field that holds a columns field, and whether it is read the other way round. */
 export function sourceOf(
-  field: ColumnsField,
+  field: SourceColumnsField,
   recipe: SourceRecipe | undefined,
 ): { key: string; negate: boolean } | undefined {
   const mapping = recipe?.fields;
@@ -76,7 +76,7 @@ export class RowReader {
     if (bad !== undefined) return `${this.file}, row ${n}: ${bad as string}`;
     return {
       object: ["table_catalog", "table_schema", "table_name"]
-        .map((field) => this.text(record, field as ColumnsField))
+        .map((field) => this.text(record, field as SourceColumnsField))
         .filter((part) => part !== "")
         .join("."),
       column,
@@ -87,7 +87,7 @@ export class RowReader {
     };
   }
 
-  private text(record: Record<string, unknown>, field: ColumnsField): string {
+  private text(record: Record<string, unknown>, field: SourceColumnsField): string {
     const source = sourceOf(field, this.recipe);
     return source === undefined ? "" : textOf(record[normal(source.key)]);
   }
@@ -103,7 +103,7 @@ export class RowReader {
 
   private position(
     record: Record<string, unknown>,
-    field: ColumnsField,
+    field: SourceColumnsField,
   ): number | string | undefined {
     const value = position(this.text(record, field));
     return Number.isNaN(value) ? `${field} is not a whole number from 1.` : value;

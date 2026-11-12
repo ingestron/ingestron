@@ -111,16 +111,30 @@ export function readSourceFile(input: {
     xml,
     ...(object !== undefined && { object }),
   };
-  const rule = nameRule(file, connection);
+  try {
+    return readWith(base, nameRule(file, connection), recipe);
+  } catch (error) {
+    // A document nested deeper than the stack can walk; the message never quotes the file.
+    if (error instanceof RangeError) return { refused: [`${file} is nested too deeply to read.`] };
+    throw error;
+  }
+}
+
+/** The file read by the reader its name or its content chooses. */
+function readWith(
+  base: ReaderInput,
+  rule: string | undefined,
+  recipe: SourceRecipe | undefined,
+): SourceRead | Refused {
   const chosen =
     rule === undefined
       ? attempts(base, recipe).find((attempt) => readers[attempt.reader].accepts(attempt.input))
       : forced(rule, base, recipe);
-  if (chosen === undefined) return notRead(file);
+  if (chosen === undefined) return notRead(base.file);
   if ("refused" in chosen) return chosen;
   const { reader, from, input: given } = chosen;
   const outcome = readers[reader].read(given);
   if (isRefused(outcome)) return outcome;
-  const renamed = renameColumns(outcome.tables, given.recipe, file);
+  const renamed = renameColumns(outcome.tables, given.recipe, base.file);
   return "refused" in renamed ? renamed : { reader, from, ...outcome, tables: renamed };
 }

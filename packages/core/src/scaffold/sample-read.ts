@@ -1,6 +1,6 @@
 // Rows of a sample file: CSV (comma, semicolon or tab, with quotes) or JSON
 // (an array of objects, or one object per line). At most `limit` rows.
-import { csvRecords } from "../csv.js";
+import { csvDelimiter, csvRecords } from "../csv.js";
 
 /** The column names in order, and each row's values by name. */
 export interface Sample {
@@ -30,11 +30,7 @@ function jsonSample(text: string, limit: number): Sample {
 }
 
 function csvSample(text: string, limit: number): Sample {
-  const firstLine = text.slice(0, text.search(/\r?\n|$/));
-  const delimiter = [",", ";", "\t"].reduce((best, candidate) =>
-    firstLine.split(candidate).length > firstLine.split(best).length ? candidate : best,
-  );
-  const [header = [], ...records] = csvRecords(text, delimiter, limit + 1);
+  const [header = [], ...records] = csvRecords(text, csvDelimiter(text), limit + 1);
   const rows = records
     .filter((record) => record.some((value) => value !== ""))
     .map((record) => Object.fromEntries(header.map((name, index) => [name, record[index] ?? ""])));

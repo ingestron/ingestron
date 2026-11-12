@@ -131,9 +131,11 @@ function nestedOf(
   scope: Data,
 ): Pick<SourceColumnDoc, "sourceType" | "properties" | "items"> {
   if (shape.type === "array")
-    return {
-      items: columnOf(itemsName, shape.items, context, [...path, itemsName], depth + 1, scope),
-    };
+    return depth >= maxNesting
+      ? {}
+      : {
+          items: columnOf(itemsName, shape.items, context, [...path, itemsName], depth + 1, scope),
+        };
   if (shape.type !== "record") return {};
   if (context.expanded.has(shape) || depth >= maxNesting) return { sourceType: String(shape.name) };
   context.expanded.add(shape);
@@ -173,7 +175,7 @@ function fieldsOf(
 ): SourceColumnDoc[] {
   const fields = Array.isArray(record.fields) ? record.fields.filter(isRecord) : [];
   return fields.flatMap((field) =>
-    typeof field.name === "string"
+    typeof field.name === "string" && field.name !== ""
       ? [columnOf(field.name, field.type, context, [...parents, field.name], depth, record)]
       : [],
   );

@@ -1,6 +1,6 @@
 // The records of a CSV or JSON file, as the columns file and samples read them
 // (spec/cli/sources.md, sections 2.1 and 2.2).
-import { csvRecords } from "../csv.js";
+import { csvDelimiter, csvRecords } from "../csv.js";
 import { typeOf } from "../sample-type.js";
 import type { ReaderInput } from "./result.js";
 import { extensionOf, type ParseResult } from "./text.js";
@@ -11,15 +11,12 @@ export interface CsvTable {
   rows: string[][];
 }
 
-/** `;` when the header line holds `;` and no `,`, else `,`. */
-function delimiterOf(text: string): string {
-  const line = text.slice(0, text.search(/\r?\n|$/));
-  return line.includes(";") && !line.includes(",") ? ";" : ",";
-}
-
-/** The header and records of CSV text; a blank line is not a record. `limit` counts records. */
+/**
+ * The header and records of CSV text, separated as `ingestron contract <sample>` separates them; a
+ * blank line is not a record. `limit` counts records.
+ */
 export function csvTable(text: string, limit = Infinity): CsvTable {
-  const [header = [], ...rows] = csvRecords(text, delimiterOf(text), limit);
+  const [header = [], ...rows] = csvRecords(text, csvDelimiter(text), limit);
   return { header, rows: rows.filter((row) => row.length > 1 || row[0] !== "") };
 }
 

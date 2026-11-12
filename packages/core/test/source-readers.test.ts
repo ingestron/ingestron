@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { readSourceRecipe, type SourceRecipe } from "../src/sources/index.js";
+import { readSourceRecipe, type SourceRead, type SourceRecipe } from "../src/sources/index.js";
 import { readSourceFile } from "../src/sources/read-file.js";
 
 interface Case {
@@ -168,5 +168,38 @@ describe("readSourceFile: parsing", () => {
       refused: ["sources/x.odcs.yaml is a data contract with no schema entries."],
     });
     warn.mockRestore();
+  });
+});
+
+describe("readSourceFile: a column with an empty name", () => {
+  it("Salesforce describe: a field with an empty name is not a column", () => {
+    const result = readSourceFile({
+      file: "sources/crm/Account.json",
+      contents: JSON.stringify({
+        name: "Account",
+        fields: [
+          { name: "Id", type: "id", nillable: false },
+          { name: "", type: "string", nillable: true },
+        ],
+      }),
+      recipe: recipeOf("salesforce"),
+    });
+    expect(result).toMatchObject({ tables: [{ object: "Account", columns: [{ name: "Id" }] }] });
+    expect((result as SourceRead).tables[0]!.columns).toHaveLength(1);
+  });
+
+  it("OpenAPI: a schema whose only property has an empty name is not a table", () => {
+    const result = readSourceFile({
+      file: "sources/shop.openapi.json",
+      contents: JSON.stringify({
+        openapi: "3.1.0",
+        components: {
+          schemas: { Empty: { type: "object", properties: { "": { type: "string" } } } },
+        },
+      }),
+    });
+    expect(result).toStrictEqual({
+      refused: ["sources/shop.openapi.json describes no object schemas."],
+    });
   });
 });

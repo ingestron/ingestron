@@ -132,12 +132,10 @@ function columnOf(property: XmlNode, walk: Walk, depth: number, place?: number):
 function tableOf(object: string, type: XmlNode, model: Model): SourceTableRead {
   const { properties, key } = membersOf(type, model);
   const walk: Walk = { model, expanded: new Set([type]) };
-  const columns = properties
-    .filter((property) => attributeOf(property, "Name") !== undefined)
-    .map((property) => {
-      const place = key.indexOf(attributeOf(property, "Name")!);
-      return columnOf(property, walk, 0, place < 0 ? undefined : place + 1);
-    });
+  const columns = properties.map((property) => {
+    const place = key.indexOf(attributeOf(property, "Name")!);
+    return columnOf(property, walk, 0, place < 0 ? undefined : place + 1);
+  });
   return { object, columns };
 }
 

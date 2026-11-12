@@ -122,6 +122,20 @@ describe("ingestron contract --from-metadata", () => {
     expect(output).toBe("No table needs a contract drafted.\n");
   });
 
+  // The hint names no environment; the drafts project's values are given only in dev, its first.
+  it("runs the command CONTRACT_NEEDED's hint prints, as printed, with no --env", () => {
+    const { folder, ingestron } = sourceProject("drafts");
+    const plan = ingestron("plan");
+    const hint = /`ingestron (contract --from-metadata sales\.orders)`/.exec(plan.output);
+    expect(hint, plan.output).not.toBeNull();
+    const { code, output } = ingestron(...hint![1]!.split(" "));
+    expect(output).toBe(
+      "Wrote contracts/erp.orders.yaml.\nAdd to sales.orders: contract: erp.orders\n",
+    );
+    expect(code).toBe(0);
+    expect(read(folder, "contracts/erp.orders.yaml")).toBe(expected("erp.orders.yaml"));
+  });
+
   it.each([
     [["contract", "--from-metadata"]],
     [["contract", "--from-metadata", "--needed", "sales.orders"]],

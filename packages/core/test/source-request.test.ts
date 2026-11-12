@@ -155,11 +155,24 @@ describe("sourceRequestFor: recipes", () => {
     );
   });
 
-  it("leaves --env out of the import lines without an environment", () => {
+  it("without an environment, resolves for the first one project.yaml declares, names it and leaves --env out", () => {
+    const { text, resolved } = request(project(), undefined);
+    expect(resolved).toBe(true);
+    expect(text).toContain("# Source request: retail (dev)\n");
+    expect(text).toContain("ingestron source import erp sources/erp.catalog.csv\n");
+    expect(text).not.toContain("--env");
+  });
+
+  it("without an environment, resolves for none when project.yaml declares none, named default", () => {
+    const declared = expected("project.yaml");
+    const environments = declared.slice(
+      declared.indexOf("environments:"),
+      declared.indexOf("imports:"),
+    );
     const files = project({
-      "project.yaml": expected("project.yaml").replace(
-        "imports:",
-        "values:\n  erp_db: ERP\n  erp_sales: sales\nimports:",
+      "project.yaml": declared.replace(
+        environments,
+        "values:\n  erp_db: ERP\n  erp_sales: sales\n",
       ),
     });
     const { text, resolved } = request(files, undefined);

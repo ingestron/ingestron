@@ -19,7 +19,7 @@ export type SourceReaderName =
  * The fields of the columns file a recipe's `fields` can map.
  * @public
  */
-export type ColumnsField =
+export type SourceColumnsField =
   | "table_catalog"
   | "table_schema"
   | "table_name"
@@ -55,8 +55,17 @@ export interface SourceAsk {
 export interface SourceTypeRule {
   /** A regular expression, applied without case to the source's type as written. */
   match: string;
-  /** An ODCS logical type. */
-  logicalType: string;
+  /** An ODCS logical type, one of the nine a recipe may give. */
+  logicalType:
+    | "string"
+    | "date"
+    | "timestamp"
+    | "time"
+    | "number"
+    | "integer"
+    | "object"
+    | "array"
+    | "boolean";
   /** The logical type's options; `$1`, `$2` and so on are capture groups of `match`. */
   options?: Record<string, string | number>;
 }
@@ -85,7 +94,7 @@ export interface SourceRecipe {
   /** With `columns` and `sample`: the path of keys, joined with `.`, to the records of a JSON result. */
   rows?: string;
   /** With `columns`: the result's field that holds each field of the columns file; `!` reads a true-or-false field the other way round. */
-  fields?: Partial<Record<ColumnsField, string>>;
+  fields?: Partial<Record<SourceColumnsField, string>>;
   /** With `columns`: the columns that form each table's primary key, in order. */
   key?: string[];
   /**
@@ -114,7 +123,7 @@ export const readerNames: readonly SourceReaderName[] = [
 ];
 
 /** Every field of the columns file, in the order the specification lists them. */
-export const columnsFields: readonly ColumnsField[] = [
+export const columnsFields: readonly SourceColumnsField[] = [
   "table_catalog",
   "table_schema",
   "table_name",
@@ -125,8 +134,8 @@ export const columnsFields: readonly ColumnsField[] = [
   "primary_key_position",
 ];
 
-/** The ODCS logical types a recipe's type rules may give. */
-export const logicalTypes = [
+/** The ODCS logical types a recipe's type rules may give, in the order the specification lists them. */
+export const logicalTypes: readonly SourceTypeRule["logicalType"][] = [
   "string",
   "date",
   "timestamp",
@@ -136,4 +145,4 @@ export const logicalTypes = [
   "object",
   "array",
   "boolean",
-] as const;
+];

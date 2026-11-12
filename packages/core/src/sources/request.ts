@@ -7,8 +7,10 @@ import type { ProjectOptions } from "../generation/index.js";
 import { packs } from "../packs/index.js";
 import { hostProject, problemsText, resolving } from "../request/index.js";
 import { byCodePoint } from "./changes.js";
+import { sourceEnvironment } from "./environment.js";
 import type { SourceRecipe } from "./recipe.js";
 import { sourceOrigin, sourceRecipes } from "./recipes.js";
+import { importing } from "./request-imports.js";
 import { sourceSection, type SectionInput } from "./request-step.js";
 
 /**
@@ -83,16 +85,17 @@ export function sourceRequestFor(
   environment: string | undefined,
   options: SourceRequestOptions = {},
 ): { text: string; resolved: boolean } {
-  const name = environment ?? "default";
+  // Without --env, the first environment project.yaml declares, which the title names.
+  const { name, environment: resolved } = sourceEnvironment(files, environment);
   const envvars = options.envvars ?? process.env;
   const { diagnostics, sourceTables = [] } = resolveDefinitions(files, {
     ...resolving,
     sourceTables: true,
     packs: [...(options.packs ?? packs)],
     envvars,
-    environment,
+    environment: resolved,
   });
-  const project = hostProject(files, environment, envvars);
+  const project = hostProject(files, resolved, envvars);
   const asked = askedFor(files, project, sourceTables, options);
   const errors = stoppingErrors(diagnostics);
   if (errors.length > 0 || asked.problems.length > 0 || project === undefined)
@@ -180,17 +183,4 @@ function recipesOf(files: FileSource, problems: string[]): Map<string, SourceRec
     problems.push(error instanceof Error ? error.message : String(error));
     return undefined;
   }
-}
-
-/** The commands that import each file the steps save; nothing when nothing was asked for. */
-function importing(lines: readonly string[], environment: string | undefined): string | undefined {
-  if (lines.length === 0) return undefined;
-  const env = environment !== undefined ? ` --env ${environment}` : "";
-  const commands = lines.map((line) => `ingestron source import ${line}${env}`).join("\n");
-  return [
-    "## Importing",
-    "Import each file you saved, from the project's folder:",
-    `\`\`\`sh\n${commands}\n\`\`\``,
-    "A file saved as one of the alternatives is imported the same way, with its own path. Add `--dry-run` to see what a file would change without writing anything.",
-  ].join("\n\n");
 }

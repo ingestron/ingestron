@@ -81,7 +81,11 @@ export function membersOf(
     childrenNamed(key, "PropertyRef").flatMap((ref) => attributeOf(ref, "Name") ?? []),
   );
   return {
-    properties: [...inherited.properties, ...childrenNamed(type, "Property")],
+    // A property with no name, or an empty one, is not a column.
+    properties: [
+      ...inherited.properties,
+      ...childrenNamed(type, "Property").filter((property) => attributeOf(property, "Name")),
+    ],
     key: own.length > 0 ? own : inherited.key,
   };
 }

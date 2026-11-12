@@ -1,7 +1,7 @@
 // Importing a source file into a connection's metadata document (spec/cli/sources.md,
 // section 3). A pure function: it is given the document's text and the file, and writes nothing.
 import type { SourceMetadataDoc, SourceTableDoc } from "@ingestron/definitions";
-import { byCodePoint, sameName, sourceChanges, type SourceChange } from "./changes.js";
+import { byCodePoint, byObject, nameKey, sourceChanges, type SourceChange } from "./changes.js";
 import { metadataText, parseMetadata } from "./document.js";
 import { isDocumentOf, objectFromPath, projectPath } from "./paths.js";
 import { readSourceFile } from "./read-file.js";
@@ -17,7 +17,10 @@ export interface SourceImportInput {
   connection: string;
   /** The current text of `sources/<connection>.yaml`; none when there is no document yet. */
   current?: string;
-  /** The file's path relative to the project's folder, with `/`; only its name when it is outside. */
+  /**
+   * The file's path relative to the project's folder, with `/` (or a Windows `\`); a path that
+   * leaves the folder, absolute or with a `..` part, is recorded by the file's name only.
+   */
   file: string;
   /** The file's contents, as text or bytes. */
   contents: string | Uint8Array;
@@ -56,11 +59,11 @@ function utcSecond(at: string): string {
 /** Why the file's tables cannot be imported: none, or the same object twice; else undefined. */
 function tablesProblem(file: string, read: SourceRead, caseSensitive: boolean): string | undefined {
   if (read.tables.length === 0) return `${file} describes no tables.`;
+  const key = nameKey(caseSensitive);
   const seen = new Set<string>();
   for (const { object } of read.tables) {
-    const key = caseSensitive ? object : object.toLowerCase();
-    if (seen.has(key)) return `${file} describes "${object}" twice.`;
-    seen.add(key);
+    if (seen.has(key(object))) return `${file} describes "${object}" twice.`;
+    seen.add(key(object));
   }
   return undefined;
 }
@@ -82,11 +85,10 @@ function mergedTables(
   whole: boolean,
   caseSensitive: boolean,
 ): SourceTableDoc[] {
-  const same = sameName(caseSensitive);
+  const key = nameKey(caseSensitive);
+  const replaced = byObject(fresh, key);
   const kept = earlier.filter(
-    (table) =>
-      !(whole && table.captured.from === "catalog") &&
-      !fresh.some((other) => same(other.object, table.object)),
+    (table) => !(whole && table.captured.from === "catalog") && !replaced.has(key(table.object)),
   );
   return [...kept, ...fresh].sort((a, b) => byCodePoint(a.object, b.object));
 }

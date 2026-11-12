@@ -20,7 +20,9 @@ type Flow = DefinitionDocument<FlowDoc>;
  * The flow table's contract; a table that ends at the landed files checks nothing, which is
  * reported on the ingest step's pack. A table with none takes its columns and key from its
  * source metadata entry of `match`, found by `matchTable` (section 12.4); with neither it has
- * no columns, which is `TABLE_NO_COLUMNS`, unless the table's name is not known yet. A table
+ * no columns, which is `TABLE_NO_COLUMNS`. When the table's name is not known yet, that error is
+ * at its `object`, which holds the unset reference, so section 1's rule for such values decides
+ * whether it stops the command. A table
  * that needs a contract, for the reason `needs` (section 12.5), is `CONTRACT_NEEDED` instead,
  * whether or not it has an entry. A table with a contract is compared with its entry, or with
  * the lack of one (section 12.6).

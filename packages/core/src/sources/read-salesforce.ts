@@ -69,7 +69,10 @@ function read(input: ReaderInput): Outcome {
   const notes: string[] = [];
   const fields = (describe.value.fields as unknown[])
     .filter(isRecord)
-    .filter((field): field is Data & { name: string } => typeof field.name === "string");
+    .filter(
+      (field): field is Data & { name: string } =>
+        typeof field.name === "string" && field.name !== "",
+    );
   if (fields.length === 0) return { refused: [`${input.file} describes no fields.`] };
   const columns = fields.map((field) => columnOf(field, object, input.recipe, notes));
   const key = fields.findIndex((field) => field.type === "id");
