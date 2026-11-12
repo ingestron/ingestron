@@ -389,31 +389,30 @@ found. A column's logical type is the narrowest that every non-empty value
 fits, as `ingestron contract <sample>` infers it: `integer`, `number`,
 `boolean`, `date`, `timestamp`, else `string`; a column with no non-empty
 value is `string`. A value that is a record makes the column
-`logicalType: object`, with the fields of the records found there as its
-`properties`, read the same way: the fields are the keys found in any of the
-records, in the order first found, and their types are merged as the types of
-the columns of the table are, from every record that has the key. A key that
-some of the records leave out is a field like any other, and none of the
-fields is `required` (every column of a sample is `required: false`). Records
-with different keys therefore give the union of their keys.
+`logicalType: object`. Its keys are read as its fields only when the keys are
+names and not data. Take the records found at that place, the values of the
+column that are records (for the elements of a list, the records among all
+the elements). The keys are names when both of these hold:
 
-A record is read as a map instead, when its keys are data and not names, such
-as counts by customer code or by date: the column is then `object` without
-`properties`, and no key is written. The keys found in the records of the
-column are data when any of these holds:
+- the keys do not look like data: no key starts with a date,
+  `^\d{4}-\d{2}-\d{2}`; none is a number, `^-?\d+(\.\d+)?$`; none is a
+  UUID, five groups of hexadecimal digits of 8, 4, 4, 4 and 12 digits, joined
+  with `-`, in any case; none holds a character outside `[A-Za-z0-9_ $.-]`;
+  and there are no more than 100 different keys;
+- the records show that the keys are shared, which is so when there is
+  exactly one record (it cannot show that they differ), or at least one key
+  is in every record and every key is in at least two of the records.
 
-- a key starts with a date, `^\d{4}-\d{2}-\d{2}`;
-- a key is a number, `^-?\d+(\.\d+)?$`;
-- a key is a UUID, five groups of hexadecimal digits of 8, 4, 4, 4 and 12
-  digits, joined with `-`, in any case;
-- a key holds a character outside `[A-Za-z0-9_ $.-]`;
-- there are more than 100 different keys.
+Then the fields are the keys found in any of the records, in the order first
+found, and their types are merged as the types of the columns of the table
+are, from every record that has the key. A key that some of the records leave
+out is a field like any other, and none of the fields is `required` (every
+column of a sample is `required: false`). Records with some keys in common
+therefore give the union of their keys.
 
-This is decided for the keys of all the records of the column together. A
-sample with one record is decided by its keys in the same way, so the keys of
-one record that read as plain names, such as `street` and `city`, are fields,
-and the keys of one record that are dates are not. An empty key is not a key
-(section 2).
+Otherwise the keys are data, such as counts by customer code or by date, as
+when each record has its own keys: the column is `object` without
+`properties`, and no key is written. An empty key is not a key (section 2).
 
 A list makes the column `logicalType: array`, with its elements read as one
 column, its `items`, which is named `items`; the records among the elements
