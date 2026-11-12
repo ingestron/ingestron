@@ -43,16 +43,22 @@ type Shape = Omit<SourceColumnDoc, "name" | "required">;
 function primitiveShape(type: string, logicalType: string, facets: XmlNode): Shape {
   const maxLength = type === "Edm.String" ? whole(attributeOf(facets, "MaxLength")) : undefined;
   const precision = whole(attributeOf(facets, "Precision"));
+  const scale = attributeOf(facets, "Scale");
   const options =
     type === "Edm.Decimal"
       ? {
           ...(precision !== undefined && { precision }),
-          scale: whole(attributeOf(facets, "Scale")) ?? 0,
+          // `Variable`, in any case, means any scale, which no whole number says: it gives none.
+          ...(scale?.toLowerCase() !== "variable" && { scale: whole(scale) ?? 0 }),
         }
       : maxLength === undefined
         ? undefined
         : { maxLength };
-  return { sourceType: type, logicalType, ...(options && { logicalTypeOptions: options }) };
+  return {
+    sourceType: type,
+    logicalType,
+    ...(options && Object.keys(options).length > 0 && { logicalTypeOptions: options }),
+  };
 }
 
 /**
@@ -162,7 +168,9 @@ function read(input: ReaderInput): Outcome {
   const byType = input.recipe?.objects === "types";
   const { tables, notes } = byType
     ? {
-        tables: model.entityTypes.map((type) => tableOf(attributeOf(type, "Name")!, type, model)),
+        tables: model.entityTypes
+          .filter((type) => attributeOf(type, "Abstract") !== "true")
+          .map((type) => tableOf(attributeOf(type, "Name")!, type, model)),
         notes: [],
       }
     : setTables(model);

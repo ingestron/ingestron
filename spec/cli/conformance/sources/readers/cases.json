@@ -4305,6 +4305,139 @@
           }
         ]
       }
+    },
+    {
+      "name": "OData CSDL: Scale=\"Variable\" gives no scale, and a missing Scale is 0",
+      "file": "sources/org.xml",
+      "input": "variable.csdl.xml",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Accounts",
+            "columns": [
+              {
+                "name": "Stamp",
+                "sourceType": "Edm.Int64",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "AccountID",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Revenue",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "Credit",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 19
+                }
+              },
+              {
+                "name": "Limit",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 19,
+                  "scale": 4
+                }
+              },
+              {
+                "name": "Share",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 5,
+                  "scale": 0
+                }
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "OData CSDL with objects: types leaves out an abstract entity type, but a type has the properties of its abstract base",
+      "file": "sources/org.catalog.xml",
+      "input": "variable.csdl.xml",
+      "recipe": "odata",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Account",
+            "columns": [
+              {
+                "name": "Stamp",
+                "sourceType": "Edm.Int64",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "AccountID",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Revenue",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false
+              },
+              {
+                "name": "Credit",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 19
+                }
+              },
+              {
+                "name": "Limit",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 19,
+                  "scale": 4
+                }
+              },
+              {
+                "name": "Share",
+                "sourceType": "Edm.Decimal",
+                "logicalType": "number",
+                "required": false,
+                "logicalTypeOptions": {
+                  "precision": 5,
+                  "scale": 0
+                }
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42"]
     }
   ]
 }
