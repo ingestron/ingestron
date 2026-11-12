@@ -1,7 +1,7 @@
 // Command-line arguments.
 import { parseArgs } from "node:util";
 import { commands } from "./help.js";
-import { metadataTables, sourceAction, type SourceAction } from "./source-args.js";
+import { metadataTables, misplacedFlag, sourceAction, type SourceAction } from "./source-args.js";
 
 export type { SourceAction } from "./source-args.js";
 
@@ -101,7 +101,8 @@ export function readArgs(args: string[]): Options | "help" | { mistake: string }
   const chosen = commandOf(positionals, values);
   if ("mistake" in chosen) return chosen;
   const { command, extra, ...subCommand } = chosen;
-  const unwanted = envMistake(command, values.env, subCommand);
+  const unwanted =
+    envMistake(command, values.env, subCommand) ?? misplacedFlag(command, values, subCommand);
   if (unwanted) return { mistake: unwanted };
   const init = initOptions(values, extra[0]);
   if ("mistake" in init) return init;

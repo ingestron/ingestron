@@ -1,6 +1,6 @@
 // ingestron source request and ingestron source import (spec/cli/sources.md, section 6). The rules
 // are @ingestron/core's: this reads the files, calls it, writes and prints.
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { formatDiagnostics, nodeFiles, resolveProject, type FileSource } from "@ingestron/config";
 import {
@@ -12,7 +12,7 @@ import {
   type SourceImport,
   type SourceRecipe,
 } from "@ingestron/core";
-import { notAConnection, sourceRequestFor } from "@ingestron/core/internal";
+import { environmentsToGenerate, notAConnection, sourceRequestFor } from "@ingestron/core/internal";
 import { kinds } from "@ingestron/definitions";
 import type { Io, Options, SourceAction } from "../terminal/index.js";
 
@@ -104,15 +104,24 @@ function projectWithImport(
   }
 }
 
+/** True when the path is a file (not a folder, and there). */
+function isFile(path: string): boolean {
+  return existsSync(path) && statSync(path).isFile();
+}
+
 /** source import: nothing is written unless the whole import can be. */
 function importFile(options: Options, action: Import, io: Io): number {
   const definitions = resolve(io.cwd, options.definitions);
   const environment = options.environments[0];
   const files = nodeFiles(definitions);
-  const origin = recipeForImport(files, action.connection, environment, io);
+  // Only the connections are read, the same in every environment, so a project whose values
+  // differ by environment loads for the first one it declares; `environment` is recorded only
+  // when --env gave it.
+  const loadedFor = environment ?? environmentsToGenerate(definitions, [])[0];
+  const origin = recipeForImport(files, action.connection, loadedFor, io);
   if ("code" in origin) return origin.code;
   const path = resolve(io.cwd, action.file);
-  if (!existsSync(path)) return stop(io, [`There is no file ${action.file}.`]).code;
+  if (!isFile(path)) return stop(io, [`There is no file ${action.file}.`]).code;
   const document = `sources/${action.connection}.yaml`;
   const existing = join(definitions, document);
   const imported = importSource({

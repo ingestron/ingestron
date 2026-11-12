@@ -74,3 +74,43 @@ describe("usage mistakes", () => {
     expect(output).toContain("Usage: ingestron");
   });
 });
+
+describe("flags belong to their commands", () => {
+  it.each([
+    [["apply", "--dry-run"], "--dry-run is only for source import."],
+    [["source", "request", "--dry-run"], "--dry-run is only for source import."],
+    [["apply", "--object", "x"], "--object is only for source import."],
+    [["plan", "--connection", "x"], "--connection is only for source request."],
+    [
+      ["source", "import", "erp", "a.csv", "--connection", "x"],
+      "--connection is only for source request.",
+    ],
+    [["plan", "--from-metadata"], "--from-metadata is only for contract."],
+    [["check", "--needed"], "--needed is only for contract --from-metadata."],
+    [["contract", "sample.csv", "--needed"], "--needed is only for contract --from-metadata."],
+  ])("%j exits 2", (args, message) => {
+    const { code, output } = sourceProject("request").ingestron(...args);
+    expect(code).toBe(2);
+    expect(output).toMatch(new RegExp(`^${message.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\n`));
+    expect(output).toContain("Usage: ingestron");
+  });
+
+  it("source import with extra arguments says what it takes", () => {
+    const { code, output } = sourceProject("request").ingestron(
+      "source",
+      "import",
+      "erp",
+      "a.csv",
+      "b.csv",
+    );
+    expect(code).toBe(2);
+    expect(output).toMatch(
+      /^source import takes a connection and a file, such as: source import erp sources\/erp\.catalog\.csv\.\n/,
+    );
+  });
+
+  it("source import without a file says the same", () => {
+    const { output } = sourceProject("request").ingestron("source", "import", "erp");
+    expect(output).toMatch(/^source import takes a connection and a file, such as:/);
+  });
+});

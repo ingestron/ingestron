@@ -37,6 +37,15 @@ describe("ingestron source import", () => {
     );
   });
 
+  it("works without --env on a project whose values are per environment, recording none", () => {
+    const { folder, ingestron } = withCatalog();
+    const { code } = ingestron("source", "import", "erp", "sources/erp.catalog.csv");
+    expect(code).toBe(0);
+    const document = read(folder, "sources/erp.yaml");
+    expect(document).not.toContain("environment:");
+    expect(document).toBe(imports("erp.first.yaml").replace("environment: dev\n", ""));
+  });
+
   it("does not add the import again, and reports no changes for the same file", () => {
     const { folder, ingestron } = withCatalog();
     ingestron("source", "import", "erp", "sources/erp.catalog.csv", "--env", "dev");

@@ -25,15 +25,14 @@ export function sourceAction(
   return { mistake: `Unknown command "source ${extra.join(" ")}".` };
 }
 
+const importUsage =
+  "source import takes a connection and a file, such as: source import erp sources/erp.catalog.csv.";
+
 /** source import's arguments: the connection and the file, and no more. */
 function importAction(extra: string[], flags: SourceFlags): SourceAction | { mistake: string } {
   const [connection, file, ...rest] = extra;
-  if (connection === undefined || file === undefined)
-    return {
-      mistake:
-        "source import needs a connection and a file, such as: source import erp sources/erp.catalog.csv.",
-    };
-  if (rest.length > 0) return { mistake: `Unknown command "source import ${extra.join(" ")}".` };
+  if (connection === undefined || file === undefined) return { mistake: importUsage };
+  if (rest.length > 0) return { mistake: importUsage };
   return {
     action: "import",
     connection,
@@ -55,4 +54,46 @@ export function metadataTables(
   if (tables.length > 0 && needed)
     return { mistake: "contract --from-metadata takes tables or --needed, not both." };
   return { tables, needed };
+}
+
+/** The flags of this feature as the command line gave them. */
+interface Flags {
+  "dry-run": boolean;
+  object?: string | undefined;
+  connection?: string | undefined;
+  "from-metadata": boolean;
+  needed: boolean;
+}
+
+/** The command's sub-command: what `source` or `contract --from-metadata` was asked. */
+interface Chosen {
+  source?: SourceAction | undefined;
+  fromMetadata?: unknown;
+}
+
+/** Which command each flag is for. */
+const owners: Record<string, string> = {
+  "--dry-run": "source import",
+  "--object": "source import",
+  "--connection": "source request",
+  "--from-metadata": "contract",
+  "--needed": "contract --from-metadata",
+};
+
+/** The first flag given to a command it does not belong to, as the mistake that says so; else none. */
+export function misplacedFlag(
+  command: string,
+  flags: Flags,
+  { source, fromMetadata }: Chosen,
+): string | undefined {
+  const importing = source?.action === "import";
+  const misplaced: [string, boolean][] = [
+    ["--dry-run", flags["dry-run"] && !importing],
+    ["--object", flags.object !== undefined && !importing],
+    ["--connection", flags.connection !== undefined && source?.action !== "request"],
+    ["--from-metadata", flags["from-metadata"] && command !== "contract"],
+    ["--needed", flags.needed && !fromMetadata],
+  ];
+  const flag = misplaced.find(([, wrong]) => wrong)?.[0];
+  return flag === undefined ? undefined : `${flag} is only for ${owners[flag]}.`;
 }

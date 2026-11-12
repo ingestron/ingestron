@@ -27,15 +27,17 @@ export function draftContract(options: Options, io: Io): number {
   return 0;
 }
 
-/** Writes a draft unless its file exists, and says which. */
+/** Writes a draft unless its file exists (never replacing one), and says which. */
 function writeDraft(definitions: string, draft: ContractDraft, io: Io): void {
   const target = join(definitions, draft.path);
-  if (existsSync(target)) {
+  mkdirSync(dirname(target), { recursive: true });
+  try {
+    writeFileSync(target, draft.text, { flag: "wx" });
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
     io.write(`Skipped ${draft.path}: it already exists.\n`);
     return;
   }
-  mkdirSync(dirname(target), { recursive: true });
-  writeFileSync(target, draft.text);
   io.write(`Wrote ${draft.path}.\n`);
 }
 

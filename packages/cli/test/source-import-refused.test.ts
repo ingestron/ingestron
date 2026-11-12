@@ -72,6 +72,14 @@ describe("ingestron source import stops", () => {
     expect(output).toBe("There is no file sources/missing.csv.\n");
   });
 
+  it("exits 1 for a folder given as the file, as for a file that is not there", () => {
+    const { folder, ingestron } = sourceProject("request");
+    const { code, output } = ingestron("source", "import", "erp", "sources", "--env", "dev");
+    expect(code).toBe(1);
+    expect(output).toBe("There is no file sources.\n");
+    expect(existsSync(join(folder, "sources/erp.yaml"))).toBe(false);
+  });
+
   it("exits 1 for a recipe that breaks a rule, and for a recipe the connection names that is not there", () => {
     const broken = withCatalog();
     writeFileSync(join(broken.folder, "recipes/sqlserver.yaml"), "id: sqlserver\ntitle: [\n");
