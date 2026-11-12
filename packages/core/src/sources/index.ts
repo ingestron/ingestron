@@ -7,6 +7,13 @@ export {
   type SourceTypeRule,
 } from "./recipe.js";
 export { sourceRecipeSchema } from "./recipe-schema.js";
+export { readSourceFile } from "./read-file.js";
+export {
+  type CapturedFrom,
+  type Refused,
+  type SourceRead,
+  type SourceTableRead,
+} from "./result.js";
 export { readSourceRecipe } from "./read.js";
 export {
   installedSourceRecipes,

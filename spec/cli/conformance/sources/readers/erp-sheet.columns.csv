@@ -1,0 +1,12 @@
+﻿"TABLE_CATALOG";"TABLE_SCHEMA";"TABLE_NAME";"COLUMN_NAME";"ORDINAL_POSITION";"DATA_TYPE";"IS_NULLABLE";"PRIMARY_KEY_POSITION"
+ERP;dbo;Customers;CustomerID;1;int;NO;1
+ERP;dbo;Customers;Name;2;nvarchar(200);YES;
+ERP;dbo;Customers;CreditLimit;3;decimal(18,2);YES;
+ERP;dbo;Customers;Location;4;geography;YES;
+ERP;dbo;Customers;Notes;5;varchar(max);YES;
+ERP;dbo;Customers;;9;int;YES;
+ERP;dbo;Orders;OrderID;1;bigint;NO;1
+ERP;dbo;Orders;CustomerID;2;int;NO;
+ERP;dbo;Orders;Placed;3;timestamp with time zone;YES;
+ERP;dbo;Orders;Total;4;numeric(10);YES;
+ERP;dbo;Orders;Active;5;boolean;NO;
