@@ -11,6 +11,9 @@ import {
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { run } from "../src/index.js";
+import { generate } from "../src/commands/generate.js";
+import { readArgs, usage } from "../src/terminal/index.js";
+import { standIns, type Notice } from "./outputs-packs.js";
 
 export const temp = () => mkdtempSync(join(tmpdir(), "ingestron-assistant-"));
 
@@ -56,4 +59,34 @@ export function listed(folder: string, under = folder): string[] {
     const path = join(under, entry);
     return statSync(path).isDirectory() ? listed(folder, path) : [relative(folder, path)];
   });
+}
+
+/** Runs `fn` with the host environment holding `values`, and puts it back after. */
+export function withEnvironment<T>(values: Record<string, string> | undefined, fn: () => T): T {
+  const saved = { ...process.env };
+  Object.assign(process.env, values ?? {});
+  try {
+    return fn();
+  } finally {
+    for (const name of Object.keys(values ?? {}))
+      if (saved[name] === undefined) delete process.env[name];
+      else process.env[name] = saved[name];
+  }
+}
+
+/**
+ * Runs plan, apply or check with the stand-in packs of the output folder cases, as their runner
+ * does: the exit code and the output.
+ */
+export function runWithStandIns(
+  args: string[],
+  cwd: string,
+  notices?: Notice[],
+): { exit: number; output: string } {
+  const options = readArgs(args);
+  if (options === "help" || "mistake" in options)
+    return { exit: 2, output: `${options === "help" ? "" : options.mistake}\n\n${usage}` };
+  let output = "";
+  const exit = generate(options, { cwd, write: (t) => (output += t) }, standIns(notices));
+  return { exit, output };
 }

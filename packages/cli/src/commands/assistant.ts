@@ -14,6 +14,7 @@ import {
 } from "node:fs";
 import { join, relative, resolve, sep } from "node:path";
 import { nodeFiles } from "@ingestron/config";
+import type { Pack } from "@ingestron/definitions";
 import {
   assistantQuestion,
   guideFacts,
@@ -144,6 +145,31 @@ export function writeAssistantFiles(
 export function guideOut(definitions: string, out: string, cwd: string): string {
   const shown = relative(definitions, resolve(cwd, out)).split(sep).join("/");
   return shown === "" ? "." : shown;
+}
+
+/**
+ * What `plan` and `apply` do about AGENTS.md after their output folders: `plan` says when the
+ * section is stale or edited by hand, `apply` rewrites a stale one and says so. Silent when there
+ * is no file, it is the user's or not a regular file, the section is current, or there is no guide.
+ * It reads the guide's facts without resolving, so it does not depend on the definitions being
+ * valid, and it never changes the exit code (spec/cli/assistants.md, section 6).
+ */
+export function refreshGuide(options: Options, io: Io, available?: readonly Pack[]): void {
+  if (options.command !== "plan" && options.command !== "apply") return;
+  const definitions = resolve(io.cwd, options.definitions);
+  const found = look(definitions, "AGENTS.md");
+  if (found.state !== "file") return;
+  const facts = guideFacts(
+    nodeFiles(definitions),
+    guideOut(definitions, options.out, io.cwd),
+    available,
+  );
+  if ("noGuide" in facts) return;
+  const update = guideUpdate(found.text, guideSection(facts), false);
+  if (update.kind === "updated" && options.command === "apply")
+    if (!writeSafely(join(definitions, "AGENTS.md"), update.text, true)) return;
+  const line = guideLine("AGENTS.md", update.kind, options.command);
+  if (line !== undefined) io.write(`${line}\n`);
 }
 
 /**

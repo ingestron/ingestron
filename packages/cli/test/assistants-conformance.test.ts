@@ -1,6 +1,6 @@
-// Runs the language-neutral cases in spec/cli/conformance/assistants/ that are for `init` and
-// `assistant add`, with the CLI's real packs (spec/cli/assistants.md, section 7). The cases for
-// plan, apply and check are run by the output-folder runner's counterpart for those commands.
+// Runs the language-neutral cases in spec/cli/conformance/assistants/ (spec/cli/assistants.md,
+// section 7): `init` and `assistant add` with the CLI's real packs, `plan`, `apply` and `check`
+// with the stand-in packs of the output folder cases.
 import {
   existsSync,
   mkdirSync,
@@ -15,6 +15,7 @@ import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
 import { run } from "../src/index.js";
 import { checkBlock, checkLines } from "./conformance-checks.js";
+import { runWithStandIns, withEnvironment } from "./assistant-helpers.js";
 
 interface Case {
   description: string;
@@ -34,7 +35,6 @@ interface Case {
 }
 
 const cases = join(import.meta.dirname, "../../../spec/cli/conformance/assistants");
-const commands = new Set(["init", "assistant"]);
 /** The keys of `expect` that spec/cli/assistants.md, section 7, defines. */
 const keys = ["exit", "lines", "block", "contains", "absent", "absentLines", "unchanged"];
 
@@ -51,22 +51,19 @@ function runCase(testCase: Case): { folder: string; exit: number; output: string
   const args =
     testCase.command === "init"
       ? ["init", ...rest]
-      : ["assistant", ...rest, "--definitions", ".", "--out", "build"];
+      : [testCase.command, ...rest, "--definitions", ".", "--out", "build"];
   let output = "";
   const io = {
     cwd: folder,
     write: (text: string) => (output += text),
     now: () => new Date("2026-11-13T09:00:00Z"),
   };
-  const saved = { ...process.env };
-  Object.assign(process.env, testCase.envvars ?? {});
-  try {
+  return withEnvironment(testCase.envvars, () => {
+    // plan, apply and check run with the stand-in packs, as the output folder cases do.
+    if (testCase.command === "plan" || testCase.command === "apply" || testCase.command === "check")
+      return { folder, ...runWithStandIns(args, folder) };
     return { folder, exit: run(args, io), output };
-  } finally {
-    for (const name of Object.keys(testCase.envvars ?? {}))
-      if (saved[name] === undefined) delete process.env[name];
-      else process.env[name] = saved[name];
-  }
+  });
 }
 
 const read = (folder: string, path: string) => readFileSync(join(folder, path), "utf8");
@@ -100,11 +97,8 @@ describe("assistant guide conformance", () => {
   const names = readdirSync(cases)
     .filter((name) => name.endsWith(".yaml"))
     .sort();
-  const mine = names.filter((name) =>
-    commands.has((parse(readFileSync(join(cases, name), "utf8")) as Case).command),
-  );
-  it("has the cases for init and assistant", () => expect(mine.length).toBeGreaterThanOrEqual(12));
-  for (const name of mine) {
+  it("has the cases", () => expect(names.length).toBeGreaterThanOrEqual(18));
+  for (const name of names) {
     const testCase = parse(readFileSync(join(cases, name), "utf8")) as Case;
     it(`${name}: ${testCase.description}`, () => {
       expect(Object.keys(testCase.expect).filter((key) => !keys.includes(key))).toEqual([]);

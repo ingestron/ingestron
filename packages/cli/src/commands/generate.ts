@@ -15,6 +15,7 @@ import {
 import type { Options } from "../terminal/index.js";
 import { generateAll, type Generated } from "@ingestron/core";
 import type { Io } from "../terminal/index.js";
+import { refreshGuide } from "./assistant.js";
 import { extraFiles, generatedFolders } from "./outputs.js";
 import { packs } from "@ingestron/core";
 import { printReports } from "../terminal/index.js";
@@ -41,7 +42,20 @@ export function generate(
 ): number {
   const generated = prepared ?? generation(options, io, available);
   printReports(io, generated);
-  if (!generated.ok) return 1;
+  const code = generated.ok ? build(options, io, generated, prepared) : 1;
+  // After everything the output folders print, whether or not the definitions resolved; `init`'s
+  // own plan (prepared) is not about the guide.
+  if (!prepared) refreshGuide(options, io, available);
+  return code;
+}
+
+/** The output folders of a generation that succeeded: plan, apply or check each. The exit code. */
+function build(
+  options: Options,
+  io: Io,
+  generated: Generated,
+  prepared: Generated | undefined,
+): number {
   const out = resolve(io.cwd, options.out);
   const planned = generated.outputs.map(({ name, folder, targets, files }): Planned => {
     const root = resolve(out, ...folder.split("/"));
