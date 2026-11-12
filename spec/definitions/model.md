@@ -2718,11 +2718,18 @@ A table that needs a contract (section 12.5) has `CONTRACT_NEEDED` instead.
 
 A flow table whose `object` is written only as references, as section 12.3
 says (one reference, such as `${envvar:TABLE}`, or only references), of
-which at least one is unset at planning, is not `TABLE_NO_COLUMNS`: which
-table it names is not known until the value is set, and so neither are its
-columns. It resolves with no columns and no error of this section until the
-value is set. This is the reasoning of "Not known" in section 12.6. Unset is
-reported as for any reference (section 1).
+which at least one is unset at planning, has no known name, and so no known
+columns, until the value is set. Its `TABLE_NO_COLUMNS` is reported, with the
+same message and hint, at the table's `object` and not at its key, so that
+section 1's rule for a problem at a value that holds an unset reference
+decides what is shown: in an editor (`missingEnvvars: information`) the
+problem is left out, so that no error is shown for a table whose name is not
+yet known and the pack checks wait (section 1); resolving for deploy it is
+`DEPLOY_VALUE` at the `object` (section 1.1), since a deploy-time value cannot
+decide what a table is made of; and without either, the unset variable is
+`ENVVAR_MISSING`, an error that fails loading before resolving reaches the
+table. `CONTRACT_NEEDED` is unchanged: it does not depend on the name. This is
+the reasoning of "Not known" in section 12.6.
 
 ### 12.5 When a table needs a contract
 
@@ -2918,10 +2925,15 @@ diagnostics, and never of the model. Each item has:
 
 A table is listed whether or not it resolved: a table with
 `TABLE_NO_COLUMNS` or `CONTRACT_NEEDED` is listed like any other. With the
-option, the list is given whenever the flows load, with or without a model:
-errors such as `TABLE_NO_COLUMNS`, `CONTRACT_NEEDED` and the breaking codes
-of section 12.6 leave no model, and they are what importing metadata and
-drafting contracts settle.
+option, the list is given whenever resolving reaches the flows, with or
+without a model: errors such as `TABLE_NO_COLUMNS`, `CONTRACT_NEEDED` and the
+breaking codes of section 12.6 leave no model, and they are what importing
+metadata and drafting contracts settle. It is not given when the project does
+not load, or when its standard, packs or platform cannot be settled, since
+resolving does not reach the flows and those errors are not ones an import or
+a draft settles. A table whose name another flow's table already has
+(`DUPLICATE_TABLE`, section 5) is not listed: the request and drafting refuse
+a project with that error anyway.
 
 Without the option, the result has no `sourceTables`. The option never
 changes the model, the diagnostics or anything built.
