@@ -751,8 +751,12 @@ Type "geography" of ERP.dbo.Shops.Location is not known; read as string.
 
 The metadata document is loaded through `project.yaml`'s `imports`. When no
 import matches `sources/<connection>.yaml` (`matchesImport`, configuration
-specification), the import also adds `sources/*.yaml` at the end of
-`imports`, keeping `project.yaml`'s comments and layout.
+specification), the import also adds that path, `sources/<connection>.yaml`,
+at the end of `imports`, keeping `project.yaml`'s comments and layout: the
+text around the list is not changed. It adds the document's own path, not a
+pattern such as `sources/*.yaml`, so that other files saved in `sources/`,
+such as a source team's `sources/<connection>.odcs.yaml`, are never loaded as
+definitions.
 
 ## 4. The source request
 
@@ -1004,7 +1008,7 @@ connection is a Connection of the project (else the message of section 4,
 It writes `sources/<connection>.yaml` and, when it adds the import, `project.yaml`,
 then prints the changes' text (section 3), then
 `Wrote sources/<connection>.yaml.` and, when it added the import,
-`Added sources/*.yaml to the imports of project.yaml.`
+`Added sources/<connection>.yaml to the imports of project.yaml.`
 
 With `--dry-run` it writes nothing and prints the same changes' text, then
 `Nothing was written (--dry-run).` A refused file prints each reason on a line
