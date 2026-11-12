@@ -1,0 +1,23 @@
+# Written by ingestron source import. Do not edit: import again to replace it.
+apiVersion: ingestron.io/v1
+kind: SourceMetadata
+id: crm
+connection: crm
+names: { parts: 1, caseSensitive: false }
+tables:
+  - object: Account
+    captured: { at: 2026-11-12T11:00:00Z, from: catalog, recipe: salesforce, file: sources/crm/Account.json }
+    columns:
+      - { name: Id, sourceType: id, logicalType: string, logicalTypeOptions: { maxLength: 18 }, required: true, primaryKeyPosition: 1 }
+      - { name: Name, sourceType: string, logicalType: string, logicalTypeOptions: { maxLength: 255 }, required: true }
+      - { name: Industry__c, sourceType: picklist, logicalType: string, logicalTypeOptions: { maxLength: 255 }, required: false }
+      - { name: IsActive__c, sourceType: boolean, logicalType: boolean, required: false }
+      - { name: AnnualRevenue, sourceType: double, logicalType: number, logicalTypeOptions: { precision: 18, scale: 2 }, required: false }
+      - { name: ParentId, sourceType: reference, logicalType: string, required: false }
+      - { name: CreatedDate, sourceType: datetime, logicalType: string, required: true }
+      - { name: Location__c, sourceType: location, logicalType: string, required: false }
+  - object: Contact
+    captured: { at: 2026-11-01T09:00:00Z, from: catalog, recipe: salesforce, file: sources/crm/Contact.json }
+    columns:
+      - { name: Id, sourceType: id, logicalType: string, logicalTypeOptions: { maxLength: 18 }, required: true, primaryKeyPosition: 1 }
+      - { name: Email, sourceType: email, logicalType: string, required: false }

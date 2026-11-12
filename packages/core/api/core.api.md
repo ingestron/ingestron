@@ -12,6 +12,7 @@ import { OutputFolder } from '@ingestron/generate';
 import { Pack } from '@ingestron/definitions';
 import { Plan } from '@ingestron/generate';
 import { ResolvedModel } from '@ingestron/definitions';
+import { SourceDifference } from '@ingestron/definitions';
 import { SuppliedValue } from '@ingestron/definitions';
 
 // @public
@@ -71,6 +72,11 @@ export interface GeneratedOutputsOptions {
     envvars?: Readonly<Record<string, string | undefined>>;
     packs?: readonly Pack[];
 }
+
+// @public
+export function importSource(input: SourceImportInput): SourceImport | {
+    refused: string[];
+};
 
 // @public
 export function installedKits(root?: string): Kit[];
@@ -325,6 +331,42 @@ export interface SourceAsk {
     run?: string;
     save: string;
     who: string;
+}
+
+// @public
+export interface SourceChange {
+    breaking: boolean;
+    change: "added" | "removed" | "changed";
+    differences: SourceDifference[];
+    object: string;
+}
+
+// @public
+export function sourceChangesText(connection: string, changes: readonly SourceChange[], notes: readonly string[]): string;
+
+// @public
+export function sourceFileFor(path: string): {
+    connection: string;
+    object?: string;
+} | undefined;
+
+// @public
+export interface SourceImport {
+    changes: SourceChange[];
+    notes: string[];
+    text: string;
+}
+
+// @public
+export interface SourceImportInput {
+    at: string;
+    connection: string;
+    contents: string | Uint8Array;
+    current?: string;
+    environment?: string;
+    file: string;
+    object?: string;
+    recipe?: SourceRecipe;
 }
 
 // @public
@@ -609,6 +651,9 @@ export const templateSchema: {
 
 // @public
 export const templatesFolder: string;
+
+// @public
+export function withSourcesImport(projectYaml: string, documentPath: string): string | undefined;
 
 // (No @packageDocumentation comment for this package)
 

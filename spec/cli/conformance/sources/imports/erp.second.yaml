@@ -1,0 +1,30 @@
+# Written by ingestron source import. Do not edit: import again to replace it.
+apiVersion: ingestron.io/v1
+kind: SourceMetadata
+id: erp
+connection: erp
+environment: dev
+names: { parts: 3, caseSensitive: false }
+tables:
+  - object: ERP.dbo.Customers
+    captured: { at: 2026-11-12T09:30:00Z, from: catalog, recipe: sqlserver, file: sources/erp.catalog.csv }
+    columns:
+      - { name: CustomerID, sourceType: int, logicalType: integer, required: true, primaryKeyPosition: 1 }
+      - { name: Name, sourceType: nvarchar(200), logicalType: string, logicalTypeOptions: { maxLength: 200 }, required: false }
+      - { name: CreditLimit, sourceType: "decimal(18,2)", logicalType: number, logicalTypeOptions: { precision: 18, scale: 2 }, required: false }
+  - object: ERP.dbo.Legacy
+    captured: { at: 2026-11-12T09:30:00Z, from: catalog, recipe: sqlserver, file: sources/erp.catalog.csv }
+    columns:
+      - { name: LegacyID, sourceType: int, logicalType: integer, required: true, primaryKeyPosition: 1 }
+  - object: ERP.dbo.Shipments
+    captured: { at: 2026-11-12T10:00:00Z, from: sample, recipe: sqlserver, file: sources/erp/ERP.dbo.Shipments.csv }
+    columns:
+      - { name: ShipmentID, logicalType: integer, required: false }
+      - { name: OrderRef, logicalType: string, required: false }
+      - { name: Carrier, logicalType: string, required: false }
+      - { name: ShippedAt, logicalType: timestamp, required: false }
+  - object: ERP.dbo.Shops
+    captured: { at: 2026-11-12T09:30:00Z, from: catalog, recipe: sqlserver, file: sources/erp.catalog.csv }
+    columns:
+      - { name: ShopID, sourceType: int, logicalType: integer, required: true, primaryKeyPosition: 1 }
+      - { name: Location, sourceType: geography, logicalType: string, required: false }

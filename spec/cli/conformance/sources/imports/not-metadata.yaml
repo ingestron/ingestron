@@ -1,0 +1,4 @@
+apiVersion: ingestron.io/v1
+kind: Connection
+id: crm
+connector: salesforce

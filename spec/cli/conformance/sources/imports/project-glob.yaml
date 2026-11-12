@@ -1,0 +1,6 @@
+id: shop
+environments:
+  dev: {}
+imports:
+  - standard.yaml
+  - ./sources/*.yaml

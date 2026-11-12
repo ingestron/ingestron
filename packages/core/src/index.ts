@@ -64,3 +64,14 @@ export {
   type SourceRecipe,
   type SourceTypeRule,
 } from "./sources/index.js";
+
+// Importing source metadata: a file into a connection's document, and what it changed.
+export {
+  importSource,
+  sourceChangesText,
+  sourceFileFor,
+  withSourcesImport,
+  type SourceChange,
+  type SourceImport,
+  type SourceImportInput,
+} from "./sources/index.js";

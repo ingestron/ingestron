@@ -1,0 +1,5 @@
+# The shop's project.
+id: shop
+environments:
+  dev: {}
+imports: ["standard.yaml", "flows/*.yaml", sources/erp.yaml] # what the project loads

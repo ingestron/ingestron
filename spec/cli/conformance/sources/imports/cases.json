@@ -1,0 +1,414 @@
+{
+  "description": "Importing source metadata (spec/cli/sources.md, section 3). Each case of imports runs importSource for the connection, with the current document's text from the fixture named by current (none when it is left out), the fixture named by input as the file at the project path file, the recipe fixture of ../recipes named by recipe, the import's object, environment and time. text names the fixture holding the exact new text; changes and notes are the rest of the result, and summary the lines of sourceChangesText, each ending with a line break. refused lists the reasons instead. forbidden lists text that must appear nowhere in the result or the summary. files gives sourceFileFor for each path (null for undefined), and projectImports withSourcesImport for the project.yaml fixture and the document's path, with expected the fixture holding the new text, or null when an import already matches.",
+  "imports": [
+    {
+      "name": "a first catalog import writes every table, sorted, with the recipe's names and the header comment",
+      "connection": "erp",
+      "file": "sources/erp.catalog.csv",
+      "input": "first.catalog.csv",
+      "recipe": "sqlserver",
+      "environment": "dev",
+      "at": "2026-11-12T09:30:00Z",
+      "text": "erp.first.yaml",
+      "changes": [
+        {
+          "object": "ERP.dbo.Customers",
+          "change": "added",
+          "breaking": false,
+          "differences": []
+        },
+        {
+          "object": "ERP.dbo.Legacy",
+          "change": "added",
+          "breaking": false,
+          "differences": []
+        },
+        {
+          "object": "ERP.dbo.Shops",
+          "change": "added",
+          "breaking": false,
+          "differences": []
+        }
+      ],
+      "notes": ["Type \"geography\" of ERP.dbo.Shops.Location is not known; read as string."],
+      "summary": [
+        "sources/erp.yaml: 3 added, 0 changed, 0 removed.",
+        "Compatible:",
+        "  ERP.dbo.Customers: added",
+        "  ERP.dbo.Legacy: added",
+        "  ERP.dbo.Shops: added",
+        "Type \"geography\" of ERP.dbo.Shops.Location is not known; read as string."
+      ]
+    },
+    {
+      "name": "a sample under sources/<connection>/ adds one table named by its path, keeps the others and the environment, and holds no value from a row",
+      "connection": "erp",
+      "current": "erp.first.yaml",
+      "file": "sources/erp/ERP.dbo.Shipments.csv",
+      "input": "shipments.csv",
+      "recipe": "sqlserver",
+      "at": "2026-11-12T10:00:00Z",
+      "text": "erp.second.yaml",
+      "changes": [
+        {
+          "object": "ERP.dbo.Shipments",
+          "change": "added",
+          "breaking": false,
+          "differences": []
+        }
+      ],
+      "notes": [],
+      "summary": [
+        "sources/erp.yaml: 1 added, 0 changed, 0 removed.",
+        "Compatible:",
+        "  ERP.dbo.Shipments: added"
+      ],
+      "forbidden": ["ZZ-SECRET-42", "ORD-0002", "Swift Freight", "Blue Haulage"]
+    },
+    {
+      "name": "a second catalog import removes a dropped table, reports a changed type and a new column, and keeps the sample's table",
+      "connection": "erp",
+      "current": "erp.second.yaml",
+      "file": "sources/erp.catalog.csv",
+      "input": "third.catalog.csv",
+      "recipe": "sqlserver",
+      "at": "2026-11-13T08:00:00Z",
+      "text": "erp.third.yaml",
+      "changes": [
+        {
+          "object": "ERP.dbo.Customers",
+          "change": "changed",
+          "breaking": true,
+          "differences": [
+            {
+              "code": "SOURCE_TYPE_CHANGED",
+              "kind": "breaking",
+              "column": "CreditLimit",
+              "before": "number(18,2)",
+              "after": "number(18,0)"
+            },
+            {
+              "code": "SOURCE_COLUMN_NEW",
+              "kind": "compatible",
+              "column": "Email"
+            }
+          ]
+        },
+        {
+          "object": "ERP.dbo.Invoices",
+          "change": "added",
+          "breaking": false,
+          "differences": []
+        },
+        {
+          "object": "ERP.dbo.Legacy",
+          "change": "removed",
+          "breaking": true,
+          "differences": []
+        }
+      ],
+      "notes": ["Type \"geography\" of ERP.dbo.Shops.Location is not known; read as string."],
+      "summary": [
+        "sources/erp.yaml: 1 added, 1 changed, 1 removed.",
+        "Breaking:",
+        "  ERP.dbo.Customers: column \"CreditLimit\" is number(18,0), but was number(18,2)",
+        "  ERP.dbo.Legacy: removed",
+        "Compatible:",
+        "  ERP.dbo.Customers: column \"Email\" is new",
+        "  ERP.dbo.Invoices: added",
+        "Type \"geography\" of ERP.dbo.Shops.Location is not known; read as string."
+      ]
+    },
+    {
+      "name": "the same file again reports no changes and changes only the time it was captured",
+      "connection": "erp",
+      "current": "erp.third.yaml",
+      "file": "sources/erp.catalog.csv",
+      "input": "third.catalog.csv",
+      "recipe": "sqlserver",
+      "at": "2026-11-14T08:00:00Z",
+      "text": "erp.again.yaml",
+      "changes": [],
+      "notes": ["Type \"geography\" of ERP.dbo.Shops.Location is not known; read as string."],
+      "summary": [
+        "sources/erp.yaml: no changes.",
+        "Type \"geography\" of ERP.dbo.Shops.Location is not known; read as string."
+      ]
+    },
+    {
+      "name": "one Salesforce describe replaces only its own object and leaves the other catalog tables",
+      "connection": "crm",
+      "current": "crm.yaml",
+      "file": "sources/crm/Account.json",
+      "input": "../readers/account.describe.json",
+      "recipe": "salesforce",
+      "at": "2026-11-12T11:00:00Z",
+      "text": "crm.after.yaml",
+      "changes": [
+        {
+          "object": "Account",
+          "change": "changed",
+          "breaking": true,
+          "differences": [
+            {
+              "code": "SOURCE_TYPE_CHANGED",
+              "kind": "breaking",
+              "column": "Name",
+              "before": "string(80)",
+              "after": "string(255)"
+            },
+            {
+              "code": "SOURCE_NULLABLE",
+              "kind": "breaking",
+              "column": "AnnualRevenue",
+              "before": "required",
+              "after": "nullable"
+            },
+            {
+              "code": "SOURCE_COLUMN_NEW",
+              "kind": "compatible",
+              "column": "Industry__c"
+            },
+            {
+              "code": "SOURCE_COLUMN_NEW",
+              "kind": "compatible",
+              "column": "IsActive__c"
+            },
+            {
+              "code": "SOURCE_COLUMN_NEW",
+              "kind": "compatible",
+              "column": "ParentId"
+            },
+            {
+              "code": "SOURCE_COLUMN_NEW",
+              "kind": "compatible",
+              "column": "CreatedDate"
+            },
+            {
+              "code": "SOURCE_COLUMN_NEW",
+              "kind": "compatible",
+              "column": "Location__c"
+            }
+          ]
+        }
+      ],
+      "notes": [
+        "Type \"id\" of Account.Id is not known; read as string.",
+        "Type \"picklist\" of Account.Industry__c is not known; read as string.",
+        "Type \"reference\" of Account.ParentId is not known; read as string.",
+        "Type \"datetime\" of Account.CreatedDate is not known; read as string.",
+        "Type \"location\" of Account.Location__c is not known; read as string."
+      ],
+      "summary": [
+        "sources/crm.yaml: 0 added, 1 changed, 0 removed.",
+        "Breaking:",
+        "  Account: column \"Name\" is string(255), but was string(80)",
+        "  Account: column \"AnnualRevenue\" was required, but can now be null",
+        "Compatible:",
+        "  Account: column \"Industry__c\" is new",
+        "  Account: column \"IsActive__c\" is new",
+        "  Account: column \"ParentId\" is new",
+        "  Account: column \"CreatedDate\" is new",
+        "  Account: column \"Location__c\" is new",
+        "Type \"id\" of Account.Id is not known; read as string.",
+        "Type \"picklist\" of Account.Industry__c is not known; read as string.",
+        "Type \"reference\" of Account.ParentId is not known; read as string.",
+        "Type \"datetime\" of Account.CreatedDate is not known; read as string.",
+        "Type \"location\" of Account.Location__c is not known; read as string."
+      ],
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "an assistant's table is compared by its column names only",
+      "connection": "shop",
+      "current": "shop.yaml",
+      "file": "sources/shop.assistant.csv",
+      "input": "shop.assistant.csv",
+      "at": "2026-11-12T12:00:00Z",
+      "text": "shop.after.yaml",
+      "changes": [
+        {
+          "object": "Orders",
+          "change": "changed",
+          "breaking": false,
+          "differences": [
+            {
+              "code": "SOURCE_COLUMN_NEW",
+              "kind": "compatible",
+              "column": "Notes"
+            }
+          ]
+        }
+      ],
+      "notes": [],
+      "summary": [
+        "sources/shop.yaml: 0 added, 1 changed, 0 removed.",
+        "Compatible:",
+        "  Orders: column \"Notes\" is new"
+      ]
+    },
+    {
+      "name": "a column with nested fields is a block mapping, its properties a list and its items one column, each flat column on one line",
+      "connection": "events",
+      "file": "sources/events/shop.Event.avsc",
+      "input": "event.avsc",
+      "at": "2026-11-12T13:00:00Z",
+      "text": "events.after.yaml",
+      "changes": [
+        {
+          "object": "shop.Event",
+          "change": "added",
+          "breaking": false,
+          "differences": []
+        }
+      ],
+      "notes": [],
+      "summary": [
+        "sources/events.yaml: 1 added, 0 changed, 0 removed.",
+        "Compatible:",
+        "  shop.Event: added"
+      ],
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a sample outside sources/ without an object is refused",
+      "connection": "erp",
+      "current": "erp.first.yaml",
+      "file": "exports/shipments.csv",
+      "input": "shipments.csv",
+      "recipe": "sqlserver",
+      "at": "2026-11-12T10:00:00Z",
+      "refused": ["Name the table this file describes with --object."],
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a sample under another connection's folder takes nothing from its path",
+      "connection": "erp",
+      "file": "sources/crm/ERP.dbo.Shipments.csv",
+      "input": "shipments.csv",
+      "recipe": "sqlserver",
+      "at": "2026-11-12T10:00:00Z",
+      "refused": ["Name the table this file describes with --object."]
+    },
+    {
+      "name": "a current text that is not the connection's source metadata is refused",
+      "connection": "erp",
+      "current": "crm.yaml",
+      "file": "sources/erp.catalog.csv",
+      "input": "first.catalog.csv",
+      "recipe": "sqlserver",
+      "at": "2026-11-12T10:00:00Z",
+      "refused": ["sources/erp.yaml is not the source metadata of \"erp\"."]
+    },
+    {
+      "name": "a current text of another kind is refused",
+      "connection": "crm",
+      "current": "not-metadata.yaml",
+      "file": "sources/crm/Account.json",
+      "input": "../readers/account.describe.json",
+      "recipe": "salesforce",
+      "at": "2026-11-12T10:00:00Z",
+      "refused": ["sources/crm.yaml is not the source metadata of \"crm\"."]
+    },
+    {
+      "name": "the metadata document itself is refused",
+      "connection": "erp",
+      "file": "sources/erp.yaml",
+      "input": "erp.first.yaml",
+      "recipe": "sqlserver",
+      "at": "2026-11-12T10:00:00Z",
+      "refused": ["sources/erp.yaml is source metadata already; import the file it was made from."]
+    },
+    {
+      "name": "the metadata document written .yml is refused",
+      "connection": "erp",
+      "file": "sources/erp.yml",
+      "input": "erp.first.yaml",
+      "at": "2026-11-12T10:00:00Z",
+      "refused": ["sources/erp.yml is source metadata already; import the file it was made from."]
+    },
+    {
+      "name": "a file that describes one object twice, by the recipe's names without case, is refused",
+      "connection": "erp",
+      "file": "sources/erp.catalog.csv",
+      "input": "duplicate.catalog.csv",
+      "recipe": "sqlserver",
+      "at": "2026-11-12T10:00:00Z",
+      "refused": ["sources/erp.catalog.csv describes \"ERP.dbo.ORDERS\" twice."]
+    },
+    {
+      "name": "a file the readers refuse gives their reasons",
+      "connection": "erp",
+      "file": "sources/erp.catalog.csv",
+      "input": "first.catalog.csv",
+      "at": "2026-11-12T10:00:00Z",
+      "refused": [
+        "sources/erp.catalog.csv is a catalog result, but no recipe was given to read it."
+      ]
+    }
+  ],
+  "files": [
+    {
+      "path": "sources/landing/exports/orders.v2.csv",
+      "expected": {
+        "connection": "landing",
+        "object": "exports/orders.v2"
+      }
+    },
+    {
+      "path": "sources/crm/Account.json",
+      "expected": {
+        "connection": "crm",
+        "object": "Account"
+      }
+    },
+    {
+      "path": "sources/erp.catalog.csv",
+      "expected": {
+        "connection": "erp"
+      }
+    },
+    {
+      "path": "sources/erp.odcs.yaml",
+      "expected": {
+        "connection": "erp"
+      }
+    },
+    {
+      "path": "sources/erp.yaml",
+      "expected": null
+    },
+    {
+      "path": "sources/erp.yml",
+      "expected": null
+    },
+    {
+      "path": "flows/orders.yaml",
+      "expected": null
+    },
+    {
+      "path": "exports/sources/erp/orders.csv",
+      "expected": null
+    }
+  ],
+  "projectImports": [
+    {
+      "name": "a flow list of imports gains the document's path, with the rest of the line kept",
+      "project": "project-flows.yaml",
+      "document": "sources/erp.yaml",
+      "expected": "project-flows.after.yaml"
+    },
+    {
+      "name": "an import that already matches the document leaves project.yaml as it is",
+      "project": "project-glob.yaml",
+      "document": "sources/erp.yaml",
+      "expected": null
+    },
+    {
+      "name": "another connection's document does not match: the path is added after it, with comments and layout kept",
+      "project": "project-crm.yaml",
+      "document": "sources/erp.yaml",
+      "expected": "project-crm.after.yaml"
+    }
+  ]
+}
