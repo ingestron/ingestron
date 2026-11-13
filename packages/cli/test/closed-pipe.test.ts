@@ -1,28 +1,23 @@
-// A reader that stops early, as `ingestron plan | head -1` does, closes the pipe: the CLI then
-// exits quietly instead of printing a stack trace.
-import { spawn } from "node:child_process";
+// A reader that stops early, as `ingestron plan | head -1` does, closes the pipe, and the next
+// write fails with EPIPE: the CLI then exits quietly instead of printing a stack trace. The tests
+// emit the error on a stream rather than closing a real pipe, which depends on timing.
 import { PassThrough } from "node:stream";
 import { describe, expect, it } from "vitest";
 import { exitOnClosedPipe } from "../src/terminal/index.js";
 
 describe("exitOnClosedPipe", () => {
-  it("exits with the code already set when the reader closes the pipe", async () => {
-    // A reader that takes one chunk and exits, as head does.
-    const reader = spawn(process.execPath, [
-      "-e",
-      "process.stdin.once('data', () => process.exit(0))",
-    ]);
-    const exited = new Promise<number>((resolve) => {
-      exitOnClosedPipe(reader.stdin, () => 3, resolve);
-    });
-    const line = `${"x".repeat(1023)}\n`;
-    const writeOn = () => {
-      if (!reader.stdin.destroyed) reader.stdin.write(line, () => setImmediate(writeOn));
-    };
-    writeOn();
-    expect(await exited).toBe(3);
-    // Spawning a Node child takes longer than the default 5 seconds when the whole repository validates.
-  }, 30_000);
+  it("exits with the code already set when the reader closes the pipe", () => {
+    const stream = new PassThrough();
+    const exits: number[] = [];
+    exitOnClosedPipe(
+      stream,
+      () => 3,
+      (code) => exits.push(code),
+    );
+    const closed = Object.assign(new Error("write EPIPE"), { code: "EPIPE" });
+    stream.emit("error", closed);
+    expect(exits).toEqual([3]);
+  });
 
   it("leaves any other error to fail as it would", () => {
     const stream = new PassThrough();
