@@ -7,6 +7,7 @@ import { byCodePoint } from "../code-point.js";
 import {
   flowText,
   isMapping,
+  keyText,
   readYaml,
   scalarAt,
   stringAt,
@@ -179,7 +180,7 @@ function environmentsOf(manifest: Mapping): GuideFacts["environments"] {
   if (!isMapping(declared)) return [];
   return [...declared].map(([name, environment]) => {
     const runsOn = isMapping(environment) ? stringAt(environment, "runs-on") : undefined;
-    return { name: String(name), ...(runsOn !== undefined && { runsOn }) };
+    return { name: keyText(name), ...(runsOn !== undefined && { runsOn }) };
   });
 }
 
@@ -229,7 +230,7 @@ function standardFrom(
     explained: listed.includes("STANDARD.md"),
     packs: stringsAt(document, "packs"),
     ...actionsOf(document),
-    fixedIntent: isMapping(fixedKeys) ? [...fixedKeys.keys()].map(String) : [],
+    fixedIntent: isMapping(fixedKeys) ? [...fixedKeys.keys()].map(keyText) : [],
   };
 }
 
@@ -248,8 +249,8 @@ function actionsOf(document: Mapping): Pick<GuideStandard, "allowed" | "fixed"> 
       if (!isMapping(settings) || settings.size === 0) continue;
       fixed.push({
         action: key,
-        method: String(method),
-        settings: [...settings].map(([name, value]) => [String(name), flowText(value)]),
+        method: keyText(method),
+        settings: [...settings].map(([name, value]) => [keyText(name), flowText(value)]),
       });
     }
   }

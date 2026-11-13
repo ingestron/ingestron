@@ -20,7 +20,7 @@ const safe = (text: string): string => text.replace(/[\u0000-\u001f\u007f]/g, " 
 const ticks = (text: string): string => {
   const fact = safe(text);
   if (!fact.includes("`")) return `\`${fact}\``;
-  const longest = Math.max(...(fact.match(/`+/g) ?? []).map((run) => run.length));
+  const longest = (fact.match(/`+/g) ?? []).reduce((most, run) => Math.max(most, run.length), 0);
   const fence = "`".repeat(longest + 1);
   return `${fence} ${fact} ${fence}`;
 };

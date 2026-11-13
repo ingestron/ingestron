@@ -102,6 +102,11 @@ function flowScalar(value: unknown): string {
   return JSON.stringify(String(value));
 }
 
+/** A mapping key as text: a string as it is, anything else as YAML flow text (`1.0`, `0x10`). */
+export function keyText(key: unknown): string {
+  return typeof key === "string" ? key : flowText(key);
+}
+
 /** A value as YAML flow text on one line (spec/cli/assistants.md, section 4, "The rules"). */
 export function flowText(value: unknown): string {
   if (Array.isArray(value))

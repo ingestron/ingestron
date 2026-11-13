@@ -150,4 +150,25 @@ describe("guideFacts writes a fixed value as the standard writes it", () => {
     });
     expect(found.standard?.origin).toBe("acme@2.10");
   });
+
+  it("writes a number key as the file writes it, for a setting, a method and a fixed key", () => {
+    const found = facts({
+      "project.yaml": project,
+      "standard.yaml": standard(
+        "fixed: { 1.0: a, 0x10: b }\nstore: { fixed: { 2.50: { 1.50: a, 0x10: b, 7: c } } }\n",
+      ),
+    });
+    expect(found.standard?.fixedIntent).toEqual(["1.0", "0x10"]);
+    expect(found.standard?.fixed).toEqual([
+      {
+        action: "store",
+        method: "2.50",
+        settings: [
+          ["1.50", "a"],
+          ["0x10", "b"],
+          ["7", "c"],
+        ],
+      },
+    ]);
+  });
 });

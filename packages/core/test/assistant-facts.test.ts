@@ -87,6 +87,15 @@ describe("guideFacts reads the files without resolving", () => {
     ]);
   });
 
+  it("writes a number environment name as the file writes it", () => {
+    const found = facts({
+      "project.yaml":
+        "id: retail\nenvironments: { 1.0: {}, 0x10: {}, 3: {}, dev: {} }\nimports: ['*.yaml']\n",
+      "standard.yaml": standard(),
+    });
+    expect(found.environments.map(({ name }) => name)).toEqual(["1.0", "0x10", "3", "dev"]);
+  });
+
   it("lists the project's files once", () => {
     const files = {
       "project.yaml": "id: retail\nimports: ['*.yaml']\n",

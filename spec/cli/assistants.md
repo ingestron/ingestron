@@ -196,7 +196,7 @@ other `<…>` is filled in.
 ### This project
 
 - **Environments.** The environments of `project.yaml`, in its order, each
-  written `` `<name>` ``. An environment with `runs-on` is written
+  written `` `<name>` `` (a number name as the file writes it). An environment with `runs-on` is written
   `` `<name>` (runs on `<pack>`) ``, with the pack as `project.yaml` gives
   it. With no environments the line is
   ``- Project `<id>`. Environments: none (`project.yaml`).``
@@ -255,7 +255,7 @@ The items are, in this order:
 2. ``- `<action>` fixes, for `<method>`: `<key>: <value>`, `<key>: <value>`.``
    for each `<action>.fixed.<method>` that has keys, the actions in the order
    of item 1 and the methods in the order the standard writes them, a key as
-   written. A value is written as YAML flow text, on
+   written (a number key as the file writes it: `1.0`, `0x10`). A value is written as YAML flow text, on
    one line: a number as the file writes it (`1.50`, `1e3` and `0x1F` stay as
    they are), `true`, `false` and `null` as they are, a string bare
    when it is made of letters, digits and `_ . / @ : -`, starts with a letter

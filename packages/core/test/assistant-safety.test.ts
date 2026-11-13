@@ -125,6 +125,11 @@ describe("unsafe facts", () => {
     expect(sectionOf(hostile("`"))).toContain("- Connections: `` ` ``.");
   });
 
+  it("copes with a fact of very many backtick runs", () => {
+    const section = sectionOf(hostile("a`".repeat(200_000)));
+    expect(section).toContain("- Connections: `` a`a`");
+  });
+
   it("makes a pack, a pattern and an environment name safe too", () => {
     const section = sectionOf({
       "project.yaml": `id: "re\`tail"\nenvironments: { "d\`ev": {} }\nimports: ["*.yaml", "a\\nb*"]\n`,
