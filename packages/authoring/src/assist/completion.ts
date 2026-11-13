@@ -14,7 +14,7 @@ import { flowFacts, listAt, placeAt, writtenKeys, type Place } from "../navigati
 import { fieldAt, fieldsIn } from "./fields.js";
 import { markFixed } from "./fixed.js";
 import { movedSettingsLast } from "./moved-settings.js";
-import type { Suggestion } from "./suggestion.js";
+import { afterDash, type Suggestion } from "./suggestion.js";
 import { inputCompletions } from "./inputs.js";
 import { valueHelp } from "./value-help.js";
 import { sourceTyped, sourceValues } from "./source-completion.js";
@@ -71,12 +71,6 @@ function values(project: Project, place: Place, environment: string | undefined)
     if (!item.snippet) return { ...item, insertText: ` ${item.insertText ?? item.label}` };
     return item.snippet.startsWith("\n") ? item : { ...item, snippet: ` ${item.snippet}` };
   });
-}
-
-/** Straight after `-`, a suggestion brings the space and is inserted after the dash. */
-function afterDash(item: Suggestion): Suggestion {
-  const spaced = item.snippet ? { snippet: ` ${item.snippet}` } : { insertText: ` ${item.label}` };
-  return { ...item, ...spaced, afterDash: true };
 }
 
 /** A new item in a list of mappings: ready-made items first, then the item's fields. */

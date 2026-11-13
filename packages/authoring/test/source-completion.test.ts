@@ -160,3 +160,27 @@ describe("column names in a contract's properties", () => {
     ).not.toContain("OrderID");
   });
 });
+
+describe("a flow table's object with a space in it", () => {
+  const spaced = {
+    "sources/erp.yaml": files["sources/erp.yaml"]!.replace(
+      "object: ERP.dbo.Archive",
+      "object: ERP.dbo.Order Details",
+    ),
+  };
+  it("is offered while it is typed, and replaces all of what is typed", () => {
+    const flow = files["flows/erp.yaml"]!;
+    const start = flow.indexOf("object: ERP.dbo.Customers") + "object: ".length;
+    for (const typed of ["ERP.dbo.Order D|", "ERP.dbo.Order |", '"ERP.dbo.Order D|"']) {
+      const items = at(
+        "flows/erp.yaml",
+        (text) => text.replace("object: ERP.dbo.Customers", `object: ${typed}`),
+        spaced,
+      );
+      expect(items.map((item) => item.label)).toContain("ERP.dbo.Order Details");
+      expect(items.map((item) => item.replaceFrom)).toEqual(
+        items.map(() => start + (typed.startsWith('"') ? 1 : 0)),
+      );
+    }
+  });
+});

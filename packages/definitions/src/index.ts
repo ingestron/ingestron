@@ -141,6 +141,7 @@ export {
 // Comparing a table's columns with a source's metadata (specification section 12.6).
 export {
   compareSourceColumns,
+  isMetadataFor,
   type SourceBefore,
   type SourceColumnBefore,
   type SourceDifference,

@@ -503,6 +503,11 @@ export type IntentUse = {
 // @public
 export function intentUseOf(pack: IntentCoverage, path: string, value?: string): IntentUse | undefined;
 
+// @public
+export function isMetadataFor(document: {
+    connection?: unknown;
+}, connection: string): boolean;
+
 export { JsonSchema }
 
 export { KindDefinition }

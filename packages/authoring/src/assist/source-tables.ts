@@ -1,7 +1,7 @@
 // What completion from the source metadata reads: a connection's metadata tables in the order
 // the project loads its documents, and every flow table with its entry, each also while the value
 // at the cursor is not yet typed, which a placeholder there stands in for.
-import type { SourceTable, SourceTableDoc } from "@ingestron/definitions";
+import { isMetadataFor, type SourceTable, type SourceTableDoc } from "@ingestron/definitions";
 import { documentOf, idsOf, type Place } from "../navigation/index.js";
 import { documentsOf, resolved, type Project } from "../project/index.js";
 
@@ -15,8 +15,8 @@ export function metadataTables(
   connection: string,
   environment: string | undefined,
 ): SourceTableDoc[] {
-  const document = metadataDocuments(project, place, environment).find(
-    (value) => value.connection === connection,
+  const document = metadataDocuments(project, place, environment).find((value) =>
+    isMetadataFor(value, connection),
   );
   if (!Array.isArray(document?.tables)) return [];
   return (document.tables as (SourceTableDoc | null)[]).filter(
@@ -68,16 +68,18 @@ const typedProjects = new WeakMap<Project, Map<string, Project>>();
 
 /**
  * The project with a placeholder written at the cursor, once per project snapshot, file, offset
- * and length of the text.
+ * and text.
  */
 function typedOver(project: Project, place: Place): Project {
   let byPlace = typedProjects.get(project);
   if (!byPlace) typedProjects.set(project, (byPlace = new Map()));
   const at = place.before.length;
-  const key = `${place.file}:${at}:${place.text.length}`;
+  const key = `${place.file}:${at}:${place.part}:${place.text}`;
   let found = byPlace.get(key);
   if (!found) {
-    const text = `${place.text.slice(0, at)}${place.before.endsWith(":") ? " " : ""}_${place.text.slice(at)}`;
+    // A new key stands for a mapping with a key of its own; a value or item for a text.
+    const standIn = place.part === "key" ? "_: {}" : "_";
+    const text = `${place.text.slice(0, at)}${/(?:^|\s)-$|:$/.test(place.before) ? " " : ""}${standIn}${place.text.slice(at)}`;
     const files = {
       ...project.files,
       read: (path: string) => (path === place.file ? text : project.files.read(path)),

@@ -41,7 +41,7 @@ export function placeAt(file: string, text: string, offset: number): Place {
     const { outer, ...place } = inFlow;
     return { ...base, ...place, inFlow: true, path: [...(outer ?? path), ...place.path] };
   }
-  const value = /^\s*(?:- )?([\w.-]+):\s*\S*$/.exec(line);
+  const value = /^\s*(?:- )?([\w.-]+):\s*(?:\S.*)?$/.exec(line);
   if (value)
     return { ...base, part: "value", path: [...path, value[1]!], tight: /:\S*$/.test(line) };
   if (/^\s*-\s*\S*$/.test(line)) return { ...base, part: "item", path };

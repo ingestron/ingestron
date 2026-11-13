@@ -168,3 +168,16 @@ export function at(
 }
 export const brief = (items: { label: string; detail?: string }[]) =>
   items.map((item) => [item.label, item.detail]);
+
+/** The fixture's metadata with Customers' columns named `names`. */
+export function named(...names: string[]): Record<string, string> {
+  const columns = names.map(
+    (name) =>
+      `      - { name: ${JSON.stringify(name)}, sourceType: int, logicalType: integer, required: false }`,
+  );
+  const text = files["sources/erp.yaml"]!.replace(
+    /(object: ERP\.dbo\.Customers\n.*\n    columns:\n)(?:      - .*\n){2}/,
+    `$1${columns.join("\n")}\n`,
+  );
+  return { "sources/erp.yaml": text };
+}

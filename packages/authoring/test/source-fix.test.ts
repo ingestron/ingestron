@@ -4,10 +4,25 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type * as CoreModule_ from "@ingestron/core";
 import { ProjectSnapshot } from "../src/index.js";
 import { files } from "./source-project.js";
 
+// The drafts are counted, whatever the machine's load: the real function runs each time.
+const { drafting } = vi.hoisted(() => ({ drafting: { calls: [] as unknown[][] } }));
+vi.mock("@ingestron/core", async (original) => {
+  const core = await original<CoreModule>();
+  return {
+    ...core,
+    draftContracts: (...args: Parameters<typeof core.draftContracts>) => {
+      drafting.calls.push(args);
+      return core.draftContracts(...args);
+    },
+  };
+});
+
+type CoreModule = typeof CoreModule_;
 const folders: string[] = [];
 afterEach(() => {
   for (const folder of folders.splice(0)) rmSync(folder, { recursive: true, force: true });
@@ -82,6 +97,33 @@ describe("the fix that drafts a contract", () => {
   });
 });
 
+describe("the fix that drafts a contract, while the project has other errors", () => {
+  it("is offered for a table with an entry though another table has an error no draft mends", () => {
+    // Returns has no entry, so its error stays; Customers is drafted all the same.
+    expect(draftedFiles(open({}))).toEqual({
+      customers: "contracts/erp.customers.yaml",
+      returns: undefined,
+    });
+  });
+
+  it("is not offered while an error the metadata does not settle stops the draft", () => {
+    // The core's draft stops at such an error (spec/cli/sources.md, section 4), so there is none.
+    const flow = files["flows/erp.yaml"]!.replace("source: erp", "source: nowhere");
+    const snapshot = open({ "flows/erp.yaml": flow });
+    expect(snapshot.problems("dev").some((problem) => problem.severity === "error")).toBe(true);
+    const created = snapshot
+      .problems("dev")
+      .flatMap((problem) =>
+        snapshot.quickFixes("dev", problem.file, {
+          start: problem.range.start,
+          end: problem.range.end,
+        }),
+      )
+      .flatMap((fix) => fix.create?.file ?? []);
+    expect(created.filter((file) => file.startsWith("contracts/erp."))).toEqual([]);
+  });
+});
+
 describe("the fix for a flow of 1,000 tables", () => {
   const count = 1000;
   const numbers = Array.from({ length: count }, (_, index) => index);
@@ -110,25 +152,39 @@ describe("the fix for a flow of 1,000 tables", () => {
     ].join("\n"),
   };
 
-  it("is found for the last table in well under a second", () => {
-    // The best of three snapshots, so that other test files running at the same time do not
-    // decide it; each snapshot's problems are found first, as the editor finds them first.
-    const runs = [1, 2, 3].map(() => {
-      const snapshot = open(large);
-      const last = snapshot
-        .problems("dev")
-        .filter((problem) => problem.code === "CONTRACT_NEEDED")
-        .at(-1)!;
-      expect(last.message).toContain(`"t${count - 1}"`);
-      const started = performance.now();
-      const fixes = snapshot.quickFixes("dev", "flows/erp.yaml", {
-        start: last.range.start,
-        end: last.range.start,
+  it("drafts once for the snapshot, however many tables or fixes", () => {
+    const snapshot = open(large);
+    const needed = snapshot.problems("dev").filter((problem) => problem.code === "CONTRACT_NEEDED");
+    expect(needed).toHaveLength(count);
+    drafting.calls.length = 0;
+    const started = performance.now();
+    // The first, a middle and the last table, and the first again: four fixes, one draft.
+    const fixes = [0, count / 2, count - 1, 0].map((n) => {
+      const { range, message } = needed[n]!;
+      expect(message).toContain(`"t${n}"`);
+      const found = snapshot.quickFixes("dev", "flows/erp.yaml", {
+        start: range.start,
+        end: range.start,
       });
-      const seconds = (performance.now() - started) / 1000;
-      expect(fixes.map((fix) => fix.create?.file)).toEqual([`contracts/erp.t${count - 1}.yaml`]);
-      return seconds;
+      return found.map((fix) => fix.create?.file);
     });
-    expect(Math.min(...runs)).toBeLessThan(1);
+    expect(fixes).toEqual([
+      ["contracts/erp.t0.yaml"],
+      [`contracts/erp.t${count / 2}.yaml`],
+      [`contracts/erp.t${count - 1}.yaml`],
+      ["contracts/erp.t0.yaml"],
+    ]);
+    expect(drafting.calls).toHaveLength(1);
+    expect(drafting.calls[0]?.[1]).toMatchObject({ needed: true });
+    // A loose bound for a hang, not a measure of speed: it must hold on a loaded machine.
+    expect((performance.now() - started) / 1000).toBeLessThan(10);
+    // Another snapshot of the project drafts again: nothing is kept past a snapshot.
+    const next = open(large);
+    next.problems("dev");
+    next.quickFixes("dev", "flows/erp.yaml", {
+      start: needed[0]!.range.start,
+      end: needed[0]!.range.start,
+    });
+    expect(drafting.calls).toHaveLength(2);
   }, 120_000);
 });
