@@ -29,8 +29,9 @@ a columns file. Ingestron never connects to the source.
 `ingestron init --assistant <names>` and `ingestron assistant add <names>` write
 a project guide for coding assistants: `AGENTS.md`, written from the project's
 own files, with a short file for each assistant that needs one. `ingestron plan`
-reports when the guide's section would change, and `ingestron apply` rewrites
-it. When you edit the section by hand, they leave it alone and say so.
+reports when the guide's section would change, or was edited by hand.
+`ingestron apply` rewrites a section that would change, and leaves an edited
+one alone, with a line that says so.
 
 It loads the definitions with [`@ingestron/definitions`](../definitions/README.md),
 builds the files with the packs its standard names, such as the

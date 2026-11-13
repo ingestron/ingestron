@@ -47,8 +47,9 @@ contract from it. Ingestron never connects to the source.
 
 `ingestron init --assistant <names>` and `ingestron assistant add <names>`
 write a project guide for coding assistants, `AGENTS.md`, from the project's
-own files. `ingestron plan` reports when the guide's section would change, and
-`ingestron apply` rewrites it.
+own files. `ingestron plan` reports when the guide's section would change, or
+was edited by hand. `ingestron apply` rewrites a section that would change, and
+leaves an edited one alone, with a line that says so.
 
 ## Learn more
 
