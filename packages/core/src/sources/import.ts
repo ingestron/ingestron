@@ -29,6 +29,13 @@ export interface SourceImportInput {
   recipe?: SourceRecipe;
   /** The table a file of one table describes (`--object`), when its path does not name it. */
   object?: string;
+  /**
+   * The objects the connection's flows read. A file under `sources/<connection>/` whose path
+   * without its last extension names none of them, and whose whole path names one, describes the
+   * whole path: `sources/shop/orders.csv` is `orders.csv`. Without them, it is the path without
+   * its last extension.
+   */
+  flowObjects?: readonly string[];
   /** The environment whose source was read (`--env`). */
   environment?: string;
   /** The time of the import, in ISO 8601, written in UTC to the second; any other text is refused. */
@@ -105,11 +112,16 @@ function mergedTables(
 }
 
 /** The file read, or the reasons the import refuses it before reading or once it is read. */
-function readFor(input: SourceImportInput, file: string): SourceRead | { refused: string[] } {
-  const { connection, recipe } = input;
+function readFor(
+  input: SourceImportInput,
+  file: string,
+  caseSensitive: boolean,
+): SourceRead | { refused: string[] } {
+  const { connection, recipe, flowObjects } = input;
   if (isDocumentOf(file, connection))
     return { refused: [`${file} is source metadata already; import the file it was made from.`] };
-  const object = objectFromPath(file, connection) ?? input.object;
+  const flows = flowObjects && { objects: flowObjects, key: nameKey(caseSensitive) };
+  const object = objectFromPath(file, connection, flows) ?? input.object;
   return readSourceFile({
     file,
     contents: input.contents,
@@ -194,10 +206,10 @@ export function importSource(input: SourceImportInput): SourceImport | { refused
   if ("refused" in current) return current;
   const { at } = current;
   const file = projectPath(input.file);
-  const read = readFor(input, file);
-  if ("refused" in read) return read;
   const names = input.recipe?.names ?? current.document?.names;
   const caseSensitive = names?.caseSensitive !== false;
+  const read = readFor(input, file, caseSensitive);
+  if ("refused" in read) return read;
   const problem = tablesProblem(file, read, caseSensitive);
   if (problem !== undefined) return { refused: [problem] };
   const earlier = current.document?.tables ?? [];

@@ -1,5 +1,5 @@
 {
-  "description": "The source request (spec/cli/sources.md, section 4). This folder is a project with three connections: erp (sqlserver, its database given in metadata.with from a value of each environment), crm (salesforce by default, without the instanceUrl input) and landing (files, covered by sources/landing.yaml). Its recipes are in its own recipes/ folder. Each case runs the request for environment (none when left out, which resolves for the first environment project.yaml declares) and connection (none when left out), with no environment variables set; expected names the file holding the exact Markdown, and resolved says whether the definitions resolved.",
+  "description": "The source request (spec/cli/sources.md, section 4). This folder is a project with three connections: erp (sqlserver, its database given in metadata.with from a value of each environment), crm (salesforce by default, without the instanceUrl input) and landing (files, covered by sources/landing.yaml). Its recipes are in its own recipes/ folder. Each case runs the request, with the project's files that replace names replaced by the files of this folder it gives, for environment (none when left out, which resolves for the first environment project.yaml declares) and connection (none when left out), with no environment variables set; expected names the file holding the exact Markdown, and resolved says whether the definitions resolved.",
   "requests": [
     {
       "name": "every connection a flow reads, for dev",
@@ -30,6 +30,27 @@
     {
       "name": "no environment: resolved for dev, the first environment project.yaml declares, which the title names; the import lines carry no --env",
       "expected": "request.default.md",
+      "resolved": true
+    },
+    {
+      "name": "an object that ends with the save path's extension has it written once",
+      "environment": "dev",
+      "connection": "landing",
+      "replace": {
+        "flows/landing.yaml": "variants/landing-flow.yaml"
+      },
+      "expected": "request.dev.landing-files.md",
+      "resolved": true
+    },
+    {
+      "name": "the alternatives' sample of an object that ends with .csv has the extension written once",
+      "environment": "dev",
+      "connection": "landing",
+      "replace": {
+        "flows/landing.yaml": "variants/landing-flow.yaml",
+        "connections/landing.yaml": "variants/landing-mapped.yaml"
+      },
+      "expected": "request.dev.landing-mapped.md",
       "resolved": true
     }
   ]

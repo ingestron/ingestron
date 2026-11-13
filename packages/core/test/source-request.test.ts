@@ -11,6 +11,8 @@ interface RequestCase {
   name: string;
   environment?: string;
   connection?: string;
+  /** Project files replaced by files of the fixture folder. */
+  replace?: Record<string, string>;
   expected: string;
   resolved: boolean;
 }
@@ -22,7 +24,11 @@ const cases = JSON.parse(readFileSync(join(folder, "cases.json"), "utf8")) as {
 describe("sourceRequestFor: the conformance cases", () => {
   for (const item of cases.requests) {
     it(item.name, () => {
-      const files = project();
+      const replaced = Object.entries(item.replace ?? {}).map(([path, from]) => [
+        path,
+        expected(from),
+      ]);
+      const files = project(Object.fromEntries(replaced));
       const result = sourceRequestFor(files, item.environment, {
         envvars: {},
         recipes: recipesOf(files),

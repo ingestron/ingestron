@@ -21,6 +21,18 @@ ingestron source import erp sources/erp.catalog.csv --dry-run # what the file wo
 ingestron contract --from-metadata --needed                  # a draft for each table that needs a contract
 ```
 
+Ingestron has [recipes](https://docs.ingestron.io/docs/reference/recipes) for
+the common kinds of source: each says who to ask, what they run or call and
+what they save. Any other source can be described with a sample of its data or
+a columns file. Ingestron never connects to the source.
+
+`ingestron init --assistant <names>` and `ingestron assistant add <names>` write
+a project guide for coding assistants: `AGENTS.md`, written from the project's
+own files, with a short file for each assistant that needs one. `ingestron plan`
+reports when the guide's section would change, or was edited by hand.
+`ingestron apply` rewrites a section that would change, and leaves an edited
+one alone, with a line that says so.
+
 It loads the definitions with [`@ingestron/definitions`](../definitions/README.md),
 builds the files with the packs its standard names, such as the
 [Databricks pack](https://github.com/ingestron/pack-databricks), and

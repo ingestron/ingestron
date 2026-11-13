@@ -38,10 +38,22 @@ export function sourceFileFor(path: string): { connection: string; object?: stri
   return dot > 0 ? { connection: first.slice(0, dot) } : undefined;
 }
 
-/** The object a file names by its path, when it is under `sources/<connection>/` for this connection. */
-export function objectFromPath(file: string, connection: string): string | undefined {
+/**
+ * The object a file names by its path, when it is under `sources/<connection>/` for this
+ * connection: the path below that folder without its last extension, or the whole path, as
+ * written, when only it names one of the flows' objects (compared by `key`).
+ */
+export function objectFromPath(
+  file: string,
+  connection: string,
+  flows?: { objects: readonly string[]; key: (object: string) => string },
+): string | undefined {
   const found = sourceFileFor(file);
-  return found?.connection === connection ? found.object : undefined;
+  if (found?.connection !== connection || found.object === undefined) return undefined;
+  if (flows === undefined) return found.object;
+  const read = new Set(flows.objects.map(flows.key));
+  const whole = projectPath(file).slice(`sources/${connection}/`.length);
+  return !read.has(flows.key(found.object)) && read.has(flows.key(whole)) ? whole : found.object;
 }
 
 /** True when the file is the connection's metadata document, `sources/<connection>.yaml` or `.yml`. */

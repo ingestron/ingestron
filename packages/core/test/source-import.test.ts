@@ -21,6 +21,7 @@ interface ImportCase {
   input: string;
   recipe?: string;
   object?: string;
+  flowObjects?: string[];
   environment?: string;
   at: string;
   text?: string;
@@ -54,6 +55,7 @@ function run(item: ImportCase): ReturnType<typeof importSource> {
     contents: new Uint8Array(readFileSync(join(conformance, "imports", item.input))),
     ...(item.recipe !== undefined && { recipe: recipeOf(item.recipe) }),
     ...(item.object !== undefined && { object: item.object }),
+    ...(item.flowObjects !== undefined && { flowObjects: item.flowObjects }),
     ...(item.environment !== undefined && { environment: item.environment }),
     at: item.at,
   });

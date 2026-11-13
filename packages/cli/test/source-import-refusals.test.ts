@@ -46,4 +46,36 @@ describe("ingestron source import, refusing a file it cannot write", () => {
       expect(existsSync(join(folder, "sources/erp.yaml"))).toBe(false);
     },
   );
+
+  it.skipIf(process.getuid?.() === 0)(
+    "names the document, not a temporary file, when sources/ cannot be written to",
+    () => {
+      const { folder, ingestron } = withCatalog();
+      chmodSync(join(folder, "sources"), 0o555);
+      try {
+        const { code, output } = ingestron("source", "import", "erp", "sources/erp.catalog.csv");
+        expect(code).toBe(1);
+        expect(output).toBe("Could not write sources/erp.yaml: EACCES. Nothing was written.\n");
+        expect(existsSync(join(folder, "sources/erp.yaml"))).toBe(false);
+      } finally {
+        chmodSync(join(folder, "sources"), 0o755);
+      }
+    },
+  );
+
+  it.skipIf(process.getuid?.() === 0)(
+    "names project.yaml, not a temporary file, when the project folder cannot be written to",
+    () => {
+      const { folder, ingestron } = withCatalog();
+      chmodSync(folder, 0o555);
+      try {
+        const { code, output } = ingestron("source", "import", "erp", "sources/erp.catalog.csv");
+        expect(code).toBe(1);
+        expect(output).toBe("Could not write project.yaml: EACCES. Nothing was written.\n");
+        expect(existsSync(join(folder, "sources/erp.yaml"))).toBe(false);
+      } finally {
+        chmodSync(folder, 0o755);
+      }
+    },
+  );
 });

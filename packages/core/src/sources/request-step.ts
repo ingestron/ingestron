@@ -4,6 +4,7 @@ import type { SourceTable } from "@ingestron/definitions";
 import { columnsFileFields } from "../source-text.js";
 import { byCodePoint } from "../code-point.js";
 import type { SourceAsk, SourceRecipe } from "./recipe.js";
+import { fill, withObject } from "./request-fill.js";
 
 /** A connection's section, and the import of each file it asks to be saved, as `[<connection>, <file>]`. */
 export interface SourceSection {
@@ -82,19 +83,6 @@ function schemasOf(recipe: SourceRecipe, objects: readonly string[]): string | u
     .sort(byCodePoint)
     .map((schema) => `'${schema.replaceAll("'", "''")}'`)
     .join(", ");
-}
-
-/**
- * The text with each known placeholder filled; any other text in braces is left as written. A
- * value that holds `{object}` has it filled too, when the values name a table.
- */
-function fill(text: string, values: Readonly<Record<string, string>>): string {
-  return text.replace(/\{([A-Za-z][A-Za-z0-9_]*)\}/g, (whole, name: string) => {
-    if (!Object.hasOwn(values, name)) return whole;
-    const value = values[name]!;
-    const object = values.object;
-    return name === "object" || !object ? value : value.split("{object}").join(object);
-  });
 }
 
 /** The inputs' defaults, for the ones the connection does not give. */
@@ -231,7 +219,9 @@ function alternatives(
     ...(sample
       ? [
           `- A sample of each table, exported as CSV, JSON, JSON lines or Parquet and saved as \`sources/${connection}/<object>.<csv|json|jsonl|parquet>\`. A Parquet file's schema is enough. A CSV or JSON sample should hold a few rows of synthetic or non-sensitive data: Ingestron reads only the names and types, and copies no value.`,
-          ...objects.map((object) => `  - \`sources/${connection}/${object}.csv\``),
+          ...objects.map(
+            (object) => `  - \`${withObject(`sources/${connection}/{object}.csv`, object)}\``,
+          ),
         ]
       : []),
     `- A data contract (ODCS) for the tables, from the source's team, saved as \`sources/${connection}.odcs.yaml\`.`,

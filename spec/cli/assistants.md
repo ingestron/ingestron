@@ -188,8 +188,8 @@ lines, and the end marker follows the last line with no blank line between.
 The numbered rules and the items under rule 3 are written as shown, with the
 items indented three spaces.
 
-Some `<…>` stay literal in the guide, as written above: in rule 8, `<a>`, `<b>`
-and `<name>`; in `## Commands`, `<a>`, `<b>`, `<name>`, `<sample>`,
+Some `<…>` stay literal in the guide, as written above: in rule 8, `<a>`,
+`<b>` and `<name>`; in `## Commands`, `<a>`, `<b>`, `<name>`, `<sample>`,
 `<connection>` and `<file>`; and in `## Source metadata`, `<connection>`. Every
 other `<…>` is filled in.
 
@@ -210,7 +210,9 @@ other `<…>` is filled in.
   ``- Standard `<id>` in `<file>`<origin>. Packs: `<pack>`, `<pack>`.``, with
   `<file>` its path, and the packs as its `packs` field writes them.
   `<origin>` is, in this order of preference:
-  - when the standard has `origin`, ``, from the published standard `<origin.standard>@<origin.version>` ``, then, when the project has a `STANDARD.md`, `; STANDARD.md explains its choices`;
+  - when the standard has `origin`, ``, from the published standard `<origin.standard>@<origin.version>` ``,
+    then, when the project has a `STANDARD.md`,
+    `; STANDARD.md explains its choices`;
   - else, when the first line of the standard's file starts `# From `, `, from `
     and the rest of that line, with its surrounding spaces removed;
   - else nothing.
@@ -224,8 +226,9 @@ other `<…>` is filled in.
 - **Generated.** The packs are the standard's `packs`, then any `runs-on` pack
   not already among them. The second part matters only for a project the
   definitions reject, since a `runs-on` pack MUST be one of the standard's
-  packs (`UNKNOWN_PACK`) and the guide is read without resolving. A pack's id is what precedes `@`. For each pack,
-  in that order, an item is written `` `<out>/<pack id>/` ``, followed by
+  packs (`UNKNOWN_PACK`) and the guide is read without resolving. A pack's id is
+  what precedes `@`. For each pack, in that order, an item is written
+  `` `<out>/<pack id>/` ``, followed by
   ` (every environment together)` for a pack that builds environments
   together (the pack has `buildEnvironments`: `databricks`, `adf` and `synapse`
   do) or ` (a folder per environment)` for one that does not (`duckdb` does
@@ -247,10 +250,10 @@ exactly:
 
 The items are, in this order:
 
-1. ``- `<action>` allows `<m>`, `<m>`.`` for each action of the standard that has
-   `allowed`, with each method as written. The actions are exactly `ingest`,
-   `transform`, `store` and `serve`, in that order: no other top-level key of
-   the standard counts as an action, even with `allowed` or `fixed`. The
+1. ``- `<action>` allows `<m>`, `<m>`.`` for each action of the standard that
+   has `allowed`, with each method as written. The actions are exactly
+   `ingest`, `transform`, `store` and `serve`, in that order: no other top-level
+   key of the standard counts as an action, even with `allowed` or `fixed`. The
    methods of an action are in the order the standard writes them.
 2. ``- `<action>` fixes, for `<method>`: `<key>: <value>`, `<key>: <value>`.``
    for each `<action>.fixed.<method>` that has keys, the actions in the order
