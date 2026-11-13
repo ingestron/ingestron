@@ -143,8 +143,8 @@ is broken, as `readKit` does ([kits.md](kits.md), "Rules"):
 1. The file is valid YAML and a mapping.
 2. No key other than those above, and none of the required ones missing.
 3. Each field has its shape: `title`, `ask`'s fields, `rows`, `columnNames`'
-   `match` and `to`, and each `description` and `default` are text; `inputs`, `ask`,
-   `names`, `fields` and `columnNames` are mappings; `types`, `key` and
+   `match` and `to`, and each `description` and `default` are text; `inputs`,
+   `ask`, `names`, `fields` and `columnNames` are mappings; `types`, `key` and
    `sources` are lists; `kind`, `read`, `objects` and each `logicalType` are
    one of their values; `names` has both `parts`, from 1 to 4, and
    `caseSensitive`, true or false; `columnNames` has both `match` and `to`.
@@ -152,7 +152,8 @@ is broken, as `readKit` does ([kits.md](kits.md), "Rules"):
 5. Each input's name matches its pattern and is not one of the three
    reserved names.
 6. `ask` has `run` or `call` as `kind` says, `save` starts `sources/`, and
-   `save` holds `{object}` when `run` or `call` does:
+   `save` holds `{object}` when `run` or `call` does, as written or through a
+   placeholder of an input whose `default` holds it:
    `<file>: save must hold {object} when run or call does, so that each table is saved to its own file.`
    A step that is written once for each table (section 4) would otherwise
    save every table to one path.
@@ -711,11 +712,27 @@ It refuses:
 - a time of the import that is not an ISO 8601 date, or date and time, that
   a calendar has: `The import time "<at>" is not an ISO 8601 time.`;
 - a current text that is not a `SourceMetadata` document of the connection,
-  with `apiVersion: ingestron.io/v1`, tables and columns whose values are as
-  `source-metadata.schema.yaml` gives them (a `logicalType` of the nine, a
-  `primaryKeyPosition` and `names.parts` that are whole numbers in range, a
-  `captured.from` of the five):
-  `sources/<connection>.yaml is not the source metadata of "<connection>".`;
+  as `source-metadata.schema.yaml` gives it for the keys the import reads:
+  `sources/<connection>.yaml is not the source metadata of "<connection>": <reason>. Correct it, or move it away and import every file again.`
+  The `<reason>` names the first field that fails, in the order of the
+  document's keys, a table's `object`, `captured` and `columns`, and a
+  column's keys, and the rule it breaks, never a value of the document. A
+  field is written as its keys joined with `.`, a list item as `[<n>]` from 0,
+  such as `tables[0].columns[1].logicalType`, followed by its rule:
+
+  - `must be text`, `must be true or false`, `must be a mapping` or
+    `must be a list`;
+  - `must be one of <values>`: `apiVersion` is `ingestron.io/v1`, `kind` is
+    `SourceMetadata`, `logicalType` is one of the nine and `captured.from` one
+    of the five;
+  - `must be <connection>`, for `connection`;
+  - `must be a whole number from 1` for a `primaryKeyPosition`, and
+    `must be a whole number from 1 to 4` for `names.parts`.
+
+  A column nested deeper than 64 levels is `<field> is nested too deeply`;
+  text that is not YAML is `it is not valid YAML`; and a YAML value that is
+  not a mapping is `the document must be a mapping`;
+
 - the metadata document itself, `sources/<connection>.yaml` or `.yml`:
   `<file> is source metadata already; import the file it was made from.`;
 - a file the readers refuse, with their reasons;
@@ -781,7 +798,8 @@ It is written so that a new import shows as a small diff:
 - It starts with the comment
   `# Written by ingestron source import. Do not edit: import again to replace it.`
 - Then `apiVersion`, `kind`, `id`, `description`, `connection`, `environment`,
-  `names` and `tables`, in that order, in block style. `names` is a one-line flow mapping.
+  `names` and `tables`, in that order, in block style. `names` is a one-line
+  flow mapping.
 - Tables are sorted by `object`, in code-point order. Columns keep the
   source's order.
 - Each table has `object`, `captured` and `columns`, in that order.

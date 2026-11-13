@@ -433,6 +433,15 @@
       "error": "recipes/sqlserver.yaml: save must hold {object} when run or call does, so that each table is saved to its own file."
     },
     {
+      "name": "save lacks {object} when call holds it through an input's default",
+      "from": "lookups",
+      "edits": [
+        ["default: v1", "default: \"{object}-v1\""],
+        ["save: sources/{connection}.catalog.xml", "save: sources/{connection}.xml"]
+      ],
+      "error": "recipes/lookups.yaml: save must hold {object} when run or call does, so that each table is saved to its own file."
+    },
+    {
       "name": "rows with a reader that has none",
       "from": "files-mapped",
       "edits": [["read: columns", "read: odata"]],

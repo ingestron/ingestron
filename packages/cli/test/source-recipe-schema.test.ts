@@ -68,7 +68,12 @@ describe("the recipe schema", () => {
       edited("sqlserver", ["logicalType: boolean", "logicalType: bool"]),
     ],
     ["an input name that is reserved", edited("sqlserver", ["  database:", "  object:"])],
-    ["no sources", edited("sqlserver", ["sources:", "sources: []\nunused:"])],
+    ["no sources", `${edited("sqlserver").split("\nsources:")[0]}\nsources: []\n`],
+    ["an input default that is not text", edited("lookups", ["default: v1", "default: [v1]"])],
+    [
+      "an input key that is not its own",
+      edited("lookups", ["default: v1", "default: v1, example: v2"]),
+    ],
   ];
 
   for (const [name, text] of broken)

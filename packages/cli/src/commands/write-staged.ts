@@ -3,16 +3,17 @@
 // of assistant-write.ts, for more than one file).
 import { randomBytes } from "node:crypto";
 import {
+  accessSync,
   closeSync,
   constants,
   fchmodSync,
+  lstatSync,
   mkdirSync,
   openSync,
-  realpathSync,
   renameSync,
-  statSync,
   unlinkSync,
   writeFileSync,
+  type Stats,
 } from "node:fs";
 import { basename, dirname, join } from "node:path";
 
@@ -31,23 +32,29 @@ interface Staged {
 /** The mode a new file gets: what `writeFileSync` would give it, before the umask. */
 const created = 0o666;
 
+/** The refusal to write: a target is a link or something that is not a file. Nothing is written. */
+export class WriteRefused extends Error {}
+
 /**
- * The file a path writes to: the path itself, or the file a link there points at, so that a link
- * is kept and its target replaced, as writing in place would.
+ * What is at the path: undefined when nothing, else its status. A link, a folder or anything that
+ * is not a regular file is refused, and so is an existing file this user cannot write, as
+ * writing it in place would be.
  */
-function targetOf(file: string): string {
-  try {
-    return realpathSync(file);
-  } catch {
-    return file;
-  }
+function regularFile(file: string): Stats | undefined {
+  const now = lstatSync(file, { throwIfNoEntry: false });
+  if (now === undefined) return undefined;
+  if (!now.isFile())
+    throw new WriteRefused(
+      `${file} is not a regular file (it is a link or a folder). Nothing was written.`,
+    );
+  accessSync(file, constants.W_OK);
+  return now;
 }
 
 /** Writes `text` to a new temporary file in the target's folder, with the target's mode if it exists. */
 function stage(target: string, text: string): Staged {
   mkdirSync(dirname(target), { recursive: true });
-  const existing = statSync(target, { throwIfNoEntry: false });
-  if (existing !== undefined && !existing.isFile()) throw new Error(`${target} is not a file.`);
+  const existing = regularFile(target);
   const temporary = join(
     dirname(target),
     `.${basename(target)}.${randomBytes(6).toString("hex")}.tmp`,
@@ -82,7 +89,9 @@ function discard(staged: readonly Staged[]): void {
 }
 
 /**
- * Writes every file, in order, creating folders as needed. Each is first written whole to a
+ * Writes every file, in order, creating folders as needed; a target that is a link, a folder or
+ * any other file that is not a regular one is refused (`WriteRefused`), with nothing written.
+ * Each is first written whole to a
  * temporary file in its own folder (created exclusively, with the original's mode when there is
  * one); only when every temporary file is written are they renamed over their targets. A failure
  * before the renames leaves every target as it was and no temporary file behind; the renames
@@ -91,7 +100,11 @@ function discard(staged: readonly Staged[]): void {
 export function writeStaged(files: readonly StagedFile[]): void {
   const staged: Staged[] = [];
   try {
-    for (const { file, text } of files) staged.push(stage(targetOf(file), text));
+    // Every target is checked before anything is written, and again just before the renames, so
+    // that a link or a folder put there meanwhile is never written through or over.
+    for (const { file } of files) regularFile(file);
+    for (const { file, text } of files) staged.push(stage(file, text));
+    for (const { target } of staged) regularFile(target);
     for (const { temporary, target } of staged) renameSync(temporary, target);
   } finally {
     discard(staged);

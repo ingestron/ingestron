@@ -1,6 +1,15 @@
 // ingestron source import (spec/cli/sources.md, section 6), run on a copy of the request
 // conformance project with an export of the erp catalog saved in it.
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -110,6 +119,20 @@ describe("ingestron source import", () => {
     expect(code).toBe(0);
     expect(output).toContain("  ERP.dbo.Shipments: added\n");
     expect(read(folder, "sources/erp.yaml")).toContain("file: elsewhere/shipments.csv");
+  });
+
+  it("refuses a metadata document that is a link, writing neither file", () => {
+    const { folder, ingestron } = withCatalog();
+    const outside = join(mkdtempSync(join(tmpdir(), "ingestron-outside-")), "erp.yaml");
+    writeFileSync(outside, "theirs\n");
+    symlinkSync(outside, join(folder, "sources/erp.yaml"));
+    const before = read(folder, "project.yaml");
+    const { code, output } = ingestron("source", "import", "erp", "sources/erp.catalog.csv");
+    expect(code).toBe(1);
+    expect(output).toContain("sources/erp.yaml is not a regular file");
+    expect(output).toContain("Nothing was written.");
+    expect(readFileSync(outside, "utf8")).toBe("theirs\n");
+    expect(read(folder, "project.yaml")).toBe(before);
   });
 
   it("copies no value from a sample's rows into the printed text or any file written", () => {

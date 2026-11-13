@@ -10,7 +10,7 @@ import {
   type SourceImportResult,
 } from "@ingestron/core/internal";
 import type { Io, Options, SourceAction } from "../terminal/index.js";
-import { writeStaged } from "./write-staged.js";
+import { WriteRefused, writeStaged } from "./write-staged.js";
 
 type Import = Extract<SourceAction, { action: "import" }>;
 
@@ -64,10 +64,17 @@ function finish(action: Import, definitions: string, result: SourceImportResult,
     return 0;
   }
   // The document and project.yaml are written together, so a failure leaves neither half written.
-  writeStaged([
-    { file: join(definitions, document), text: imported.text },
-    ...(project === undefined ? [] : [{ file: join(definitions, "project.yaml"), text: project }]),
-  ]);
+  try {
+    writeStaged([
+      { file: join(definitions, document), text: imported.text },
+      ...(project === undefined
+        ? []
+        : [{ file: join(definitions, "project.yaml"), text: project }]),
+    ]);
+  } catch (error) {
+    if (error instanceof WriteRefused) return stop(io, [error.message]);
+    throw error;
+  }
   io.write(`Wrote ${document}.\n`);
   if (project !== undefined) io.write(`Added ${document} to the imports of project.yaml.\n`);
   return 0;

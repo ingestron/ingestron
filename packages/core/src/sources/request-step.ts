@@ -93,7 +93,7 @@ function fill(text: string, values: Readonly<Record<string, string>>): string {
     if (!Object.hasOwn(values, name)) return whole;
     const value = values[name]!;
     const object = values.object;
-    return name === "object" || !object ? value : value.replaceAll("{object}", object);
+    return name === "object" || !object ? value : value.split("{object}").join(object);
   });
 }
 

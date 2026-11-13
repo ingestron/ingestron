@@ -1,7 +1,7 @@
 // A connection's metadata document as text: read back for an import, and written so a new
 // import shows as a small diff (spec/cli/sources.md, section 3, "The document").
 import type { SourceColumnDoc, SourceMetadataDoc, SourceTableDoc } from "@ingestron/definitions";
-import { parse } from "yaml";
+import { parseDocument } from "yaml";
 import { metadataOf } from "./metadata-shape.js";
 import { flowMapping, yamlText, yamlValue } from "./yaml-value.js";
 
@@ -23,17 +23,22 @@ export type MetadataDocument = SourceMetadataDoc & { description?: string };
 /**
  * The text's document when it is a `SourceMetadata` document of the connection (its `apiVersion`,
  * `kind`, `connection`, `names`, tables and columns as source-metadata.schema.yaml says), else
- * undefined. Its description is kept.
+ * the reason it is not: the first field that fails and its rule. Its description is kept.
  */
-export function parseMetadata(text: string, connection: string): MetadataDocument | undefined {
+export function parseMetadata(
+  text: string,
+  connection: string,
+): MetadataDocument | { problem: string } {
   let value: unknown;
   try {
-    value = parse(text, { logLevel: "silent" });
+    const parsed = parseDocument(text, { logLevel: "silent" });
+    if (parsed.errors.length > 0) return { problem: "it is not valid YAML" };
+    value = parsed.toJS();
   } catch {
-    return undefined;
+    return { problem: "it is not valid YAML" };
   }
   const document = metadataOf(value, connection);
-  if (document === undefined) return undefined;
+  if ("problem" in document) return document;
   const { description, environment } = value as { description?: string; environment?: string };
   return {
     ...document,

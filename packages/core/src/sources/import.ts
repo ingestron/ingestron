@@ -133,9 +133,11 @@ function startOf(
     return { refused: [`The import time "${input.at}" is not an ISO 8601 time.`] };
   if (current === undefined) return { at };
   const document = parseMetadata(current, connection);
-  if (document === undefined)
+  if ("problem" in document)
     return {
-      refused: [`sources/${connection}.yaml is not the source metadata of "${connection}".`],
+      refused: [
+        `sources/${connection}.yaml is not the source metadata of "${connection}": ${document.problem}. Correct it, or move it away and import every file again.`,
+      ],
     };
   return { at, document };
 }

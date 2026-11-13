@@ -65,7 +65,7 @@ export function readSourceRecipe(text: string, file: string): SourceRecipe {
   const id = checkId(data.id, check);
   const inputs = (data.inputs ?? {}) as SourceRecipe["inputs"];
   checkInputNames(inputs, check);
-  checkAsk(data.ask as Data, data.kind as string, check);
+  checkAsk(data.ask as Data, data.kind as string, inputs, check);
   checkReaderKeys(data, check);
   const types = (data.types ?? []) as SourceTypeRule[];
   checkMatches(types, data.columnNames as Data | undefined, check);

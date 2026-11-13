@@ -1,6 +1,8 @@
 // writeStaged: several files written together, so a failure leaves every target as it was.
 import {
   chmodSync,
+  existsSync,
+  lstatSync,
   mkdirSync,
   readdirSync,
   readFileSync,
@@ -10,7 +12,7 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { writeStaged } from "../src/commands/write-staged.js";
+import { WriteRefused, writeStaged } from "../src/commands/write-staged.js";
 import { temp } from "./assistant-helpers.js";
 
 describe("writeStaged", () => {
@@ -27,34 +29,33 @@ describe("writeStaged", () => {
     expect(readdirSync(join(folder, "sources"))).toEqual(["erp.yaml"]);
   });
 
-  it("writes neither file when the second cannot be written", () => {
+  it("writes neither file when the second is a folder, before creating anything", () => {
     const folder = temp();
     writeFileSync(join(folder, "project.yaml"), "old\n");
-    // A folder where project.yaml should be: the second file cannot be staged.
     mkdirSync(join(folder, "other.yaml"));
     expect(() =>
       writeStaged([
         { file: join(folder, "sources/erp.yaml"), text: "document\n" },
         { file: join(folder, "other.yaml"), text: "new\n" },
       ]),
-    ).toThrow(/is not a file/);
-    expect(readdirSync(folder).sort()).toEqual(["other.yaml", "project.yaml", "sources"]);
-    expect(readdirSync(join(folder, "sources"))).toEqual([]);
+    ).toThrow(/not a regular file/);
+    expect(readdirSync(folder).sort()).toEqual(["other.yaml", "project.yaml"]);
     expect(readFileSync(join(folder, "project.yaml"), "utf8")).toBe("old\n");
   });
 
-  it("keeps an existing file as it was when the second cannot be written", () => {
+  it("keeps an existing file as it was, and leaves no temporary file, when the second fails to stage", () => {
     const folder = temp();
     writeFileSync(join(folder, "a.yaml"), "kept\n");
-    mkdirSync(join(folder, "b.yaml"));
+    // A file where the second file's folder should be: the folder cannot be made.
+    writeFileSync(join(folder, "blocker"), "a file\n");
     expect(() =>
       writeStaged([
         { file: join(folder, "a.yaml"), text: "changed\n" },
-        { file: join(folder, "b.yaml"), text: "x\n" },
+        { file: join(folder, "blocker/b.yaml"), text: "x\n" },
       ]),
     ).toThrow();
     expect(readFileSync(join(folder, "a.yaml"), "utf8")).toBe("kept\n");
-    expect(readdirSync(folder).sort()).toEqual(["a.yaml", "b.yaml"]);
+    expect(readdirSync(folder).sort()).toEqual(["a.yaml", "blocker"]);
   });
 
   it("keeps an existing file's mode", () => {
@@ -65,14 +66,39 @@ describe("writeStaged", () => {
     expect(statSync(join(folder, "project.yaml")).mode & 0o777).toBe(0o640);
   });
 
-  it("writes through a link to the file it points at, keeping the link", () => {
+  it("refuses a link, writing nothing and leaving the file it points at unchanged", () => {
     const folder = temp();
     const elsewhere = join(temp(), "project.yaml");
     writeFileSync(elsewhere, "old\n");
     symlinkSync(elsewhere, join(folder, "project.yaml"));
-    writeStaged([{ file: join(folder, "project.yaml"), text: "new\n" }]);
-    expect(readFileSync(elsewhere, "utf8")).toBe("new\n");
-    expect(readFileSync(join(folder, "project.yaml"), "utf8")).toBe("new\n");
-    expect(readdirSync(folder)).toEqual(["project.yaml"]);
+    expect(() =>
+      writeStaged([
+        { file: join(folder, "sources/erp.yaml"), text: "document\n" },
+        { file: join(folder, "project.yaml"), text: "new\n" },
+      ]),
+    ).toThrow(WriteRefused);
+    expect(readFileSync(elsewhere, "utf8")).toBe("old\n");
+    expect(lstatSync(join(folder, "project.yaml")).isSymbolicLink()).toBe(true);
+    expect(existsSync(join(folder, "sources/erp.yaml"))).toBe(false);
+    expect(readdirSync(folder).filter((name) => name.endsWith(".tmp"))).toEqual([]);
+  });
+
+  it("refuses a link to a missing file and a link made to a new target", () => {
+    const folder = temp();
+    const elsewhere = join(temp(), "made-by-link.yaml");
+    symlinkSync(elsewhere, join(folder, "erp.yaml"));
+    expect(() => writeStaged([{ file: join(folder, "erp.yaml"), text: "x\n" }])).toThrow(
+      /not a regular file/,
+    );
+    expect(existsSync(elsewhere)).toBe(false);
+  });
+
+  it("refuses a file this user cannot write, as writing it in place would fail", () => {
+    const folder = temp();
+    writeFileSync(join(folder, "project.yaml"), "old\n");
+    chmodSync(join(folder, "project.yaml"), 0o444);
+    if (process.getuid?.() === 0) return;
+    expect(() => writeStaged([{ file: join(folder, "project.yaml"), text: "new\n" }])).toThrow();
+    expect(readFileSync(join(folder, "project.yaml"), "utf8")).toBe("old\n");
   });
 });

@@ -102,6 +102,28 @@ describe("sourceRequestFor: what is filled in", () => {
     expect(text).not.toContain("{target}");
   });
 
+  it("fills a table whose name holds $ characters as written, in an input's default too", () => {
+    const own = salesforce(
+      [
+        "inputs:\n",
+        'inputs:\n  target: { description: "The name to call", default: "{object}-v1" }\n',
+      ],
+      ["/sobjects/{object}/describe", "/sobjects/{target}/describe"],
+    );
+    // A `$$` in a definition is an escaped `$`, so it cannot be written as two.
+    for (const object of ["A$`B", "A$&B", "A$1B", "A$'B"]) {
+      const files = project({
+        "recipes/salesforce.yaml": own,
+        "flows/crm.yaml": expected("flows/crm.yaml").replace(
+          "accounts: { object: Account }",
+          () => `accounts: { object: "${object}" }`,
+        ),
+      });
+      const { text } = request(files, "dev", "crm");
+      expect(text, object).toContain(`/sobjects/${object}-v1/describe\``);
+    }
+  });
+
   it("does not list {object} when only the list holds it", () => {
     expect(request(project(), "dev", "crm").text).not.toContain("- `{object}`");
   });
