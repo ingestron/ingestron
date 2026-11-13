@@ -150,12 +150,11 @@ describe("guideUpdate against the conformance cases", () => {
     ).toBe("updated");
     const update = guideUpdate(existing("09-stale-apply"), sectionOfCase("09-stale-apply"), false);
     expect(update.kind).toBe("updated");
-    const text = (update as { text: string }).text;
-    expect(text.startsWith("# Team notes\n\nUse British English in every message.\n\n")).toBe(true);
-    expect(
-      text.endsWith("\n\n## More notes\n\nAsk first.\n") || text.includes("## More notes"),
-    ).toBe(true);
-    expect(text).toContain(sectionOfCase("09-stale-apply"));
+    expect((update as { text: string }).text).toBe(
+      "# Team notes\n\nUse British English in every message.\n\n" +
+        sectionOfCase("09-stale-apply") +
+        "\n## More notes\n\nAsk before adding a pack.\n",
+    );
   });
 
   it("finds a hand edit (05), the user's file (06) and a current CRLF section (16)", () => {

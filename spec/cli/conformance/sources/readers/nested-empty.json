@@ -1,0 +1,5 @@
+[
+  { "id": 1, "tag": "ZZ-SECRET-42", "n": { "a": 1 }, "lone": {} },
+  { "id": 2, "tag": "ZZ-SECRET-43", "n": { "a": 2 }, "lone": {} },
+  { "id": 3, "tag": "ZZ-SECRET-44", "n": {}, "lone": {} }
+]

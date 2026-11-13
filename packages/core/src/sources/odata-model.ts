@@ -1,4 +1,5 @@
 // The types, entity sets and members of a CSDL document (spec/cli/sources.md, section 2.4).
+import { maxNesting } from "./records.js";
 import type { XmlNode } from "./text.js";
 
 /** The name without its namespace prefix: `edmx:Edmx` is `Edmx`. */
@@ -65,7 +66,11 @@ export function modelOf(root: XmlNode): Model {
   return model;
 }
 
-/** A type's properties, those of its base types first, and its key, which a base type may give. */
+/**
+ * A type's properties, those of its base types first, and its key, which a base type may give. A
+ * type with more than `maxNesting` base types is nested too deeply to read, which `readSourceFile`
+ * refuses.
+ */
 export function membersOf(
   type: XmlNode,
   model: Model,
@@ -73,6 +78,8 @@ export function membersOf(
 ): { properties: XmlNode[]; key: string[] } {
   const baseName = attributeOf(type, "BaseType");
   const base = baseName === undefined ? undefined : model.types.get(baseName);
+  if (base !== undefined && !seen.includes(base) && seen.length > maxNesting)
+    throw new RangeError("Base types nested too deeply.");
   const inherited =
     base === undefined || seen.includes(base)
       ? { properties: [], key: [] }

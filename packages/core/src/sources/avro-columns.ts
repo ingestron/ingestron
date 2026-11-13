@@ -47,25 +47,33 @@ function fullNameOf(node: Data, space: string): { space: string; full: string } 
   return { space: inside, full: dot >= 0 || inside === "" ? name : `${inside}.${name}` };
 }
 
-/** Every record, enum and fixed the schema defines, wherever it is: fields, items, map values and unions. */
-function collectNamed(node: unknown, space: string, names: Names): void {
+/** True for a record, enum or fixed that has a name. */
+const isNamed = (node: Data): boolean =>
+  ["record", "enum", "fixed"].includes(node.type as string) && typeof node.name === "string";
+
+/**
+ * Every record, enum and fixed the schema defines, wherever it is: fields, items, map values and
+ * unions. `depth` counts the named types the node is inside; the walk goes no deeper than
+ * `maxNesting` of them, below which no column is written in full.
+ */
+function collectNamed(node: unknown, space: string, names: Names, depth = 0): void {
   if (Array.isArray(node)) {
-    for (const branch of node) collectNamed(branch, space, names);
+    for (const branch of node) collectNamed(branch, space, names, depth);
     return;
   }
   if (!isRecord(node)) return;
   let inside = space;
-  if (["record", "enum", "fixed"].includes(node.type as string) && typeof node.name === "string") {
+  const level = isNamed(node) ? depth + 1 : depth;
+  if (level > maxNesting) return;
+  if (level > depth) {
     const found = fullNameOf(node, space);
     inside = found.space;
     names.named.set(found.full, node);
     names.spaces.set(node, inside);
   }
-  collectNamed(node.type, inside, names);
-  collectNamed(node.items, inside, names);
-  collectNamed(node.values, inside, names);
-  for (const field of Array.isArray(node.fields) ? node.fields : [])
-    if (isRecord(field)) collectNamed(field.type, inside, names);
+  const fields = (Array.isArray(node.fields) ? node.fields : []).filter(isRecord);
+  const inner = [node.type, node.items, node.values, ...fields.map((field) => field.type)];
+  for (const child of inner) collectNamed(child, inside, names, level);
 }
 
 /** The type name that stands for a branch of a union, in a note. */

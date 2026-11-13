@@ -1,8 +1,9 @@
 // Importing a source file into a connection's metadata document (spec/cli/sources.md,
 // section 3). A pure function: it is given the document's text and the file, and writes nothing.
 import type { SourceMetadataDoc, SourceTableDoc } from "@ingestron/definitions";
-import { byCodePoint, byObject, nameKey, sourceChanges, type SourceChange } from "./changes.js";
-import { metadataText, parseMetadata } from "./document.js";
+import { byCodePoint } from "../code-point.js";
+import { byObject, nameKey, sourceChanges, type SourceChange } from "./changes.js";
+import { metadataText, parseMetadata, type MetadataDocument } from "./document.js";
 import { isDocumentOf, objectFromPath, projectPath } from "./paths.js";
 import { readSourceFile } from "./read-file.js";
 import type { SourceReaderName, SourceRecipe } from "./recipe.js";
@@ -30,7 +31,7 @@ export interface SourceImportInput {
   object?: string;
   /** The environment whose source was read (`--env`). */
   environment?: string;
-  /** The time of the import, in ISO 8601; it is written in UTC, to the second. */
+  /** The time of the import, in ISO 8601, written in UTC to the second; any other text is refused. */
   at: string;
 }
 
@@ -50,10 +51,20 @@ export interface SourceImport {
 /** The readers that read many tables: only their catalog results describe the whole source. */
 const manyTables = new Set<SourceReaderName>(["columns", "odata", "openapi", "odcs"]);
 
-/** The time as `YYYY-MM-DDTHH:MM:SSZ` in UTC; text that is not a time is kept as it is. */
-function utcSecond(at: string): string {
+/** An ISO 8601 date, or a date and time with an optional zone: `2026-11-12`, `2026-11-12T09:30:00+01:00`. */
+const isoTime =
+  /^(\d{4})-(\d{2})-(\d{2})(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/i;
+
+/** The time as `YYYY-MM-DDTHH:MM:SSZ` in UTC, or undefined when the text is not a time. */
+function utcSecond(at: string): string | undefined {
+  const parts = isoTime.exec(at);
   const time = new Date(at);
-  return Number.isNaN(time.getTime()) ? at : time.toISOString().replace(/\.\d+Z$/, "Z");
+  if (parts === null || Number.isNaN(time.getTime())) return undefined;
+  // A day the month does not have, such as 30 February, is not a day.
+  const day = new Date(Date.UTC(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3])));
+  if (day.getUTCMonth() !== Number(parts[2]) - 1 || day.getUTCDate() !== Number(parts[3]))
+    return undefined;
+  return time.toISOString().replace(/\.\d+Z$/, "Z");
 }
 
 /** Why the file's tables cannot be imported: none, or the same object twice; else undefined. */
@@ -108,27 +119,41 @@ function readFor(input: SourceImportInput, file: string): SourceRead | { refused
   });
 }
 
-/** The current document, none when there is no text, or the refusal when the text is not one. */
-function currentOf(
+/**
+ * What the import starts from, or the reason it refuses before reading the file: the import time
+ * in UTC and the current document, none when there is no text, or the refusal when the text is
+ * not one.
+ */
+function startOf(
   input: SourceImportInput,
-): { document?: SourceMetadataDoc } | { refused: string[] } {
+): { at: string; document?: MetadataDocument } | { refused: string[] } {
   const { connection, current } = input;
-  if (current === undefined) return {};
+  const at = utcSecond(input.at);
+  if (at === undefined)
+    return { refused: [`The import time "${input.at}" is not an ISO 8601 time.`] };
+  if (current === undefined) return { at };
   const document = parseMetadata(current, connection);
-  if (document === undefined)
+  if ("problem" in document)
     return {
-      refused: [`sources/${connection}.yaml is not the source metadata of "${connection}".`],
+      refused: [
+        `sources/${connection}.yaml is not the source metadata of "${connection}": ${document.problem}. Correct it, or move it away and import every file again.`,
+      ],
     };
-  return { document };
+  return { at, document };
 }
 
 /** The file's tables, each captured now, from the reader's rung, with the recipe and the file. */
-function freshTables(input: SourceImportInput, read: SourceRead, file: string): SourceTableDoc[] {
+function freshTables(
+  input: SourceImportInput,
+  read: SourceRead,
+  file: string,
+  at: string,
+): SourceTableDoc[] {
   const recipe = input.recipe?.id;
   return read.tables.map(({ object, columns }) => ({
     object,
     captured: {
-      at: utcSecond(input.at),
+      at,
       from: read.from,
       ...(recipe !== undefined && { recipe }),
       file,
@@ -140,14 +165,15 @@ function freshTables(input: SourceImportInput, read: SourceRead, file: string): 
 /** The new document: the connection, the environment given or kept, the names and the tables. */
 function documentOf(
   input: SourceImportInput,
-  current: SourceMetadataDoc | undefined,
+  current: MetadataDocument | undefined,
   names: SourceMetadataDoc["names"],
   tables: SourceTableDoc[],
-): SourceMetadataDoc {
+): MetadataDocument {
   const environment = input.environment ?? current?.environment;
   return {
     id: input.connection,
     connection: input.connection,
+    ...(current?.description !== undefined && { description: current.description }),
     ...(environment !== undefined && { environment }),
     ...(names !== undefined && { names }),
     tables,
@@ -164,8 +190,9 @@ function documentOf(
  * @public
  */
 export function importSource(input: SourceImportInput): SourceImport | { refused: string[] } {
-  const current = currentOf(input);
+  const current = startOf(input);
   if ("refused" in current) return current;
+  const { at } = current;
   const file = projectPath(input.file);
   const read = readFor(input, file);
   if ("refused" in read) return read;
@@ -175,7 +202,7 @@ export function importSource(input: SourceImportInput): SourceImport | { refused
   if (problem !== undefined) return { refused: [problem] };
   const earlier = current.document?.tables ?? [];
   const whole = readsWholeSource(input, read, file);
-  const tables = mergedTables(earlier, freshTables(input, read, file), whole, caseSensitive);
+  const tables = mergedTables(earlier, freshTables(input, read, file, at), whole, caseSensitive);
   const document = documentOf(input, current.document, names, tables);
   const changes = sourceChanges(earlier, tables, caseSensitive);
   return { text: metadataText(document), changes, notes: read.notes };

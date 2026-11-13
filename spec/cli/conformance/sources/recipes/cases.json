@@ -201,6 +201,10 @@
         "inputs": {
           "serviceRoot": {
             "description": "The service's root URL, such as https://example.com/odata"
+          },
+          "version": {
+            "description": "The service's version, such as v2",
+            "default": "v1"
           }
         },
         "types": [],
@@ -210,7 +214,7 @@
         "ask": {
           "who": "Someone who can call the service",
           "access": "Read access to the service's metadata",
-          "call": "{serviceRoot}/$metadata",
+          "call": "{serviceRoot}/{version}/$metadata",
           "save": "sources/{connection}.catalog.xml",
           "how": "With a browser, curl or Postman."
         },
@@ -381,6 +385,18 @@
       "error": "recipes/sqlserver.yaml: the input name \"Database\" must start with a lower-case letter and hold only letters, digits and \"_\"."
     },
     {
+      "name": "an input's default is not text",
+      "from": "lookups",
+      "edits": [["default: v1", "default: [v1]"]],
+      "error": "recipes/lookups.yaml: \"inputs.version.default\" must be text."
+    },
+    {
+      "name": "an input has a key that is not one of its own",
+      "from": "lookups",
+      "edits": [["default: v1", "default: v1, example: v2"]],
+      "error": "recipes/lookups.yaml: unknown key \"example\" in \"inputs.version\". Check its spelling or remove it."
+    },
+    {
       "name": "ask has run and call",
       "from": "sqlserver",
       "edits": [["  save: sources", "  call: https://example.com/x\n  save: sources"]],
@@ -403,6 +419,27 @@
       "from": "sqlserver",
       "edits": [["save: sources/{connection}.catalog.csv", "save: \"{connection}.catalog.csv\""]],
       "error": "recipes/sqlserver.yaml: \"ask.save\" must start with sources/."
+    },
+    {
+      "name": "save lacks {object} when call holds it",
+      "from": "salesforce",
+      "edits": [["save: sources/{connection}/{object}.json", "save: sources/{connection}.json"]],
+      "error": "recipes/salesforce.yaml: save must hold {object} when run or call does, so that each table is saved to its own file."
+    },
+    {
+      "name": "save lacks {object} when run holds it",
+      "from": "sqlserver",
+      "edits": [["WHERE c.TABLE_SCHEMA IN ({schemas})", "WHERE c.TABLE_NAME = '{object}'"]],
+      "error": "recipes/sqlserver.yaml: save must hold {object} when run or call does, so that each table is saved to its own file."
+    },
+    {
+      "name": "save lacks {object} when call holds it through an input's default",
+      "from": "lookups",
+      "edits": [
+        ["default: v1", "default: \"{object}-v1\""],
+        ["save: sources/{connection}.catalog.xml", "save: sources/{connection}.xml"]
+      ],
+      "error": "recipes/lookups.yaml: save must hold {object} when run or call does, so that each table is saved to its own file."
     },
     {
       "name": "rows with a reader that has none",

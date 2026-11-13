@@ -13,12 +13,16 @@ const valuesUpTo = 8;
 const safe = (text: string): string => text.replace(/[\u0000-\u001f\u007f]/g, " ");
 
 /**
- * A fact as a code span: with single backticks, or, when it holds a backtick, with double ones and
- * a space on each side (CommonMark). A fact never starts a line or ends the span early.
+ * A fact as a code span: with single backticks, or, when it holds a backtick, with a run of
+ * backticks one longer than its longest run and a space on each side (CommonMark). A fact never
+ * starts a line or ends the span early.
  */
 const ticks = (text: string): string => {
   const fact = safe(text);
-  return fact.includes("`") ? `\`\` ${fact} \`\`` : `\`${fact}\``;
+  if (!fact.includes("`")) return `\`${fact}\``;
+  const longest = (fact.match(/`+/g) ?? []).reduce((most, run) => Math.max(most, run.length), 0);
+  const fence = "`".repeat(longest + 1);
+  return `${fence} ${fact} ${fence}`;
 };
 
 /** `` `a`, `b` ``, cut after 20 names with `, and <n> more`. */
@@ -103,10 +107,14 @@ function generated(facts: GuideFacts): string {
   return items.length === 0 ? "none yet" : items.join(", ");
 }
 
+/** A folder as a shell word: as it is when plain, else in single quotes. */
+const shellWord = (text: string): string =>
+  /^[A-Za-z0-9_./@%+=:,-]+$/.test(text) ? text : `'${text.replaceAll("'", "'\\''")}'`;
+
 /** An `ingestron <word>` command as a code span, with `--out <out>` after the word unless `out` is `build`. */
 function command(facts: GuideFacts, word: string): string {
   return ticks(
-    facts.out === "build" ? `ingestron ${word}` : `ingestron ${word} --out ${facts.out}`,
+    facts.out === "build" ? `ingestron ${word}` : `ingestron ${word} --out ${shellWord(facts.out)}`,
   );
 }
 

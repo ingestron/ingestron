@@ -1,0 +1,74 @@
+description: "A metadata object with fewer parts than the flow's object matches nothing: ERP.dbo.Customers does not match a metadata table written dbo.Customers, since the flow names a database that the metadata does not. A flow object with fewer or as many parts matches it, from the right."
+environment: dev
+sourceTables: true
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml", "sources/*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    layers:
+      - { name: bronze, does: raw }
+  erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: erp
+    connector: files
+    connectivity: public
+    settings: { path: /data/erp }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: erp
+    tables:
+      customers: { object: ERP.dbo.Customers }
+      same: { object: dbo.Customers }
+      last: { object: Customers }
+  sources/erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: SourceMetadata
+    id: erp
+    connection: erp
+    names: { parts: 3, caseSensitive: false }
+    tables:
+      - object: dbo.Customers
+        captured: { at: 2026-11-12T09:30:00Z, from: catalog, file: erp.csv }
+        columns:
+          - { name: id, logicalType: integer, required: true, primaryKeyPosition: 1 }
+expect:
+  diagnostics:
+    - { code: TABLE_NO_COLUMNS, severity: error, file: sales.yaml, line: 6 }
+  sourceTables:
+    - flow: sales
+      table: customers
+      connection: erp
+      object: ERP.dbo.Customers
+      names: { parts: 3, caseSensitive: false }
+      file: sources/erp.yaml
+    - flow: sales
+      table: same
+      connection: erp
+      object: dbo.Customers
+      entry:
+        object: dbo.Customers
+        captured: { at: 2026-11-12T09:30:00Z, from: catalog, file: erp.csv }
+        columns:
+          - { name: id, logicalType: integer, required: true, primaryKeyPosition: 1 }
+      names: { parts: 3, caseSensitive: false }
+      file: sources/erp.yaml
+    - flow: sales
+      table: last
+      connection: erp
+      object: Customers
+      entry:
+        object: dbo.Customers
+        captured: { at: 2026-11-12T09:30:00Z, from: catalog, file: erp.csv }
+        columns:
+          - { name: id, logicalType: integer, required: true, primaryKeyPosition: 1 }
+      names: { parts: 3, caseSensitive: false }
+      file: sources/erp.yaml

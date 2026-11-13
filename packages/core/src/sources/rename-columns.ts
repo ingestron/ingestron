@@ -1,5 +1,6 @@
 // A recipe's `columnNames` (spec/cli/sources.md, section 1 and the start of section 2), applied in
 // one place to the tables any reader read.
+import { nameKey } from "./changes.js";
 import type { SourceRecipe } from "./recipe.js";
 import type { Refused, SourceTableRead } from "./result.js";
 
@@ -24,6 +25,7 @@ export function renameColumns(
   const rule = recipe?.columnNames;
   if (recipe === undefined || rule === undefined) return tables;
   const result: SourceTableRead[] = [];
+  const key = nameKey(recipe.names?.caseSensitive !== false);
   for (const table of tables) {
     const seen = new Set<string>();
     const columns = table.columns.map((column) => ({
@@ -31,13 +33,13 @@ export function renameColumns(
       name: renamed(column.name, rule),
     }));
     for (const { name } of columns) {
-      if (seen.has(name))
+      if (seen.has(key(name)))
         return {
           refused: [
             `${file}: the recipe "${recipe.id}" gives two columns of the table "${table.object}" the name "${name}".`,
           ],
         };
-      seen.add(name);
+      seen.add(key(name));
     }
     result.push({ ...table, columns });
   }

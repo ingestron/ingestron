@@ -62,3 +62,39 @@ describe("readSourceFile: deep nesting", () => {
     });
   });
 });
+
+/** An Avro record nested `depth` records deep, each the one field `a` of the one above. */
+function nestedRecords(depth: number): string {
+  let type = '"int"';
+  for (let level = depth; level >= 1; level -= 1)
+    type = `{"type":"record","name":"R${String(level)}","fields":[{"name":"a","type":${type}}]}`;
+  return type.replace(/^\{"type":"record","name":"R1"/, '{"type":"record","name":"Event"');
+}
+
+/** A CSDL document whose type `T<depth>` has a chain of `depth` base types. */
+function baseChain(depth: number): string {
+  const types = Array.from({ length: depth + 1 }, (_, at) => {
+    const base = at === 0 ? "" : ` BaseType="N.T${String(at - 1)}"`;
+    return `<EntityType Name="T${String(at)}"${base}><Property Name="p${String(at)}" Type="Edm.Int32"/></EntityType>`;
+  }).join("");
+  return `<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"><edmx:DataServices><Schema Namespace="N">${types}<EntityContainer Name="C"><EntitySet Name="S" EntityType="N.T${String(depth)}"/></EntityContainer></Schema></edmx:DataServices></edmx:Edmx>`;
+}
+
+describe("readSourceFile: nesting a reader walks without a column to show for it", () => {
+  const tooDeep = (file: string): { refused: string[] } => ({
+    refused: [`${file} is nested too deeply to read.`],
+  });
+
+  it("reads Avro records nested 20000 levels to 17 levels", () => {
+    const file = "sources/events.avsc";
+    const result = readSourceFile({ file, contents: nestedRecords(20000) });
+    expect(result).toHaveProperty("tables");
+    expect(depthOf((result as SourceRead).tables[0]!.columns[0])).toBe(17);
+  });
+
+  it("reads OData types with 16 base types and refuses 17", () => {
+    const file = "sources/shop.xml";
+    expect(readSourceFile({ file, contents: baseChain(16) })).toHaveProperty("tables");
+    expect(readSourceFile({ file, contents: baseChain(17) })).toStrictEqual(tooDeep(file));
+  });
+});

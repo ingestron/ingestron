@@ -37,8 +37,12 @@ export function checkInputNames(inputs: Data, check: Checker): void {
   }
 }
 
-/** Rule 6: `ask` has `run` or `call` as `kind` says, and `save` starts `sources/`. */
-export function checkAsk(ask: Data, kind: string, check: Checker): void {
+/**
+ * Rule 6: `ask` has `run` or `call` as `kind` says, `save` starts `sources/`, and `save` holds
+ * `{object}` when `run` or `call` does, each as written or through an input whose `default`
+ * holds it.
+ */
+export function checkAsk(ask: Data, kind: string, inputs: Data, check: Checker): void {
   const given = ["run", "call"].filter((key) => ask[key] !== undefined);
   if (kind === "sample" && given.length > 0)
     check.fail('"ask" must have neither run nor call for a sample recipe.');
@@ -48,6 +52,25 @@ export function checkAsk(ask: Data, kind: string, check: Checker): void {
     check.fail(`"ask" needs run (a query) or call (a URL) for a ${kind} recipe.`);
   if (!(ask.save as string).startsWith("sources/"))
     check.fail('"ask.save" must start with sources/.');
+  checkSaveHoldsObject(ask, inputs, check);
+}
+
+/** True when the text holds `{object}`, or a placeholder of an input whose default does. */
+function holdsObject(text: string, inputs: Data): boolean {
+  if (text.includes("{object}")) return true;
+  return [...text.matchAll(/\{([A-Za-z][A-Za-z0-9_]*)\}/g)].some(([, name]) => {
+    const input = Object.hasOwn(inputs, name!) ? (inputs[name!] as Data) : undefined;
+    return typeof input?.default === "string" && input.default.includes("{object}");
+  });
+}
+
+/** Rule 6, last part: `save` holds `{object}` when `run` or `call` does. */
+function checkSaveHoldsObject(ask: Data, inputs: Data, check: Checker): void {
+  const step = (ask.run ?? ask.call) as string | undefined;
+  if (step !== undefined && holdsObject(step, inputs) && !holdsObject(ask.save as string, inputs))
+    check.fail(
+      "save must hold {object} when run or call does, so that each table is saved to its own file.",
+    );
 }
 
 /** Rule 7: `rows`, `fields`, `key` and `objects` only with their readers, and `fields` well formed. */

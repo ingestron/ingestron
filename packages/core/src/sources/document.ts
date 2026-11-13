@@ -1,8 +1,8 @@
 // A connection's metadata document as text: read back for an import, and written so a new
 // import shows as a small diff (spec/cli/sources.md, section 3, "The document").
 import type { SourceColumnDoc, SourceMetadataDoc, SourceTableDoc } from "@ingestron/definitions";
-import { parse } from "yaml";
-import { isRecord } from "./records.js";
+import { parseDocument } from "yaml";
+import { metadataOf } from "./metadata-shape.js";
 import { flowMapping, yamlText, yamlValue } from "./yaml-value.js";
 
 const header = "# Written by ingestron source import. Do not edit: import again to replace it.";
@@ -17,68 +17,33 @@ const columnKeys = [
   "primaryKeyPosition",
 ] as const;
 
-/** How deep a document read back may nest columns; a reader writes at most 16 levels. */
-const deepest = 64;
+/** A document as it is read back and written: the shape of the definitions, and its description. */
+export type MetadataDocument = SourceMetadataDoc & { description?: string };
 
-/** Nested columns: none, or a list of columns for `properties`, or one column for `items`. */
-function nestedAreColumns(properties: unknown, items: unknown, depth: number): boolean {
-  const listed =
-    properties === undefined ||
-    (Array.isArray(properties) && properties.every((column) => isColumn(column, depth + 1)));
-  return listed && (items === undefined || isColumn(items, depth + 1));
-}
-
-/** A column with a name, a logical type and `required`, and its nested columns the same. */
-function isColumn(value: unknown, depth = 0): value is SourceColumnDoc {
-  if (depth > deepest || !isRecord(value)) return false;
-  const { name, logicalType, required, properties, items } = value;
-  return (
-    typeof name === "string" &&
-    typeof logicalType === "string" &&
-    typeof required === "boolean" &&
-    nestedAreColumns(properties, items, depth)
-  );
-}
-
-function isTable(value: unknown): value is SourceTableDoc {
-  return (
-    isRecord(value) &&
-    typeof value.object === "string" &&
-    isRecord(value.captured) &&
-    typeof value.captured.at === "string" &&
-    typeof value.captured.from === "string" &&
-    typeof value.captured.file === "string" &&
-    Array.isArray(value.columns) &&
-    value.columns.every((column) => isColumn(column))
-  );
-}
-
-function namesOf(value: unknown): SourceMetadataDoc["names"] {
-  return isRecord(value) &&
-    typeof value.parts === "number" &&
-    typeof value.caseSensitive === "boolean"
-    ? { parts: value.parts, caseSensitive: value.caseSensitive }
-    : undefined;
-}
-
-/** The text's document when it is a `SourceMetadata` document of the connection, else undefined. */
-export function parseMetadata(text: string, connection: string): SourceMetadataDoc | undefined {
+/**
+ * The text's document when it is a `SourceMetadata` document of the connection (its `apiVersion`,
+ * `kind`, `connection`, `names`, tables and columns as source-metadata.schema.yaml says), else
+ * the reason it is not: the first field that fails and its rule. Its description is kept.
+ */
+export function parseMetadata(
+  text: string,
+  connection: string,
+): MetadataDocument | { problem: string } {
   let value: unknown;
   try {
-    value = parse(text, { logLevel: "silent" });
+    const parsed = parseDocument(text, { logLevel: "silent" });
+    if (parsed.errors.length > 0) return { problem: "it is not valid YAML" };
+    value = parsed.toJS();
   } catch {
-    return undefined;
+    return { problem: "it is not valid YAML" };
   }
-  if (!isRecord(value) || value.kind !== "SourceMetadata" || value.connection !== connection)
-    return undefined;
-  if (!Array.isArray(value.tables) || !value.tables.every(isTable)) return undefined;
-  const names = namesOf(value.names);
+  const document = metadataOf(value, connection);
+  if ("problem" in document) return document;
+  const { description, environment } = value as { description?: string; environment?: string };
   return {
-    id: connection,
-    connection,
-    ...(typeof value.environment === "string" && { environment: value.environment }),
-    ...(names && { names }),
-    tables: value.tables,
+    ...document,
+    ...(description !== undefined && { description }),
+    ...(environment !== undefined && { environment }),
   };
 }
 
@@ -137,13 +102,14 @@ function tableLines(table: SourceTableDoc): string[] {
 }
 
 /** The document's text: the header comment, then its keys in order, ending with a line break. */
-export function metadataText(document: SourceMetadataDoc): string {
-  const { id, connection, environment, names } = document;
+export function metadataText(document: MetadataDocument): string {
+  const { id, connection, description, environment, names } = document;
   const lines = [
     header,
     "apiVersion: ingestron.io/v1",
     "kind: SourceMetadata",
     `id: ${yamlText(id, "block")}`,
+    ...(description === undefined ? [] : [`description: ${yamlText(description, "block")}`]),
     `connection: ${yamlText(connection, "block")}`,
     ...(environment === undefined ? [] : [`environment: ${yamlText(environment, "block")}`]),
     ...(names === undefined

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="Chain" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="T0">
+        <Property Name="p0" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T1" BaseType="Chain.T0">
+        <Property Name="p1" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T2" BaseType="Chain.T1">
+        <Property Name="p2" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T3" BaseType="Chain.T2">
+        <Property Name="p3" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T4" BaseType="Chain.T3">
+        <Property Name="p4" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T5" BaseType="Chain.T4">
+        <Property Name="p5" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T6" BaseType="Chain.T5">
+        <Property Name="p6" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T7" BaseType="Chain.T6">
+        <Property Name="p7" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T8" BaseType="Chain.T7">
+        <Property Name="p8" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T9" BaseType="Chain.T8">
+        <Property Name="p9" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T10" BaseType="Chain.T9">
+        <Property Name="p10" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T11" BaseType="Chain.T10">
+        <Property Name="p11" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T12" BaseType="Chain.T11">
+        <Property Name="p12" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T13" BaseType="Chain.T12">
+        <Property Name="p13" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T14" BaseType="Chain.T13">
+        <Property Name="p14" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T15" BaseType="Chain.T14">
+        <Property Name="p15" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T16" BaseType="Chain.T15">
+        <Property Name="p16" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityType Name="T17" BaseType="Chain.T16">
+        <Property Name="p17" Type="Edm.Int32"/>
+      </EntityType>
+      <EntityContainer Name="Container">
+        <EntitySet Name="Things" EntityType="Chain.T17"/>
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

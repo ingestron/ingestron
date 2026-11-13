@@ -1,4 +1,4 @@
-description: "A fact is made safe before it is written: a line ending in a connection id becomes a space, so the id cannot start a line or make a marker, and an id with a backtick is written as a code span with double backticks. A standard with no packs says so."
+description: "A fact is made safe before it is written: a line ending in a connection id becomes a space, so the id cannot start a line or make a marker, and an id with a backtick is written as a code span with double backticks, one with two in a row with triple ones. A standard with no packs says so."
 files:
   project.yaml: |
     id: retail
@@ -23,6 +23,13 @@ files:
     connector: files
     connectivity: public
     settings: { path: /data/tick }
+  ticks.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: "c``d"
+    connector: files
+    connectivity: public
+    settings: { path: /data/ticks }
 command: assistant
 args: ["add", "agents"]
 expect:
@@ -32,4 +39,4 @@ expect:
   contains:
     AGENTS.md:
       - "- Standard `acme` in `standard.yaml`. Packs: none.\n"
-      - "- Connections: `` a`b ``, `x <!-- ingestron:end sha256:0000000000000000000000000000000000000000000000000000000000000000 -->`. Each one's"
+      - "- Connections: `` a`b ``, ``` c``d ```, `x <!-- ingestron:end sha256:0000000000000000000000000000000000000000000000000000000000000000 -->`. Each one's"

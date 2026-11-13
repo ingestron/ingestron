@@ -17,7 +17,9 @@ function withoutExtension(path: string): string {
  * extension only. A file directly in `sources/` belongs to the connection its name starts with,
  * up to the first `.`, as the source request names them (`sources/erp.catalog.csv`). Undefined
  * for the metadata document itself (`sources/<connection>.yaml` or `.yml`) and for a path outside
- * `sources/`. The path is relative to the project's folder, written with `/`.
+ * `sources/`. The path is relative to the project's folder, written with `/` (a `\` is read as
+ * `/`, and a leading `./` is dropped, as the import does); a path that leaves the folder has
+ * nothing of `sources/` in it.
  * @example
  * sourceFileFor("sources/landing/exports/orders.v2.csv") // { connection: "landing", object: "exports/orders.v2" }
  * sourceFileFor("sources/erp.catalog.csv")               // { connection: "erp" }
@@ -25,7 +27,7 @@ function withoutExtension(path: string): string {
  * @public
  */
 export function sourceFileFor(path: string): { connection: string; object?: string } | undefined {
-  const [top, first = "", ...rest] = path.split("/");
+  const [top, first = "", ...rest] = projectPath(path).split("/");
   if (top !== "sources" || first === "") return undefined;
   if (rest.length > 0) {
     const below = rest.join("/");

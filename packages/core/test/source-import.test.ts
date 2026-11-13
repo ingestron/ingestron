@@ -112,9 +112,27 @@ describe("importSource: the document", () => {
     const broken = fixture("erp.first.yaml").replace("required: true, ", "");
     expect(run({ ...first, current: "erp.first.yaml" })).not.toHaveProperty("refused");
     const input = { connection: "erp", file: first.file, contents: "", at: first.at };
+    const recovery = "Correct it, or move it away and import every file again.";
     expect(importSource({ ...input, current: broken })).toStrictEqual({
-      refused: ['sources/erp.yaml is not the source metadata of "erp".'],
+      refused: [
+        `sources/erp.yaml is not the source metadata of "erp": tables[0].columns[0].required must be true or false. ${recovery}`,
+      ],
     });
+    // Text that is not a document says so, and no reason holds a value from the text.
+    const reason = (current: string) =>
+      (importSource({ ...input, current }) as { refused: string[] }).refused[0];
+    expect(reason("a: [\n")).toBe(
+      `sources/erp.yaml is not the source metadata of "erp": it is not valid YAML. ${recovery}`,
+    );
+    expect(reason("ZZ-SECRET-42\n")).toBe(
+      `sources/erp.yaml is not the source metadata of "erp": the document must be a mapping. ${recovery}`,
+    );
+    const odd = fixture("erp.first.yaml").replace(
+      "logicalType: integer",
+      "logicalType: ZZ-SECRET-42",
+    );
+    expect(reason(odd)).not.toContain("ZZ-SECRET-42");
+    expect(reason(odd)).toContain("tables[0].columns[0].logicalType must be one of");
   });
 
   it("takes the object from the path before the object given", () => {

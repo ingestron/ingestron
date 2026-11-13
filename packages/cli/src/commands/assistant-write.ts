@@ -50,7 +50,13 @@ function rewrite(file: string, text: string): boolean {
   const before = lstatSync(file, { throwIfNoEntry: false });
   if (before === undefined || !before.isFile()) return false;
   // A file that is read-only for this user stays as it is, as it would if it were written in place.
-  accessSync(file, constants.W_OK);
+  try {
+    accessSync(file, constants.W_OK);
+  } catch (error) {
+    // Removed since it was looked at: it is no longer a regular file.
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+    throw error;
+  }
   const temporary = join(dirname(file), `.${basename(file)}.${randomBytes(6).toString("hex")}.tmp`);
   const descriptor = openSync(
     temporary,

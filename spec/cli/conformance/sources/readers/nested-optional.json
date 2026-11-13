@@ -1,0 +1,5 @@
+[
+  { "id": 1, "address": { "city": "ZZ-SECRET-42", "zip": "ZZ-OTHER-1" } },
+  { "id": 2, "address": { "city": "ZZ-SECRET-43", "zip": "ZZ-OTHER-2" } },
+  { "id": 3, "address": { "city": "ZZ-SECRET-44" } }
+]

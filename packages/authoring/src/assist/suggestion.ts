@@ -31,3 +31,13 @@ export interface Suggestion {
   /** Edits to make once inserted, possibly in other files, such as declaring an input. */
   edits?: QuickFix["edits"];
 }
+
+/**
+ * Straight after `-`, a suggestion brings the space and is inserted after the dash: its snippet,
+ * or its text (the label unless `insertText` gives another).
+ */
+export function afterDash(item: Suggestion): Suggestion {
+  const text = item.insertText ?? item.label;
+  const spaced = item.snippet ? { snippet: ` ${item.snippet}` } : { insertText: ` ${text}` };
+  return { ...item, ...spaced, afterDash: true };
+}

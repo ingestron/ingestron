@@ -28,6 +28,12 @@ const flow = [
   "    expectations:",
   "      - name: has_ref",
   "        check: order_ref IS NOT NULL",
+  "    sequence: placed",
+  "    load: { mode: incremental, cursor: placed }",
+  "    cleanse:",
+  "      columns:",
+  "        customer_email: { case: lower }",
+  "      deduplicate: { order_by: [placed] }",
   "",
 ].join("\n");
 const contract = [
@@ -76,22 +82,60 @@ function at(path: string, marked: string): Suggestion[] {
   return ProjectSnapshot.open(folder, texts).completionsAt(path, text, marked.indexOf("|"), "dev");
 }
 
+/** Every string anywhere in the suggestions, whichever field holds it. */
+const everything = (items: Suggestion[]) => JSON.stringify(items);
+
+/** The hover where `|` is, in `path` with `marked` as its text. */
+function hover(path: string, marked: string): string {
+  const text = marked.replace("|", "");
+  const texts = new Map([
+    ...open,
+    [join(folder, "flows/landing.yaml"), flow],
+    [join(folder, "contracts/landing.shipments.yaml"), contract],
+    [join(folder, path), text],
+  ]);
+  return ProjectSnapshot.open(folder, texts).hoverAt(path, text, marked.indexOf("|"), "dev") ?? "";
+}
+
 describe("completion from a sample's metadata", () => {
   it("shows the sample's columns and its object, and no value from its rows", () => {
+    const columns = ["order_ref", "customer_email", "amount", "placed"];
+    const inFlow = (from: string, to: string) => at("flows/landing.yaml", flow.replace(from, to));
     const shown = [
       at("flows/landing.yaml", flow.replace("object: shipments", "object: |")),
       at("flows/landing.yaml", flow.replace("check: order_ref IS NOT NULL", "check: |")),
       at("contracts/landing.shipments.yaml", contract.replace("- name: order_ref", "- name: |")),
+      inFlow("sequence: placed", "sequence: |"),
+      inFlow("cursor: placed", "cursor: | "),
+      inFlow("order_by: [placed]", "order_by: [|]"),
+      inFlow("        customer_email: { case: lower }", "        |"),
     ];
     expect(shown[0]!.map((item) => item.label)).toContain("shipments");
     for (const items of shown.slice(1))
-      expect(items.map((item) => item.label)).toEqual(
-        expect.arrayContaining(["order_ref", "customer_email", "amount", "placed"]),
-      );
-    const words = shown
-      .flat()
-      .flatMap((item) => [item.label, item.detail, item.documentation, item.insertText])
-      .join("\n");
+      expect(items.map((item) => item.label)).toEqual(expect.arrayContaining(columns.slice(0, 1)));
+    for (const items of shown.slice(3, 6))
+      expect(items.map((item) => item.label)).toEqual(expect.arrayContaining(columns));
+    // Without a contract the table's columns come from the metadata, which its hover lists.
+    const bare = flow.replace("    contract: landing.shipments\n", "");
+    const listing = [
+      hover("flows/landing.yaml", bare.replace("  shipments:", "  |shipments:")),
+      hover("flows/landing.yaml", bare.replace("object: shipments", "object: |shipments")),
+    ];
+    for (const text of listing) {
+      expect(text).toContain("Columns of");
+      expect(text).toContain("customer_email");
+    }
+    const hovers = [
+      ...listing,
+      hover("flows/landing.yaml", flow.replace("object: shipments", "object: |shipments")),
+      hover("flows/landing.yaml", flow.replace("check: order_ref", "check: |order_ref")),
+      hover("flows/landing.yaml", flow.replace("sequence: placed", "sequence: |placed")),
+      hover(
+        "contracts/landing.shipments.yaml",
+        contract.replace("- name: order_ref", "- name: |order_ref"),
+      ),
+    ];
+    const words = [...shown.map(everything), ...hovers].join("\n");
     for (const value of values) expect(words).not.toContain(value);
   });
 });

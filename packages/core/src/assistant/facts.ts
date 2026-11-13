@@ -4,7 +4,16 @@ import { matchesImport, type FileSource } from "@ingestron/config";
 import type { Pack } from "@ingestron/definitions";
 import { packs as corePacks } from "../packs/index.js";
 import { byCodePoint } from "../code-point.js";
-import { flowText, isMapping, readYaml, stringAt, stringsAt, type Mapping } from "./yaml.js";
+import {
+  flowText,
+  isMapping,
+  keyText,
+  readYaml,
+  scalarAt,
+  stringAt,
+  stringsAt,
+  type Mapping,
+} from "./yaml.js";
 
 /**
  * What the standard says that the guide repeats.
@@ -92,7 +101,8 @@ export function guideFacts(
   if ("noGuide" in manifest) return manifest;
   const id = stringAt(manifest.fields, "id")!;
   const imports = stringsAt(manifest.fields, "imports");
-  const { documents, names } = readImported(files, imports, text);
+  const listed = files.list();
+  const { documents, names } = readImported(files, listed, imports, text);
   const ofKind = (kind: string): Mapping[] =>
     documents.flatMap(({ value }) =>
       isMapping(value) && value.get("kind") === kind ? [value] : [],
@@ -101,7 +111,7 @@ export function guideFacts(
     ({ value }) =>
       isMapping(value) && value.get("kind") === "Standard" && stringAt(value, "id") !== undefined,
   );
-  const standard = found && standardFrom(found.value as Mapping, found.path, found.text, files);
+  const standard = found && standardFrom(found.value as Mapping, found.path, found.text, listed);
   const environments = environmentsOf(manifest.fields);
   const folder = out.replaceAll("\\", "/").replace(/\/+$/, "");
   return {
@@ -132,6 +142,7 @@ function readManifest(text: string): { fields: Mapping } | NoGuide {
 /** The imported files that parse, as documents, and every `${envvar:NAME}` name in them and in project.yaml. */
 function readImported(
   files: FileSource,
+  listed: readonly string[],
   imports: readonly string[],
   manifestText: string,
 ): { documents: { path: string; text: string; value: unknown }[]; names: Set<string> } {
@@ -141,7 +152,7 @@ function readImported(
     for (const match of source.matchAll(envvarName)) names.add(match[1]!);
   };
   note(manifestText);
-  for (const path of importedPaths(files, imports)) {
+  for (const path of importedPaths(listed, imports)) {
     const source = files.read(path);
     const read = source === undefined ? undefined : readYaml(source);
     if (source === undefined || read === undefined) continue;
@@ -152,9 +163,8 @@ function readImported(
 }
 
 /** The files the patterns match, each once, in code point order; never a `.env` file. */
-function importedPaths(files: FileSource, imports: readonly string[]): string[] {
-  return files
-    .list()
+function importedPaths(listed: readonly string[], imports: readonly string[]): string[] {
+  return listed
     .filter((path) => path !== "project.yaml" && !isEnvFile(path))
     .filter((path) => imports.some((pattern) => matchesImport(pattern, path)))
     .sort(byCodePoint);
@@ -170,7 +180,7 @@ function environmentsOf(manifest: Mapping): GuideFacts["environments"] {
   if (!isMapping(declared)) return [];
   return [...declared].map(([name, environment]) => {
     const runsOn = isMapping(environment) ? stringAt(environment, "runs-on") : undefined;
-    return { name: String(name), ...(runsOn !== undefined && { runsOn }) };
+    return { name: keyText(name), ...(runsOn !== undefined && { runsOn }) };
   });
 }
 
@@ -185,7 +195,7 @@ function outputsOf(
   const names = [...listed];
   for (const { runsOn } of environments)
     if (runsOn !== undefined && !names.some((name) => idOf(name) === idOf(runsOn)))
-      names.push(runsOn);
+      names.push(idOf(runsOn));
   return names.map((name) => {
     const id = idOf(name);
     const pack = available.find((candidate) => candidate.id === id);
@@ -198,17 +208,11 @@ function outputsOf(
   });
 }
 
-/** A key's value when it is a string or a number (a version may be written either way), as text. */
-function scalarAt(mapping: Mapping, key: string): string | undefined {
-  const value = mapping.get(key);
-  return typeof value === "string" || typeof value === "number" ? String(value) : undefined;
-}
-
 function standardFrom(
   document: Mapping,
   file: string,
   text: string,
-  files: FileSource,
+  listed: readonly string[],
 ): GuideStandard {
   const origin = document.get("origin");
   const published = isMapping(origin)
@@ -223,10 +227,10 @@ function standardFrom(
     ...(published?.standard !== undefined &&
       published.version !== undefined && { origin: `${published.standard}@${published.version}` }),
     ...(comment !== "" && { from: comment }),
-    explained: files.list().includes("STANDARD.md"),
+    explained: listed.includes("STANDARD.md"),
     packs: stringsAt(document, "packs"),
     ...actionsOf(document),
-    fixedIntent: isMapping(fixedKeys) ? [...fixedKeys.keys()].map(String) : [],
+    fixedIntent: isMapping(fixedKeys) ? [...fixedKeys.keys()].map(keyText) : [],
   };
 }
 
@@ -245,8 +249,8 @@ function actionsOf(document: Mapping): Pick<GuideStandard, "allowed" | "fixed"> 
       if (!isMapping(settings) || settings.size === 0) continue;
       fixed.push({
         action: key,
-        method: String(method),
-        settings: [...settings].map(([name, value]) => [String(name), flowText(value)]),
+        method: keyText(method),
+        settings: [...settings].map(([name, value]) => [keyText(name), flowText(value)]),
       });
     }
   }

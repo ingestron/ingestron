@@ -1,6 +1,7 @@
 // The sample reader (spec/cli/sources.md, section 2.2): CSV, JSON, JSON lines and Parquet. A sample
 // describes one table, whose object the import gives.
 import type { SourceColumnDoc } from "@ingestron/definitions";
+import { keepingOrder } from "./key-order.js";
 import { readParquet } from "./read-parquet.js";
 import { csvTable, isRecord, holdsNoName, valueAt } from "./records.js";
 import type { Outcome, Reader, ReaderInput, Refused } from "./result.js";
@@ -21,15 +22,19 @@ interface Records {
   names?: string[];
 }
 
+/** What a refusal says of a first line that has no name: how many fields, and how many have text. */
+function describeFirstLine(header: string[]): string {
+  const empty = header.filter((cell) => cell.trim() === "").length;
+  if (header.length === 1)
+    return `the first line has 1 field, which is ${empty === 1 ? "empty" : "a number or a date"}`;
+  return `the first line has ${header.length} fields, ${header.length - empty} of them numbers or dates`;
+}
+
 function csvRecords(input: ReaderInput): Records | Refused {
   const { header, rows } = csvTable(input.text);
   if (header.length === 0) return { refused: [`${input.file} has no columns.`] };
   if (holdsNoName(header))
-    return {
-      refused: [
-        `${input.file} has no header row: every field of its first line is a number, a date, a timestamp or a boolean.`,
-      ],
-    };
+    return { refused: [`${input.file} has no header row: ${describeFirstLine(header)}.`] };
   const names = header.map((name) => name.trim());
   const records = rows.map((row) =>
     Object.fromEntries(
@@ -42,7 +47,7 @@ function csvRecords(input: ReaderInput): Records | Refused {
 function jsonRecords(input: ReaderInput): Records | Refused {
   const parsed = input.json();
   if ("refused" in parsed) return parsed;
-  const value = valueAt(parsed.value, input.recipe?.rows);
+  const value = valueAt(keepingOrder(input.text, parsed.value), input.recipe?.rows);
   const list = Array.isArray(value) ? value : [value];
   return list.every(isRecord) ? { records: list } : holdsNoRecords(input.file);
 }
@@ -53,8 +58,9 @@ function linesRecords(input: ReaderInput): Records | Refused {
     if (line.trim() === "") continue;
     const parsed = parseJson(line, input.file, at);
     if ("refused" in parsed) return parsed;
-    if (!isRecord(parsed.value)) return holdsNoRecords(input.file);
-    records.push(parsed.value);
+    const value = keepingOrder(line, parsed.value);
+    if (!isRecord(value)) return holdsNoRecords(input.file);
+    records.push(value);
   }
   return { records };
 }

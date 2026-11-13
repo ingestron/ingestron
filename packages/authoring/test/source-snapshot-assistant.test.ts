@@ -4,12 +4,15 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { memoryFiles } from "@ingestron/config";
+import type { Pack } from "@ingestron/definitions";
 import { guideFacts, guideSection, type GuideFacts } from "@ingestron/core/internal";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ProjectSnapshot } from "../src/index.js";
 
 const conformance = join(import.meta.dirname, "../../../spec/cli/conformance/sources/request");
 const expected = readFileSync(join(conformance, "request.dev.md"), "utf8");
+/** The stand-in pack of the output folder cases that builds a folder per environment. */
+const standIns = [{ id: "local" }] as unknown as Pack[];
 const section = guideSection(
   guideFacts(
     memoryFiles({
@@ -18,7 +21,7 @@ const section = guideSection(
       "a.yaml": "kind: Connection\nid: crm\n",
     }),
     "build",
-    [],
+    standIns,
   ) as GuideFacts,
 );
 

@@ -503,6 +503,11 @@ export type IntentUse = {
 // @public
 export function intentUseOf(pack: IntentCoverage, path: string, value?: string): IntentUse | undefined;
 
+// @public
+export function isMetadataFor(document: {
+    connection?: unknown;
+}, connection: string): boolean;
+
 export { JsonSchema }
 
 export { KindDefinition }
@@ -1033,21 +1038,13 @@ export interface SourceColumnBefore {
 
 // @public
 export interface SourceColumnDoc {
-    // (undocumented)
     items?: SourceColumnDoc;
-    // (undocumented)
     logicalType: string;
-    // (undocumented)
     logicalTypeOptions?: Record<string, unknown>;
-    // (undocumented)
     name: string;
-    // (undocumented)
     primaryKeyPosition?: number;
-    // (undocumented)
     properties?: SourceColumnDoc[];
-    // (undocumented)
     required: boolean;
-    // (undocumented)
     sourceType?: string;
 }
 
@@ -1062,18 +1059,13 @@ export interface SourceDifference {
 
 // @public
 export interface SourceMetadataDoc {
-    // (undocumented)
     connection: string;
-    // (undocumented)
     environment?: string;
-    // (undocumented)
     id: string;
-    // (undocumented)
     names?: {
         parts: number;
         caseSensitive: boolean;
     };
-    // (undocumented)
     tables: SourceTableDoc[];
 }
 
@@ -1095,16 +1087,13 @@ export interface SourceTable {
 
 // @public
 export interface SourceTableDoc {
-    // (undocumented)
     captured: {
         at: string;
         from: "catalog" | "document" | "sample" | "columns" | "assistant";
         recipe?: string;
         file: string;
     };
-    // (undocumented)
     columns: SourceColumnDoc[];
-    // (undocumented)
     object: string;
 }
 

@@ -1,7 +1,7 @@
 // ingestron source request and ingestron source import (spec/cli/sources.md, section 6). The rules
 // are @ingestron/core's: this reads the files, calls it, writes and prints.
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { join, relative, resolve, sep } from "node:path";
 import { nodeFiles } from "@ingestron/config";
 import { sourceChangesText } from "@ingestron/core";
 import {
@@ -10,6 +10,7 @@ import {
   type SourceImportResult,
 } from "@ingestron/core/internal";
 import type { Io, Options, SourceAction } from "../terminal/index.js";
+import { WriteRefused, writeStaged } from "./write-staged.js";
 
 type Import = Extract<SourceAction, { action: "import" }>;
 
@@ -54,20 +55,41 @@ function importFile(options: Options, action: Import, io: Io): number {
   return finish(action, definitions, result, io);
 }
 
+/**
+ * The refusal an error from writing is, naming the path from the project folder; an error that
+ * the system gave a code to is one too (a file or folder that cannot be written), and anything
+ * else is thrown again.
+ */
+function refusal(error: unknown, definitions: string): string {
+  const { code, path } = error as NodeJS.ErrnoException;
+  const shown = (file: string): string => relative(definitions, file).split(sep).join("/");
+  if (error instanceof WriteRefused) return error.text(shown(error.file));
+  if (code === undefined) throw error;
+  return WriteRefused.say(shown(path ?? definitions), code);
+}
+
 /** Prints the changes and, unless --dry-run, writes the document and the import. */
 function finish(action: Import, definitions: string, result: SourceImportResult, io: Io): number {
   const { document, imported, project } = result;
-  io.write(sourceChangesText(action.connection, imported.changes, imported.notes));
+  const changes = sourceChangesText(action.connection, imported.changes, imported.notes);
   if (action.dryRun) {
-    io.write("Nothing was written (--dry-run).\n");
+    io.write(`${changes}Nothing was written (--dry-run).\n`);
     return 0;
   }
-  const target = join(definitions, document);
-  mkdirSync(dirname(target), { recursive: true });
-  writeFileSync(target, imported.text);
+  // The document and project.yaml are written together, so a failure leaves neither half written.
+  // The changes are printed only once they are written, so a refused import prints none.
+  try {
+    writeStaged([
+      { file: join(definitions, document), text: imported.text },
+      ...(project === undefined
+        ? []
+        : [{ file: join(definitions, "project.yaml"), text: project }]),
+    ]);
+  } catch (error) {
+    return stop(io, [refusal(error, definitions)]);
+  }
+  io.write(changes);
   io.write(`Wrote ${document}.\n`);
-  if (project === undefined) return 0;
-  writeFileSync(join(definitions, "project.yaml"), project);
-  io.write(`Added ${document} to the imports of project.yaml.\n`);
+  if (project !== undefined) io.write(`Added ${document} to the imports of project.yaml.\n`);
   return 0;
 }

@@ -18,9 +18,15 @@ export interface SourceTable {
   object: string;
   /** The id of the contract the table names. */
   contract?: string;
-  /** Why the table needs a contract (the reason of `CONTRACT_NEEDED`), whether or not it names one. */
+  /**
+   * Why the table needs a contract (the reason of `CONTRACT_NEEDED`), whether or not it names
+   * one.
+   */
   needs?: string;
-  /** The one table of the connection's metadata the `object` matches; none for no match or more than one. */
+  /**
+   * The one table of the connection's metadata the `object` matches; none for no match or more
+   * than one.
+   */
   entry?: SourceTableDoc;
   /** The `names` of the connection's metadata document, when it has one. */
   names?: { parts: number; caseSensitive: boolean };

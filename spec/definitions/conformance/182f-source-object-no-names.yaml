@@ -1,0 +1,66 @@
+description: "Without names, a flow table's object must equal a metadata table's object, with case, and it is not split: dbo.Orders matches dbo.Orders, and neither dbo.orders nor Orders does, so those two tables have no columns."
+environment: dev
+sourceTables: true
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml", "sources/*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    layers:
+      - { name: bronze, does: raw }
+  erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: erp
+    connector: files
+    connectivity: public
+    settings: { path: /data/erp }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: erp
+    tables:
+      orders: { object: dbo.Orders }
+      lower: { object: dbo.orders }
+      short: { object: Orders }
+  sources/erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: SourceMetadata
+    id: erp
+    connection: erp
+    tables:
+      - object: dbo.Orders
+        captured: { at: 2026-11-12T09:30:00Z, from: catalog, file: erp.csv }
+        columns:
+          - { name: id, logicalType: integer, required: true, primaryKeyPosition: 1 }
+expect:
+  diagnostics:
+    - { code: TABLE_NO_COLUMNS, severity: error, file: sales.yaml, line: 7 }
+    - { code: TABLE_NO_COLUMNS, severity: error, file: sales.yaml, line: 8 }
+  sourceTables:
+    - flow: sales
+      table: orders
+      connection: erp
+      object: dbo.Orders
+      entry:
+        object: dbo.Orders
+        captured: { at: 2026-11-12T09:30:00Z, from: catalog, file: erp.csv }
+        columns:
+          - { name: id, logicalType: integer, required: true, primaryKeyPosition: 1 }
+      file: sources/erp.yaml
+    - flow: sales
+      table: lower
+      connection: erp
+      object: dbo.orders
+      file: sources/erp.yaml
+    - flow: sales
+      table: short
+      connection: erp
+      object: Orders
+      file: sources/erp.yaml

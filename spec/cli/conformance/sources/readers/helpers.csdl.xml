@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="Crm" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="expando" OpenType="true"/>
+      <EntityType Name="Account">
+        <Key>
+          <PropertyRef Name="AccountID"/>
+        </Key>
+        <Property Name="AccountID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="Name" Type="Edm.String" MaxLength="100"/>
+      </EntityType>
+      <EntityContainer Name="Container">
+        <EntitySet Name="Accounts" EntityType="Crm.Account"/>
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

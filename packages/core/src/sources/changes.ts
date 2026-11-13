@@ -8,8 +8,6 @@ import {
 } from "@ingestron/definitions";
 import { byCodePoint } from "../code-point.js";
 
-export { byCodePoint };
-
 /**
  * One table an import added, removed or changed.
  * @public

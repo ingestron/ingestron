@@ -63,9 +63,9 @@ export function readSourceRecipe(text: string, file: string): SourceRecipe {
   checkKeys(data, check);
   checkShapes(data, check);
   const id = checkId(data.id, check);
-  const inputs = (data.inputs ?? {}) as Record<string, { description: string }>;
+  const inputs = (data.inputs ?? {}) as SourceRecipe["inputs"];
   checkInputNames(inputs, check);
-  checkAsk(data.ask as Data, data.kind as string, check);
+  checkAsk(data.ask as Data, data.kind as string, inputs, check);
   checkReaderKeys(data, check);
   const types = (data.types ?? []) as SourceTypeRule[];
   checkMatches(types, data.columnNames as Data | undefined, check);
@@ -75,7 +75,13 @@ export function readSourceRecipe(text: string, file: string): SourceRecipe {
     title: data.title as string,
     kind: data.kind as SourceRecipe["kind"],
     inputs: Object.fromEntries(
-      Object.entries(inputs).map(([name, input]) => [name, { description: input.description }]),
+      Object.entries(inputs).map(([name, input]) => [
+        name,
+        {
+          description: input.description,
+          ...(input.default !== undefined && { default: input.default }),
+        },
+      ]),
     ),
     ask: askOf(data),
     read: data.read as SourceReaderName,

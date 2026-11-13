@@ -139,7 +139,7 @@ function catalogOf(project: Project): Catalog {
   if (catalog) return catalog;
   const broken = project.files
     .list()
-    .filter((file) => /^recipes\/[^/]+\.yaml$/.test(file))
+    .filter((file) => /^recipes\/[^/.][^/]*\.yaml$/.test(file))
     .flatMap((file) => brokenAt(project, file) ?? []);
   catalog = { broken };
   if (broken.length === 0)

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="https://example.com/not-edmx">
+  <edmx:DataServices>
+    <Schema Namespace="Shop" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="Order">
+        <Key><PropertyRef Name="ZZ-SECRET-42"/></Key>
+        <Property Name="ZZ-SECRET-42" Type="Edm.Int32" Nullable="false"/>
+      </EntityType>
+      <EntityContainer Name="Container">
+        <EntitySet Name="Orders" EntityType="Shop.Order"/>
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

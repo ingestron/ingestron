@@ -1,0 +1,51 @@
+description: "A layer whose does lists only check, or only quarantine, is the reason on its own: CONTRACT_NEEDED names the duty the layer lists, so its layer checked does check and its layer held does quarantine."
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    layers:
+      - { name: bronze, does: raw }
+      - { name: checked, does: [check] }
+      - { name: held, does: [quarantine] }
+  erp.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: erp
+    connector: files
+    connectivity: public
+    settings: { path: /data/erp }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: erp
+    layer: checked
+    tables:
+      orders: { object: ERP.dbo.Orders }
+  returns.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: returns
+    source: erp
+    layer: held
+    tables:
+      returns: { object: ERP.dbo.Returns }
+expect:
+  diagnostics:
+    - code: CONTRACT_NEEDED
+      severity: error
+      file: returns.yaml
+      line: 7
+      message: '"returns" needs a contract: its layer held does quarantine.'
+    - code: CONTRACT_NEEDED
+      severity: error
+      file: sales.yaml
+      line: 7
+      message: '"orders" needs a contract: its layer checked does check.'

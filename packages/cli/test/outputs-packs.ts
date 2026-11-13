@@ -12,6 +12,8 @@ import {
   type PackInfo,
   type ResolvedModel,
 } from "@ingestron/definitions";
+import { generate } from "../src/commands/generate.js";
+import { readArgs, usage } from "../src/terminal/index.js";
 
 const folder = join(import.meta.dirname, "../../../spec/definitions/conformance");
 
@@ -38,6 +40,23 @@ export function standIns(notices: readonly Notice[] = []): Pack[] {
     "pack-databricks.yaml",
     "pack-views.yaml",
   ].map((file) => standIn(parse(readFileSync(join(folder, file), "utf8")) as DataPack, notices));
+}
+
+/**
+ * Runs plan, apply or check with the stand-in packs, as the output folder cases do: the exit code
+ * and the output. A usage mistake or help is the mistake's text and the usage, with exit 2.
+ */
+export function runWithStandIns(
+  args: string[],
+  cwd: string,
+  notices?: Notice[],
+): { exit: number; output: string } {
+  const options = readArgs(args);
+  if (options === "help" || "mistake" in options)
+    return { exit: 2, output: `${options === "help" ? "" : options.mistake}\n\n${usage}` };
+  let output = "";
+  const exit = generate(options, { cwd, write: (text) => (output += text) }, standIns(notices));
+  return { exit, output };
 }
 
 /** The stand-ins of a case that gives no notices. */

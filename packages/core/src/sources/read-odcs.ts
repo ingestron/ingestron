@@ -16,13 +16,18 @@ function nameOf(entry: Data, fallback?: string): string | undefined {
   return fallback;
 }
 
-/** The key positions of the properties: each given, or for `primaryKey: true` the next after the highest. */
+/**
+ * The key positions of a list of properties: for each with `primaryKey: true`, the one it gives, or
+ * the next after the highest the keys give. A position on a property that is not in the key is
+ * ignored.
+ */
 function keyPositions(properties: Data[]): (number | undefined)[] {
   const given = (property: Data): number | undefined => {
     const place = property.primaryKeyPosition;
     return typeof place === "number" && Number.isInteger(place) && place >= 1 ? place : undefined;
   };
-  let next = Math.max(0, ...properties.map((property) => given(property) ?? 0)) + 1;
+  const keys = properties.filter((property) => property.primaryKey === true);
+  let next = Math.max(0, ...keys.map((property) => given(property) ?? 0)) + 1;
   return properties.map((property) =>
     property.primaryKey === true ? (given(property) ?? next++) : undefined,
   );

@@ -735,7 +735,7 @@
       "forbidden": ["ZZ-SECRET-42", "hello", "00123", "10.50"]
     },
     {
-      "name": "JSON sample with nested records and lists: a record whose fields differ between records has no properties",
+      "name": "JSON sample with nested records and lists: a record keeps the fields that two or more records have, and leaves out the others",
       "file": "sources/shop/orders.json",
       "input": "orders.json",
       "object": "orders",
@@ -756,7 +756,14 @@
               {
                 "name": "customer",
                 "logicalType": "object",
-                "required": false
+                "required": false,
+                "properties": [
+                  {
+                    "name": "name",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
               },
               {
                 "name": "tags",
@@ -832,6 +839,459 @@
       "forbidden": ["ZZ-SECRET-42", "ZZ-OTHER"]
     },
     {
+      "name": "JSON sample: nested records that share a key keep the union of their keys as fields, none required",
+      "file": "sources/landing/address.json",
+      "input": "nested-optional.json",
+      "object": "customers",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "customers",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "address",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "city",
+                    "logicalType": "string",
+                    "required": false
+                  },
+                  {
+                    "name": "zip",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42", "ZZ-SECRET-43", "ZZ-SECRET-44", "ZZ-OTHER-1", "ZZ-OTHER-2"]
+    },
+    {
+      "name": "JSON sample: nested records with no key in common are a dictionary, written without properties",
+      "file": "sources/landing/stock.json",
+      "input": "nested-disjoint.json",
+      "object": "stock",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "stock",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "stock",
+                "logicalType": "object",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["alpha", "beta", "gamma", "delta"]
+    },
+    {
+      "name": "JSON sample: a key seen in only one of several records is left out, the others are fields; keys that each appear in one record are a dictionary, written without properties",
+      "file": "sources/landing/seen.json",
+      "input": "nested-single-use.json",
+      "object": "seen",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "seen",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "stock",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "common",
+                    "logicalType": "integer",
+                    "required": false
+                  }
+                ]
+              },
+              {
+                "name": "seen",
+                "logicalType": "object",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["only-first", "only-second", "scarlet", "emerald", "indigo"]
+    },
+    {
+      "name": "JSON sample: a key seen in only one element of a list of records is left out of its items",
+      "file": "sources/landing/orders.json",
+      "input": "nested-items-left-out.json",
+      "object": "orders",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "orders",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "lines",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "object",
+                  "required": false,
+                  "properties": [
+                    {
+                      "name": "sku",
+                      "logicalType": "string",
+                      "required": false
+                    },
+                    {
+                      "name": "qty",
+                      "logicalType": "integer",
+                      "required": false
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["gift", "ZZ-SECRET-42", "ZZ-SECRET-43", "ZZ-SECRET-44", "ZZ-GIFT-1"]
+    },
+    {
+      "name": "JSON sample: nested records keyed by dates, numbers, ids or other characters are dictionaries, written without properties",
+      "file": "sources/landing/keyed.json",
+      "input": "nested-data-keys.json",
+      "object": "keyed",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "keyed",
+            "columns": [
+              {
+                "name": "byDay",
+                "logicalType": "object",
+                "required": false
+              },
+              {
+                "name": "byCode",
+                "logicalType": "object",
+                "required": false
+              },
+              {
+                "name": "byId",
+                "logicalType": "object",
+                "required": false
+              },
+              {
+                "name": "byPath",
+                "logicalType": "object",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": [
+        "2026-01-01",
+        "2026-01-02",
+        "100",
+        "200",
+        "3.5",
+        "0F8FAD5B",
+        "6ba7b810",
+        "north/east",
+        "south/west"
+      ]
+    },
+    {
+      "name": "JSON sample: a nested record with more than 100 different keys is a dictionary, written without properties",
+      "file": "sources/landing/wide.json",
+      "input": "nested-wide.json",
+      "object": "wide",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "wide",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "wide",
+                "logicalType": "object",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["key001", "key050", "key101"]
+    },
+    {
+      "name": "JSON sample: an empty nested record counts as no record, so it does not stop the others sharing their keys",
+      "file": "sources/landing/empty.json",
+      "input": "nested-empty.json",
+      "object": "things",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "things",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "tag",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "n",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "a",
+                    "logicalType": "integer",
+                    "required": false
+                  }
+                ]
+              },
+              {
+                "name": "lone",
+                "logicalType": "object",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42", "ZZ-SECRET-43", "ZZ-SECRET-44"]
+    },
+    {
+      "name": "JSON sample: one record holding a nested record, beside records that hold none, shows nothing about its keys",
+      "file": "sources/landing/holder.json",
+      "input": "nested-one-holder.json",
+      "object": "holder",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "holder",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "empty",
+                "logicalType": "object",
+                "required": false
+              },
+              {
+                "name": "absent",
+                "logicalType": "object",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ACME", "ACME-CORP"]
+    },
+    {
+      "name": "JSON sample: in a list of several elements, one record holding a nested record shows nothing about its keys",
+      "file": "sources/landing/lists.json",
+      "input": "nested-one-holder-list.json",
+      "object": "lists",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "lists",
+            "columns": [
+              {
+                "name": "pairs",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "object",
+                  "required": false,
+                  "properties": [
+                    {
+                      "name": "m",
+                      "logicalType": "object",
+                      "required": false
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "bare",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "object",
+                  "required": false
+                }
+              },
+              {
+                "name": "solo",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "object",
+                  "required": false,
+                  "properties": [
+                    {
+                      "name": "name",
+                      "logicalType": "integer",
+                      "required": false
+                    }
+                  ]
+                }
+              },
+              {
+                "name": "shared",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "object",
+                  "required": false,
+                  "properties": [
+                    {
+                      "name": "m",
+                      "logicalType": "object",
+                      "required": false,
+                      "properties": [
+                        {
+                          "name": "a",
+                          "logicalType": "integer",
+                          "required": false
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ACME", "ACME-CORP"]
+    },
+    {
+      "name": "JSON sample: a key named like a member of every object is a field of its own, not required",
+      "file": "sources/landing/members.json",
+      "input": "nested-inherited.json",
+      "object": "members",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "members",
+            "columns": [
+              {
+                "name": "tag",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "n",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "toString",
+                    "logicalType": "integer",
+                    "required": false
+                  },
+                  {
+                    "name": "a",
+                    "logicalType": "integer",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["ZZ-SECRET-42", "ZZ-SECRET-43", "ZZ-SECRET-44"]
+    },
+    {
       "name": "JSON sample: a nested record with the same keys in every record, in any order, keeps its properties",
       "file": "sources/landing/people.json",
       "input": "same-keys.json",
@@ -871,6 +1331,48 @@
         ],
         "notes": []
       }
+    },
+    {
+      "name": "JSON sample: a sample with one record keeps the fields of its nested record, which are plain names",
+      "file": "sources/landing/one.json",
+      "input": "one-record.json",
+      "object": "one",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "one",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "address",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "street",
+                    "logicalType": "string",
+                    "required": false
+                  },
+                  {
+                    "name": "city",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["1 High Street", "Leeds"]
     },
     {
       "name": "JSON sample: an empty key is not a column, at any depth",
@@ -1077,7 +1579,14 @@
               {
                 "name": "customer",
                 "logicalType": "object",
-                "required": false
+                "required": false,
+                "properties": [
+                  {
+                    "name": "name",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
               },
               {
                 "name": "tags",
@@ -1143,7 +1652,14 @@
               {
                 "name": "customer",
                 "logicalType": "object",
-                "required": false
+                "required": false,
+                "properties": [
+                  {
+                    "name": "name",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
               },
               {
                 "name": "tags",
@@ -1433,9 +1949,20 @@
       "object": "h",
       "connection": "shop",
       "refused": [
-        "sources/shop/h.csv has no header row: every field of its first line is a number, a date, a timestamp or a boolean."
+        "sources/shop/h.csv has no header row: the first line has 3 fields, 3 of them numbers or dates."
       ],
       "forbidden": ["2.5", "2026-01-01"]
+    },
+    {
+      "name": "a CSV sample whose first line is one number is refused in the singular, without quoting it",
+      "file": "sources/shop/h1.csv",
+      "input": "headerless-one.csv",
+      "object": "h1",
+      "connection": "shop",
+      "refused": [
+        "sources/shop/h1.csv has no header row: the first line has 1 field, which is a number or a date."
+      ],
+      "forbidden": ["42"]
     },
     {
       "name": "a CSV sample header may hold numbers beside a name",
@@ -1745,6 +2272,71 @@
           "Type \"polygon\" of customers.extra.shape is not known; read as string."
         ]
       }
+    },
+    {
+      "name": "an ODCS contract: key places count only properties with primaryKey, in each list of properties by itself",
+      "file": "sources/keyed.odcs.yaml",
+      "input": "keyed.odcs.yaml",
+      "expected": {
+        "reader": "odcs",
+        "from": "document",
+        "tables": [
+          {
+            "object": "events",
+            "columns": [
+              {
+                "name": "stray",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "day",
+                "logicalType": "date",
+                "required": false,
+                "primaryKeyPosition": 2
+              },
+              {
+                "name": "parts",
+                "logicalType": "object",
+                "required": false,
+                "properties": [
+                  {
+                    "name": "stray",
+                    "logicalType": "integer",
+                    "required": false
+                  },
+                  {
+                    "name": "first",
+                    "logicalType": "string",
+                    "required": false,
+                    "primaryKeyPosition": 5
+                  },
+                  {
+                    "name": "second",
+                    "logicalType": "string",
+                    "required": false,
+                    "primaryKeyPosition": 4
+                  },
+                  {
+                    "name": "third",
+                    "logicalType": "string",
+                    "required": false,
+                    "primaryKeyPosition": 6
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["1.0.0", "active", "v3.1.0"]
     },
     {
       "name": "an ODCS contract is found by its kind, not its name",
@@ -2859,6 +3451,25 @@
       "input": "other.xml",
       "refused": [
         "sources/other.xml is not a file Ingestron reads: a columns file, an ODCS contract, OData CSDL, OpenAPI, JSON Schema, Avro, a schema registry response, a Salesforce describe, or a sample ending .csv, .json, .jsonl, .ndjson or .parquet."
+      ],
+      "forbidden": ["ZZ-SECRET-42"]
+    },
+    {
+      "name": "a name rule's OData file whose root is Edmx outside the EDMX namespaces is refused",
+      "file": "sources/shop.catalog.xml",
+      "input": "edmx-elsewhere.xml",
+      "refused": [
+        "sources/shop.catalog.xml is not an OData CSDL document: its root element is not Edmx."
+      ],
+      "forbidden": ["ZZ-SECRET-42"],
+      "recipe": "odata"
+    },
+    {
+      "name": "XML whose root is Edmx outside the EDMX namespaces is not a file Ingestron reads",
+      "file": "sources/elsewhere.xml",
+      "input": "edmx-elsewhere.xml",
+      "refused": [
+        "sources/elsewhere.xml is not a file Ingestron reads: a columns file, an ODCS contract, OData CSDL, OpenAPI, JSON Schema, Avro, a schema registry response, a Salesforce describe, or a sample ending .csv, .json, .jsonl, .ndjson or .parquet."
       ],
       "forbidden": ["ZZ-SECRET-42"]
     },
@@ -4384,6 +4995,13 @@
       }
     },
     {
+      "name": "a CSDL type with more than 16 base types is refused as nested too deeply",
+      "file": "sources/chain.xml",
+      "input": "deep-bases.csdl.xml",
+      "refused": ["sources/chain.xml is nested too deeply to read."],
+      "forbidden": ["T17", "T0", "Chain"]
+    },
+    {
       "name": "a CSDL document is read by content only when its name ends .xml or .edmx",
       "file": "sources/shop-metadata.txt",
       "input": "shop.csdl.xml",
@@ -4661,6 +5279,47 @@
       "forbidden": ["ZZ-SECRET-42"]
     },
     {
+      "name": "OData CSDL with objects: types leaves out an entity type with no properties, such as Dataverse's expando",
+      "file": "sources/crm.catalog.xml",
+      "input": "helpers.csdl.xml",
+      "recipe": "lookups",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "Account",
+            "columns": [
+              {
+                "name": "AccountID",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "Name",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": false,
+                "logicalTypeOptions": {
+                  "maxLength": 100
+                }
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "OData CSDL with objects: types whose entity types are all abstract or without properties describes no entity types",
+      "file": "sources/crm.catalog.xml",
+      "input": "helpers-only.csdl.xml",
+      "recipe": "lookups",
+      "refused": ["sources/crm.catalog.xml describes no entity types."]
+    },
+    {
       "name": "a recipe's columnNames renames the columns of each table once, without case, and leaves nested fields alone",
       "file": "sources/crm.catalog.xml",
       "input": "lookups.csdl.xml",
@@ -4822,6 +5481,60 @@
       "recipe": "lookups",
       "refused": [
         "sources/crm.catalog.xml: the recipe \"lookups\" gives two columns of the table \"clash\" the name \"x\"."
+      ]
+    },
+    {
+      "name": "columnNames that give two columns names that differ only by case keeps both when the recipe's names are case sensitive",
+      "file": "sources/crm.catalog.xml",
+      "input": "clash-case.csdl.xml",
+      "recipe": "lookups",
+      "expected": {
+        "reader": "odata",
+        "from": "document",
+        "tables": [
+          {
+            "object": "clashcase",
+            "columns": [
+              {
+                "name": "id",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": true,
+                "primaryKeyPosition": 1
+              },
+              {
+                "name": "X",
+                "sourceType": "Edm.String",
+                "logicalType": "string",
+                "required": false
+              },
+              {
+                "name": "x",
+                "sourceType": "Edm.Guid",
+                "logicalType": "string",
+                "required": false
+              }
+            ]
+          }
+        ],
+        "notes": []
+      }
+    },
+    {
+      "name": "columnNames that give two columns names that differ only by case is refused when the recipe's names are not case sensitive",
+      "file": "sources/crm.catalog.xml",
+      "input": "clash-case.csdl.xml",
+      "recipe": {
+        "from": "lookups",
+        "set": {
+          "names": {
+            "parts": 1,
+            "caseSensitive": false
+          }
+        }
+      },
+      "refused": [
+        "sources/crm.catalog.xml: the recipe \"lookups\" gives two columns of the table \"clashcase\" the name \"x\"."
       ]
     },
     {

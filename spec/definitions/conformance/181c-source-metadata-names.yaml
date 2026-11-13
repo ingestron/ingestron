@@ -1,4 +1,4 @@
-description: "A names that gives parts without caseSensitive is refused by the schema, at the mapping."
+description: "A `names` mapping that gives `parts` without `caseSensitive` is refused by the schema, and the error is at the mapping."
 environment: dev
 files:
   project.yaml: |

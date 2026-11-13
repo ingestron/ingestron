@@ -1,6 +1,7 @@
 // The source request when something stops it (spec/cli/sources.md, section 4, "Resolving").
 import { describe, expect, it } from "vitest";
 import { sourceRequestFor } from "../src/internal.js";
+import { problemsText } from "../src/request/index.js";
 import { expected, project, recipesOf } from "./source-request-fixture.js";
 
 describe("sourceRequestFor: problems", () => {
@@ -62,6 +63,11 @@ describe("sourceRequestFor: problems", () => {
     expect(resolved).toBe(false);
     expect(text).toMatch(/```text\nflows\/landing\.yaml:\d+:\d+  error  /);
     expect(text).not.toContain('"nope"');
+  });
+
+  it("never shows an empty block: with nothing to list, it says the project could not be loaded", () => {
+    problems(problemsText("# Source request (dev)", []), ["The project could not be loaded."]);
+    problems(problemsText("# Source request (dev)", [], ["A line."]), ["A line."]);
   });
 
   it("is stopped by an error the metadata does not settle", () => {

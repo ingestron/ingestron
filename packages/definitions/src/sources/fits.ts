@@ -7,13 +7,19 @@ export interface TypeOf {
   options?: Record<string, unknown> | undefined;
 }
 
-/** `fits`: every value of the source's type is a value of the contract's; `differs`: they are not the same. */
+/**
+ * `fits`: every value of the source's type is a value of the contract's; `differs`: they are not
+ * the same.
+ */
 export interface TypeJudgement {
   fits: boolean;
   differs: boolean;
 }
 
-/** The options of a number the comparison reads, `scale` counting as 0 for a side that gives a precision. */
+/**
+ * The options of a number the comparison reads, `scale` counting as 0 for a side that gives a
+ * precision.
+ */
 function digits(options: Record<string, unknown> | undefined): {
   precision?: number;
   scale?: number;
@@ -77,11 +83,15 @@ function judgeLength(source: TypeOf, contract: TypeOf): TypeJudgement {
   return { fits: from <= to, differs: from !== to };
 }
 
-/** A type as a message says it: `number(18,2)`, `string(200)`, else the logical type. */
+/**
+ * A type as a message says it: `number(18,2)`, `number(scale 2)` for a scale with no precision,
+ * `string(200)`, else the logical type.
+ */
 export function typeText({ logicalType, options }: TypeOf): string {
   if (logicalType === "number") {
     const { precision, scale } = digits(options);
     if (precision !== undefined) return `number(${precision},${scale})`;
+    if (scale !== undefined) return `number(scale ${scale})`;
   }
   const length = numberOf(options?.maxLength);
   if (logicalType === "string" && length !== undefined) return `string(${length})`;

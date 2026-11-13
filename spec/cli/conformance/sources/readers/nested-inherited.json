@@ -1,0 +1,5 @@
+[
+  { "tag": "ZZ-SECRET-42", "n": { "toString": 1, "a": 1 } },
+  { "tag": "ZZ-SECRET-43", "n": { "toString": 2, "a": 2 } },
+  { "tag": "ZZ-SECRET-44", "n": { "a": 3 } }
+]

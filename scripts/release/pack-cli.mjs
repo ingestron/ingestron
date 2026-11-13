@@ -5,7 +5,15 @@
 // resolve @ingestron/standards, so its kits are copied to "../kits" too, and its source
 // recipes to "../source-recipes" ("../recipes" holds the ADF pack's project recipes).
 import { execFileSync } from "node:child_process";
-import { cpSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { build } from "esbuild";
@@ -92,10 +100,18 @@ function manifest(version) {
 
 /**
  * Builds and packs the package; returns the tarball's absolute path. The standards package's
- * recipes folder is required; `recipes` names another (an absolute path), for a test while the
- * installed package has none.
+ * recipes folder is required; `recipesFolder` names another (an absolute path), for a test
+ * while the installed package has none. A folder that is not there stops the pack at once, with
+ * a message that says which and what to do.
  */
-export async function packCli({ outDir = join(repository, ".release"), recipes } = {}) {
+export async function packCli({ outDir = join(repository, ".release"), recipesFolder } = {}) {
+  const recipes = recipesFolder ?? join(repository, standardsRecipes);
+  if (!existsSync(recipes))
+    throw new Error(
+      recipesFolder === undefined
+        ? `The recipes folder of @ingestron/standards is not at ${recipes}. Run pnpm install, with a version of @ingestron/standards that has recipes.`
+        : `The recipes folder ${recipes}, given as recipesFolder, does not exist.`,
+    );
   const stage = join(outDir, "ingestron");
   rmSync(stage, { recursive: true, force: true });
   // The CLI's version is a constant written from its package.json; refresh it before bundling.
@@ -118,14 +134,10 @@ export async function packCli({ outDir = join(repository, ".release"), recipes }
   });
   writeFileSync(join(stage, "THIRD_PARTY_NOTICES"), thirdPartyNotices(metafile, repository));
   for (const [from, to] of folders)
-    cpSync(
-      from === standardsRecipes && recipes ? recipes : join(repository, from),
-      join(stage, to),
-      {
-        recursive: true,
-        filter: notGenerated,
-      },
-    );
+    cpSync(from === standardsRecipes ? recipes : join(repository, from), join(stage, to), {
+      recursive: true,
+      filter: notGenerated,
+    });
   for (const file of ["LICENSE", "NOTICE"]) cpSync(join(repository, file), join(stage, file));
   cpSync(join(import.meta.dirname, "cli-readme.md"), join(stage, "README.md"));
   const { version } = JSON.parse(

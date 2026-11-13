@@ -61,4 +61,36 @@ describe("the text completion is asked for", () => {
     expect(labels(`${flow}source: nowhere\n`)).toEqual([]);
     expect(labels(`${flow}source: erp\n`)).toEqual(["CustomerID", "Email"]);
   });
+
+  it("is the one read, though an earlier text of the same length had the cursor at the same offset", () => {
+    const flow = files["flows/erp.yaml"]!.replace("source: erp\n", "").replace(
+      "check: Email IS NOT NULL",
+      "check: ",
+    );
+    const offset = flow.indexOf("check: ") + "check: ".length;
+    const project = openProject(folder, new Map([[join(folder, "flows/erp.yaml"), flow]]));
+    const labels = (text: string) =>
+      completionsAt(project, "flows/erp.yaml", text, offset, "dev").map((item) => item.label);
+    // The same number of characters: only the source's name differs.
+    expect(labels(`${flow}source: err\n`)).toEqual([]);
+    expect(labels(`${flow}source: erp\n`)).toEqual(["CustomerID", "Email"]);
+  });
+});
+
+describe("the placeholder project", () => {
+  it("gives the typed text's size, not the file's on disk", () => {
+    // A size left over from the file on disk is over the limit; the text being typed is not.
+    const flow = files["flows/erp.yaml"]!.replace("check: Email IS NOT NULL", "check: ");
+    const offset = flow.indexOf("check: ") + "check: ".length;
+    const project = openProject(folder, new Map([[join(folder, "flows/erp.yaml"), flow]]));
+    const files_ = {
+      ...project.files,
+      size: (path: string) => (path === "flows/erp.yaml" ? 50_000_000 : project.files.size?.(path)),
+    };
+    const stale = { ...project, files: files_ };
+    const labels = completionsAt(stale, "flows/erp.yaml", flow, offset, "dev").map(
+      (item) => item.label,
+    );
+    expect(labels).toEqual(["CustomerID", "Email"]);
+  });
 });

@@ -39,7 +39,10 @@ When neither exists, there are none.
 A project MAY keep its own recipes in `<project>/recipes/<id>.yaml`. A
 project recipe replaces Ingestron's recipe of the same id, so a team can
 correct a query without waiting for a release. The request names the file of
-a project recipe it uses.
+a project recipe it uses. Only a file directly in `recipes/` whose name ends
+`.yaml` and does not start with `.` is a recipe, and one over 10,485,760
+bytes (the limit of any project file) is refused, before it is read when the
+file's size is known: `<path>: it is <n> bytes; the limit is 10485760.`
 
 <!-- prettier-ignore -->
 ```yaml
@@ -76,7 +79,9 @@ than those below is an error.
   publishes, such as OData `$metadata`) or `sample` (a file of what the
   source sends).
 - `inputs` (default none): a mapping from each input's name to
-  `{ description }`, the text that says what to write for it. An input's name
+  `{ description }`, the text that says what to write for it, and optionally
+  `default`, the text the request uses when the connection gives no value for
+  the input; a default may hold `{object}` (below). An input's name
   matches `^[a-z][a-zA-Z0-9_]*$` and is not `connection`, `object` or
   `schemas`. A connection gives the values in
   `metadata.with`.
@@ -138,15 +143,20 @@ is broken, as `readKit` does ([kits.md](kits.md), "Rules"):
 1. The file is valid YAML and a mapping.
 2. No key other than those above, and none of the required ones missing.
 3. Each field has its shape: `title`, `ask`'s fields, `rows`, `columnNames`'
-   `match` and `to`, and each `description` are text; `inputs`, `ask`,
-   `names`, `fields` and `columnNames` are mappings; `types`, `key` and `sources` are lists; `kind`, `read`,
-   `objects` and each `logicalType` are one of their values; `names` has
-   both `parts`, from 1 to 4, and `caseSensitive`, true or false;
-   `columnNames` has both `match` and `to`.
+   `match` and `to`, and each `description` and `default` are text; `inputs`,
+   `ask`, `names`, `fields` and `columnNames` are mappings; `types`, `key` and
+   `sources` are lists; `kind`, `read`, `objects` and each `logicalType` are
+   one of their values; `names` has both `parts`, from 1 to 4, and
+   `caseSensitive`, true or false; `columnNames` has both `match` and `to`.
 4. `id` matches its pattern and equals the file's name.
 5. Each input's name matches its pattern and is not one of the three
    reserved names.
-6. `ask` has `run` or `call` as `kind` says, and `save` starts `sources/`.
+6. `ask` has `run` or `call` as `kind` says, `save` starts `sources/`, and
+   `save` holds `{object}` when `run` or `call` does, as written or through a
+   placeholder of an input whose `default` holds it:
+   `<file>: save must hold {object} when run or call does, so that each table is saved to its own file.`
+   A step that is written once for each table (section 4) would otherwise
+   save every table to one path.
 7. `rows`, `fields`, `key` and `objects` are given only with their readers;
    each key of `fields` is a field of the columns file, and `fields` maps
    `table_name`, `column_name` and `data_type`.
@@ -168,13 +178,16 @@ The text of `ask` MAY hold these placeholders, which the request fills in:
 
 - `{connection}`: the connection's id;
 - `{object}`: one table's `object`, as the flow writes it, resolved. A step
-  that holds it is written once for each table (section 4);
+  that holds it is written once for each table (section 4), so a recipe whose
+  `run` or `call` holds it MUST hold it in `save` too (section 1, rule 6);
 - `{schemas}`: the schemas the connection's flow tables read (section 4), each
   as a single-quoted SQL literal, joined with `, `, such as `'dbo', 'sales'`;
-- `{<input>}`: the value the connection gives for that input. A value that
-  holds an unset reference (`${envvar:…}` set nowhere) is not given: the
-  placeholder is left as written, as for an input the connection does not
-  give.
+- `{<input>}`: the value the connection gives for that input, else the
+  input's `default`. A value that holds an unset reference (`${envvar:…}` set
+  nowhere) is not given: the default is used, or, when the input has none,
+  the placeholder is left as written, as for an input the connection does not
+  give. A value, given or default, that holds `{object}` has it filled for each
+  table, as the step's text has (section 4).
 
 A placeholder that cannot be filled is left as written, and the request says
 what to write in its place. Any other text in braces is left as written.
@@ -239,7 +252,8 @@ or an empty one, and an Avro field, a JSON Schema or OpenAPI property, a
 Salesforce field, an ODCS property or a Parquet field whose name is empty.
 
 A file nested too deeply for a reader to walk is refused, without quoting it:
-`<file> is nested too deeply to read.`
+`<file> is nested too deeply to read.` So is a CSDL document that has an entity
+or complex type with more than 16 base types, one inside the next.
 
 When the recipe that reads a file gives `columnNames` (section 1), the reader
 applies it to the name of each column of each table it reads, once all the
@@ -248,7 +262,8 @@ reader. Only the columns of a table are renamed, not the fields nested in a
 column, and a table's key and the columns' other facts are unchanged. A column
 whose name the rule does not change, and one whose new name would be empty,
 keeps its name. A table in which the rule gives two columns the same name is
-refused:
+refused, names that differ only by case being the same when the recipe's
+`names.caseSensitive` is `false`:
 `<file>: the recipe "<id>" gives two columns of the table "<object>" the name "<column>".`
 (the first such name, in the table's column order, and the first such table).
 `<id>` is the recipe's `id`. A file read by another reader than the recipe's,
@@ -361,11 +376,17 @@ by the import (section 3).
 
 - **CSV** is read as the columns file is (section 2.1). Its header gives the
   column names, in order. A name that is empty is left out. The first line is
-  refused as a header, with `<file> has no header row: every field of its first line is a number, a date, a timestamp or a boolean.`,
-  only when no field of it could be a name: each is empty or, as
-  `ingestron contract <sample>` reads values, a number (an integer with
-  leading zeros too), a date, a timestamp or a boolean. So `region,2023,2024`
-  is a header, and the message never quotes the line. The test cannot tell a
+  refused as a header, only when no field of it could be a name: each is empty
+  or, as `ingestron contract <sample>` reads values, a number (an integer with
+  leading zeros too), a date, a timestamp or a boolean. The refusal is
+  `<file> has no header row: <found>.` with `<found>` the text
+  `the first line has <n> fields, <m> of them numbers or dates`, where `<n>`
+  is the number of fields of the first line, empty ones included, and `<m>`
+  the number of them that are such a number, date, timestamp or boolean. When
+  `<n>` is 1 it is `the first line has 1 field, which is a number or a date`,
+  or `the first line has 1 field, which is empty`. The message gives counts
+  and never a name or a value of the line, since a file without a header has
+  data there. So `region,2023,2024` is a header. The test cannot tell a
   headerless file whose first line holds some text from a header: its values
   become column names, which is the rule of this section.
 - **JSON** is a list of records, or one record. With the recipe's `rows`, the
@@ -379,14 +400,49 @@ found. A column's logical type is the narrowest that every non-empty value
 fits, as `ingestron contract <sample>` infers it: `integer`, `number`,
 `boolean`, `date`, `timestamp`, else `string`; a column with no non-empty
 value is `string`. A value that is a record makes the column
-`logicalType: object`, with the record's fields as its `properties`, read the
-same way, when every record of the column has the same set of fields, in any
-order. When the sets differ between records, the record is a dictionary keyed
-by values, such as counts by customer code, and its keys are data: the column
-is `object` without `properties`, so no key is written. (A sample with one
-record keeps its fields: it cannot show that they differ.) A list makes the
-column `logicalType: array`, with its elements read as one column, its
-`items`, which is named `items`. A column nested deeper than 16 levels has no
+`logicalType: object`. Its keys are read as its fields only when the keys are
+names and not data. Take the records found at that place, the values of the
+column that are records (for the elements of a list, the records among all
+the elements). A record with no key, or only an empty one, counts as no
+record, as `null` does: it neither stops the other records from showing that
+their keys are shared nor makes any key optional. The keys are names when both
+of these hold:
+
+- the keys do not look like data: no key starts with a date,
+  `^\d{4}-\d{2}-\d{2}`; none is a number, `^-?\d+(\.\d+)?$`; none is a
+  UUID, five groups of hexadecimal digits of 8, 4, 4, 4 and 12 digits, joined
+  with `-`, in any case; none holds a character outside `[A-Za-z0-9_ $.-]`;
+  and there are no more than 100 different keys;
+- the records show that the keys are shared, which is so when the sample is
+  one record, no list on the way to that place has more than one element
+  (counting every element, a `null` or an empty record too), and exactly one
+  record is found at that place (nothing then can show that they differ), or,
+  whatever the sample, when at least one key is in every record found at that
+  place and at least two records are found there. Otherwise a single record,
+  such as `{ "n": { "ACME": 1 } }` beside records whose `n` is `null` or `{}`,
+  or the one record among the elements `[{ "ACME": 1 }, {}]`, shows nothing,
+  and its keys are not read as fields.
+
+Then the fields are the keys found in the records, in the order first found,
+and their types are merged as the types of the columns of the table are, from
+every record that has the key. A key that some of the records leave out is a
+field like any other, and none of the fields is `required` (every column of a
+sample is `required: false`). When several records are found at that place, a
+key that is in only one of them is left out, since one record shows nothing
+about whether it is a name: the other keys are the fields. So
+`lines[].items`, whose elements are `{ "sku": …, "qty": …, "gift": … }` and
+`{ "sku": …, "qty": … }`, has the fields `sku` and `qty` and not `gift`. The
+keys left out count in the test of the first condition, so one that looks like
+data makes the column a dictionary.
+
+Otherwise the keys are data, such as counts by customer code or by date, as
+when each record has its own keys: the column is `object` without
+`properties`, and no key is written. So is a column whose records have no key.
+An empty key is not a key (section 2).
+
+A list makes the column `logicalType: array`, with its elements read as one
+column, its `items`, which is named `items`; the records among the elements
+are read together, as above. A column nested deeper than 16 levels has no
 `properties` or `items`. Every column has `required: false` and no
 `primaryKeyPosition`, and no `sourceType`. The values are read only to find
 the types and are then dropped.
@@ -409,8 +465,9 @@ when it has one, whatever its physical type, so an `INT32` field annotated
 | `TIME`                                     | `time`                                 |
 | `BYTE_ARRAY` with `STRING`, and any other  | `string`                               |
 
-A `DECIMAL` field that gives no scale has a `scale` of 0. `sourceType` is the field's physical type, with its annotation after it in
-brackets when it has one, such as `INT32(DATE)`. A Parquet file has no key.
+A `DECIMAL` field that gives no scale has a `scale` of 0. `sourceType` is the
+field's physical type, with its annotation after it in brackets when it has
+one, such as `INT32(DATE)`. A Parquet file has no key.
 
 A sample is refused when it has no columns: `<file> has no columns.`; when
 its JSON is not records:
@@ -427,15 +484,18 @@ Each entry of `schema` is a table: its `object` is the entry's
 - `name` is the property's `physicalName`, else its `name`;
 - `logicalType`, `logicalTypeOptions` and `required` are the property's;
   a property with no `logicalType` is `string`, and so is one whose
-  `logicalType` is text that is not one of the logical types a recipe's `types` may give (section 1),
-  with the note `Type "<logicalType>" of <object>.<column> is not known; read as string.`,
+  `logicalType` is text that is not one of the logical types a recipe's
+  `types` may give (section 1), with the note `Type "<logicalType>" of <object>.<column> is not known; read as string.`,
   where `<column>` is the property's name, after the names of the properties
   it is nested in, joined with `.`;
 - `primaryKeyPosition` is the property's, for a property with
   `primaryKey: true` and a whole `primaryKeyPosition` from 1. A property with
   `primaryKey: true` and none takes the next positions, in the order of the
-  properties, counting from one more than the highest position the properties
-  of its table give (from 1 when none gives one);
+  properties, counting from one more than the highest position that the
+  properties with `primaryKey: true` give (from 1 when none gives one). Each
+  list of properties, a table's or one nested in a property, is numbered by
+  itself, and a `primaryKeyPosition` on a property without
+  `primaryKey: true` is ignored;
 - `sourceType` is the property's `physicalType`, when it has one;
 - nested `properties` and `items` are read the same way.
 
@@ -446,13 +506,18 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
 
 ### 2.4 Documents a source publishes
 
-- **OData** (`odata`): a CSDL document, XML whose root element is `Edmx`. A
-  file is read as OData by its content only when its name ends `.xml` or
-  `.edmx`; any other file is read as OData only as the reader of the
-  connection's recipe, or by the `.catalog.` name rule (section 2.5). Each
+- **OData** (`odata`): a CSDL document, XML whose root element is `Edmx` in an
+  EDMX namespace, `http://docs.oasis-open.org/odata/ns/edmx` (OData 4) or
+  `http://schemas.microsoft.com/ado/2007/06/edmx` (OData 2 and 3), whatever
+  prefix it is written with. A file is read as OData by its content only when
+  its name ends `.xml` or `.edmx`; any other file is read as OData only as the
+  reader of the connection's recipe, or by the `.catalog.` name rule
+  (section 2.5). Each
   entity set is a table named after the set, or, with the recipe's
   `objects: types`, each entity type that is not abstract (`Abstract="true"`)
-  is a table named after the type. Each
+  and has at least one property, its own or a base type's, is a table named
+  after the type (a helper type with none, such as Dataverse's `expando`, is
+  left out). Each
   property is a column: `Nullable="false"` makes it required, and
   `<Key>`'s `PropertyRef`s, in order, are the primary key, whose columns are
   required. A complex type is `object`, with its properties as `properties`,
@@ -478,7 +543,7 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
   document does not define is left out, with the note
   `The entity set "<set>" is left out: its type "<type>" is not defined in the document.`
   A document with no entity set (or, with
-  `objects: types`, no entity type that is not abstract) is refused:
+  `objects: types`, no such entity type) is refused:
   `<file> describes no entity sets.` (or `no entity types`).
 - **OpenAPI** (`openapi`): JSON or YAML with a top-level `openapi` (3.x) or
   `swagger` (2.0). Each schema of `components.schemas` (`definitions` in
@@ -523,8 +588,8 @@ refused: `<file> is not an ODCS data contract: it has no kind: DataContract.`
   other is `string`.
 - **A schema registry's response**: a JSON mapping whose `schema` is text and
   that also has `subject`, `id` or `version`, as a registry returns a
-  subject's version. (A sample record with a text column `schema` is a sample.) Its `schema` is read with Avro when
-  `schemaType` is missing or `AVRO`, and with JSON Schema when it is `JSON`.
+  subject's version. (A sample record with a text column `schema` is a
+  sample.) Its `schema` is read with Avro when `schemaType` is missing or `AVRO`, and with JSON Schema when it is `JSON`.
   The readers `avro` and `json-schema` both accept it, and each reads it by
   its `schemaType`. `PROTOBUF` is refused:
   `Protobuf schemas are not read yet; save the topic's columns as a columns file instead.`
@@ -571,8 +636,9 @@ schema reached by `$ref` is written in full only the first time in a table
 (the table's own schema counts as the first); wherever it appears again it
 has its type, `object` or `array`, without `properties` or `items`, and the
 last part of the `$ref`, such as `Address`, as its `sourceType`. An object
-nested deeper than 16 levels has no `properties`. `enum`, `default`, `example` and every other keyword are
-not read, so no value of the data a schema describes reaches the metadata.
+nested deeper than 16 levels has no `properties`. `enum`, `default`,
+`example` and every other keyword are not read, so no value of the data a
+schema describes reaches the metadata.
 
 ### 2.5 Choosing the reader
 
@@ -649,8 +715,30 @@ and the notes, or the reasons it refuses the file. It writes nothing.
 
 It refuses:
 
-- a current text that is not a `SourceMetadata` document of the connection:
-  `sources/<connection>.yaml is not the source metadata of "<connection>".`;
+- a time of the import that is not an ISO 8601 date, or date and time, that
+  a calendar has: `The import time "<at>" is not an ISO 8601 time.`;
+- a current text that is not a `SourceMetadata` document of the connection,
+  as `source-metadata.schema.yaml` gives it for the keys the import reads:
+  `sources/<connection>.yaml is not the source metadata of "<connection>": <reason>. Correct it, or move it away and import every file again.`
+  The `<reason>` names the first field that fails, in the order of the
+  document's keys, a table's `object`, `captured` and `columns`, and a
+  column's keys, and the rule it breaks, never a value of the document. A
+  field is written as its keys joined with `.`, a list item as `[<n>]` from 0,
+  such as `tables[0].columns[1].logicalType`, followed by its rule:
+
+  - `must be text`, `must be true or false`, `must be a mapping` or
+    `must be a list`;
+  - `must be one of <values>`: `apiVersion` is `ingestron.io/v1`, `kind` is
+    `SourceMetadata`, `logicalType` is one of the nine and `captured.from` one
+    of the five;
+  - `must be <connection>`, for `connection`;
+  - `must be a whole number from 1` for a `primaryKeyPosition`, and
+    `must be a whole number from 1 to 4` for `names.parts`.
+
+  A column nested deeper than 64 levels is `<field> is nested too deeply`;
+  text that is not YAML is `it is not valid YAML`; and a YAML value that is
+  not a mapping is `the document must be a mapping`;
+
 - the metadata document itself, `sources/<connection>.yaml` or `.yml`:
   `<file> is source metadata already; import the file it was made from.`;
 - a file the readers refuse, with their reasons;
@@ -701,6 +789,7 @@ otherwise.
 The new document has:
 
 - `id` and `connection`: the connection's id;
+- `description`: the current document's, else none;
 - `environment`: `--env`'s value, else the current document's, else none;
 - `names`: the recipe's, else the current document's, else none;
 - `tables`: each with `captured` of `at` (the time of the import, as
@@ -714,8 +803,9 @@ It is written so that a new import shows as a small diff:
 
 - It starts with the comment
   `# Written by ingestron source import. Do not edit: import again to replace it.`
-- Then `apiVersion`, `kind`, `id`, `connection`, `environment`, `names` and
-  `tables`, in that order, in block style. `names` is a one-line flow mapping.
+- Then `apiVersion`, `kind`, `id`, `description`, `connection`, `environment`,
+  `names` and `tables`, in that order, in block style. `names` is a one-line
+  flow mapping.
 - Tables are sorted by `object`, in code-point order. Columns keep the
   source's order.
 - Each table has `object`, `captured` and `columns`, in that order.
@@ -860,7 +950,9 @@ have problems; fix them first:", and each error in a `text` code block,
 written as `ingestron plan` writes a problem, as the platform request writes
 them. Warnings and information are left out. An unknown connection and a
 recipe's problems are written in the same block, each on a line of its own,
-after the definitions' errors. A pack that cannot be loaded gives the
+after the definitions' errors. When the project cannot be loaded and no
+error says why, the block holds the line `The project could not be loaded.`
+A pack that cannot be loaded gives the
 `PACK_LOAD` error and the exit code 2, as for every command
 ([output folders](outputs.md), section 4). An unknown connection is
 `"<id>" is not a connection of the project. Connections: <ids>.`
@@ -899,7 +991,9 @@ Every table its flows read is in sources/<connection>.yaml:
 ```
 
 with one line for each entry, in code-point order of its `object`, each once.
-Nothing is asked for that connection.
+A line ends after `<captured.from>`, with no `, captured <YYYY-MM-DD>`, when
+`captured.at` does not start with a date. Nothing is asked for that
+connection.
 
 **The recipe's step.** Otherwise, when the connection has a recipe, the
 section starts with its step:
@@ -926,7 +1020,8 @@ Save the result as `<save>`.
 - A project recipe's line is ``- Recipe: <title> (`<id>`, from `recipes/<id>.yaml`)``.
 - With `call` instead of `run`, `Run this query:` is `Call this URL:` and the
   block is a `text` block. `how`, when the recipe gives it, is a paragraph
-  after the block, without the line breaks and spaces at its start and end. `Save the result as` is `Save the response as`.
+  after the block, without the line breaks and spaces at its start and end.
+  `Save the result as` is `Save the response as`.
 - A `sample` recipe has neither: the step says `Save a sample of each table:`.
 - When `run`, `call` or `save` holds `{object}`, the block and the save line
   are replaced by a list with one item for each table, in the order of the
@@ -940,12 +1035,16 @@ Save the result as `<save>`.
   - `<run or call, filled>`, saved as `<save, filled>`
   ```
 
-- Every placeholder is filled where its value is known (section 1). The
+- Every placeholder is filled where its value is known (section 1); an
+  input's value that holds `{object}` has it filled in the list's items, and
+  left as written elsewhere. The
   list after `Fill in before use:` names, in the order they first appear,
   each that is not: an input the connection does not give, with the input's
   `description`, `{schemas}` when the schemas are not known, with
   `the schemas to describe, each in single quotes and separated by commas, such as 'dbo', 'sales'`,
-  and `{object}` when it is left as written, with
+  and `{object}` when it is left as written (in the block and save line when
+  there are no flow tables, and in `who`, `access` or `how`, which are shown
+  once and not for each table), with
   `a table to describe, as a flow's object names it; do this once for each table`.
   With none, the list and its line are left out.
 
@@ -1135,6 +1234,14 @@ With `--dry-run` it writes nothing and prints the same changes' text, then
 `Nothing was written (--dry-run).` A refused file prints each reason on a line
 of its own, and nothing is written.
 
+A target that cannot be written is a refusal too, never a stack trace, and
+nothing is written: a link, a folder or anything else that is not a regular
+file gives `<path> is not a regular file (it is a link or a folder). Nothing was
+written.`, and any other failure of the system gives `Could not write <path>:
+<code>. Nothing was written.`, `<code>` being the system's, such as `EACCES`.
+`<path>` is from the project folder, such as `sources/erp.yaml`. A refused
+import prints no changes, and exits 1.
+
 ### `ingestron contract --from-metadata <flow>.<table>` and `ingestron contract --from-metadata --needed [--env <name>]`
 
 Drafts the contracts of the tables named, one or more, or with `--needed` of
@@ -1156,7 +1263,7 @@ and 0 otherwise: a skipped file alone is not a problem.
 | Code | When                                                                                                                                                                                                                                                                                                         |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 0    | Done, a dry run that would write included. Breaking changes do not change it.                                                                                                                                                                                                                                |
-| 1    | A refusal; an unknown connection, flow table or recipe; definitions that cannot be loaded; or definitions with errors that stop the command (section 4, "Resolving").                                                                                                                                        |
+| 1    | A refusal; an unknown connection, flow table or recipe; a recipe that breaks a rule (section 1), even one no connection uses; definitions that cannot be loaded; or definitions with errors that stop the command (section 4, "Resolving").                                                                  |
 | 2    | A usage mistake: `source` without `request` or `import`, `import` without both arguments or with more, `--env` more than once on `source` or on `contract --from-metadata`, `--from-metadata` with neither a table nor `--needed`, or with both, or a flag given to a command it does not belong to (below). |
 
 ### Flags

@@ -1,0 +1,10 @@
+[
+  {
+    "id": 1,
+    "lines": [
+      { "sku": "ZZ-SECRET-42", "qty": 2, "gift": "ZZ-GIFT-1" },
+      { "sku": "ZZ-SECRET-43", "qty": 1 }
+    ]
+  },
+  { "id": 2, "lines": [{ "sku": "ZZ-SECRET-44", "qty": 5 }] }
+]

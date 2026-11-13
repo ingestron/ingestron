@@ -113,3 +113,62 @@ describe("guideFacts reads the standard", () => {
     ]);
   });
 });
+
+describe("guideFacts writes a fixed value as the standard writes it", () => {
+  const settings = (value: string) =>
+    facts({
+      "project.yaml": project,
+      "standard.yaml": standard(`store: { fixed: { fold: { setting: ${value} } } }\n`),
+    }).standard?.fixed[0]?.settings[0]?.[1];
+
+  it("keeps a number's text, including a float, an exponent and a hexadecimal", () => {
+    expect(settings("1.50")).toBe("1.50");
+    expect(settings("1e21")).toBe("1e21");
+    expect(settings("0x1F")).toBe("0x1F");
+    expect(settings("[2.0, 2]")).toBe("[2.0, 2]");
+    expect(settings("{ a: .5 }")).toBe("{ a: .5 }");
+  });
+
+  it("leaves other numbers, booleans, null and the specials as they were", () => {
+    expect(settings("7")).toBe("7");
+    expect(settings("-3")).toBe("-3");
+    expect(settings("true")).toBe("true");
+    expect(settings("~")).toBe("null");
+    expect(settings(".nan")).toBe(".nan");
+    expect(settings("-.inf")).toBe("-.inf");
+  });
+
+  it("writes a key of a nested mapping as a value, not as [object Map]", () => {
+    expect(settings("{ ? { a: 1 } : x, 2: y, k: z }")).toBe("{ { a: 1 }: x, 2: y, k: z }");
+    expect(settings("{ ? [a, b] : x }")).toBe("{ [a, b]: x }");
+  });
+
+  it("reads a version written as a number as written", () => {
+    const found = facts({
+      "project.yaml": project,
+      "standard.yaml": standard("origin: { standard: acme, version: 2.10 }\n"),
+    });
+    expect(found.standard?.origin).toBe("acme@2.10");
+  });
+
+  it("writes a number key as the file writes it, for a setting, a method and a fixed key", () => {
+    const found = facts({
+      "project.yaml": project,
+      "standard.yaml": standard(
+        "fixed: { 1.0: a, 0x10: b }\nstore: { fixed: { 2.50: { 1.50: a, 0x10: b, 7: c } } }\n",
+      ),
+    });
+    expect(found.standard?.fixedIntent).toEqual(["1.0", "0x10"]);
+    expect(found.standard?.fixed).toEqual([
+      {
+        action: "store",
+        method: "2.50",
+        settings: [
+          ["1.50", "a"],
+          ["0x10", "b"],
+          ["7", "c"],
+        ],
+      },
+    ]);
+  });
+});

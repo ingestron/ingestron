@@ -12,7 +12,10 @@ export interface SourceDifference {
   code: SourceCode;
   /** `breaking` fails by default; `compatible` is information. */
   kind: "breaking" | "compatible";
-  /** The column, as the contract (`before`) names it, or the metadata for a new column; none for the key. */
+  /**
+   * The column, as the contract (`before`) names it, or the metadata for a new column; none for
+   * the key.
+   */
   column?: string;
   /** What the table had: a type, `required`, or the key's columns joined with `, `. */
   before?: string;

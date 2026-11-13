@@ -71,6 +71,51 @@ describe("guideFacts reads the files without resolving", () => {
     expect(found.outputs.map(({ id }) => id)).toEqual(["fold", "local"]);
   });
 
+  it("names a runs-on pack the standard lacks by its id, and finds the pack by it", () => {
+    const found = facts({
+      "project.yaml":
+        "id: retail\nenvironments: { dev: {}, p: { runs-on: 'fold@3' }, q: { runs-on: other@1 } }\nimports: ['*.yaml']\n",
+      "standard.yaml": standard().replace("[fold@2, local@1]", "[local@1]"),
+    });
+    expect(found.environments[1]).toEqual({ name: "p", runsOn: "fold@3" });
+    expect(
+      found.outputs.map(({ id, name, folder, together }) => [id, name, folder, together]),
+    ).toEqual([
+      ["local", "local@1", "build/local/", false],
+      ["fold", "fold", "build/fold/", true],
+      ["other", "other", "build/other/", undefined],
+    ]);
+  });
+
+  it("writes a number environment name as the file writes it", () => {
+    const found = facts({
+      "project.yaml":
+        "id: retail\nenvironments: { 1.0: {}, 0x10: {}, 3: {}, dev: {} }\nimports: ['*.yaml']\n",
+      "standard.yaml": standard(),
+    });
+    expect(found.environments.map(({ name }) => name)).toEqual(["1.0", "0x10", "3", "dev"]);
+  });
+
+  it("lists the project's files once", () => {
+    const files = {
+      "project.yaml": "id: retail\nimports: ['*.yaml']\n",
+      "standard.yaml": standard(),
+      "STANDARD.md": "# Why\n",
+    };
+    let listed = 0;
+    const source: FileSource = {
+      ...memoryFiles(files),
+      list: () => {
+        listed += 1;
+        return Object.keys(files);
+      },
+    };
+    const found = guideFacts(source, "build", standIns);
+    if ("noGuide" in found) throw new Error(found.noGuide);
+    expect(found.standard?.explained).toBe(true);
+    expect(listed).toBe(1);
+  });
+
   it("finds connections, data products and the ${envvar:…} names, each once, in code point order", () => {
     const found = facts({
       "project.yaml": "id: retail\nimports: ['*.yaml']\nvalues: { a: '${envvar:ZED}' }\n",

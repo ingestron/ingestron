@@ -34,7 +34,7 @@ export function reportColumn(context: Context, contract: Contract, name: string,
   const place = columnsPlace(contract);
   context.reporter.error(
     "CLEANSE_COLUMN",
-    `"${name}" is not a column of ${place.of}.`,
+    `"${name}" is not a column of ${place.name}.`,
     at,
     `Use a column the ${place.lists} lists: ${names.slice(0, listed).join(", ")}${more}.`,
   );
@@ -108,7 +108,7 @@ function checkZone(subject: Subject, block: ColumnCleanseDoc): boolean {
   if (!typed) {
     context.reporter.error(
       "CLEANSE_TYPE",
-      `"timezone" works on timestamps, and "${column.name}" is ${column.logicalType} in ${columnsPlace(contract).in}.`,
+      `"timezone" works on timestamps, and "${column.name}" is ${column.logicalType} in ${columnsPlace(contract).name}.`,
       placeOf(own, "columns", column.name, "timezone"),
       `Remove "timezone" from "${column.name}", or convert it where it is still a timestamp.`,
     );
@@ -127,7 +127,7 @@ function checkText(subject: Subject, block: ColumnCleanseDoc, operation: Operati
   if (writtenOf(block, operation) === undefined || !isNotText(column)) return true;
   context.reporter.error(
     "CLEANSE_TYPE",
-    `"${operation}" works on text, and "${column.name}" is ${column.logicalType} in ${columnsPlace(contract).in}.`,
+    `"${operation}" works on text, and "${column.name}" is ${column.logicalType} in ${columnsPlace(contract).name}.`,
     placeOf(own, "columns", column.name, operation),
     `Remove "${operation}" from "${column.name}", or cleanse it where it is still text.`,
   );
@@ -163,7 +163,7 @@ function reportValue(
 ): false {
   context.reporter.error(
     "CLEANSE_TYPE",
-    `The ${item.what} ${JSON.stringify(item.value)} doesn't fit "${column.name}", which is ${column.logicalType} in ${columnsPlace(contract).in}.`,
+    `The ${item.what} ${JSON.stringify(item.value)} doesn't fit "${column.name}", which is ${column.logicalType} in ${columnsPlace(contract).name}.`,
     at,
     "Give a value of the column's type.",
   );

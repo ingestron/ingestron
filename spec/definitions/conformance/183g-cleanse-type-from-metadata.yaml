@@ -46,4 +46,4 @@ expect:
       severity: error
       file: sales.yaml
       line: 10
-      message: '"trim" works on text, and "id" is integer in the source metadata of "ERP.dbo.Orders".'
+      message: '"trim" works on text, and "id" is integer in "ERP.dbo.Orders" in the source metadata.'

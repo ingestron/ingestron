@@ -36,7 +36,14 @@ export const sourceRecipeSchema = {
         type: "object",
         additionalProperties: false,
         required: ["description"],
-        properties: { description: { ...text, description: "What to write for the input." } },
+        properties: {
+          description: { ...text, description: "What to write for the input." },
+          default: {
+            ...text,
+            description:
+              "The text used when the connection gives no value for the input; it may hold {object}.",
+          },
+        },
       },
       description:
         "Each input's name and description. A connection gives the values in metadata.with.",
