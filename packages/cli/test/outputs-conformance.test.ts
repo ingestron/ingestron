@@ -5,11 +5,9 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative, sep } from "node:path";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
-import { readArgs, usage } from "../src/terminal/index.js";
-import { generate } from "../src/commands/generate.js";
 import { generatedFolders } from "../src/commands/outputs.js";
 import { checkLines } from "./conformance-checks.js";
-import { standIns, type Notice } from "./outputs-packs.js";
+import { runWithStandIns, type Notice } from "./outputs-packs.js";
 
 interface Case {
   description: string;
@@ -36,18 +34,11 @@ function runCase(testCase: Case): { folder: string; exit: number; output: string
     mkdirSync(dirname(join(folder, path)), { recursive: true });
     writeFileSync(join(folder, path), text);
   }
-  let output = "";
-  const io = { cwd: folder, write: (text: string) => (output += text) };
   const args = [testCase.command, ...(testCase.args ?? []), "--definitions", ".", "--out", "build"];
   const saved = { ...process.env };
   Object.assign(process.env, testCase.envvars ?? {});
   try {
-    const options = readArgs(args);
-    if (options === "help" || "mistake" in options) {
-      output = `${options === "help" ? "" : options.mistake}\n\n${usage}`;
-      return { folder, exit: 2, output };
-    }
-    return { folder, exit: generate(options, io, standIns(testCase.notices)), output };
+    return { folder, ...runWithStandIns(args, folder, testCase.notices) };
   } finally {
     for (const name of Object.keys(testCase.envvars ?? {}))
       if (saved[name] === undefined) delete process.env[name];

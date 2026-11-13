@@ -1,6 +1,6 @@
 // A file that cannot be read or written (spec/cli/assistants.md, section 5): its line, the next
 // file still written, exit 1 for assistant add, and nothing thrown.
-import { chmodSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { writeAssistantFiles } from "../src/commands/assistant.js";
@@ -18,7 +18,7 @@ describe("a file that cannot be read or written", () => {
   };
   afterEach(() => {
     for (const path of restore.splice(0))
-      chmodSync(path, path.endsWith("AGENTS.md") ? 0o644 : 0o755);
+      chmodSync(path, path.endsWith(".yaml") || path.endsWith("AGENTS.md") ? 0o644 : 0o755);
   });
 
   denied("says an AGENTS.md with mode 000 could not be read, and writes the other files", () => {
@@ -69,6 +69,36 @@ describe("a file that cannot be read or written", () => {
     const io = { cwd: folder, write: (text: string) => (output += text), now: () => new Date() };
     expect(writeAssistantFiles(folder, ["agents"], "build", io)).toBe(false);
     expect(output).toBe("AGENTS.md: could not be read (EACCES), so nothing was written to it.\n");
+  });
+
+  denied(
+    "says there is no guide for a project.yaml that cannot be read, and writes nothing",
+    () => {
+      const folder = project();
+      mode(join(folder, "project.yaml"), 0o000);
+      const { code, output } = ingestron(folder, ["assistant", "add", "claude"]);
+      expect(output).toBe("No guide: project.yaml cannot be read.\n");
+      expect(code).toBe(1);
+      expect(listed(folder).sort()).toEqual(["project.yaml", "standard.yaml"]);
+    },
+  );
+
+  denied("says the same for a folder of the project that cannot be listed", () => {
+    const folder = project();
+    mkdirSync(join(folder, "private"));
+    mode(join(folder, "private"), 0o000);
+    const { code, output } = ingestron(folder, ["assistant", "add", "agents"]);
+    expect(output).toBe("No guide: project.yaml cannot be read.\n");
+    expect(code).toBe(1);
+  });
+
+  denied("does not throw out of writeAssistantFiles for either, as init's step needs", () => {
+    const folder = project();
+    mode(join(folder, "project.yaml"), 0o000);
+    let output = "";
+    const io = { cwd: folder, write: (text: string) => (output += text), now: () => new Date() };
+    expect(writeAssistantFiles(folder, ["agents"], "build", io)).toBe(false);
+    expect(output).toBe("No guide: project.yaml cannot be read.\n");
   });
 
   it("is still current and exit 0 when nothing has to be written", () => {

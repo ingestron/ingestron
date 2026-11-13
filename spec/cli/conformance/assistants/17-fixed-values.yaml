@@ -1,4 +1,4 @@
-description: "With eight fixed settings or fewer, each fixes item gives the values as YAML flow text: a number, a boolean, a mapping, a bare string, and a string that would read as another type or has a space, quoted."
+description: "With eight fixed settings or fewer, each fixes item gives the values as YAML flow text: a number, a boolean, a mapping, a bare string, and a string that would read as another type or has a space, quoted. A number is written as the file writes it, and a key of a mapping inside a value is written as a value."
 files:
   project.yaml: |
     id: retail
@@ -11,12 +11,14 @@ files:
     packs: [databricks@2, adf@2]
     ingest:
       fixed:
-        adf-copy: { retries: 2, every: { frequency: Hour, interval: 24 }, paused: false }
+        adf-copy: { retries: 2, every: { frequency: Hour, interval: 24 }, paused: false, timeout: 1.50 }
     store:
       fixed:
         streaming-table:
           cluster_by: auto
           properties: { delta.enableChangeDataFeed: "true", owner: data platform }
+          limit: 1e3
+          tiers: { 1: low, 0x10: high }
 command: assistant
 args: ["add", "agents"]
 expect:
@@ -25,4 +27,4 @@ expect:
     - "AGENTS.md: written"
   contains:
     AGENTS.md:
-      - "   - `ingest` fixes, for `adf-copy`: `retries: 2`, `every: { frequency: Hour, interval: 24 }`, `paused: false`.\n   - `store` fixes, for `streaming-table`: `cluster_by: auto`, `properties: { delta.enableChangeDataFeed: \"true\", owner: \"data platform\" }`.\n"
+      - "   - `ingest` fixes, for `adf-copy`: `retries: 2`, `every: { frequency: Hour, interval: 24 }`, `paused: false`, `timeout: 1.50`.\n   - `store` fixes, for `streaming-table`: `cluster_by: auto`, `properties: { delta.enableChangeDataFeed: \"true\", owner: \"data platform\" }`, `limit: 1e3`, `tiers: { 1: low, 0x10: high }`.\n"

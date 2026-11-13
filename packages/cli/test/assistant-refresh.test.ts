@@ -175,11 +175,14 @@ describe("plan and apply keep the guide current", () => {
     () => {
       const folder = staleProject();
       const text = read(folder, "AGENTS.md");
-      const without = ingestron(project(), ["apply"]);
+      const bare = staleProject();
+      rmSync(join(bare, "AGENTS.md"));
+      const without = ingestron(bare, ["apply"]);
       chmodSync(join(folder, "AGENTS.md"), 0o444);
       try {
         const { code, output } = ingestron(folder, ["apply"]);
         expect(code).toBe(without.code);
+        expect(output).toBe(without.output);
         expect(output).not.toContain("AGENTS.md");
         expect(read(folder, "AGENTS.md")).toBe(text);
       } finally {

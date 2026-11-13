@@ -2,7 +2,7 @@
 import { parseArgs } from "node:util";
 import { readAssistantNames } from "@ingestron/core/internal";
 import { commands } from "./help.js";
-import { plainSub, type AssistantAction, type StandardAction } from "./sub-args.js";
+import { subCommandOf, type AssistantAction, type StandardAction } from "./sub-args.js";
 import { metadataTables, misplacedFlag, sourceAction, type SourceAction } from "./source-args.js";
 
 export type { SourceAction } from "./source-args.js";
@@ -150,7 +150,7 @@ interface Chosen {
 /** The command and the arguments after it, with standard's, source's and assistant's sub-commands, or a mistake. */
 function commandOf(positionals: string[], values: Values): Chosen | { mistake: string } {
   const [command = "", ...extra] = positionals;
-  const plain = plainSub(command, extra, values.platform);
+  const plain = subCommandOf(command, extra, values.platform);
   if (plain) return "mistake" in plain ? plain : { command, extra: [], ...plain };
   if (command === "source") {
     const source = sourceAction(extra, {

@@ -18,6 +18,7 @@ import type * as nodeFs from "node:fs";
 const behave = vi.hoisted(() => ({
   failWrite: undefined as Error | undefined,
   afterWrite: undefined as (() => void) | undefined,
+  beforeAccess: undefined as (() => void) | undefined,
   renamed: [] as [string, string][],
 }));
 
@@ -29,6 +30,10 @@ vi.mock("node:fs", async (importOriginal) => {
       if (behave.failWrite) throw behave.failWrite;
       actual.writeFileSync(...args);
       behave.afterWrite?.();
+    },
+    accessSync: (...args: Parameters<typeof actual.accessSync>) => {
+      behave.beforeAccess?.();
+      actual.accessSync(...args);
     },
     renameSync: (from: string, to: string) => {
       behave.renamed.push([from, to]);
@@ -43,6 +48,7 @@ const { ingestron, project, read, temp } = await import("./assistant-helpers.js"
 beforeEach(() => {
   behave.failWrite = undefined;
   behave.afterWrite = undefined;
+  behave.beforeAccess = undefined;
   behave.renamed = [];
 });
 
@@ -110,6 +116,15 @@ describe("writeSafely on an existing file", () => {
     expect(hidden(folder)).toEqual([]);
   });
 
+  it("is false, not a throw, for a file removed after it was looked at", () => {
+    const folder = temp();
+    const file = join(folder, "AGENTS.md");
+    writeFileSync(file, "original\n");
+    behave.beforeAccess = () => rmSync(file);
+    expect(writeSafely(file, "new text\n", true)).toBe(false);
+    expect(readdirSync(folder)).toEqual([]);
+  });
+
   it("creates a new file directly, without a temporary file", () => {
     const folder = temp();
     expect(writeSafely(join(folder, "AGENTS.md"), "one\n", false)).toBe(true);
@@ -119,6 +134,14 @@ describe("writeSafely on an existing file", () => {
 });
 
 describe("assistant add when the write fails", () => {
+  it("says not a regular file, not ENOENT, for a file deleted between the check and the write", () => {
+    const folder = project({ "AGENTS.md": "# Mine\n" });
+    behave.beforeAccess = () => rmSync(join(folder, "AGENTS.md"));
+    const { code, output } = ingestron(folder, ["assistant", "add", "agents"]);
+    expect(output).toBe("AGENTS.md: not a regular file, so nothing was written to it.\n");
+    expect(code).toBe(1);
+  });
+
   it("says it could not be written, with error when the failure has no code, and keeps the file", () => {
     const folder = project({ "AGENTS.md": "# Mine\n" });
     behave.failWrite = new Error("boom");

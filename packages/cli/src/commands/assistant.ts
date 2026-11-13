@@ -68,6 +68,10 @@ const codeOf = (error: unknown): string => {
   return typeof code === "string" ? code : "error";
 };
 
+/** True for a failure of the file system (it has a `code`), not a mistake in the program. */
+const isFileError = (error: unknown): boolean =>
+  typeof (error as NodeJS.ErrnoException | undefined)?.code === "string";
+
 /**
  * Reads the file at `path`, decides what to write with `decide` (undefined when nothing is to be
  * written) and writes it. A read or write that fails is an outcome, never a throw.
@@ -121,22 +125,37 @@ export function writeAssistantFiles(
   out: string,
   io: Io,
 ): boolean {
-  const facts = guideFacts(nodeFiles(folder), out);
+  const facts = factsOf(folder, out);
   if ("noGuide" in facts) {
     io.write(`${facts.noGuide}\n`);
     return false;
   }
-  const outcomes: [string, Outcome][] = [
-    ["AGENTS.md", writeAgents(folder, guideSection(facts))],
-    ...pointerFiles(names).map(({ path, text }): [string, Outcome] => [
+  const writes: [string, () => Outcome][] = [
+    ["AGENTS.md", () => writeAgents(folder, guideSection(facts))],
+    ...pointerFiles(names).map(({ path, text }): [string, () => Outcome] => [
       path,
-      writePointer(folder, path, text),
+      () => writePointer(folder, path, text),
     ]),
   ];
-  for (const [file, { kind, code }] of outcomes)
-    io.write(`${guideLine(file, kind, "write", code)}\n`);
   const failed = new Set<Outcome["kind"]>(["not-regular", "unreadable", "unwritable"]);
-  return outcomes.every(([, { kind }]) => !failed.has(kind));
+  let ok = true;
+  // One file at a time, so that each line is out before the next file is looked at.
+  for (const [file, write] of writes) {
+    const { kind, code } = write();
+    io.write(`${guideLine(file, kind, "write", code)}\n`);
+    if (failed.has(kind)) ok = false;
+  }
+  return ok;
+}
+
+/** The guide's facts for the project at `folder`; a folder or file that cannot be read gives no guide. */
+function factsOf(folder: string, out: string): ReturnType<typeof guideFacts> {
+  try {
+    return guideFacts(nodeFiles(folder), out);
+  } catch (error) {
+    if (!isFileError(error)) throw error;
+    return { noGuide: "No guide: project.yaml cannot be read." };
+  }
 }
 
 /** The output folder as the guide writes it: relative to the project folder, with `/` separators. */
@@ -160,7 +179,8 @@ export function refreshGuide(options: Options, io: Io, available?: readonly Pack
 
 /**
  * The line `refreshGuide` prints, or undefined for none. A file that cannot be read or written
- * (a mode that denies it, say) is left as it is: the guide never fails the command.
+ * (a mode that denies it, say) is left as it is: the guide never fails the command. Only a failure
+ * of the file system is held back; a mistake in the program is thrown.
  */
 function guideRefresh(
   options: Options,
@@ -181,8 +201,9 @@ function guideRefresh(
     const writes = update.kind === "updated" && options.command === "apply";
     if (writes && !writeSafely(join(definitions, "AGENTS.md"), update.text, true)) return undefined;
     return guideLine("AGENTS.md", update.kind, options.command as "plan" | "apply");
-  } catch {
-    return undefined;
+  } catch (error) {
+    if (isFileError(error)) return undefined;
+    throw error;
   }
 }
 

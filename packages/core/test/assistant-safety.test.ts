@@ -63,6 +63,24 @@ describe("the output folder", () => {
     expect(section).toContain("- `ingestron compare --env <a> --env <b>`:");
   });
 
+  it("writes an output folder with a space or a shell character in single quotes", () => {
+    const section = sectionOf(withConnection, "my out");
+    expect(section).toContain("run `ingestron plan --out 'my out'`.");
+    expect(section).toContain("- `ingestron apply --out 'my out'`: writes `my out/`;");
+    expect(section).toContain(
+      "- `ingestron check --out 'my out'`: fails when `my out/` is out of date.",
+    );
+    expect(section).toContain("`my out/`. Ingestron records");
+    expect(sectionOf(withConnection, "a$(b)")).toContain("`ingestron plan --out 'a$(b)'`");
+    expect(sectionOf(withConnection, "it's")).toContain("`ingestron plan --out 'it'\\''s'`");
+    expect(sectionOf(withConnection, "~/out")).toContain("`ingestron plan --out '~/out'`");
+  });
+
+  it("leaves a plain output folder unquoted", () => {
+    for (const out of ["dist", "out/build-2", "../x_y.z", "a@b+c=d,e:f%"])
+      expect(sectionOf(withConnection, out)).toContain(`\`ingestron plan --out ${out}\``);
+  });
+
   it("leaves the text as it is with build", () => {
     const section = sectionOf(withConnection, "build");
     expect(section).not.toContain("--out");
@@ -99,6 +117,12 @@ describe("unsafe facts", () => {
   it("writes a fact with a backtick as a code span with double backticks", () => {
     const section = sectionOf(hostile("a`b"));
     expect(section).toContain("- Connections: `` a`b ``.");
+  });
+
+  it("writes a fact with two backticks in a row as a span with three", () => {
+    expect(sectionOf(hostile("a``b"))).toContain("- Connections: ``` a``b ```.");
+    expect(sectionOf(hostile("a`b``c```d"))).toContain("- Connections: ```` a`b``c```d ````.");
+    expect(sectionOf(hostile("`"))).toContain("- Connections: `` ` ``.");
   });
 
   it("makes a pack, a pattern and an environment name safe too", () => {

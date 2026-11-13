@@ -34,7 +34,7 @@ function assistantAction(extra: string[]): AssistantAction | { mistake: string }
 }
 
 /** The sub-command of `standard` or `assistant`, or a mistake; nothing for any other command. */
-export function plainSub(
+export function subCommandOf(
   command: string,
   extra: string[],
   platform: string | undefined,
