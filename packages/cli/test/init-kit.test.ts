@@ -16,7 +16,7 @@ offlineCatalogue();
 
 describe("init --kit with an installed kit", () => {
   it("the CLI's version meets each installed kit's requires", () => {
-    expect(cliVersion).toBe("2.3.1");
+    expect(cliVersion).toBe("2.4.0");
     expect(kits.map((kit) => kit.id)).toEqual([
       "databricks/lakehouse-streaming",
       "duckdb/local-medallion",
