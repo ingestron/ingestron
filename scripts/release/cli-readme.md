@@ -37,15 +37,18 @@ generated files are out of date.
 ## Source metadata and coding assistants
 
 A contract can start from what a source says about its tables. `ingestron
-source request` prints what to ask the source's owners for, with a recipe for
-each kind of source: who to ask, what they run or call, and what they save.
+source request` prints what to ask the source's owners for: who to ask, what
+they run or call, and what they save. Ingestron has recipes for the common
+kinds of source; any other source can be described with a sample of its data
+or a columns file.
 `ingestron source import` reads the file they send into
 `sources/<connection>.yaml`, and `ingestron contract --from-metadata` drafts a
 contract from it. Ingestron never connects to the source.
 
 `ingestron init --assistant <names>` and `ingestron assistant add <names>`
 write a project guide for coding assistants, `AGENTS.md`, from the project's
-own files. `ingestron plan` and `ingestron apply` keep it current.
+own files. `ingestron plan` reports when the guide's section would change, and
+`ingestron apply` rewrites it.
 
 ## Learn more
 
