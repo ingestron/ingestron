@@ -82,6 +82,35 @@ describe("sourceImportFor", () => {
     expect(captured(result)).toEqual([{ object, file: recorded }]);
   });
 
+  it("names a file by its whole path when only that is an object the connection's flows read", () => {
+    // The flow reads orders.csv, Refunds.CSV, returns and exports.v2 (spec/cli/sources.md, section 3).
+    const flows = { "flows/landing.yaml": expected("variants/landing-flow.yaml") };
+    const objectOf = (file: string, changes: Record<string, string> = {}) =>
+      captured(
+        importInto(project({ "sources/landing.yaml": null, ...flows, ...changes }), { file }),
+      );
+    expect(objectOf("sources/landing/orders.csv")).toEqual([
+      { object: "orders.csv", file: "sources/landing/orders.csv" },
+    ]);
+    expect(objectOf("sources/landing/Refunds.CSV")).toEqual([
+      { object: "Refunds.CSV", file: "sources/landing/Refunds.CSV" },
+    ]);
+    expect(objectOf("sources/landing/returns.csv")).toEqual([
+      { object: "returns", file: "sources/landing/returns.csv" },
+    ]);
+    expect(objectOf("sources/landing/exports.v2.csv")).toEqual([
+      { object: "exports.v2", file: "sources/landing/exports.v2.csv" },
+    ]);
+    // A flow that reads orders keeps the path without its extension.
+    const orders = expected("variants/landing-flow.yaml").replace(
+      "object: returns",
+      "object: orders",
+    );
+    expect(objectOf("sources/landing/orders.csv", { "flows/landing.yaml": orders })).toEqual([
+      { object: "orders", file: "sources/landing/orders.csv" },
+    ]);
+  });
+
   it("stops for a connection the project lacks, naming its connections", () => {
     expect(importInto(project(), { connection: "nope" })).toEqual({
       problems: ['"nope" is not a connection of the project. Connections: crm, erp, landing.'],

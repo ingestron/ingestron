@@ -1,0 +1,10 @@
+apiVersion: ingestron.io/v1
+kind: Connection
+id: landing
+connector: files
+connectivity: public
+settings:
+  path: /Volumes/landing/retail/files
+metadata:
+  from: files-mapped
+  with: { instance: example-dev, apiVersion: v2 }

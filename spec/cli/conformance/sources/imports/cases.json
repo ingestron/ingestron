@@ -1,5 +1,5 @@
 {
-  "description": "Importing source metadata (spec/cli/sources.md, section 3). Each case of imports runs importSource for the connection, with the current document's text from the fixture named by current (none when it is left out), the fixture named by input as the file at the project path file, the recipe fixture of ../recipes named by recipe, the import's object, environment and time. text names the fixture holding the exact new text; changes and notes are the rest of the result, and summary the lines of sourceChangesText, each ending with a line break. refused lists the reasons instead. forbidden lists text that must appear nowhere in the result or the summary. files gives sourceFileFor for each path (null for undefined), a path being read as the import reads it: `./` dropped, `\\` read as `/`, and a path that leaves the folder taking nothing from it, and projectImports withSourcesImport for the project.yaml fixture and the document's path, with expected the fixture holding the new text, or null when an import already matches.",
+  "description": "Importing source metadata (spec/cli/sources.md, section 3). Each case of imports runs importSource for the connection, with the current document's text from the fixture named by current (none when it is left out), the fixture named by input as the file at the project path file, the recipe fixture of ../recipes named by recipe, the import's object, environment and time, and flowObjects as the objects the connection's flows read (none when left out). text names the fixture holding the exact new text; changes and notes are the rest of the result, and summary the lines of sourceChangesText, each ending with a line break. refused lists the reasons instead. forbidden lists text that must appear nowhere in the result or the summary. files gives sourceFileFor for each path (null for undefined), a path being read as the import reads it: `./` dropped, `\\` read as `/`, and a path that leaves the folder taking nothing from it, and projectImports withSourcesImport for the project.yaml fixture and the document's path, with expected the fixture holding the new text, or null when an import already matches.",
   "imports": [
     {
       "name": "a first catalog import writes every table, sorted, with the recipe's names and the header comment",
@@ -64,6 +64,104 @@
         "  ERP.dbo.Shipments: added"
       ],
       "forbidden": ["ZZ-SECRET-42", "ORD-0002", "Swift Freight", "Blue Haulage"]
+    },
+    {
+      "name": "a sample whose whole path below sources/<connection>/ is a flow's object, and whose path without the extension is none, is that object",
+      "connection": "shop",
+      "file": "sources/shop/orders.csv",
+      "input": "shipments.csv",
+      "recipe": "sample",
+      "flowObjects": ["orders.csv", "returns"],
+      "at": "2026-11-12T10:00:00Z",
+      "text": "shop.orders-csv.yaml",
+      "changes": [
+        {
+          "object": "orders.csv",
+          "change": "added",
+          "breaking": false,
+          "differences": []
+        }
+      ],
+      "notes": [],
+      "summary": [
+        "sources/shop.yaml: 1 added, 0 changed, 0 removed.",
+        "Compatible:",
+        "  orders.csv: added"
+      ]
+    },
+    {
+      "name": "a sample whose path without the extension is a flow's object is that object",
+      "connection": "shop",
+      "file": "sources/shop/orders.csv",
+      "input": "shipments.csv",
+      "recipe": "sample",
+      "flowObjects": ["orders", "orders.csv"],
+      "at": "2026-11-12T10:00:00Z",
+      "text": "shop.orders.yaml",
+      "changes": [
+        {
+          "object": "orders",
+          "change": "added",
+          "breaking": false,
+          "differences": []
+        }
+      ],
+      "notes": [],
+      "summary": [
+        "sources/shop.yaml: 1 added, 0 changed, 0 removed.",
+        "Compatible:",
+        "  orders: added"
+      ]
+    },
+    {
+      "name": "the whole path is the object as written, matched by the recipe's names without case",
+      "connection": "erp",
+      "current": "erp.first.yaml",
+      "file": "sources/erp/ERP.dbo.Shipments.CSV",
+      "input": "shipments.csv",
+      "recipe": "sqlserver",
+      "flowObjects": ["erp.dbo.shipments.csv"],
+      "at": "2026-11-12T10:00:00Z",
+      "text": "erp.shipments-csv.yaml",
+      "changes": [
+        {
+          "object": "ERP.dbo.Shipments.CSV",
+          "change": "added",
+          "breaking": false,
+          "differences": []
+        }
+      ],
+      "notes": [],
+      "summary": [
+        "sources/erp.yaml: 1 added, 0 changed, 0 removed.",
+        "Compatible:",
+        "  ERP.dbo.Shipments.CSV: added"
+      ]
+    },
+    {
+      "name": "a dotted object a flow reads keeps its name from the path without the extension",
+      "connection": "erp",
+      "current": "erp.first.yaml",
+      "file": "sources/erp/ERP.dbo.Shipments.csv",
+      "input": "shipments.csv",
+      "recipe": "sqlserver",
+      "flowObjects": ["ERP.dbo.Customers", "ERP.dbo.Shipments"],
+      "at": "2026-11-12T10:00:00Z",
+      "text": "erp.second.yaml",
+      "changes": [
+        {
+          "object": "ERP.dbo.Shipments",
+          "change": "added",
+          "breaking": false,
+          "differences": []
+        }
+      ],
+      "notes": [],
+      "summary": [
+        "sources/erp.yaml: 1 added, 0 changed, 0 removed.",
+        "Compatible:",
+        "  ERP.dbo.Shipments: added"
+      ]
     },
     {
       "name": "a second catalog import removes a dropped table, reports a changed type and a new column, and keeps the sample's table",

@@ -1,0 +1,9 @@
+apiVersion: ingestron.io/v1
+kind: Flow
+id: landing
+source: landing
+tables:
+  landed_orders: { object: orders.csv }
+  landed_refunds: { object: Refunds.CSV }
+  landed_returns: { object: returns }
+  landed_exports: { object: exports.v2 }

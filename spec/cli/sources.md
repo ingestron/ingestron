@@ -179,7 +179,12 @@ The text of `ask` MAY hold these placeholders, which the request fills in:
 - `{connection}`: the connection's id;
 - `{object}`: one table's `object`, as the flow writes it, resolved. A step
   that holds it is written once for each table (section 4), so a recipe whose
-  `run` or `call` holds it MUST hold it in `save` too (section 1, rule 6);
+  `run` or `call` holds it MUST hold it in `save` too (section 1, rule 6).
+  When it is followed directly by an extension, a `.` and letters or digits,
+  and the object ends with that extension already, compared without case, the
+  extension is written once: `sources/{connection}/{object}.csv` is
+  `sources/shop/orders.csv` for the object `orders.csv`, so that the import
+  finds the object again (section 3, "The object");
 - `{schemas}`: the schemas the connection's flow tables read (section 4), each
   as a single-quoted SQL literal, joined with `, `, such as `'dbo', 'sales'`;
 - `{<input>}`: the value the connection gives for that input, else the
@@ -754,7 +759,15 @@ A reader that reads one table (a sample, JSON Schema, Avro) takes its
 1. the file's path, when it is `sources/<connection>/<object>.<ext>` for the
    connection being imported: the path below `sources/<connection>/`, without
    its last extension only. So `sources/landing/exports/orders.v2.csv` is the
-   object `exports/orders.v2` of the connection `landing`;
+   object `exports/orders.v2` of the connection `landing`. When that names
+   none of the tables the connection's flows read and the whole path below
+   `sources/<connection>/` names one, the object is the whole path, as written.
+   So `sources/shop/orders.csv` is the object `orders.csv` when a flow of
+   `shop` reads `orders.csv` and none reads `orders`, and `orders` when one
+   does. The objects are compared as an import compares tables (below): by the
+   recipe's `names.caseSensitive`, else the current document's. `importSource`
+   is given the flows' objects (`flowObjects`); without them, the path without
+   its last extension is the object;
 2. else `--object`;
 3. else, for a sample, the import is refused:
    `Name the table this file describes with --object.`
@@ -1072,7 +1085,9 @@ alternatives end with one more item, after the columns file's:
 ```
 
 The sample item has one line for each table, in the order of the flows and
-their tables, each `object` once. A `sample` recipe's connection has no
+their tables, each `object` once: `sources/<connection>/<object>.csv`, or
+`sources/<connection>/<object>` when the object ends with `.csv` already,
+compared without case, as a placeholder writes it (section 1, "Placeholders"). A `sample` recipe's connection has no
 sample item among its alternatives: its step asks for one already.
 
 **Importing.** The request ends with a section, when it asked for anything:
@@ -1209,9 +1224,10 @@ Imports `<file>`, a path relative to the current folder, read as bytes, into
 not resolved, so a project whose tables have no columns yet can be imported
 into. The load tolerates an `${envvar:…}` reference that is set nowhere, as the
 request does. It needs only the project's connections, which are the same in
-every environment, so it loads for the environment `--env` names or, without
-`--env`, for the first environment `project.yaml` declares, and a project whose
-values differ by environment loads either way. The command that the request
+every environment, and the objects the connection's flows read (section 3, "The
+object"), so it loads for the environment `--env` names or, without `--env`, for
+the first environment `project.yaml` declares, as the request does, and a project
+whose values differ by environment loads either way. The command that the request
 prints, which carries `--env` only when the request was asked for one, works
 as printed. `--env` also records the document's `environment`; without it none
 is recorded. Any other loading error stops it, written as `ingestron plan`
@@ -1266,11 +1282,11 @@ and 0 otherwise: a skipped file alone is not a problem.
 
 ### Exit codes
 
-| Code | When                                                                                                                                                                                                                                                                                                         |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 0    | Done, a dry run that would write included. Breaking changes do not change it.                                                                                                                                                                                                                                |
-| 1    | A refusal; an unknown connection, flow table or recipe; a recipe that breaks a rule (section 1), even one no connection uses; definitions that cannot be loaded; or definitions with errors that stop the command (section 4, "Resolving").                                                                  |
-| 2    | A usage mistake: `source` without `request` or `import`, `import` without both arguments or with more, `--env` more than once on `source` or on `contract --from-metadata`, `--from-metadata` with neither a table nor `--needed`, or with both, or a flag given to a command it does not belong to (below). |
+| Code | When                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | Done, a dry run that would write included. Breaking changes do not change it.                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 1    | A refusal; an unknown connection or flow table; for `source request` and `source import`, an unknown recipe or a recipe that breaks a rule (section 1), even one no connection uses (`contract --from-metadata` reads no recipe); a table `contract --from-metadata` does not draft because it has no entry in the source metadata or already names a contract (section 5); definitions that cannot be loaded; or definitions with errors that stop the command (section 4, "Resolving"). |
+| 2    | A usage mistake: `source` without `request` or `import`, `import` without both arguments or with more, `--env` more than once on `source` or on `contract --from-metadata`, `--from-metadata` with neither a table nor `--needed`, or with both, or a flag given to a command it does not belong to (below).                                                                                                                                                                              |
 
 ### Flags
 

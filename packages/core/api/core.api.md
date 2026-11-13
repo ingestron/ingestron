@@ -386,6 +386,7 @@ export interface SourceImportInput {
     current?: string;
     environment?: string;
     file: string;
+    flowObjects?: readonly string[];
     object?: string;
     recipe?: SourceRecipe;
 }

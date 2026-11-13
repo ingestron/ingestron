@@ -56,14 +56,14 @@ const messageOf = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
 /**
- * The connection's recipe, once the project's documents are loaded (not resolved, so a project
- * with no columns yet can be imported into), tolerating a reference set nowhere, for the
- * environment given or else the first one project.yaml declares.
+ * The connection's recipe and the objects its flows read, once the project's documents are
+ * loaded (not resolved, so a project with no columns yet can be imported into), tolerating a
+ * reference set nowhere, for the environment given or else the first one project.yaml declares.
  */
 function recipeFor(
   files: FileSource,
   request: SourceImportRequest,
-): { recipe?: SourceRecipe } | Problems {
+): { recipe?: SourceRecipe; flowObjects: string[] } | Problems {
   const { environment } = sourceEnvironment(files, request.environment);
   const loaded = resolveProject(files, {
     kinds: Object.values(kinds),
@@ -83,9 +83,14 @@ function recipeFor(
         ),
       ],
     };
+  // The objects the connection's flows read name a file by its whole path (section 3).
+  const flowObjects = loaded.project
+    .all(kinds.flow)
+    .filter(({ value }) => value.source === request.connection)
+    .flatMap(({ value }) => Object.values(value.tables).map(({ object }) => object));
   try {
     const { recipe, problems } = sourceOrigin(found, sourceRecipes(files, request.recipesRoot));
-    return problems.length > 0 ? { problems } : { ...(recipe && { recipe }) };
+    return problems.length > 0 ? { problems } : { ...(recipe && { recipe }), flowObjects };
   } catch (error) {
     return { problems: [messageOf(error)] };
   }
