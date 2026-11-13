@@ -21,7 +21,8 @@ describe("exitOnClosedPipe", () => {
     };
     writeOn();
     expect(await exited).toBe(3);
-  });
+    // Spawning a Node child takes longer than the default 5 seconds when the whole repository validates.
+  }, 30_000);
 
   it("leaves any other error to fail as it would", () => {
     const stream = new PassThrough();
