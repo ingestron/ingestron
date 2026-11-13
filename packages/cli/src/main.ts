@@ -1,7 +1,15 @@
 #!/usr/bin/env node
 // The `ingestron` command.
-import { askInTerminal } from "./terminal/index.js";
+import { askInTerminal, exitOnClosedPipe } from "./terminal/index.js";
 import { run } from "./index.js";
+
+// A reader that stops early, such as `ingestron plan | head -1`, ends the command quietly.
+for (const stream of [process.stdout, process.stderr])
+  exitOnClosedPipe(
+    stream,
+    () => Number(process.exitCode ?? 0),
+    (code) => process.exit(code),
+  );
 
 process.exitCode = run(process.argv.slice(2), {
   cwd: process.cwd(),
