@@ -34,9 +34,23 @@ Commit the definitions and the generated `build/` folder, then deploy the
 output with your own pipeline. In CI, `ingestron check` fails when the
 generated files are out of date.
 
+## Source metadata and coding assistants
+
+A contract can start from what a source says about its tables. `ingestron
+source request` prints what to ask the source's owners for, with a recipe for
+each kind of source: who to ask, what they run or call, and what they save.
+`ingestron source import` reads the file they send into
+`sources/<connection>.yaml`, and `ingestron contract --from-metadata` drafts a
+contract from it. Ingestron never connects to the source.
+
+`ingestron init --assistant <names>` and `ingestron assistant add <names>`
+write a project guide for coding assistants, `AGENTS.md`, from the project's
+own files. `ingestron plan` and `ingestron apply` keep it current.
+
 ## Learn more
 
 - Documentation: https://docs.ingestron.io
+- Recipes for each kind of source: https://docs.ingestron.io/docs/reference/recipes
 - Source and issues: https://github.com/ingestron/ingestron
 
 ## Contact
