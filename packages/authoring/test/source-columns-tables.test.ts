@@ -91,6 +91,29 @@ describe("a column completed in a flow table", () => {
     ]);
   });
 
+  it("compares the contract's names with the entry's by the metadata's case rule", () => {
+    const contract = files["contracts/orders.yaml"]!.replace(
+      "      - name: OrderID\n",
+      "      - name: orderid\n      - name: OrderID\n      - name: Notes\n",
+    );
+    const sequence = (names: string | undefined) =>
+      at(
+        "flows/erp.yaml",
+        (text) =>
+          text.replace("    contract: erp.orders\n", "    contract: erp.orders\n    sequence: |\n"),
+        {
+          "contracts/orders.yaml": contract,
+          "sources/erp.yaml": names
+            ? files["sources/erp.yaml"]!
+            : files["sources/erp.yaml"]!.replace(/^names: .*\n/m, ""),
+        },
+      ).map((item) => item.label);
+    // Case ignored (the fixture's names): `orderid` and `OrderID` are the entry's column once.
+    expect(sequence("names")).toEqual(["OrderID", "PlacedAt", "Total", "Notes"]);
+    // Case counts without `names`: the contract's `orderid` is another name.
+    expect(sequence(undefined)).toEqual(["OrderID", "PlacedAt", "Total", "orderid", "Notes"]);
+  });
+
   it("offers a contract's property names for a table with no metadata entry", () => {
     const items = at("flows/erp.yaml", (text) =>
       text

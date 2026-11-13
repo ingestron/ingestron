@@ -9,6 +9,8 @@ import type * as CoreModule_ from "@ingestron/core";
 import { ProjectSnapshot } from "../src/index.js";
 import { files } from "./source-project.js";
 
+type CoreModule = typeof CoreModule_;
+
 // The drafts are counted, whatever the machine's load: the real function runs each time.
 const { drafting } = vi.hoisted(() => ({ drafting: { calls: [] as unknown[][] } }));
 vi.mock("@ingestron/core", async (original) => {
@@ -22,7 +24,6 @@ vi.mock("@ingestron/core", async (original) => {
   };
 });
 
-type CoreModule = typeof CoreModule_;
 const folders: string[] = [];
 afterEach(() => {
   for (const folder of folders.splice(0)) rmSync(folder, { recursive: true, force: true });

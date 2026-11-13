@@ -4,17 +4,22 @@
 import { stringify } from "yaml";
 
 /**
- * Words Spark SQL reserves in its ANSI mode, which cannot stand for a column unquoted. A word
- * quoted that need not be is harmless, so the list errs on the side of more.
+ * The keywords Spark SQL reserves in its ANSI mode, which cannot stand for a column unquoted: the
+ * "Spark SQL ANSI Mode" column of the SQL Keywords table marked `reserved`, at
+ * https://spark.apache.org/docs/latest/sql-ref-ansi-compliance.html (read 2026-11-13). Two more,
+ * which that table does not mark so for Spark but which are not a column's name either: `true`
+ * (the literal) and `exists` (reserved in SQL-2016). A name quoted that need not be is harmless.
  */
 const reserved = new Set(
   (
-    "all and anti any as authorization both case cast check collate column constraint create cross " +
-    "current_date current_time current_timestamp current_user default distinct else end except " +
-    "exists false fetch filter for foreign from full grant group having in inner intersect into is " +
-    "join lateral leading left like limit minus natural not null offset on only or order outer " +
-    "overlaps primary references right select semi session_user some table then to trailing true " +
-    "union unique unknown user using when where with"
+    "all and any as authorization both call case cast check collate collation collations column " +
+    "constraint create cross current_date current_path current_schema current_time " +
+    "current_timestamp current_user distinct else end escape except execute false fetch filter for " +
+    "foreign from full grant group having in inner intersect into is join lateral leading left " +
+    "localtime natural not null offset on only or order outer overlaps primary recursive " +
+    "references right select session_user some sql table then time to trailing union unique " +
+    "unknown user using when where with within " +
+    "true exists"
   ).split(" "),
 );
 

@@ -141,12 +141,14 @@ export {
 // Comparing a table's columns with a source's metadata (specification section 12.6).
 export {
   compareSourceColumns,
-  isMetadataFor,
   type SourceBefore,
   type SourceColumnBefore,
   type SourceDifference,
   type SourceTable,
 } from "./sources/index.js";
+
+// Which source metadata document is a connection's (specification section 12.1).
+export { isMetadataFor } from "./sources/index.js";
 
 // Types from @ingestron/config that appear in this package's API, so a pack
 // needs only @ingestron/definitions.

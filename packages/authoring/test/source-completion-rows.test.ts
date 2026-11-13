@@ -115,7 +115,18 @@ describe("completion from a sample's metadata", () => {
       expect(items.map((item) => item.label)).toEqual(expect.arrayContaining(columns.slice(0, 1)));
     for (const items of shown.slice(3, 6))
       expect(items.map((item) => item.label)).toEqual(expect.arrayContaining(columns));
+    // Without a contract the table's columns come from the metadata, which its hover lists.
+    const bare = flow.replace("    contract: landing.shipments\n", "");
+    const listing = [
+      hover("flows/landing.yaml", bare.replace("  shipments:", "  |shipments:")),
+      hover("flows/landing.yaml", bare.replace("object: shipments", "object: |shipments")),
+    ];
+    for (const text of listing) {
+      expect(text).toContain("Columns of");
+      expect(text).toContain("customer_email");
+    }
     const hovers = [
+      ...listing,
       hover("flows/landing.yaml", flow.replace("object: shipments", "object: |shipments")),
       hover("flows/landing.yaml", flow.replace("check: order_ref", "check: |order_ref")),
       hover("flows/landing.yaml", flow.replace("sequence: placed", "sequence: |placed")),

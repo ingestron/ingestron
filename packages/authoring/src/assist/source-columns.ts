@@ -42,10 +42,10 @@ export function checkColumns(
 ): Suggestion[] | undefined {
   const check = checkAt(place);
   if (!check) return undefined;
-  if ((check.typed.match(/'/g) ?? []).length % 2 === 1) return [];
+  const { text, open } = openText(check.typed);
+  if (text) return [];
   const entry = tableOf(project, place, check.table, environment)?.entry;
   // Inside a backtick already typed, a name goes in as it is, doubled, with the closing one.
-  const open = (check.typed.match(/`/g) ?? []).length % 2 === 1;
   const after = open ? check.typed.slice(check.typed.lastIndexOf("`") + 1) : "";
   const replaceFrom = open ? place.before.length - after.length : undefined;
   return (entry?.columns ?? []).map((item) => {
@@ -53,13 +53,26 @@ export function checkColumns(
     const sql = open ? `${item.name.replaceAll("`", "``")}\`` : sqlName(item.name);
     // A YAML plain scalar cannot start with a backtick: open the quoted one it needs instead.
     const opens = check.quote === "" && check.typed === "" && sql.startsWith("`") ? '"' : "";
-    const text = `${check.tight ? " " : ""}${opens}${inQuote(sql, check.quote)}`;
+    const text = `${check.tight ? " " : ""}${opens}${inQuote(sql, opens || check.quote)}`;
     return {
       ...base,
       ...(text !== item.name && { insertText: text }),
       ...(replaceFrom !== undefined && { replaceFrom }),
     };
   });
+}
+
+/**
+ * Whether the SQL typed so far ends inside a text in single quotes (`text`) or a name in backticks
+ * (`open`): a quote inside the other kind does not count, so a backticked name that holds `'`
+ * leaves the rest of the check open to columns.
+ */
+function openText(sql: string): { text: boolean; open: boolean } {
+  let inside = "";
+  for (const mark of sql)
+    if (inside === "") inside = mark === "'" || mark === "`" ? mark : "";
+    else if (mark === inside) inside = "";
+  return { text: inside === "'", open: inside === "`" };
 }
 
 /** The flow table at `key` in the flow being edited, as the resolved project lists it. */
@@ -90,7 +103,7 @@ function inYaml(item: Suggestion, place: Place): Suggestion {
 /**
  * The columns a flow table's `sequence`, `load.cursor`, `deduplicate.order_by` and
  * `cleanse.columns` name: those of its metadata entry, then, when it names a contract, the
- * contract's top-level properties that the entry has not. Undefined when it has neither.
+ * contract's top-level properties that the entry has not (compared as section 12.6 does). Undefined when it has neither.
  */
 export function tableColumns(
   project: Project,
@@ -101,9 +114,16 @@ export function tableColumns(
 ): Suggestion[] | undefined {
   const table = tableOf(project, place, key, environment);
   const listed = (table?.entry?.columns ?? []).map(column);
-  const seen = new Set(listed.map(({ label }) => label));
+  // As the comparison with the contract does (specification section 12.6): case counts unless
+  // the metadata says names do not differ by case.
+  const same = (label: string) =>
+    table?.names?.caseSensitive === false ? label.toLowerCase() : label;
+  const seen = new Set(listed.map(({ label }) => same(label)));
   const own = table?.contract ? contractProperties(project, table.contract) : [];
-  const found = [...listed, ...own.filter(({ label }) => !seen.has(label) && seen.add(label))]
+  const found = [
+    ...listed,
+    ...own.filter(({ label }) => !seen.has(same(label)) && seen.add(same(label))),
+  ]
     .filter(({ label }) => !skip.has(label))
     .map((item) => inYaml(item, place));
   return found.length === 0 ? undefined : found;

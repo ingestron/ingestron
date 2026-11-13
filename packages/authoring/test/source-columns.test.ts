@@ -37,24 +37,39 @@ describe("a column inserted into a check's SQL", () => {
   });
 
   it("quotes a word Spark SQL reserves whatever its case", () => {
-    const items = check("a > |", named("SELECT", "From", "order", "selected"));
-    expect(items.map(inserted)).toEqual(["`SELECT`", "`From`", "`order`", "selected"]);
+    // `escape`, `time` and `within` are in the keywords table's reserved column; `limit` is not.
+    const names = ["SELECT", "From", "order", "Escape", "time", "within", "limit", "selected"];
+    const items = check("a > |", named(...names));
+    expect(items.map(inserted)).toEqual([
+      ...names.slice(0, 6).map((name) => `\`${name}\``),
+      "limit",
+      "selected",
+    ]);
   });
 
   it("brings a space straight after the colon, and opens a YAML quote for a name in backticks", () => {
-    const items = at(
-      "flows/erp.yaml",
-      (text) => text.replace("check: Email IS NOT NULL", "check:|"),
-      others,
-    );
+    const tight = (names: Record<string, string>) =>
+      at("flows/erp.yaml", (text) => text.replace("check: Email IS NOT NULL", "check:|"), names);
     // A plain YAML scalar cannot start with a backtick, so the text is opened as a quoted one.
-    expect(items.map(inserted)).toEqual([
+    expect(tight(others).map(inserted)).toEqual([
       ' "`Order Date`',
       ' "`select`',
       ' "`a``b`',
       ' "`ünïcode`',
       " plain_1",
     ]);
+    // Escaped for the quote it opens, so that the text parses once the person closes the quote.
+    const odd = tight(named('say "hi"', "back\\slash"));
+    const checks = odd.map((item) => {
+      const text = files["flows/erp.yaml"]!.replace(
+        "check: Email IS NOT NULL",
+        `check:${inserted(item)} > 0"`,
+      );
+      return (parse(text) as { tables: { customers: { expectations: { check: string }[] } } })
+        .tables.customers.expectations[0]!.check;
+    });
+    expect(odd.map(inserted)).toEqual([' "`say \\"hi\\"`', ' "`back\\\\slash`']);
+    expect(checks).toEqual(['`say "hi"` > 0', "`back\\slash` > 0"]);
   });
 
   it("is escaped for the YAML quote the check is written in", () => {
@@ -78,6 +93,16 @@ describe("a column inserted into a check's SQL", () => {
       "plain_1`",
     ]);
     expect(items[0]?.replaceFrom).toBe(start.indexOf(typed) + typed.length - "Or".length);
+  });
+
+  it("is not turned off by a quote inside a backticked name, nor a backtick inside a text", () => {
+    const quoted = named("it's", "plain_1");
+    const afterName = check("a > `it's` AND |", quoted);
+    expect(afterName.map((item) => item.label)).toEqual(["it's", "plain_1"]);
+    expect(afterName.map(inserted)).toEqual(["`it's`", "plain_1"]);
+    // Still inside a text in single quotes, where a backtick means nothing: no column.
+    expect(check("a = 'x`y' AND b = '|", quoted)).toEqual([]);
+    expect(check("a = 'x`y' AND |", quoted).map((item) => item.label)).toEqual(["it's", "plain_1"]);
   });
 
   it("gives text that parses to a check holding the column, once the rest is typed", () => {
