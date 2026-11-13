@@ -25,25 +25,27 @@ const dataKeys = [
 ];
 
 /**
- * True when the keys of the records are names that the records share, so that each is a field. They
- * are not when any looks like data, such as a date or a customer's code, or there are more than
- * 100; and the records show that the keys are shared only when the sample is one record and holds
- * one record here, or a key is in every record here and every key is in at least two of them
+ * The keys of the records that are names the records share, each a field, or undefined when the
+ * keys are data. They are data when any looks like data, such as a date or a customer's code, or
+ * there are more than 100. The records show that the keys are shared only when the sample is one
+ * record and holds one record here, or a key is in every one of at least two records here; a key
+ * in only one of several records is then left out, as one record shows nothing about it
  * (spec/cli/sources.md, section 2.2).
  */
 function sharedNames(
   records: Record<string, unknown>[],
   names: string[],
   oneRecordSample: boolean,
-): boolean {
+): string[] | undefined {
   if (names.length > mostKeys || names.some((key) => dataKeys.some((data) => data.test(key))))
-    return false;
-  if (oneRecordSample && records.length === 1) return true;
+    return undefined;
+  if (oneRecordSample && records.length === 1) return names;
   const holding = new Map<string, number>();
   for (const record of records)
     for (const key of new Set(keysOf(record))) holding.set(key, (holding.get(key) ?? 0) + 1);
-  const counts = names.map((key) => holding.get(key) ?? 0);
-  return counts.some((count) => count === records.length) && counts.every((count) => count >= 2);
+  const everywhere = names.some((key) => holding.get(key) === records.length);
+  if (records.length < 2 || !everywhere) return undefined;
+  return names.filter((key) => (holding.get(key) ?? 0) >= 2);
 }
 
 /** True for a record with a key; one with none, or only an empty one, counts as no record. */
@@ -62,9 +64,8 @@ function inferColumn(
   if (depth >= maxNesting) return column;
   if (logicalType === "object") {
     const records = present.filter(isRecord).filter(hasKey);
-    const names = namesOf(records);
-    if (sharedNames(records, names, single))
-      column.properties = columnsAt(records, names, depth + 1, single);
+    const shared = sharedNames(records, namesOf(records), single);
+    if (shared !== undefined) column.properties = columnsAt(records, shared, depth + 1, single);
   }
   if (logicalType === "array") {
     const elements = present.flat();

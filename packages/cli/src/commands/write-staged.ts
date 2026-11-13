@@ -32,8 +32,31 @@ interface Staged {
 /** The mode a new file gets: what `writeFileSync` would give it, before the umask. */
 const created = 0o666;
 
-/** The refusal to write: a target is a link or something that is not a file. Nothing is written. */
-export class WriteRefused extends Error {}
+/**
+ * The refusal to write: a target is a link or something that is not a file, or a file this user
+ * cannot write (`code` is then the system's, such as `EACCES`). Nothing is written. `file` is the
+ * path as given; `text` says it again with whatever name the caller shows.
+ */
+export class WriteRefused extends Error {
+  constructor(
+    readonly file: string,
+    readonly code?: string,
+  ) {
+    super(WriteRefused.say(file, code));
+  }
+
+  /** The refusal naming `shown`, the path as the user knows it. */
+  static say(shown: string, code?: string): string {
+    return code === undefined
+      ? `${shown} is not a regular file (it is a link or a folder). Nothing was written.`
+      : `Could not write ${shown}: ${code}. Nothing was written.`;
+  }
+
+  /** The refusal naming `shown` instead of the path it was given. */
+  text(shown: string): string {
+    return WriteRefused.say(shown, this.code);
+  }
+}
 
 /**
  * What is at the path: undefined when nothing, else its status. A link, a folder or anything that
@@ -43,11 +66,14 @@ export class WriteRefused extends Error {}
 function regularFile(file: string): Stats | undefined {
   const now = lstatSync(file, { throwIfNoEntry: false });
   if (now === undefined) return undefined;
-  if (!now.isFile())
-    throw new WriteRefused(
-      `${file} is not a regular file (it is a link or a folder). Nothing was written.`,
-    );
-  accessSync(file, constants.W_OK);
+  if (!now.isFile()) throw new WriteRefused(file);
+  try {
+    accessSync(file, constants.W_OK);
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === undefined) throw error;
+    throw new WriteRefused(file, code);
+  }
   return now;
 }
 

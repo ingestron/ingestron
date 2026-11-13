@@ -2788,9 +2788,10 @@ for a table that ends at the landed files and is served by a serve step, the
 serve step's pack. The platform manages grants or masks for it when
 `<pack>.manage.grants` or `<pack>.manage.masks` is on (section 7.1, as for
 every capability of a pack).
-A table whose steps cannot be resolved (an unknown method, for example) has no
-known pack, so this trigger is not judged for it, and nothing is reported for
-that: its own error is the one to fix.
+
+A table whose steps cannot be resolved, or are not known yet (an unknown
+method, for example), has no known pack, so this trigger is not judged for it,
+and nothing is reported for that: its own error is the one to fix.
 
 The second trigger needs no rule of its own. A data product's port finds its
 table through the port's `contractId` (section 8), so a table without a

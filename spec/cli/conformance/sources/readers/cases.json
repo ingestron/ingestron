@@ -735,7 +735,7 @@
       "forbidden": ["ZZ-SECRET-42", "hello", "00123", "10.50"]
     },
     {
-      "name": "JSON sample with nested records and lists: a record whose fields differ between records has no properties",
+      "name": "JSON sample with nested records and lists: a record keeps the fields that two or more records have, and leaves out the others",
       "file": "sources/shop/orders.json",
       "input": "orders.json",
       "object": "orders",
@@ -756,7 +756,14 @@
               {
                 "name": "customer",
                 "logicalType": "object",
-                "required": false
+                "required": false,
+                "properties": [
+                  {
+                    "name": "name",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
               },
               {
                 "name": "tags",
@@ -904,7 +911,7 @@
       "forbidden": ["alpha", "beta", "gamma", "delta"]
     },
     {
-      "name": "JSON sample: nested records whose keys each appear in only one record are a dictionary, written without properties",
+      "name": "JSON sample: a key seen in only one of several records is left out, the others are fields; keys that each appear in one record are a dictionary, written without properties",
       "file": "sources/landing/seen.json",
       "input": "nested-single-use.json",
       "object": "seen",
@@ -924,7 +931,14 @@
               {
                 "name": "stock",
                 "logicalType": "object",
-                "required": false
+                "required": false,
+                "properties": [
+                  {
+                    "name": "common",
+                    "logicalType": "integer",
+                    "required": false
+                  }
+                ]
               },
               {
                 "name": "seen",
@@ -936,7 +950,54 @@
         ],
         "notes": []
       },
-      "forbidden": ["common", "only-first", "only-second", "scarlet", "emerald", "indigo"]
+      "forbidden": ["only-first", "only-second", "scarlet", "emerald", "indigo"]
+    },
+    {
+      "name": "JSON sample: a key seen in only one element of a list of records is left out of its items",
+      "file": "sources/landing/orders.json",
+      "input": "nested-items-left-out.json",
+      "object": "orders",
+      "connection": "landing",
+      "expected": {
+        "reader": "sample",
+        "from": "sample",
+        "tables": [
+          {
+            "object": "orders",
+            "columns": [
+              {
+                "name": "id",
+                "logicalType": "integer",
+                "required": false
+              },
+              {
+                "name": "lines",
+                "logicalType": "array",
+                "required": false,
+                "items": {
+                  "name": "items",
+                  "logicalType": "object",
+                  "required": false,
+                  "properties": [
+                    {
+                      "name": "sku",
+                      "logicalType": "string",
+                      "required": false
+                    },
+                    {
+                      "name": "qty",
+                      "logicalType": "integer",
+                      "required": false
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "notes": []
+      },
+      "forbidden": ["gift", "ZZ-SECRET-42", "ZZ-SECRET-43", "ZZ-SECRET-44", "ZZ-GIFT-1"]
     },
     {
       "name": "JSON sample: nested records keyed by dates, numbers, ids or other characters are dictionaries, written without properties",
@@ -1518,7 +1579,14 @@
               {
                 "name": "customer",
                 "logicalType": "object",
-                "required": false
+                "required": false,
+                "properties": [
+                  {
+                    "name": "name",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
               },
               {
                 "name": "tags",
@@ -1584,7 +1652,14 @@
               {
                 "name": "customer",
                 "logicalType": "object",
-                "required": false
+                "required": false,
+                "properties": [
+                  {
+                    "name": "name",
+                    "logicalType": "string",
+                    "required": false
+                  }
+                ]
               },
               {
                 "name": "tags",

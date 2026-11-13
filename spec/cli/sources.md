@@ -418,16 +418,22 @@ of these hold:
   (counting every element, a `null` or an empty record too), and exactly one
   record is found at that place (nothing then can show that they differ), or,
   whatever the sample, when at least one key is in every record found at that
-  place and every key is in at least two of them. Otherwise a single record,
+  place and at least two records are found there. Otherwise a single record,
   such as `{ "n": { "ACME": 1 } }` beside records whose `n` is `null` or `{}`,
   or the one record among the elements `[{ "ACME": 1 }, {}]`, shows nothing,
   and its keys are not read as fields.
 
-Then the fields are the keys found in any of the records, in the order first
-found, and their types are merged as the types of the columns of the table
-are, from every record that has the key. A key that some of the records leave
-out is a field like any other, and none of the fields is `required` (every
-column of a sample is `required: false`).
+Then the fields are the keys found in the records, in the order first found,
+and their types are merged as the types of the columns of the table are, from
+every record that has the key. A key that some of the records leave out is a
+field like any other, and none of the fields is `required` (every column of a
+sample is `required: false`). When several records are found at that place, a
+key that is in only one of them is left out, since one record shows nothing
+about whether it is a name: the other keys are the fields. So
+`lines[].items`, whose elements are `{ "sku": …, "qty": …, "gift": … }` and
+`{ "sku": …, "qty": … }`, has the fields `sku` and `qty` and not `gift`. The
+keys left out count in the test of the first condition, so one that looks like
+data makes the column a dictionary.
 
 Otherwise the keys are data, such as counts by customer code or by date, as
 when each record has its own keys: the column is `object` without
@@ -1227,6 +1233,14 @@ then prints the changes' text (section 3), then
 With `--dry-run` it writes nothing and prints the same changes' text, then
 `Nothing was written (--dry-run).` A refused file prints each reason on a line
 of its own, and nothing is written.
+
+A target that cannot be written is a refusal too, never a stack trace, and
+nothing is written: a link, a folder or anything else that is not a regular
+file gives `<path> is not a regular file (it is a link or a folder). Nothing was
+written.`, and any other failure of the system gives `Could not write <path>:
+<code>. Nothing was written.`, `<code>` being the system's, such as `EACCES`.
+`<path>` is from the project folder, such as `sources/erp.yaml`. A refused
+import prints no changes, and exits 1.
 
 ### `ingestron contract --from-metadata <flow>.<table>` and `ingestron contract --from-metadata --needed [--env <name>]`
 

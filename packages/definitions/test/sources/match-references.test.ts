@@ -22,8 +22,15 @@ describe("matchObject with a value that holds a dot or a $", () => {
       expect(matchObject("dbo.Orders_EU.1", "dbo.Orders_${values.r}", dotted, insensitive)).toEqual(
         [],
       );
+      // t holds "b.c", so the object is "dbo.b.c_x.Customers". Split again, it would be four
+      // parts, and match the table that has them; as it is, "b.c_x" is one part that holds a dot.
       expect(
-        matchObject("a.b_x.Customers", "${values.s}.${values.t}_x.Customers", erp, insensitive),
+        matchObject(
+          "dbo.b.c_x.Customers",
+          "dbo.${values.t}_x.Customers",
+          [table("ERP.dbo.b.c_x.Customers")],
+          { parts: 4, caseSensitive: false },
+        ),
       ).toEqual([]);
     });
 
@@ -50,10 +57,13 @@ describe("matchObject with a value that holds a dot or a $", () => {
     });
   });
 
-  it("reads a doubled dollar before a brace as text, not as a reference", () => {
-    const braced = [table("ERP.dbo.${x}")];
-    expect(objects(matchObject("dbo.${x}", "dbo.$${x}", braced, insensitive))).toEqual([
-      "ERP.dbo.${x}",
+  it("reads a doubled dollar before a brace as text, so a dot inside it is a dot between parts", () => {
+    // `$${a.b}` is the text `${a.b}`, not a reference that holds the dot: its parts are `${a`
+    // and `b}`. Read as a reference, the written parts would be two, and the first of them being
+    // only a reference, the table `ERP.x.b}` would match the last of the three resolved parts.
+    const braced = [table("ERP.x.b}"), table("ERP.${a.b}")];
+    expect(objects(matchObject("p.${a.b}", "${values.s}.$${a.b}", braced, insensitive))).toEqual([
+      "ERP.${a.b}",
     ]);
   });
 

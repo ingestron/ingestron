@@ -196,9 +196,9 @@ other `<…>` is filled in.
 ### This project
 
 - **Environments.** The environments of `project.yaml`, in its order, each
-  written `` `<name>` `` (a number name as the file writes it). An environment with `runs-on` is written
-  `` `<name>` (runs on `<pack>`) ``, with the pack as `project.yaml` gives
-  it. With no environments the line is
+  written `` `<name>` `` (a number name as the file writes it). An environment
+  with `runs-on` is written `` `<name>` (runs on `<pack>`) ``, with the pack
+  as `project.yaml` gives it. With no environments the line is
   ``- Project `<id>`. Environments: none (`project.yaml`).``
 - **The standard line.** The standard is the first `Standard` document among
   the imported files. The files are the union of those the patterns of
@@ -255,15 +255,16 @@ The items are, in this order:
 2. ``- `<action>` fixes, for `<method>`: `<key>: <value>`, `<key>: <value>`.``
    for each `<action>.fixed.<method>` that has keys, the actions in the order
    of item 1 and the methods in the order the standard writes them, a key as
-   written (a number key as the file writes it: `1.0`, `0x10`). A value is written as YAML flow text, on
-   one line: a number as the file writes it (`1.50`, `1e3` and `0x1F` stay as
-   they are), `true`, `false` and `null` as they are, a string bare
-   when it is made of letters, digits and `_ . / @ : -`, starts with a letter
-   or digit and is not read as another type (`true`, `false`, `null`, `~`, a
-   number) and otherwise as a JSON string, a list `[a, b]`, and a mapping
-   `{ key: value, key: value }`, with `[]` and `{}` for an empty one. A key of
-   a mapping inside a value is written as a value is, so a number key stays a
-   number and a mapping key is written as a mapping. When
+   written (a number key as the file writes it: `1.0`, `0x10`). A value is
+   written as YAML flow text, on one line: a number as the file writes it
+   (`1.50`, `1e3` and `0x1F` stay as they are), `true`, `false` and `null` as
+   they are, a string bare when it is made of letters, digits and
+   `_ . / @ : -`, starts with a letter or digit and is not read as another
+   type (`true`, `false`, `null`, `~`, a number) and otherwise as a JSON
+   string, a list `[a, b]`, and a mapping `{ key: value, key: value }`, with
+   `[]` and `{}` for an empty one. A key of a mapping inside a value is
+   written as a value is, so a number key stays a number and a mapping key is
+   written as a mapping. When
    the standard fixes more than eight settings in total, counting each key of
    each `<action>.fixed.<method>`, every such item lists keys only:
    ``- `<action>` fixes, for `<method>`: `<key>`, `<key>`.``

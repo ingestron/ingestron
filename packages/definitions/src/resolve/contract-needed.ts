@@ -38,8 +38,9 @@ export function contractNeeded(context: Context, table: ContractNeedTable): stri
 /**
  * The pack that access is resolved on for the table: the one that keeps it, or, for a table
  * that ends at the landed files, the serve step's. Undefined when no pack applies access, and
- * when the steps are not known (one failed to resolve, and has its own error): the access
- * reason is then skipped, with nothing reported for it (specification section 12.5, case 184l).
+ * when the steps cannot be resolved, or are not known yet (one failed to resolve, and has its
+ * own error): the access reason is then skipped, with nothing reported for it (specification
+ * section 12.5, case 184l).
  */
 function accessPack({ steps }: ContractNeedTable): string | undefined {
   if (steps?.endsAtFiles !== undefined) return steps.serve?.pack;

@@ -98,7 +98,9 @@ describe("writeStaged", () => {
     writeFileSync(join(folder, "project.yaml"), "old\n");
     chmodSync(join(folder, "project.yaml"), 0o444);
     if (process.getuid?.() === 0) return;
-    expect(() => writeStaged([{ file: join(folder, "project.yaml"), text: "new\n" }])).toThrow();
+    expect(() => writeStaged([{ file: join(folder, "project.yaml"), text: "new\n" }])).toThrow(
+      WriteRefused,
+    );
     expect(readFileSync(join(folder, "project.yaml"), "utf8")).toBe("old\n");
   });
 });

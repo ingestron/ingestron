@@ -52,7 +52,7 @@ function primaryKeyOf(columns: SourceColumnDoc[]): string[] {
 /**
  * How a message names the place a table's columns are written: the contract, or for a table
  * whose contract is made from source metadata (`origin: "metadata"`), the entry's object in that
- * metadata, since the contract's id is not one a person wrote (specification section 9). `name`
+ * metadata, since the contract's id is not one a person wrote (specification section 6.1). `name`
  * follows "a column of" and "is <type> in" alike, and `lists` is what lists the columns.
  */
 export function columnsPlace(contract: Contract): { name: string; lists: string } {

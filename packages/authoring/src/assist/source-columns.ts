@@ -103,7 +103,8 @@ function inYaml(item: Suggestion, place: Place): Suggestion {
 /**
  * The columns a flow table's `sequence`, `load.cursor`, `deduplicate.order_by` and
  * `cleanse.columns` name: those of its metadata entry, then, when it names a contract, the
- * contract's top-level properties that the entry has not (compared as section 12.6 does). Undefined when it has neither.
+ * contract's top-level properties that the entry has not (compared as section 12.6 does).
+ * Undefined when it has neither.
  */
 export function tableColumns(
   project: Project,
