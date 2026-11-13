@@ -120,7 +120,12 @@ function stage(target: string, text: string): Staged {
       closeSync(descriptor);
     }
   } catch (error) {
-    unlinkSync(temporary);
+    // The write's error is the refusal; a temporary file that cannot be removed is left behind.
+    try {
+      unlinkSync(temporary);
+    } catch {
+      // Its own error would hide the write's.
+    }
     return naming(target, () => {
       throw error;
     });

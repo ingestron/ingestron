@@ -57,15 +57,15 @@ function importFile(options: Options, action: Import, io: Io): number {
 
 /**
  * The refusal an error from writing is, naming the path from the project folder; an error that
- * the system gave a code to is one too (a file or folder that cannot be written), and anything
- * else is thrown again.
+ * the system gave a code to is one too (a file or folder that cannot be written), naming the
+ * document the import writes when it carries no path, and anything else is thrown again.
  */
-function refusal(error: unknown, definitions: string): string {
+function refusal(error: unknown, definitions: string, document: string): string {
   const { code, path } = error as NodeJS.ErrnoException;
   const shown = (file: string): string => relative(definitions, file).split(sep).join("/");
   if (error instanceof WriteRefused) return error.text(shown);
   if (code === undefined) throw error;
-  return WriteRefused.say(shown(path ?? definitions), code);
+  return WriteRefused.say(shown(path ?? join(definitions, document)), code);
 }
 
 /** Prints the changes and, unless --dry-run, writes the document and the import. */
@@ -86,7 +86,7 @@ function finish(action: Import, definitions: string, result: SourceImportResult,
         : [{ file: join(definitions, "project.yaml"), text: project }]),
     ]);
   } catch (error) {
-    return stop(io, [refusal(error, definitions)]);
+    return stop(io, [refusal(error, definitions, document)]);
   }
   io.write(changes);
   io.write(`Wrote ${document}.\n`);
