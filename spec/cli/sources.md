@@ -1239,8 +1239,14 @@ nothing is written: a link, a folder or anything else that is not a regular
 file gives `<path> is not a regular file (it is a link or a folder). Nothing was
 written.`, and any other failure of the system gives `Could not write <path>:
 <code>. Nothing was written.`, `<code>` being the system's, such as `EACCES`.
-`<path>` is from the project folder, such as `sources/erp.yaml`. A refused
-import prints no changes, and exits 1.
+`<path>` is from the project folder, such as `sources/erp.yaml`, and is the
+file the import writes, never a temporary file. A refused import prints no
+changes, and exits 1.
+
+The two files are put in place one after the other. When the second cannot be
+put in place after the first was, the first stays, and the refusal says so
+instead: `Could not write <second path>: <code>. <first path> was written;
+import again to finish.` It prints no changes, and exits 1.
 
 ### `ingestron contract --from-metadata <flow>.<table>` and `ingestron contract --from-metadata --needed [--env <name>]`
 

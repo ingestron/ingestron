@@ -63,7 +63,7 @@ function importFile(options: Options, action: Import, io: Io): number {
 function refusal(error: unknown, definitions: string): string {
   const { code, path } = error as NodeJS.ErrnoException;
   const shown = (file: string): string => relative(definitions, file).split(sep).join("/");
-  if (error instanceof WriteRefused) return error.text(shown(error.file));
+  if (error instanceof WriteRefused) return error.text(shown);
   if (code === undefined) throw error;
   return WriteRefused.say(shown(path ?? definitions), code);
 }

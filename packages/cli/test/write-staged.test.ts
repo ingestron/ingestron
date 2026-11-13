@@ -103,4 +103,28 @@ describe("writeStaged", () => {
     );
     expect(readFileSync(join(folder, "project.yaml"), "utf8")).toBe("old\n");
   });
+
+  it.skipIf(process.getuid?.() === 0)(
+    "refuses a folder it cannot write to by the target's path, not a temporary file's",
+    () => {
+      const folder = temp();
+      mkdirSync(join(folder, "sources"));
+      chmodSync(join(folder, "sources"), 0o555);
+      try {
+        const file = join(folder, "sources/erp.yaml");
+        let refused: unknown;
+        try {
+          writeStaged([{ file, text: "x\n" }]);
+        } catch (error) {
+          refused = error;
+        }
+        expect(refused).toBeInstanceOf(WriteRefused);
+        expect((refused as WriteRefused).file).toBe(file);
+        expect((refused as WriteRefused).code).toBe("EACCES");
+        expect(readdirSync(join(folder, "sources"))).toEqual([]);
+      } finally {
+        chmodSync(join(folder, "sources"), 0o755);
+      }
+    },
+  );
 });
