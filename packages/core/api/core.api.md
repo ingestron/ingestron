@@ -7,19 +7,71 @@
 import { AcceptAtBuild } from '@ingestron/definitions';
 import { AcceptedWarning } from '@ingestron/definitions';
 import { AnyDiagnostic } from '@ingestron/config';
+import { Connector } from '@ingestron/definitions';
 import { FileSource } from '@ingestron/config';
 import { OutputFolder } from '@ingestron/generate';
 import { Pack } from '@ingestron/definitions';
 import { Plan } from '@ingestron/generate';
+import type { ProblemCode } from '@ingestron/generate';
 import { ResolvedModel } from '@ingestron/definitions';
 import { SourceDifference } from '@ingestron/definitions';
 import { SuppliedValue } from '@ingestron/definitions';
+
+// @public
+export interface AddConnection {
+    // (undocumented)
+    connectivity: string;
+    // (undocumented)
+    connector: string;
+    // (undocumented)
+    environment?: string;
+    // (undocumented)
+    id: string;
+    method?: string;
+    // (undocumented)
+    settings?: Record<string, unknown>;
+}
+
+// @public
+export interface AddedImport {
+    added: string;
+    // (undocumented)
+    project: string;
+}
+
+// @public
+export interface AddFlow {
+    // (undocumented)
+    connection: string;
+    // (undocumented)
+    environment?: string;
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    method?: string;
+    // (undocumented)
+    objects: string[];
+}
 
 // @public
 export function builtInTemplates(): Template[];
 
 // @public
 export function compareEnvironments(files: FileSource, a: string, b: string, options?: ProjectOptions): string;
+
+// @public
+export interface ConnectionChoice {
+    // (undocumented)
+    connectivity: string[];
+    // (undocumented)
+    connector: string;
+    // (undocumented)
+    method: string;
+    // (undocumented)
+    settings: Connector["settings"];
+    // (undocumented)
+    title: string;
+}
 
 // @public
 export interface ContractDraft {
@@ -33,6 +85,21 @@ export interface ContractDraft {
 export function contractFromSample(text: string, file: string, id: string): string;
 
 // @public
+export interface DefinitionDraft {
+    // (undocumented)
+    file: string;
+    imports?: AddedImport;
+    // (undocumented)
+    text: string;
+}
+
+// @public
+export function definitionImport(files: FileSource, file: string): AddedImport | undefined;
+
+// @public
+export function draftConnection(files: FileSource, input: AddConnection): DefinitionDraft;
+
+// @public
 export function draftContracts(files: FileSource, options?: DraftContractsOptions): {
     drafts: ContractDraft[];
     problems: string[];
@@ -44,6 +111,9 @@ export interface DraftContractsOptions extends ProjectOptions {
     needed?: boolean;
     tables?: string[];
 }
+
+// @public
+export function draftFlow(files: FileSource, input: AddFlow): DefinitionDraft;
 
 // @public
 export function generateAll(files: FileSource, available: readonly Pack[], envvars: Readonly<Record<string, string | undefined>>, replaceMe?: "warning" | "error"): Generated;
@@ -223,7 +293,20 @@ export function parseKitSpec(spec: string): {
 export function parseTemplate(text: string, name: string, folder: string): Template;
 
 // @public
+export function planOutput(folder: OutputFolder, name: string, files: Readonly<Record<string, string>>, available: readonly Pack[], now?: Date): Plan;
+
+// @public
 export function platformRequest(files: FileSource, environment: string | undefined, options?: ProjectOptions): string;
+
+// @public
+export interface ProblemHelp {
+    fix: string;
+    meaning: string;
+    reportedBy: "plan" | "apply";
+}
+
+// @public
+export const problemHelp: Record<ProblemCode, ProblemHelp>;
 
 // @beta
 export class Project {
@@ -241,13 +324,44 @@ export class Project {
 }
 
 // @public
+export interface ProjectAdditions {
+    // (undocumented)
+    connections: {
+        id: string;
+        connector: string;
+        connectivity: string;
+    }[];
+    // (undocumented)
+    connectors: ConnectionChoice[];
+    // (undocumented)
+    objects: Record<string, string[]>;
+}
+
+// @public
+export function projectAdditions(files: FileSource, environment?: string): ProjectAdditions;
+
+// @public
 export function projectId(text: string): string;
 
 // @public
 export interface ProjectOptions {
     envvars?: Readonly<Record<string, string | undefined>>;
+    now?: Date;
     packs?: readonly Pack[];
 }
+
+// @public
+export interface ProjectPlatform {
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    summary: string;
+    // (undocumented)
+    title: string;
+}
+
+// @public
+export function projectPlatforms(): ProjectPlatform[];
 
 // @public
 export interface ProjectRecipe {
@@ -710,6 +824,9 @@ export const templatesFolder: string;
 
 // @public
 export function withSourcesImport(projectYaml: string, documentPath: string): string | undefined;
+
+// @public
+export function writeDefinitionDraft(folder: string, draft: DefinitionDraft): void;
 
 // (No @packageDocumentation comment for this package)
 

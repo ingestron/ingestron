@@ -10,7 +10,8 @@ import { intentText } from "./intent-text.js";
 import { from } from "./origin-text.js";
 import { sourceColumnsText } from "./source-hover.js";
 import { explainReplaceMe } from "./replace-me.js";
-import { methodAt, methodInfo } from "../assist/index.js";
+import { triggerHover } from "./trigger-hover.js";
+import { methodAt, methodInfo, movedSettingText } from "../assist/index.js";
 import { resolvedForDisplay, type Project } from "../project/index.js";
 import { holdsSecret } from "../project/index.js";
 import { schemaFor, schemasAt } from "../project/index.js";
@@ -73,6 +74,8 @@ function explainSpot(
   const setting = settingAt(spot);
   const key = spot.part === "key";
   const parts = [
+    movedSettingText(project, place, spot.segments, environment),
+    triggerHover(project, file, spot.segments, environment, options.now),
     setting && explainSetting(project, file, setting, environment),
     explainField(project, place, spot, environment, options) ??
       (key ? describe(file, text, spot) : undefined),

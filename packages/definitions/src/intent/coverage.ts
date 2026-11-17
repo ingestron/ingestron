@@ -44,6 +44,8 @@ export type IntentUse =
        * no `does`, the value is `NOT_APPLIED`. Read for the quality and cleansing paths only.
        */
       onlyWhere?: LayerDuty;
+      /** Provider guidance appended when the layer lacks `onlyWhere`, such as a separately run check script. */
+      whereHint?: string;
       /**
        * For `cleanse.timezone` only: the zones the pack cannot convert from or to, each with its
        * reason, such as `{ "Antarctica/Troll": "Windows has no zone for Antarctica/Troll." }`. A

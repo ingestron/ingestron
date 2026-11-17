@@ -8,12 +8,11 @@ import {
   formatPlan,
   manifestFile,
   nodeFolder,
-  planGeneration,
   type OutputFolder,
   type Plan,
 } from "@ingestron/generate";
 import type { Options } from "../terminal/index.js";
-import { generateAll, type Generated } from "@ingestron/core";
+import { generateAll, planOutput, type Generated } from "@ingestron/core";
 import type { Io } from "../terminal/index.js";
 import { refreshGuide } from "./assistant.js";
 import { extraFiles, generatedFolders } from "./outputs.js";
@@ -42,7 +41,7 @@ export function generate(
 ): number {
   const generated = prepared ?? generation(options, io, available);
   printReports(io, generated);
-  const code = generated.ok ? build(options, io, generated, prepared) : 1;
+  const code = generated.ok ? build(options, io, generated, prepared, available) : 1;
   // After everything the output folders print, whether or not the definitions resolved; `init`'s
   // own plan (prepared) is not about the guide.
   if (!prepared) refreshGuide(options, io, available);
@@ -55,12 +54,19 @@ function build(
   io: Io,
   generated: Generated,
   prepared: Generated | undefined,
+  available: readonly Pack[],
 ): number {
   const out = resolve(io.cwd, options.out);
   const planned = generated.outputs.map(({ name, folder, targets, files }): Planned => {
     const root = resolve(out, ...folder.split("/"));
     const output = nodeFolder(root);
-    return { name, targets, folder: output, plan: planGeneration(output, files), root };
+    return {
+      name,
+      targets,
+      folder: output,
+      plan: planOutput(output, name, files, available),
+      root,
+    };
   });
   const roots = planned.map((item) => item.root);
   const done = planned.filter((item) => finish(options, io, item, roots)).map(({ name }) => name);

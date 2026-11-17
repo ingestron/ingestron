@@ -1,0 +1,45 @@
+# A data-only pack whose own coverage runs no jobs, as Synapse serverless views, but
+# whose ws-copy method runs a pipeline with a schedule for each flow, as the Synapse copy
+# pipeline, for the cases about judging operations by the methods a project uses
+# (section 11.6). Its connector is its own.
+id: workspace
+version: 1
+defaults:
+  naming:
+    {
+      catalog: "{{ environment }}",
+      schema: "{{ layer }}",
+      table: "{{ table }}",
+      pipeline: "{{ project }}",
+      job: "{{ project }}_refresh",
+    }
+  layers: [bronze, silver, gold]
+  types:
+    {
+      string: STRING,
+      integer: BIGINT,
+      number: DOUBLE,
+      boolean: BOOLEAN,
+      date: DATE,
+      timestamp: TIMESTAMP,
+    }
+  quality: { required: warn, default: warn }
+rules:
+  ingest: { default: ws-copy }
+methods:
+  ws-copy:
+    action: ingest
+    description: Copies a source's tables with a workspace pipeline.
+    connectors: [workspace]
+    produces: table
+    settings: { type: object }
+    intent:
+      operations.schedule=flow: { use: used, does: A trigger for each flow's pipeline. }
+  ws-link:
+    action: ingest
+    description: Reads a source's tables where they are, with no pipeline.
+    connectors: [workspace]
+    produces: table
+    settings: { type: object }
+intent:
+  operations: { use: not-applicable, reason: Serverless views run no jobs. }

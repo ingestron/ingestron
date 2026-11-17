@@ -1,0 +1,46 @@
+description: A default that the selected environment replaces is never read, so a reference through it is no cycle, and a mapping that replaces text is not merged with it; keys are compared as text.
+environment: prod
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    values:
+      a: ${values.b}
+      b: from-${values.a}
+      shape: flat
+      1: one
+      alias: &base { x: 1 }
+      copy: *base
+      x: ${values.copy.x}
+      first: ${values.1}
+    environments:
+      prod:
+        values:
+          a: plain
+          shape: { kind: nested }
+    imports: ["*.pipeline.yaml"]
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    a: ${values.a}
+    b: ${values.b}
+    shape: ${values.shape}
+    x: ${values.x}
+    first: ${values.first}
+expect:
+  documents:
+    - kind: Pipeline
+      id: a
+      value:
+        apiVersion: example.dev/v1
+        kind: Pipeline
+        id: a
+        a: plain
+        b: from-plain
+        shape: { kind: nested }
+        x: 1
+        first: one

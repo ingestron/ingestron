@@ -5,6 +5,7 @@
 ```ts
 
 import { AnyDiagnostic } from '@ingestron/config';
+import type { DefinitionDocument } from '@ingestron/config';
 import { DiagnosticCode } from '@ingestron/config';
 import { FileSource } from '@ingestron/config';
 import { JsonSchema } from '@ingestron/config';
@@ -107,6 +108,18 @@ export interface ChosenBy {
 
 // @public
 export function classificationTag(model: Pick<ResolvedModel, "standard">): string;
+
+// @public
+export interface Clock {
+    instant(wall: number): number;
+    offset(at: number): number;
+}
+
+// @public
+export function clockOf(zone: string): Clock;
+
+// @public
+export function clockTime(at: Date, zone: string): string;
 
 // @public
 export interface CodeHelp {
@@ -266,10 +279,13 @@ export type ContractUse = {
 export function contractUseOf(pack: PackInfo, path: string): ContractUse | undefined;
 
 // @public
+export function cycleStarts(trigger: ResolvedTrigger): Date[] | undefined;
+
+// @public
 export const defaultClassificationTag = "classification";
 
 // @public
-export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "PACK_VERSION" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "SETTING_MOVED" | "PLATFORM_FIELD_MOVED" | "INTENT_CONFLICT" | "NOT_APPLIED" | "PREVIEW_FEATURE" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "DUPLICATE_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "REPLACE_ME" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "TRANSFORM_CODE" | "LAYER_RESPONSIBILITY" | "QUARANTINE_UNUSED" | "CLEANSE_COLUMN" | "CLEANSE_TYPE" | "DEDUPLICATE_KEY" | "DEDUPLICATE_MODE" | "TIMEZONE_NAME" | "TIMEZONE_SOURCE" | "ACCEPT_CODE" | "ACCEPT_UNUSED" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS" | "ROLE_ACCESS" | "MASK_TYPE" | "FILTER_MATCH" | "FILTER_MULTIPLE" | "MASK_NEEDS_RUN_AS" | "MASK_FUNCTIONS" | "POLICY_LIMIT" | "POLICY_PRINCIPALS" | "DEPLOY_VALUE" | "ENVIRONMENTS_DIFFER" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS" | "PACK_NOTICE" | "PACK_LOAD" | "SOURCE_METADATA_DUPLICATE" | "SOURCE_OBJECT_AMBIGUOUS" | "TABLE_NO_COLUMNS" | "CONTRACT_NEEDED" | "SOURCE_COLUMN_NEW" | "SOURCE_COLUMN_GONE" | "SOURCE_TYPE_CHANGED" | "SOURCE_TYPE_FITS" | "SOURCE_NULLABLE" | "SOURCE_KEY_CHANGED" | "SOURCE_TABLE_GONE";
+export type DefinitionCode = "NO_STANDARD" | "MANY_STANDARDS" | "WRONG_PACK" | "PACK_VERSION" | "UNKNOWN_PACK" | "METHOD_CONFLICT" | "MANY_PLATFORMS" | "UNKNOWN_METHOD" | "WRONG_ACTION" | "METHOD_NOT_ALLOWED" | "CONNECTOR_NOT_SUPPORTED" | "CONNECTIVITY_NOT_SUPPORTED" | "HANDOVER" | "FIXED_SETTING" | "SETTING_MOVED" | "PLATFORM_FIELD_MOVED" | "INTENT_CONFLICT" | "NOT_APPLIED" | "PREVIEW_FEATURE" | "BAD_SETTING" | "METHOD_CHECK" | "PACK_CHECK" | "UNKNOWN_LAYER" | "DUPLICATE_LAYER" | "BAD_PATTERN" | "BAD_NAME" | "DUPLICATE_NAME" | "DUPLICATE_TABLE" | "UNKNOWN_INPUT" | "UNKNOWN_CODE_VALUE" | "INPUT_CYCLE" | "CONTRACT_TABLE" | "CONTRACT_FIELD_UNUSED" | "QUALITY_RULE_NOT_CHECKED" | "CAPABILITY_OFF" | "PLACEHOLDER_NOT_REPLACED" | "REPLACE_ME" | "RUNS_ON" | "RUNS_ON_SKIPPED" | "SETTINGS_UNUSED" | "TRANSFORM_COLUMNS" | "TRANSFORM_CODE" | "LAYER_RESPONSIBILITY" | "QUARANTINE_UNUSED" | "CLEANSE_COLUMN" | "CLEANSE_TYPE" | "DEDUPLICATE_KEY" | "DEDUPLICATE_MODE" | "TIMEZONE_NAME" | "TIMEZONE_SOURCE" | "TRIGGER_NOT_ALLOWED" | "TRIGGER_PARAMETER" | "TRIGGER_OPTION" | "TRIGGER_HOURS" | "TRIGGER_LOOKBACK" | "TRIGGER_KEY" | "TRIGGER_ENVIRONMENT" | "FILTER_NOT_SUPPORTED" | "ACCEPT_CODE" | "ACCEPT_UNUSED" | "PRODUCT_CONTRACT_UNUSED" | "PRODUCT_NOT_BUILT" | "PRODUCT_CONTRACT_SHARED" | "DUPLICATE_PRODUCT" | "PRODUCT_ID" | "PRODUCT_INCOMPLETE" | "COLUMN_UNCLASSIFIED" | "CLASSIFICATION_UNKNOWN" | "SENSITIVE_ACCESS" | "ROLE_ACCESS" | "MASK_TYPE" | "FILTER_MATCH" | "FILTER_MULTIPLE" | "MASK_NEEDS_RUN_AS" | "MASK_FUNCTIONS" | "POLICY_LIMIT" | "POLICY_PRINCIPALS" | "DEPLOY_VALUE" | "ENVIRONMENTS_DIFFER" | "ARM_PARAMETERS" | "SECRET_NAME_DIFFERS" | "PACK_NOTICE" | "PACK_LOAD" | "SOURCE_METADATA_DUPLICATE" | "SOURCE_OBJECT_AMBIGUOUS" | "TABLE_NO_COLUMNS" | "CONTRACT_NEEDED" | "SOURCE_COLUMN_NEW" | "SOURCE_COLUMN_GONE" | "SOURCE_TYPE_CHANGED" | "SOURCE_TYPE_FITS" | "SOURCE_NULLABLE" | "SOURCE_KEY_CHANGED" | "SOURCE_TABLE_GONE";
 
 // @public
 export type DeleteMode = "soft" | "hard" | "keep";
@@ -386,6 +402,9 @@ export interface FoldView {
 }
 
 // @public
+export type Frequency = "Minute" | "Hour" | "Day" | "Week" | "Month";
+
+// @public
 export interface FullName {
     // (undocumented)
     catalog: string;
@@ -438,6 +457,13 @@ export type Handover = "files" | "table" | "query";
 
 // @public
 export type History = "none" | "latest" | "full" | "bitemporal";
+
+// @public
+export interface HoursDoc {
+    from: string;
+    timezone?: string;
+    to: string;
+}
 
 // @public
 export interface Intent {
@@ -494,6 +520,7 @@ export type IntentUse = {
     does: string;
     status?: FeatureStatus;
     onlyWhere?: LayerDuty;
+    whereHint?: string;
     zonesNotApplied?: Readonly<Record<string, string>>;
 } | {
     use: "not-yet" | "elsewhere" | "not-applicable";
@@ -551,6 +578,9 @@ export type LoadingStage = "Files and YAML" | "References" | "Environments and d
 export type LoadMode = "files" | "incremental" | "changes" | "full";
 
 // @public
+export function longestGap(trigger: ResolvedTrigger): number | undefined;
+
+// @public
 export interface Method {
     accepts?: Handover[];
     // (undocumented)
@@ -562,6 +592,7 @@ export interface Method {
     defaults?: Record<string, unknown>;
     // (undocumented)
     description: string;
+    filters?: boolean;
     intent?: Record<string, IntentUse>;
     intentDefaults?: Intent;
     needsOutput?: true;
@@ -620,10 +651,18 @@ export interface Origin {
 }
 
 // @public
+export function outsideHours(trigger: ResolvedTrigger, hours: {
+    from: string;
+    to: string;
+    timezone: string;
+}): Date | undefined;
+
+// @public
 export interface Pack extends PackInfo {
     // (undocumented)
     build(model: ResolvedModel): Record<string, string>;
     buildEnvironments?(models: Readonly<Record<string, ResolvedModel>>): EnvironmentsBuild;
+    checkFirstWrites?(files: Readonly<Record<string, string>>, generatedBefore: ReadonlySet<string>, now: Date): string[];
     request?(model: ResolvedModel): RequestSection[];
 }
 
@@ -649,6 +688,7 @@ export interface PackInfo {
     // (undocumented)
     id: string;
     intent?: Record<string, IntentUse>;
+    metadataType?(column: SourceColumnDoc): string | undefined;
     // (undocumented)
     methods: Record<string, Method>;
     platformFields?: string[];
@@ -675,6 +715,28 @@ export interface PackNotice {
 }
 
 // @public
+export interface ParameterDef {
+    default: string | number | boolean;
+    type: "string" | "int" | "float" | "bool" | "date" | "datetime";
+}
+
+// @public
+export interface ParameterDoc {
+    // (undocumented)
+    default?: ParameterDef["default"];
+    // (undocumented)
+    type: ParameterDef["type"];
+}
+
+// @public
+export function parameterReferences(text: string): string[];
+
+// @public
+export type ParameterValue = string | number | boolean | {
+    expression: string;
+};
+
+// @public
 export function passportFile(id: string): string;
 
 // @public
@@ -693,6 +755,12 @@ export interface PreviewFeature {
     table: string;
     value?: string;
 }
+
+// @public
+export function readStart(start: string, clock: Clock): {
+    instant: number;
+    wall: number;
+} | undefined;
 
 // @public
 export const referenceKinds: {
@@ -772,6 +840,7 @@ export interface ResolvedOperations {
     };
     timeout?: string;
     trigger: "schedule" | "files" | "upstream" | "continuous";
+    triggers: ResolvedTriggers;
 }
 
 // @public
@@ -885,6 +954,9 @@ export interface ResolvedTable {
         };
         object: string;
         renamed: boolean;
+        triggers?: ResolvedTrigger[];
+        parameters?: Record<string, ParameterDef>;
+        filter?: string;
     };
     intent: Intent;
     intentOrigins: Record<string, Origin>;
@@ -916,6 +988,44 @@ export interface ResolvedTable {
         code: string;
         inputs: Record<string, string>;
     };
+}
+
+// @public
+export interface ResolvedTrigger {
+    at?: ScheduleAt;
+    at_source: Source;
+    backfill?: boolean;
+    concurrency?: number;
+    delay?: string;
+    depends_on?: TriggerDependency[];
+    end?: string;
+    every: {
+        frequency: Frequency;
+        interval: number;
+    };
+    flow: string;
+    lookback?: string;
+    name: string;
+    parameters: Record<string, ParameterValue>;
+    paused?: boolean;
+    retries?: {
+        count: number;
+        interval: string;
+    };
+    start: string;
+    timezone: string;
+    type: TriggerType;
+}
+
+// @public
+export interface ResolvedTriggers {
+    hours?: {
+        from: string;
+        to: string;
+        timezone: string;
+    };
+    timezone: string;
+    types: TriggerType[];
 }
 
 // @public
@@ -1012,11 +1122,31 @@ export interface Schedule {
 }
 
 // @public
+export interface ScheduleAt {
+    hours?: number[];
+    minutes?: number[];
+    month_days?: number[];
+    occurrences?: {
+        day: Weekday;
+        occurrence?: number;
+    }[];
+    weekdays?: Weekday[];
+}
+
+// @public
 export type SettingAlias = {
     path: string;
 } | {
     values: Record<string, IntentFragment>;
 };
+
+// @public
+export interface Source {
+    // (undocumented)
+    document: DefinitionDocument;
+    // (undocumented)
+    pointer: string;
+}
 
 // @public
 export interface SourceBefore {
@@ -1083,6 +1213,7 @@ export interface SourceTable {
     needs?: string;
     object: string;
     table: string;
+    types?: Record<string, string>;
 }
 
 // @public
@@ -1174,15 +1305,84 @@ export interface TargetDifference {
     values: Record<string, unknown>;
 }
 
+// @public
+export type TriggerDependency = {
+    self: true;
+    offset: string;
+    size?: string;
+} | {
+    trigger: string;
+    offset?: string;
+    size?: string;
+};
+
+// @public
+export interface TriggerDoc {
+    // (undocumented)
+    at?: ScheduleAt;
+    // (undocumented)
+    backfill?: boolean;
+    // (undocumented)
+    concurrency?: number;
+    // (undocumented)
+    delay?: string;
+    // (undocumented)
+    depends_on?: TriggerDependency[];
+    // (undocumented)
+    end?: string;
+    // (undocumented)
+    every: {
+        frequency: Frequency;
+        interval: number;
+    };
+    // (undocumented)
+    lookback?: string;
+    // (undocumented)
+    name: string;
+    // (undocumented)
+    parameters?: Record<string, ParameterValue>;
+    // (undocumented)
+    paused?: boolean;
+    // (undocumented)
+    retries?: {
+        count: number;
+        interval: string;
+    };
+    // (undocumented)
+    start: string;
+    // (undocumented)
+    timezone?: string;
+    // (undocumented)
+    type: TriggerType;
+}
+
+// @public
+export interface TriggersPolicyDoc extends TriggersValuesDoc {
+    environments?: Record<string, TriggersValuesDoc>;
+}
+
+// @public
+export interface TriggersValuesDoc {
+    hours?: HoursDoc | "any";
+    timezone?: string;
+    types?: TriggerType[];
+}
+
+// @public
+export type TriggerType = "schedule" | "tumbling-window";
+
+// @public
+export type Weekday = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday";
+
 // Warnings were encountered during analysis:
 //
-// dist/documents/documents.d.ts:184:5 - (ae-forgotten-export) The symbol "StandardDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:185:5 - (ae-forgotten-export) The symbol "PlatformDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:186:5 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:187:5 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:188:5 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:190:5 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
-// dist/documents/documents.d.ts:192:5 - (ae-forgotten-export) The symbol "ProductDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:191:5 - (ae-forgotten-export) The symbol "StandardDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:192:5 - (ae-forgotten-export) The symbol "PlatformDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:193:5 - (ae-forgotten-export) The symbol "ConnectionDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:194:5 - (ae-forgotten-export) The symbol "FlowDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:195:5 - (ae-forgotten-export) The symbol "TransformDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:197:5 - (ae-forgotten-export) The symbol "ContractDoc" needs to be exported by the entry point index.d.ts
+// dist/documents/documents.d.ts:199:5 - (ae-forgotten-export) The symbol "ProductDoc" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

@@ -6,6 +6,8 @@ import { commands, flags } from "../../src/index.js";
 describe("command metadata", () => {
   it("lists every command and flag in the usage text", () => {
     expect(commands.map((command) => command.name)).toEqual([
+      "connection",
+      "flow",
       "plan",
       "apply",
       "check",

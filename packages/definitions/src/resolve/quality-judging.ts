@@ -190,6 +190,6 @@ export function whereOutcome(
   if (does === "raw" && duty === "check") return undefined;
   return {
     reason: `it is applied only in a layer whose does lists ${duty}.`,
-    hint: `Add \`${duty}\` to the layer's \`does\` to apply it here.`,
+    hint: `Add \`${duty}\` to the layer's \`does\` to apply it here.${use.whereHint ? ` ${use.whereHint}` : ""}`,
   };
 }

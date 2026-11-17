@@ -201,7 +201,8 @@ what to write in its place. Any other text in braces is left as written.
 
 A connection's recipe is the one its `metadata.from` names. Without
 `metadata`, it is its connector's default: `files` has the `sample` recipe,
-`sqlserver` the `sqlserver` recipe, `salesforce` the `salesforce` recipe and
+`sqlserver`, `azure-sql-database`, `azure-sql-managed-instance` and
+`amazon-rds-sqlserver` the `sqlserver` recipe, `salesforce` the `salesforce` recipe and
 `kafka` the `schema-registry` recipe. Any other connector has none. A
 connection with no recipe is asked for the lower steps only (section 4).
 
@@ -1151,14 +1152,19 @@ Each draft is `contracts/<connection>.<table>.yaml`, with:
 - one `schema` entry, whose `name` is the flow table's key, with
   `logicalType: object`;
 - a property for each column of the entry, in order, with its `name`,
-  `logicalType`, `logicalTypeOptions` and `required`, and, except for a table
+  `logicalType`, `physicalType` when the source table's `types` give the
+  column one (definitions specification, section 12.7),
+  `logicalTypeOptions` and `required`, and, except for a table
   `captured.from: sample` or `assistant`, `primaryKey: true` and
   `primaryKeyPosition` for a column of the key. Nested `properties` and
   `items` are kept, written the same way. `sourceType` is not carried, and
   neither are a decimal's `precision` and `scale` in `logicalTypeOptions`:
   ODCS 3.1 has no such field, so a contract that had them would fail its
   schema. The comparison reads an option only when both sides give it, so the
-  contract's missing precision is never a difference.
+  contract's missing precision is never a difference. The `physicalType` keeps
+  what the platform type held instead: linking the draft changes no generated
+  column's type, so a `money` column stays `DECIMAL(19,4)` on Synapse rather
+  than becoming the `FLOAT` of a plain `number`.
 
 It starts with a comment that says where it came from and what to add:
 
@@ -1173,7 +1179,7 @@ For a table from a sample or
 an assistant, the second line is
 `# Review the types and required columns, then add the key, descriptions, classifications and checks.`
 The draft is in block style, its keys in the order above and each property's
-in the order `name`, `logicalType`, `logicalTypeOptions`, `required`,
+in the order `name`, `logicalType`, `physicalType`, `logicalTypeOptions`, `required`,
 `primaryKey`, `primaryKeyPosition`, then `properties` or `items`;
 `logicalTypeOptions` is a one-line flow mapping.
 
@@ -1198,7 +1204,14 @@ schema:
         logicalType: string
         logicalTypeOptions: { maxLength: 200 }
         required: false
+      - name: CreditLimit
+        logicalType: number
+        physicalType: DECIMAL(18,2)
+        required: false
 ```
+
+Here the standard's first pack is `synapse@2`, which keeps a decimal's
+precision and scale.
 
 An existing file is never replaced, merged into or refreshed: it is skipped
 and named. The table's `contract:` line is never written by the command; it
@@ -1270,7 +1283,9 @@ Drafts the contracts of the tables named, one or more, or with `--needed` of
 every table that needs one (section 5), for the environment `--env` names, or
 for the first environment `project.yaml` declares.
 For each draft, in order, it prints `Wrote <path>.` or, when the file exists,
-`Skipped <path>: it already exists.`; then, for each draft, a skipped one
+`Skipped <path>: it already exists.`; after a written draft that no import
+matched, `project.yaml now imports <entry>.` (projects specification, "The new
+file's import"); then, for each draft, a skipped one
 included, `Add to <flow>.<table>: contract: <id>`; then each problem
 (section 5). With `--needed` and nothing to draft and no problem, it prints
 `No table needs a contract drafted.` It exits 1 when there is any problem,
@@ -1278,7 +1293,7 @@ and 0 otherwise: a skipped file alone is not a problem.
 
 `--env` is given at most once.
 
-`ingestron contract <sample>` is unchanged.
+`ingestron contract <sample>` adds its file to the imports the same way.
 
 ### Exit codes
 
@@ -1296,3 +1311,13 @@ to `source import`; `--connection` to `source request`; `--from-metadata` to
 command, or `--needed` without `--from-metadata`, it is a usage mistake,
 `<flag> is only for <command>.` (`--dry-run is only for source import.`,
 `--needed is only for contract --from-metadata.`).
+
+The editor also offers optional drafting on any metadata-based flow table, even
+when its standard does not require a contract. Draft contract creates the same
+ODCS draft as the CLI and links its id to that table as one undoable edit. It
+preserves the object, unrelated tables and source observation, refuses existing
+contract files, and adds the new contract to `project.yaml`'s imports when no
+import matches it, as `contract --from-metadata` does (projects specification,
+"The new file's import").
+Generated asset links are grouped in a per-table picker rather than listing long
+filenames inline. Method-selection details remain available on hover.

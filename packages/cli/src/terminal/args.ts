@@ -1,6 +1,7 @@
 // Command-line arguments.
 import { parseArgs } from "node:util";
-import { readAssistantNames } from "@ingestron/core/internal";
+import { initOptions } from "./init-args.js";
+import { additionCommand } from "./addition-args.js";
 import { commands } from "./help.js";
 import { subCommandOf, type AssistantAction, type StandardAction } from "./sub-args.js";
 import { metadataTables, misplacedFlag, sourceAction, type SourceAction } from "./source-args.js";
@@ -21,7 +22,14 @@ export interface Options {
     | "init"
     | "standard"
     | "source"
-    | "assistant";
+    | "assistant"
+    | "connection"
+    | "flow";
+  /** Independent connection or flow addition: its new id. */
+  additionId?: string;
+  connection?: string;
+  object?: string;
+  method?: string;
   /** assistant: add the project guide and the files that point to it. */
   assistant?: AssistantAction;
   /** standard: install a kit's standard, or list the kits, for one platform when given. */
@@ -45,6 +53,8 @@ export interface Options {
   /** init: the folder to create the project in, the answers given as flags, and --yes. */
   init: {
     folder: string;
+    platform?: string;
+    empty?: boolean;
     template?: string;
     kit?: string;
     connector?: string;
@@ -73,6 +83,7 @@ const spec = {
   help: { type: "boolean", default: false },
   template: { type: "string" },
   kit: { type: "string" },
+  empty: { type: "boolean", default: false },
   connector: { type: "string" },
   via: { type: "string" },
   connectivity: { type: "string" },
@@ -83,13 +94,15 @@ const spec = {
   platform: { type: "string" },
   connection: { type: "string" },
   object: { type: "string" },
+  method: { type: "string" },
   "dry-run": { type: "boolean", default: false },
   "from-metadata": { type: "boolean", default: false },
   needed: { type: "boolean", default: false },
   assistant: { type: "string", multiple: true },
 } as const;
 
-type Values = ReturnType<
+/** Parsed flag values shared with project creation. */
+export type Values = ReturnType<
   typeof parseArgs<{ options: typeof spec; allowPositionals: true }>
 >["values"];
 
@@ -119,6 +132,12 @@ export function readArgs(args: string[]): Options | "help" | { mistake: string }
     diffs: !values["no-diff"],
     allowExtra: values["allow-extra"],
     ...sampleOf(command, extra[0]),
+    ...(["connection", "flow"].includes(command) && {
+      additionId: extra[1],
+      connection: values.connection,
+      object: values.object,
+      method: values.method,
+    }),
     ...subCommand,
     init,
   };
@@ -150,8 +169,10 @@ interface Chosen {
 /** The command and the arguments after it, with standard's, source's and assistant's sub-commands, or a mistake. */
 function commandOf(positionals: string[], values: Values): Chosen | { mistake: string } {
   const [command = "", ...extra] = positionals;
+  const addition = additionCommand(command, extra);
+  if (addition) return addition;
   const plain = subCommandOf(command, extra, values.platform);
-  if (plain) return "mistake" in plain ? plain : { command, extra: [], ...plain };
+  if (plain) return plainCommand(command, plain);
   if (command === "source") {
     const source = sourceAction(extra, {
       connection: values.connection,
@@ -180,36 +201,10 @@ function sampleOf(command: string, file: string | undefined): { sample?: string 
   return command === "contract" && file !== undefined ? { sample: file } : {};
 }
 
-/** The init options that are text, each kept only when it is given. */
-const initTexts = [
-  "template",
-  "kit",
-  "connector",
-  "via",
-  "connectivity",
-  "name",
-  "standard",
-] as const;
-
-function initOptions(values: Values, folder = "."): Options["init"] | { mistake: string } {
-  const set = answersOf(values.set ?? []);
-  if (typeof set === "string") return { mistake: set };
-  const given = initTexts.flatMap((key) =>
-    values[key] === undefined ? [] : [[key, values[key]] as const],
-  );
-  const named = values.assistant && readAssistantNames(values.assistant);
-  if (named && "mistake" in named) return named;
-  const assistants = values.assistant === undefined ? {} : { assistants: values.assistant };
-  return { folder, ...Object.fromEntries(given), set, yes: values.yes, ...assistants };
-}
-
-/** `--set key=value` pairs, or a mistake naming the one without `=`. */
-function answersOf(pairs: string[]): Record<string, string> | string {
-  const answers: Record<string, string> = {};
-  for (const pair of pairs) {
-    const at = pair.indexOf("=");
-    if (at < 1) return `--set ${pair}: write it as <name>=<text>.`;
-    answers[pair.slice(0, at)] = pair.slice(at + 1);
-  }
-  return answers;
+/** Attach the command name to its validated sub-command. */
+function plainCommand(
+  command: string,
+  plain: NonNullable<ReturnType<typeof subCommandOf>>,
+): Chosen | { mistake: string } {
+  return "mistake" in plain ? plain : { command, extra: [], ...plain };
 }

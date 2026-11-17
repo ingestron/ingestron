@@ -12,6 +12,7 @@ import { accessCodeHelp } from "./access-codes.js";
 import { cleanseCodeHelp } from "./cleanse-codes.js";
 import { sourceCodeHelp } from "./source-codes.js";
 import { transformCodeHelp } from "./transform-codes.js";
+import { triggerCodeHelp } from "./trigger-codes.js";
 
 /**
  * Help for every code this package reports.
@@ -25,6 +26,7 @@ export const codeHelp: Record<DefinitionCode, CodeHelp> = {
   ...productCodeHelp,
   ...accessCodeHelp,
   ...transformCodeHelp,
+  ...triggerCodeHelp,
   ...cleanseCodeHelp,
   ...acceptCodeHelp,
   ...sourceCodeHelp,

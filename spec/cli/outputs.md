@@ -197,6 +197,27 @@ a manifest and is not one of the output folders is reported:
 with `<folder>` relative to the working folder. `check` fails while there is
 one.
 
+**Refused first writes.** When a pack has `checkFirstWrites` (definitions
+specification, section 2.1), each of its output folders is checked once its
+plan is made. The pack is given that output's files, the paths its manifest
+lists (`.generated.json`; none when the folder has no manifest) and the current
+time. When the manifest cannot be read, its `BAD_MANIFEST` problem is reported
+as for any plan and the pack is not asked. Each message the pack returns is a
+problem of the plan, with the code `FIRST_WRITE`, shown under the plan like
+`BAD_MANIFEST` and `BAD_PATH`:
+
+```text
+problem   FIRST_WRITE
+          <the pack's message>
+```
+
+A plan with such a problem is not clean. `plan` exits with 1 and `apply` writes
+nothing to that folder, as for any other problem of a plan. The outputs of no
+pack, such as `products`, are never checked, and neither is a folder whose pack
+has no `checkFirstWrites`. A path the manifest already lists is not a first
+write, so a folder that has been applied once is accepted from then on, and
+`check` reports the same problem for a folder whose files were never written.
+
 **REPLACE_ME.** `plan`, `apply` and `check` resolve every environment as
 section 1 says; `check` does so with `replaceMe: "error"` (definitions
 specification, section 1), so a value still `REPLACE_ME` is an error there

@@ -47,6 +47,7 @@ describe("resolveOperations", () => {
       trigger: "schedule",
       alerts: { on: ["failure"] },
       require_tags: [],
+      triggers: { types: ["schedule", "tumbling-window"], timezone: "UTC" },
     });
   });
 

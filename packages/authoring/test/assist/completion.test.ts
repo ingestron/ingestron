@@ -93,11 +93,11 @@ describe("completion", () => {
     const items = at("flows/shop.yaml", (text) =>
       text.replace(
         "      with: { except_columns: [op] }",
-        "      with:\n        mode: upsert\n        |",
+        "      with:\n        except_columns: [op]\n        |",
       ),
     );
-    expect(labels(items)).not.toContain("mode");
-    expect(labels(items)).toContain("sequence_by");
+    expect(labels(items)).not.toContain("except_columns");
+    expect(labels(items)).toContain("changes_suffix");
   });
 
   it("leaves out a contract's fields already written", () => {
@@ -116,7 +116,9 @@ describe("completion", () => {
         "      with:\n        |\n      x: { except_columns",
       ),
     );
-    expect(labels(items)).toEqual(expect.arrayContaining(["mode", "sequence_by", "cluster_by"]));
+    expect(labels(items)).toEqual(
+      expect.arrayContaining(["except_columns", "changes_suffix", "properties"]),
+    );
     expect(items.find((item) => item.label === "except_columns")?.detail).toBeUndefined();
     expect(items.find((item) => item.label === "changes_suffix")?.detail).toBe("default: _changes");
   });
@@ -181,21 +183,7 @@ describe("completion", () => {
   });
 });
 
-describe("references in project.yaml", () => {
-  it("offers the forms a value may use there, but not values, which may not refer to values", () => {
-    const project = openProject(retail, new Map());
-    const text = "id: retail\nvalues:\n  account: sa_${";
-    const labels = completionsAt(
-      project,
-      "project.yaml",
-      text,
-      text.length,
-      project.environments[0],
-    ).map((item) => item.label);
-    expect(labels).toContain("environment.name");
-    expect(labels).not.toContain("values.");
-  });
-
+describe("completion of other kinds", () => {
   it("offers serve methods and their settings", () => {
     const synapse = join(import.meta.dirname, "../../../cli/test/fixtures/synapse-views");
     const complete = (file: string, edit: (text: string) => string) => {

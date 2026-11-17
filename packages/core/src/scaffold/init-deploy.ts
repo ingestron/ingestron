@@ -7,7 +7,7 @@ import type { Output } from "../generation/index.js";
 type Deploy = (output: Output, folder: string) => string[];
 
 /** The documentation's page with Data Factory's full deploy steps. */
-const adfDeploy = "https://docs.ingestron.io/docs/platforms/adf-deploy";
+const adfDeploy = "https://docs.ingestron.io/docs/adf/deploy";
 
 const sh = (lines: string[]) => ["```sh", ...lines, "```"];
 const powershell = (lines: string[]) => ["```powershell", ...lines, "```"];
@@ -60,7 +60,14 @@ const deploys: Record<string, Deploy> = {
     "`databricks.workspace.host` names one: sign in to each environment's workspace, or set it per",
     "environment.",
   ],
-  synapse: (_output, folder) => [
+  synapse: (output, folder) => [
+    ...(Object.keys(output.files).some((path) => path.startsWith("workspace/"))
+      ? [
+          `Review native artifacts under \`${folder}/workspace/<environment>/\` and deliver them through your existing Synapse workspace publishing process.`,
+          "They reference an existing Azure integration runtime. Schedule triggers are stopped by default. SQL query companions under `queries/` are review files, not workspace resources.",
+          "",
+        ]
+      : []),
     "One `views.sql` for every environment, and a script for each that sets its values. For each",
     "environment, from the folder, with sqlcmd (Go):",
     "",

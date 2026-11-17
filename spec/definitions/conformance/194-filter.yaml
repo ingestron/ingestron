@@ -1,0 +1,75 @@
+description: A flow table's source row `filter` is a predicate the table's ingest method must filter with. On a method that does not (`files`), it is FILTER_NOT_SUPPORTED, an error at the filter, naming the method. On one that does (`copy`), each `{{ parameters.<name> }}` it holds must name a parameter the flow declares; one that does not is TRIGGER_PARAMETER, an error at the filter, reported once for each name.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+  webshop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: webshop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: shop
+    source: webshop
+    ingest:
+      uses: copy
+      with: { landing: /landing }
+      parameters:
+        min_date: { type: date, default: "2020-01-01" }
+    tables:
+      orders:
+        object: orders
+        contract: orders
+        ingest:
+          filter: "OrderDate >= {{ parameters.min_date }} AND Region = {{parameters.region}} AND Region <> {{ parameters.region }}"
+      customers:
+        object: customers
+        contract: orders
+        ingest:
+          filter: "CreatedOn >= {{ parameters.min_date }}"
+      suppliers: { object: suppliers, contract: orders }
+  plain.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: plain
+    source: webshop
+    tables:
+      events:
+        object: events
+        contract: orders
+        ingest:
+          filter: "Kind = 'click'"
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  diagnostics:
+    - code: FILTER_NOT_SUPPORTED
+      severity: error
+      file: plain.yaml
+      line: 10
+      message: "files does not filter source rows; remove `filter`, or use a method that does."
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 15
+      message: '"{{ parameters.region }}" names no parameter of the flow.'

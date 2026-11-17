@@ -34,7 +34,7 @@ import {
   type ProjectSymbol,
   type TextPlace,
 } from "../navigation/index.js";
-import { openProject, type Position, type Project } from "../project/index.js";
+import { openProject, resolvedForDisplay, type Position, type Project } from "../project/index.js";
 import {
   importSource,
   sourceFileAt,
@@ -80,6 +80,11 @@ export class ProjectSnapshot {
   /** Every problem for the environment. */
   problems(environment: string | undefined): Problem[] {
     return problems(this, environment);
+  }
+
+  /** The effective platform mode for previews; undefined while the project cannot resolve. */
+  environmentMode(environment: string): "development" | "production" | undefined {
+    return resolvedForDisplay(this, environment).model?.platform.mode;
   }
 
   /** Suggestions for the cursor at `offset` in `text`, the open text of `file`. */
@@ -140,8 +145,8 @@ export class ProjectSnapshot {
   }
 
   /** Where the id or reference at the offset is defined. */
-  definitionAt(file: string, offset: number): TextPlace | undefined {
-    return definitionAt(this, file, offset);
+  definitionAt(file: string, offset: number, environment?: string): TextPlace | undefined {
+    return definitionAt(this, file, offset, environment);
   }
 
   /**

@@ -13,7 +13,7 @@ export {
 } from "./folder/index.js";
 
 // The manifest: which files Ingestron wrote, by digest.
-export { digestOf } from "./manifest/index.js";
+export { digestOf, readManifest, type Manifest, type ManifestResult } from "./manifest/index.js";
 
 // Planning: what would change in an output folder, and the plan as text.
 export {

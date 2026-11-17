@@ -150,14 +150,15 @@ behave like folders or links. `snapshot()` returns every file.
 
 ### Problems
 
-| Code                 | Meaning                                                                                    |
-| -------------------- | ------------------------------------------------------------------------------------------ |
-| `BAD_PATH`           | A wanted path breaks the path rules above                                                  |
-| `BAD_MANIFEST`       | `.generated.json` is unreadable or lists a path outside the folder; no changes are planned |
-| `PLAN_HAS_CONFLICTS` | `applyPlan` was given a plan that is not clean                                             |
-| `LOCKED`             | Another generation holds `.generated.lock`                                                 |
-| `CHANGED_SINCE_PLAN` | A file or the manifest changed between planning and applying                               |
-| `WRITE_FAILED`       | Writing or removing failed; the message says whether every changed file was put back       |
+| Code                 | Meaning                                                                                               |
+| -------------------- | ----------------------------------------------------------------------------------------------------- |
+| `BAD_PATH`           | A wanted path breaks the path rules above                                                             |
+| `BAD_MANIFEST`       | `.generated.json` is unreadable or lists a path outside the folder; no changes are planned            |
+| `PLAN_HAS_CONFLICTS` | `applyPlan` was given a plan that is not clean                                                        |
+| `LOCKED`             | Another generation holds `.generated.lock`                                                            |
+| `CHANGED_SINCE_PLAN` | A file or the manifest changed between planning and applying                                          |
+| `WRITE_FAILED`       | Writing or removing failed; the message says whether every changed file was put back                  |
+| `FIRST_WRITE`        | A caller added it: a pack refused a file that was never generated here; never set by `planGeneration` |
 
 Each problem is `{ code, path?, message }`; the message says what to do.
 

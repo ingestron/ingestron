@@ -780,6 +780,45 @@
         "inputs": {},
         "problems": []
       }
+    },
+    {
+      "name": "uses the SQL Server catalogue for azure-sql-database",
+      "connection": {
+        "id": "erp",
+        "connector": "azure-sql-database"
+      },
+      "recipes": "catalog",
+      "expected": {
+        "recipe": "sqlserver",
+        "inputs": {},
+        "problems": []
+      }
+    },
+    {
+      "name": "uses the SQL Server catalogue for azure-sql-managed-instance",
+      "connection": {
+        "id": "erp",
+        "connector": "azure-sql-managed-instance"
+      },
+      "recipes": "catalog",
+      "expected": {
+        "recipe": "sqlserver",
+        "inputs": {},
+        "problems": []
+      }
+    },
+    {
+      "name": "uses the SQL Server catalogue for amazon-rds-sqlserver",
+      "connection": {
+        "id": "erp",
+        "connector": "amazon-rds-sqlserver"
+      },
+      "recipes": "catalog",
+      "expected": {
+        "recipe": "sqlserver",
+        "inputs": {},
+        "problems": []
+      }
     }
   ],
   "catalog": {

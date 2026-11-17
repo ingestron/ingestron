@@ -10,7 +10,8 @@ export type ProblemCode =
   | "PLAN_HAS_CONFLICTS"
   | "LOCKED"
   | "CHANGED_SINCE_PLAN"
-  | "WRITE_FAILED";
+  | "WRITE_FAILED"
+  | "FIRST_WRITE";
 
 /**
  * One problem, with the path it concerns when there is one.

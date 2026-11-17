@@ -111,8 +111,10 @@ take each variable as a deploy-time value: the pipeline that deploys them
 supplies it ([output folders](outputs.md), section 6). Then the first
 sentence says instead that the pipeline that deploys the files supplies each
 value for each environment, under the names each line gives, and that
-`.env.<environment>` on your own computer is read only by a pack that reads
-the values when generating, such as DuckDB; and the line for each such
+`.env.<environment>` on your own computer is read only by packs that take
+the values when generating, not by those that take them when deploying. The
+sentence names no pack or platform, since the request may be for a project
+with none that reads them when generating; and the line for each such
 variable also gives
 each name under which a pack's files take it, with the pack's id, from that
 pack's `buildEnvironments` (definitions specification, section 2.1); for

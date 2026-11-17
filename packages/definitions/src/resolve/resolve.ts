@@ -12,6 +12,7 @@ import type { Diagnostic, Reporter, Source } from "../diagnostics/index.js";
 import { checkDeployValues, deployValuesOf, resolutionReporter } from "../context/index.js";
 import { kinds } from "../documents/index.js";
 import { flowTables } from "./flows.js";
+import { sourceLoadProblems } from "./source-load-problems.js";
 import { outcome } from "./outcome.js";
 import type { SourceTable } from "../sources/index.js";
 import { documentFiles, withPlaceholders } from "../internal/index.js";
@@ -167,7 +168,10 @@ function resolveLoadedProject(
             ...runsOnProblems(files, loaded.project, options.packs),
           ]),
         )
-      : { ok: false, diagnostics: loaded.diagnostics },
+      : {
+          ok: false,
+          diagnostics: [...loaded.diagnostics, ...sourceLoadProblems(files, loaded.documents)],
+        },
     documentFiles(files, loaded.project?.documents),
   );
   return acceptWarnings(files, loaded.ok ? loaded.project : undefined, resolution);

@@ -3,6 +3,7 @@ import { formatDiagnostics } from "@ingestron/config";
 import * as core from "@ingestron/core";
 import { packLoadProblem } from "@ingestron/definitions";
 import {
+  addition,
   assistant,
   compare,
   draftContract,
@@ -22,6 +23,8 @@ export type { Io } from "./terminal/index.js";
 
 /** What each command runs. */
 const handlers: Record<Options["command"], (options: Options, io: Io) => number> = {
+  connection: addition,
+  flow: addition,
   plan: generate,
   apply: generate,
   check: generate,

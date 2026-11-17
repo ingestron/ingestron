@@ -1,0 +1,36 @@
+# A data-only pack that runs the project's jobs but not a schedule for each flow, like the
+# Databricks pack, for the case about judging each operations value by the first pack that
+# applies it (section 11.6). Its connector is its own, so it offers no fixes in other cases.
+id: jobs
+version: 1
+defaults:
+  naming:
+    catalog: "{{ environment }}"
+    schema: "{{ layer }}"
+    table: "{{ table }}"
+    pipeline: "{{ project }}"
+    job: "{{ project }}_refresh"
+  layers: [bronze, silver, gold]
+  types:
+    {
+      string: STRING,
+      integer: BIGINT,
+      number: DOUBLE,
+      boolean: BOOLEAN,
+      date: DATE,
+      timestamp: TIMESTAMP,
+    }
+  quality: { required: warn, default: warn }
+rules: {}
+methods:
+  jobs-copy:
+    action: ingest
+    description: Copies a source's files to a landing folder.
+    connectors: [jobs]
+    produces: files
+    settings: { type: object }
+intent:
+  operations.retries: { use: used, does: Retries each job. }
+  operations.schedule=project: { use: used, does: Runs one job for the project. }
+  operations.schedule=flow: { use: not-yet, reason: It runs one job for the project. }
+  operations.alerts=slow: { use: not-yet, reason: It sends no alert for a slow run. }

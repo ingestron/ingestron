@@ -57,7 +57,17 @@ export function formatPlan(plan: Plan, options?: FormatOptions): string;
 export const lockFile = ".generated.lock";
 
 // @public
+export type Manifest = ReadonlyMap<string, string>;
+
+// @public
 export const manifestFile = ".generated.json";
+
+// @public
+export type ManifestResult = {
+    files: Manifest;
+} | {
+    problem: Problem;
+};
 
 // @public
 export interface MemoryFolder extends OutputFolder {
@@ -111,7 +121,10 @@ export interface Problem {
 }
 
 // @public
-export type ProblemCode = "BAD_PATH" | "BAD_MANIFEST" | "PLAN_HAS_CONFLICTS" | "LOCKED" | "CHANGED_SINCE_PLAN" | "WRITE_FAILED";
+export type ProblemCode = "BAD_PATH" | "BAD_MANIFEST" | "PLAN_HAS_CONFLICTS" | "LOCKED" | "CHANGED_SINCE_PLAN" | "WRITE_FAILED" | "FIRST_WRITE";
+
+// @public
+export function readManifest(folder: OutputFolder): ManifestResult;
 
 // @public
 export type Seen = string;

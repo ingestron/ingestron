@@ -13,7 +13,8 @@ import { methodChoices } from "./method-suggestions.js";
 import { flowFacts, listAt, placeAt, writtenKeys, type Place } from "../navigation/index.js";
 import { fieldAt, fieldsIn } from "./fields.js";
 import { markFixed } from "./fixed.js";
-import { movedSettingsLast } from "./moved-settings.js";
+import { withoutMovedSettings } from "./moved-settings.js";
+import { keyEntry, fieldSuggestion } from "./key-entry.js";
 import { afterDash, type Suggestion } from "./suggestion.js";
 import { inputCompletions } from "./inputs.js";
 import { valueHelp } from "./value-help.js";
@@ -34,14 +35,14 @@ export function completionsAt(
   const before = text.slice(0, offset);
   const inputs = inputCompletions(project, file, before);
   if (inputs) return inputs;
-  const inline = inlineCompletions(project, before, file);
-  if (inline) return inline;
+  const inline = inlineCompletions(project, before, file, environment);
+  if (inline) return inline.map((item) => ({ ...item, ...nameAround(text, offset) }));
   if (!/\.ya?ml$/.test(file)) return [];
   if (/^\s*\w*$/.test(text)) return skeletons(project, file);
   const place = placeAt(file, text, offset);
   if (place.path[0] === "naming" && /\{\{\s*\w*$/.test(before)) return patternNames();
   const typed = sourceTyped(project, place, environment);
-  if (typed) return typed;
+  if (typed) return place.part === "key" ? typed.map((item) => keyEntry(item, place)) : typed;
   return place.part === "key"
     ? newKeys(project, place, environment)
     : values(project, place, environment);
@@ -50,7 +51,9 @@ export function completionsAt(
 /** Keys for a new line; a mapping holds each key once, so the keys already written are left out. */
 function newKeys(project: Project, place: Place, environment: string | undefined): Suggestion[] {
   const written = writtenKeys(place);
-  return keyCompletions(project, place, environment).filter((item) => !written.has(item.label));
+  return keyCompletions(project, place, environment)
+    .filter((item) => !written.has(item.label))
+    .map((item) => keyEntry(item, place));
 }
 
 /** Values, or for a new list item of mappings its fields; straight after `key:` with its space. */
@@ -76,7 +79,12 @@ function values(project: Project, place: Place, environment: string | undefined)
 /** A new item in a list of mappings: ready-made items first, then the item's fields. */
 function newItem(project: Project, place: Place, environment: string | undefined): Suggestion[] {
   const fields = fieldsIn(project, place, [...place.path, "0"], environment) ?? [];
-  return [...itemSnippets(place), ...firstFields(place, fields).map(fieldSuggestion)];
+  return [
+    ...itemSnippets(place),
+    ...firstFields(place, fields)
+      .map(fieldSuggestion)
+      .map((item) => keyEntry(item, place)),
+  ];
 }
 
 /** The distinct names of the project's symbols with `prefix`, such as every value name. */
@@ -206,7 +214,7 @@ function keyCompletions(
     return newTables(project, place);
   const described = fieldsIn(project, place, path, environment);
   if (described)
-    return movedSettingsLast(project, place, path, environment, described.map(fieldSuggestion));
+    return withoutMovedSettings(project, place, path, environment, described.map(fieldSuggestion));
   const schema = schemaFor(place.file, place.kind);
   if (!schema) return [];
   const fields = schemasAt(schema, path).flatMap((item) => Object.entries(item.properties ?? {}));
@@ -220,18 +228,13 @@ function keyCompletions(
     }));
 }
 
-/** A described field as a key to complete, with its default. */
-function fieldSuggestion(field: FieldInfo): Suggestion {
-  const shown = typeof field.default === "string" ? field.default : JSON.stringify(field.default);
-  return {
-    label: field.name,
-    kind: field.placement ? "setting" : "field",
-    docs: field.docs,
-    ...(field.default !== undefined && { detail: `default: ${shown}` }),
-    ...(field.description && { documentation: field.description }),
-  };
-}
-
 function methodNamed(name: string): Method | undefined {
   return packs.map((pack) => pack.methods[name]).find((method) => method !== undefined);
+}
+
+/** The name the cursor is in, before and after it: what a suggestion inside `${…}` replaces. */
+function nameAround(text: string, offset: number): { replaceFrom: number; replaceTo: number } {
+  const before = /[\w-]*$/.exec(text.slice(0, offset))![0].length;
+  const after = /^[\w-]*/.exec(text.slice(offset))![0].length;
+  return { replaceFrom: offset - before, replaceTo: offset + after };
 }

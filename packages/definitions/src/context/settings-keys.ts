@@ -3,7 +3,7 @@
 // renaming it to the near method (specification section 3).
 import type { DefinitionDocument, Fix } from "@ingestron/config";
 import type { Context } from "./context.js";
-import { isRecord } from "../internal/index.js";
+import { distance, isRecord } from "../internal/index.js";
 import type { Action } from "../pack/index.js";
 
 const actions: Action[] = ["ingest", "transform", "store", "serve"];
@@ -47,20 +47,4 @@ function checkKeys(
       fixes,
     );
   }
-}
-
-/** Edit distance (insert, delete, replace). */
-function distance(a: string, b: string): number {
-  let row = Array.from({ length: b.length + 1 }, (_, index) => index);
-  for (let i = 1; i <= a.length; i += 1) {
-    const next = [i];
-    for (let j = 1; j <= b.length; j += 1)
-      next[j] = Math.min(
-        row[j]! + 1,
-        next[j - 1]! + 1,
-        row[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1),
-      );
-    row = next;
-  }
-  return row[b.length]!;
 }

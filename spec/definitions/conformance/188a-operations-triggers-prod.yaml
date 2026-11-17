@@ -1,0 +1,54 @@
+description: The selected environment's timezone replaces the common one, and hours that give no zone take the resolved one. Here prod is UTC, so the hours are in UTC, and the types are the defaults.
+environment: prod
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+    operations:
+      triggers:
+        timezone: Europe/London
+        hours: { from: "22:00", to: "06:00" }
+        environments:
+          dev: { hours: any }
+          prod: { timezone: UTC }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  operations:
+    schedule: { per: project }
+    trigger: schedule
+    alerts: { on: [failure] }
+    require_tags: []
+    triggers:
+      types: [schedule, tumbling-window]
+      timezone: UTC
+      hours: { from: "22:00", to: "06:00", timezone: UTC }

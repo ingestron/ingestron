@@ -2,11 +2,12 @@
 // with, and its generation, worked out once and kept until refresh().
 import type { FileSource } from "@ingestron/config";
 import type { Pack } from "@ingestron/definitions";
-import { planGeneration, type OutputFolder, type Plan } from "@ingestron/generate";
+import type { OutputFolder, Plan } from "@ingestron/generate";
 import { compareEnvironments } from "../compare/index.js";
 import {
   generateAll,
   outputsOf,
+  planOutput,
   reportsText,
   type Generated,
   type GeneratedOutputs,
@@ -33,6 +34,7 @@ export class Project {
   readonly packs: readonly Pack[];
   // The values `${envvar:…}` reads: private, so logging the project never shows them.
   readonly #envvars: Readonly<Record<string, string | undefined>>;
+  readonly #now: Date | undefined;
   readonly #generations = new Map<"warning" | "error", Generated>();
   #outputs: GeneratedOutputs | undefined;
 
@@ -40,6 +42,7 @@ export class Project {
     this.files = files;
     this.packs = options.packs ?? builtInPacks;
     this.#envvars = options.envvars ?? process.env;
+    this.#now = options.now;
   }
 
   /** Opens the project whose files `files` reads; `options` gives other packs or host values. */
@@ -67,8 +70,9 @@ export class Project {
   }
 
   /**
-   * What applying the output named `outputName` to `folder` would change. Throws
-   * when the definitions have problems, with them, or for an output the project
+   * What applying the output named `outputName` to `folder` would change, with a
+   * `FIRST_WRITE` problem for each file the output's pack refuses to write for the first
+   * time. Throws when the definitions have problems, with them, or for an output the project
    * does not generate.
    */
   plan(folder: OutputFolder, outputName: string): Plan {
@@ -79,7 +83,7 @@ export class Project {
       );
     const output = generated.outputs.find(({ name }) => name === outputName);
     if (!output) throw new Error(`The project generates no output named "${outputName}".`);
-    return planGeneration(folder, output.files);
+    return planOutput(folder, output.name, output.files, this.packs, this.#now);
   }
 
   /** What differs between environments `a` and `b`, as Markdown. */
@@ -99,6 +103,6 @@ export class Project {
   }
 
   #options(): ProjectOptions {
-    return { packs: this.packs, envvars: this.#envvars };
+    return { packs: this.packs, envvars: this.#envvars, now: this.#now };
   }
 }

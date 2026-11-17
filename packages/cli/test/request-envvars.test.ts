@@ -23,8 +23,11 @@ describe("ingestron request with environment variables", () => {
     expect(output).toMatch(/^# Platform request: shop \(dev\)\n\n## Values to provide\n/);
     const values = section(output, "Values to provide");
     expect(values).toContain(
-      "These values come from environment variables. The pipeline that deploys the files supplies each one for each environment, under the names given; on your own computer, `.env.dev` (kept out of Git) is read only by a pack that reads them when generating, such as DuckDB.",
+      "These values come from environment variables. The pipeline that deploys the files supplies each one for each environment, under the names given; on your own computer, `.env.dev` (kept out of Git) is read only by packs that take these values when generating, not by those that take them when deploying.",
     );
+    // It names no platform: the project may have no pack that reads them when generating.
+    const first = values.split("\n").find((text) => text.startsWith("These values come"));
+    expect(first).not.toMatch(/duckdb|databricks|synapse|data factory/i);
     expect(values).toContain(
       "- `INGT_REQ_LANDING`, used for `values.landing` in `project.yaml`: not set yet.",
     );

@@ -20,7 +20,7 @@ export function metadataContract(
   return {
     id: `${connection}:${table.object}`,
     origin: "metadata",
-    columns: table.columns.map((column) => columnOf(column, types)),
+    columns: table.columns.map((column) => columnOf(column, types, context)),
     primaryKey: primaryKeyOf(table.columns),
     checks: [],
     tableChecks: [],
@@ -31,14 +31,36 @@ export function metadataContract(
   };
 }
 
-function columnOf(column: SourceColumnDoc, types: Record<string, string>): Column {
-  const type = types[column.logicalType];
+function columnOf(
+  column: SourceColumnDoc,
+  types: Record<string, string>,
+  context: Context,
+): Column {
+  const overridden = context.standard.value.types?.[column.logicalType];
+  const type = overridden ?? context.packs[0]?.metadataType?.(column) ?? types[column.logicalType];
   return {
     name: column.name,
     ...(type && { type }),
     logicalType: column.logicalType,
     nullable: true,
   };
+}
+
+/**
+ * The top-level columns whose type from the metadata is not the one their logical type alone
+ * gives, such as `DECIMAL(19,4)` for `money`, by name; undefined when there is none
+ * (specification section 12.7, `types`). A contract keeps such a type only as `physicalType`.
+ */
+export function metadataTypes(
+  context: Context,
+  table: SourceTableDoc,
+): Record<string, string> | undefined {
+  const types = { ...context.pack.defaults.types, ...context.standard.value.types };
+  const kept = table.columns.flatMap((column): [string, string][] => {
+    const { type } = columnOf(column, types, context);
+    return type !== undefined && type !== types[column.logicalType] ? [[column.name, type]] : [];
+  });
+  return kept.length > 0 ? Object.fromEntries(kept) : undefined;
 }
 
 /** The columns that have a `primaryKeyPosition`, ordered by it. */

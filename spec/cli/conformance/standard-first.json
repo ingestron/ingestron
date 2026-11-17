@@ -1,0 +1,57 @@
+{
+  "cases": [
+    {
+      "name": "platform before source",
+      "args": ["init", "--platform", "synapse", "--yes"],
+      "present": ["project.yaml", "standard.yaml", "platform.yaml", "README.md"],
+      "absentKinds": ["Connection", "Flow", "DataContract"]
+    },
+    {
+      "name": "imports only what it writes",
+      "args": ["init", "--platform", "synapse", "--yes"],
+      "imports": ["standard.yaml", "platform.yaml"],
+      "warnings": 0
+    },
+    {
+      "name": "preserve supplied standard",
+      "args": ["init", "--platform", "synapse", "--standard", "standard.yaml", "--yes"],
+      "standardContent": "unchanged"
+    },
+    {
+      "name": "independent connection",
+      "command": "connection add",
+      "adds": ["Connection"],
+      "preserves": ["Standard", "Platform", "Flow"]
+    },
+    {
+      "name": "first connection imports its folder",
+      "command": "connection add",
+      "addsImport": "connections/*.yaml",
+      "preserves": ["Standard", "Platform"]
+    },
+    {
+      "name": "a folder's other files stay out",
+      "existingFile": "connections/legacy.yaml",
+      "command": "connection add",
+      "addsImport": "connections/<id>.yaml"
+    },
+    {
+      "name": "reject unsupported source",
+      "platform": "synapse",
+      "connector": "salesforce",
+      "writes": 0
+    },
+    {
+      "name": "no overwrite",
+      "existingId": "northwind",
+      "command": "connection add northwind",
+      "writes": 0
+    },
+    {
+      "name": "spaced source object",
+      "command": "flow add",
+      "object": "northwind.dbo.Order Details",
+      "preservesObject": true
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+# A data-only pack whose metadata mapping keeps a fixed-point type, as Synapse keeps money as
+# DECIMAL(19,4) (section 12.4). `metadataTypes` stands for the pack's `metadataType`: the type
+# for a column's `sourceType`, none for any other.
+id: exact
+version: 1
+defaults:
+  naming:
+    {
+      catalog: "{{ environment }}",
+      schema: "{{ layer }}",
+      table: "{{ table }}",
+      pipeline: "{{ project }}",
+      job: "{{ project }}_refresh",
+    }
+  layers: [bronze, silver, gold]
+  types:
+    {
+      string: STRING,
+      integer: BIGINT,
+      number: DOUBLE,
+      boolean: BOOLEAN,
+      date: DATE,
+      timestamp: TIMESTAMP,
+    }
+  quality: { required: warn, default: warn }
+metadataTypes: { money: "DECIMAL(19,4)", "decimal(18,2)": "DECIMAL(18,2)", int: BIGINT }
+rules:
+  ingest: { default: exact-copy }
+methods:
+  exact-copy:
+    action: ingest
+    description: Copies a source's tables.
+    connectors: [exact]
+    produces: table
+    settings: { type: object }

@@ -35,7 +35,7 @@ describe("sourceRequestFor: problems", () => {
     ]);
   });
 
-  it("writes an unknown connection after the definitions' errors", () => {
+  it("reports an unknown connection before any flows are added", () => {
     const files = project({
       "flows/erp.yaml": null,
       "flows/crm.yaml": null,
@@ -46,11 +46,7 @@ describe("sourceRequestFor: problems", () => {
       recipes: recipesOf(files),
       connection: "nope",
     });
-    problems(text, [
-      "(project)  error  PACK_CHECK",
-      "  there is nothing to generate: add a flow or a transform.",
-      '"nope" is not a connection of the project. Connections: crm, erp, landing.',
-    ]);
+    problems(text, ['"nope" is not a connection of the project. Connections: crm, erp, landing.']);
   });
 
   it("shows only the loading errors when the project cannot be loaded", () => {

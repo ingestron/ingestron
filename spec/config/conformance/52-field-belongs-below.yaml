@@ -1,0 +1,54 @@
+description: A field that is unknown where it is written, but is a field of one of the mapping's own fields, is reported with where it belongs.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        apiVersion: { type: string }
+        kind: { type: string }
+        id: { type: string }
+        ingest: { $ref: "#/$defs/ingest" }
+        store:
+          type: object
+          properties:
+            retries: { type: integer }
+      $defs:
+        ingest:
+          type: object
+          additionalProperties: false
+          properties:
+            uses: { type: string }
+            triggers: { type: array }
+            retries: { type: integer }
+files:
+  project.yaml: |
+    id: sales
+    imports: ["*.pipeline.yaml"]
+  orders.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: orders
+    ingest:
+      uses: copy
+    triggers: []
+    retries: 2
+    ingest_mode: copy
+expect:
+  diagnostics:
+    - code: SCHEMA
+      file: orders.pipeline.yaml
+      line: 6
+      message: '"triggers" is not a field of the document. Write it under "ingest".'
+      hint: "Fields: apiVersion, kind, id, ingest, store."
+    - code: SCHEMA
+      file: orders.pipeline.yaml
+      line: 7
+      message: '"retries" is not a field of the document. Write it under "ingest" or "store".'
+      hint: "Fields: apiVersion, kind, id, ingest, store."
+    - code: SCHEMA
+      file: orders.pipeline.yaml
+      line: 8
+      message: '"ingest_mode" is not a field of the document.'
+      hint: "Fields: apiVersion, kind, id, ingest, store."

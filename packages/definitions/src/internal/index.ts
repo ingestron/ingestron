@@ -2,3 +2,4 @@
 export { byCodePoint, isRecord, merge, sameValue } from "./merge.js";
 export { documentFiles, withPlaceholders } from "./placeholders.js";
 export { holdsReference, writtenValue, type ParsedFiles } from "./written.js";
+export { distance } from "./distance.js";
