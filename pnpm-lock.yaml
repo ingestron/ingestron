@@ -37,8 +37,8 @@ importers:
         specifier: workspace:^
         version: link:../cli
       '@ingestron/pack-adf':
-        specifier: ^2.4.0
-        version: 2.4.0(@ingestron/definitions@packages+definitions)
+        specifier: ^2.5.0
+        version: 2.5.0(@ingestron/definitions@packages+definitions)
       '@microsoft/api-extractor':
         specifier: 7.59.4
         version: 7.59.4(@types/node@22.20.5)
@@ -83,17 +83,17 @@ importers:
         specifier: 1.5.6-r.2
         version: 1.5.6-r.2
       '@ingestron/pack-adf':
-        specifier: ^2.4.0
-        version: 2.4.0(@ingestron/definitions@packages+definitions)
+        specifier: ^2.5.0
+        version: 2.5.0(@ingestron/definitions@packages+definitions)
       '@ingestron/pack-databricks':
+        specifier: ^2.5.0
+        version: 2.5.0(@ingestron/definitions@packages+definitions)
+      '@ingestron/pack-duckdb':
         specifier: ^2.4.0
         version: 2.4.0(@ingestron/definitions@packages+definitions)
-      '@ingestron/pack-duckdb':
-        specifier: ^2.3.0
-        version: 2.3.0(@ingestron/definitions@packages+definitions)
       '@ingestron/pack-synapse':
-        specifier: ^2.3.0
-        version: 2.3.0(@ingestron/definitions@packages+definitions)
+        specifier: ^2.4.0
+        version: 2.4.0(@ingestron/definitions@packages+definitions)
       '@microsoft/api-extractor':
         specifier: 7.59.4
         version: 7.59.4(@types/node@22.20.5)
@@ -180,20 +180,20 @@ importers:
         specifier: workspace:^
         version: link:../generate
       '@ingestron/pack-adf':
-        specifier: ^2.4.0
-        version: 2.4.0(@ingestron/definitions@packages+definitions)
+        specifier: ^2.5.0
+        version: 2.5.0(@ingestron/definitions@packages+definitions)
       '@ingestron/pack-databricks':
+        specifier: ^2.5.0
+        version: 2.5.0(@ingestron/definitions@packages+definitions)
+      '@ingestron/pack-duckdb':
         specifier: ^2.4.0
         version: 2.4.0(@ingestron/definitions@packages+definitions)
-      '@ingestron/pack-duckdb':
-        specifier: ^2.3.0
-        version: 2.3.0(@ingestron/definitions@packages+definitions)
       '@ingestron/pack-synapse':
-        specifier: ^2.3.0
-        version: 2.3.0(@ingestron/definitions@packages+definitions)
+        specifier: ^2.4.0
+        version: 2.4.0(@ingestron/definitions@packages+definitions)
       '@ingestron/standards':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.2.0
+        version: 1.2.0
       hyparquet:
         specifier: 1.31.5
         version: 1.31.5
@@ -580,32 +580,32 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
-  '@ingestron/pack-adf@2.4.0':
-    resolution: {integrity: sha512-VeQlcsDSXpp9sAXYDfIR8G49HqmrVdKJ+4PMjxVnakUipiL+md1h4FR+lh7pO0URBfRWp4zLYFb3sxv0XmqWdg==}
+  '@ingestron/pack-adf@2.5.0':
+    resolution: {integrity: sha512-xnKgoHG5WILGvbNRpIwtvzxe62BR0tV/iloteDvhf5HgO2GMW+pOKe+2j87UmoTHoiwqKefpSf9GB9E5FITOyQ==}
     engines: {node: '>=22.13.0'}
     peerDependencies:
-      '@ingestron/definitions': ^1.14.0
+      '@ingestron/definitions': ^1.15.0
 
-  '@ingestron/pack-databricks@2.4.0':
-    resolution: {integrity: sha512-cp3i2mWWFIWnLe5ZsWbGy0/hawwfajkxms2bdgurbK23j3v3VK9g7PaUmr5dgnXGebjNYhkYbIFAbsh9EZvtZw==}
+  '@ingestron/pack-databricks@2.5.0':
+    resolution: {integrity: sha512-t9V5sPTDZszTQdmZ+3ptZK+/Mn7Qd+KnFr7fQLayfvbTGgVY3hMQoBCb4lKmdFGjiOuAilKQDmrOkoTdKvEalQ==}
     engines: {node: '>=22.13.0'}
     peerDependencies:
-      '@ingestron/definitions': ^1.14.0
+      '@ingestron/definitions': ^1.15.0
 
-  '@ingestron/pack-duckdb@2.3.0':
-    resolution: {integrity: sha512-REdhncxcoECTr7MMqyO+nXwkoCcIuFEPcEgQGn8OqAQKi3nf4vanN9ll+C7WQEy1ddEa70s1c4R8wOISRZbYUg==}
+  '@ingestron/pack-duckdb@2.4.0':
+    resolution: {integrity: sha512-FpdtiHkL7R6XJempyraIKcInFB8+zGq9G9z+9oQwssPprhQ7znNgv8hWWIi+0j8v3HZVXwpTgCGTARaLksqGog==}
     engines: {node: '>=22.13.0'}
     peerDependencies:
-      '@ingestron/definitions': ^1.14.0
+      '@ingestron/definitions': ^1.15.0
 
-  '@ingestron/pack-synapse@2.3.0':
-    resolution: {integrity: sha512-i+NnGY6MyfqPSPki8RmspNxT5QOE8oOcgJ353X0Fsk0hhz4dBoEoVBrIDK+MphdonEcXvv0J2GzOOneXAcuO3A==}
+  '@ingestron/pack-synapse@2.4.0':
+    resolution: {integrity: sha512-7XPkjR/Oc9Ku4kJvgXKMk6h+ksa0WbuwNKcyjpwVtKS43DWCs9NMNRUgYdw2wABaaRPCFElfU204f9MJJPUpog==}
     engines: {node: '>=22.13.0'}
     peerDependencies:
-      '@ingestron/definitions': ^1.14.0
+      '@ingestron/definitions': ^1.15.0
 
-  '@ingestron/standards@1.1.0':
-    resolution: {integrity: sha512-yYQk2WmuSENBD7p/ZGFjz5D4dSzwLM7iojz1+qm7sCZqI4ucSeA972j/mfE+J9C1FWKigXOONWU44XLdjFYDLg==}
+  '@ingestron/standards@1.2.0':
+    resolution: {integrity: sha512-RanGeajDlgJdPjhMI4IGgHHTzNu+RS8Jg+uADlep0JttZR3jwmiB8yKsid8A8dtXUaRcoewkUqCmFermNFfdLw==}
     engines: {node: '>=22.13.0'}
 
   '@jridgewell/resolve-uri@3.1.2':
@@ -1854,25 +1854,26 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@ingestron/pack-adf@2.4.0(@ingestron/definitions@packages+definitions)':
+  '@ingestron/pack-adf@2.5.0(@ingestron/definitions@packages+definitions)':
     dependencies:
       '@ingestron/definitions': link:packages/definitions
 
-  '@ingestron/pack-databricks@2.4.0(@ingestron/definitions@packages+definitions)':
+  '@ingestron/pack-databricks@2.5.0(@ingestron/definitions@packages+definitions)':
     dependencies:
       '@ingestron/definitions': link:packages/definitions
       liquidjs: 10.30.0
       yaml: 2.9.1
 
-  '@ingestron/pack-duckdb@2.3.0(@ingestron/definitions@packages+definitions)':
+  '@ingestron/pack-duckdb@2.4.0(@ingestron/definitions@packages+definitions)':
     dependencies:
       '@ingestron/definitions': link:packages/definitions
 
-  '@ingestron/pack-synapse@2.3.0(@ingestron/definitions@packages+definitions)':
+  '@ingestron/pack-synapse@2.4.0(@ingestron/definitions@packages+definitions)':
     dependencies:
       '@ingestron/definitions': link:packages/definitions
+      '@ingestron/pack-adf': 2.5.0(@ingestron/definitions@packages+definitions)
 
-  '@ingestron/standards@1.1.0': {}
+  '@ingestron/standards@1.2.0': {}
 
   '@jridgewell/resolve-uri@3.1.2': {}
 
