@@ -17,6 +17,8 @@ import type { Spot } from "../project/index.js";
 export interface HoverOptions {
   /** A full URL for a docs path such as `/docs/reference/errors#SCHEMA`. */
   docs?: (link: string) => string;
+  /** The moment a trigger's next starts are counted from; the time now when omitted. */
+  now?: Date;
 }
 
 /** The described field at the spot, explained; undefined when nothing describes it. */

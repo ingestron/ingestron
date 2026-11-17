@@ -1,4 +1,5 @@
-// `{{ … }}` is replaced only in naming patterns and transform code; anywhere
+// `{{ … }}` is replaced only in naming patterns, transform code and a flow table's source filter,
+// where it names a parameter (section 5.1); anywhere
 // else in project.yaml or a document it stays as written, which is a warning
 // with the `${…}` form as the fix (specification section 1).
 import type { AnyDiagnostic, FileSource, Fix } from "@ingestron/config";
@@ -55,9 +56,14 @@ function inFile(file: string, text: string): AnyDiagnostic[] {
   return found;
 }
 
-/** Naming patterns and transform code replace `{{ … }}` themselves. */
-function replaced(kind: unknown, [first]: string[]): boolean {
+/**
+ * Naming patterns and transform code replace `{{ … }}` themselves, and a flow table's source
+ * filter holds the `{{ parameters.<name> }}` references a pack replaces.
+ */
+function replaced(kind: unknown, path: string[]): boolean {
+  const [first, , third, fourth] = path;
   if (kind === "Standard" || kind === "Platform") return first === "naming";
+  if (kind === "Flow") return first === "tables" && third === "ingest" && fourth === "filter";
   return kind === "Transform" && first === "code";
 }
 

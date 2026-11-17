@@ -18,6 +18,7 @@ import type { GovernanceDoc } from "./governance-docs.js";
 import type { RulesDoc } from "./rules.js";
 import type { ContractDoc, ProductDoc } from "./exchange-docs.js";
 import type { SourceMetadataDoc } from "./source-docs.js";
+import type { ParameterDoc, TriggerDoc } from "../triggers/index.js";
 
 /** An action's method choice and settings, as written in a flow or transform. */
 export interface ActionDoc {
@@ -121,7 +122,8 @@ export interface FlowTableDoc extends FlowIntentDoc {
   expectations?: ExpectationDoc[];
   quality?: QuarantineDoc;
   cleanse?: CleanseDoc;
-  ingest?: { with?: Record<string, unknown> };
+  /** `filter`: a predicate in the source's SQL dialect that limits the rows read (section 5.1). */
+  ingest?: { with?: Record<string, unknown>; filter?: string };
   store?: { with?: Record<string, unknown> };
   serve?: { with?: Record<string, unknown> };
 }
@@ -132,7 +134,8 @@ export interface FlowDoc extends FlowIntentDoc {
   source: string;
   layer?: string;
   tables: Record<string, FlowTableDoc>;
-  ingest?: ActionDoc;
+  /** The ingest method, and the triggers and parameters of the flow's pipeline (section 5.1). */
+  ingest?: ActionDoc & { triggers?: TriggerDoc[]; parameters?: Record<string, ParameterDoc> };
   store?: ActionDoc;
   serve?: ActionDoc;
 }

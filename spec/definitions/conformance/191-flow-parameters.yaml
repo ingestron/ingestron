@@ -1,0 +1,80 @@
+description: A flow's custom parameters are checked, each TRIGGER_PARAMETER an error at the value. A value that does not fit the declared type, a name the flow does not declare, a name that is reserved or does not match the pattern, and a declaration without a default.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, ops@1]
+    operations:
+      schedule: { per: flow }
+  webshop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: webshop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: shop
+    source: webshop
+    ingest:
+      parameters:
+        min_date: { type: date, default: "2020-01-01" }
+        no_default: { type: string }
+        load: { type: string, default: x }
+        Region: { type: string, default: eu }
+      triggers:
+        - name: daily
+          type: schedule
+          every: { frequency: Day, interval: 1 }
+          start: 2026-12-01T00:00:00Z
+          parameters:
+            min_date: 5
+            region: eu
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  diagnostics:
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 8
+      message: 'The parameter "no_default" has no default.'
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 9
+      message: '"load" is reserved for the pipeline, so a flow cannot declare a parameter with that name.'
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 10
+      message: '"Region" is not a valid parameter name.'
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 17
+      message: 'The parameter "min_date" is a date, but the trigger "daily" gives 5.'
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 18
+      message: 'The trigger "daily" sets the parameter "region", which the flow does not declare.'

@@ -38,7 +38,9 @@ const storage = (container: string) =>
  * The settings schema of a method of any pack, by the method's id.
  * @internal
  */
-export function methodSettings(method: string): Record<string, { description?: string }> {
+export function methodSettings(
+  method: string,
+): Record<string, { description?: string; default?: unknown }> {
   const found = packs.map((pack) => pack.methods[method]).find(Boolean);
   const schema = found?.settings as { properties?: Record<string, { description?: string }> };
   return schema?.properties ?? {};
@@ -105,7 +107,7 @@ function composeInfrastructure(
     setWithComment(
       document,
       at(method, "integration_runtime"),
-      replaceMe,
+      methodSettings(method).integration_runtime?.default ?? replaceMe,
       describe(method, "integration_runtime"),
     );
 }
@@ -122,7 +124,10 @@ export function composeStandard(
     const keys = ["ingest", "settings", route.method, "every"];
     const every = document.getIn(keys) as { toJSON?(): unknown } | undefined;
     if (!every) return;
-    const size = windowSize(every.toJSON?.());
+    const size = windowSize(
+      every.toJSON?.(),
+      route.method === "synapse-copy" ? "snapshot" : "window",
+    );
     const described = methodSettings(route.method).every?.description ?? "Window size";
     setWithComment(document, keys, document.getIn(keys, true), `${commentText(described)}${size}`);
     inFlow(document, keys);
@@ -130,11 +135,11 @@ export function composeStandard(
 }
 
 /** `: one window every 24 hours`, for an `every` of a frequency and an interval. */
-function windowSize(every: unknown): string {
+function windowSize(every: unknown, unitName: string): string {
   const { frequency, interval } = (every ?? {}) as { frequency?: unknown; interval?: unknown };
   if (typeof frequency !== "string" || typeof interval !== "number") return "";
   const unit = frequency.toLowerCase();
-  return `: one window every ${interval} ${unit}${interval === 1 ? "" : "s"}`;
+  return `: one ${unitName} every ${interval} ${unit}${interval === 1 ? "" : "s"}`;
 }
 
 /**

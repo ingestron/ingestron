@@ -47,6 +47,7 @@ methods:
     description: Copies to a landing folder first.
     connectors: [files, sqlserver]
     produces: files
+    filters: true
     # What differs on this method from the pack's coverage (section 11.5).
     intent:
       load.mode=changes: { use: not-yet, reason: It copies whole files and reads no change feed. }

@@ -43,4 +43,5 @@ expect:
     trigger: schedule
     alerts: { on: [failure, slow], slow_after: 1h }
     require_tags: []
+    triggers: { types: [schedule, tumbling-window], timezone: UTC }
   diagnostics: []

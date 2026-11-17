@@ -1,8 +1,10 @@
-// Completion of a method's settings that are now intent (definitions specification, section 11.4).
+// Completion and hover of a method's settings that are now intent (definitions specification,
+// section 11.4).
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { completionsAt } from "../../src/assist/completion.js";
+import { hoverAt } from "../../src/hover/hover.js";
 import { openProject } from "../../src/project/project.js";
 import { filledTemplates } from "../starters.js";
 
@@ -18,21 +20,43 @@ function at(path: string, edit: (text: string) => string) {
 }
 
 describe("completion of settings that are now intent", () => {
-  it("offers the settings that are now intent last, naming the intent that replaces each", () => {
+  const moved = ["mode", "sequence_by", "delete_when", "cluster_by"];
+
+  it("does not offer them where writing one is SETTING_MOVED", () => {
     const items = at("flows/shop.yaml", (text) =>
       text.replace(
         "      with: { except_columns",
         "      with:\n        |\n      x: { except_columns",
       ),
     );
-    const moved = ["mode", "sequence_by", "delete_when", "cluster_by"];
-    const order = items.map((item) => item.label);
-    const firstMoved = Math.min(...moved.map((label) => order.indexOf(label)));
-    expect(order.slice(firstMoved).sort()).toEqual([...moved].sort());
-    expect(items.find((item) => item.label === "mode")?.detail).toBe("now intent: history");
-    expect(items.find((item) => item.label === "sequence_by")?.detail).toBe("now intent: sequence");
-    expect(items.find((item) => item.label === "cluster_by")?.detail).toBe(
-      "now intent: storage.clustering",
+    expect(items.length).toBeGreaterThan(0);
+    for (const label of moved) expect(items.map((item) => item.label)).not.toContain(label);
+  });
+
+  it("offers them under the standard's fixed.<method>, where they are fixed intent", () => {
+    const items = at("standard.yaml", (text) =>
+      text.replace(
+        "    streaming-table: { cluster_by: auto }",
+        "    streaming-table:\n      cluster_by: auto\n      |\n",
+      ),
+    );
+    expect(items.map((item) => item.label)).toContain("sequence_by");
+  });
+});
+
+describe("hover on a setting that is now intent", () => {
+  it("leads with the intent that replaces it", () => {
+    const path = "flows/shop.yaml";
+    const text = readFileSync(join(retail, path), "utf8").replace(
+      "      with: { except_columns",
+      "      with:\n        sequence_by: updated_at\n      x: { except_columns",
+    );
+    const project = openProject(retail, new Map([[join(retail, path), text]]));
+    const shown = hoverAt(project, path, text, text.indexOf("sequence_by") + 2, "dev", {
+      docs: (page) => page,
+    });
+    expect(shown).toMatch(
+      /^\*\*Now intent:\*\* `sequence_by` is written as `sequence` under `intent`\./,
     );
   });
 });

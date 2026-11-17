@@ -1,0 +1,54 @@
+description: A value that leads back to itself, through other values, a mapping that contains it, a file, or an environment's replacement of it, is reported once, at the reference that closes the cycle, with the chain.
+environment: prod
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    values:
+      a: ${values.b}
+      b: x-${values.a}
+      self: ${values.self}
+      cluster: { name: c, all: "${values.cluster}" }
+      viafile: ${file:loop.yaml}
+      catalog: main
+    environments:
+      prod:
+        values:
+          catalog: ${values.catalog}_prod
+    imports: ["*.pipeline.yaml"]
+  loop.yaml: |
+    back: ${values.viafile}
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    a: ${values.a}
+expect:
+  diagnostics:
+    - code: VALUE_CYCLE
+      file: project.yaml
+      line: 4
+      column: 6
+      message: '"${values.a}" makes a cycle: values.a → values.b → values.a.'
+    - code: VALUE_CYCLE
+      file: project.yaml
+      line: 5
+      column: 9
+      message: '"${values.self}" makes a cycle: values.self → values.self.'
+    - code: VALUE_CYCLE
+      file: project.yaml
+      line: 6
+      message: '"${values.cluster}" makes a cycle: values.cluster → values.cluster.all → values.cluster.'
+    - code: VALUE_CYCLE
+      file: loop.yaml
+      line: 1
+      column: 7
+      message: '"${values.viafile}" makes a cycle: values.viafile → values.viafile.back → values.viafile.'
+    - code: VALUE_CYCLE
+      file: project.yaml
+      line: 12
+      column: 16
+      message: '"${values.catalog}" makes a cycle: values.catalog → values.catalog.'

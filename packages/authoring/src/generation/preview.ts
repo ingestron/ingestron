@@ -64,6 +64,8 @@ export function generatedForTable(
     (file) =>
       file.text.includes(`(table ${table})`) ||
       file.text.includes(`"copy_${table}"`) ||
+      (file.path.startsWith("build/synapse/queries/") &&
+        file.path.endsWith(`/copy_${table}.sql`)) ||
       new RegExp(`^\\s*destination_table: ${physical}$`, "m").test(file.text) ||
       file.text.includes(`.[${physical.replaceAll("]", "]]")}] AS\n`) ||
       (file.path.endsWith(schema ? `/${schema}.${physical}.sql` : `.${physical}.sql`) &&

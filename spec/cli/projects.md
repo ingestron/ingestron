@@ -194,9 +194,14 @@ and prints the values to replace instead. The README has, in order:
 1. the project id as its title, then what the route, starter or kit does,
    the date `init` wrote it, that the file is the user's, for a kit the line
    `The standard comes from <id>@<version>; STANDARD.md explains its choices.`,
-   and which table and contract are examples to rename;
-2. **Run it**: `ingestron plan` and `ingestron apply`;
-3. **Values to replace before deploying**: a row for each name that is still
+   and which table and contract are examples to rename; for a project with
+   no flow yet, that its lists show the project as it starts, and that once
+   connections and flows are added `ingestron plan` shows the values still to
+   replace and `ingestron request --env <environment>` what the platform
+   needs, for the last environment;
+2. **Build and review in VS Code**: configure YAML with hover, completion and Reference, request and import source metadata, select environments and compare effective modes, then Plan, local Apply and Check. These actions do not deploy or execute generated assets;
+3. **Run it**: `ingestron plan` and `ingestron apply`;
+4. **Values to replace before deploying**: a row for each name that is still
    `REPLACE_ME`, with each `file:line`, what it is (the comment above it),
    where to find it (the setting's `find`, else the connector's
    documentation) and its environments (`all` for a value written once). For
@@ -210,17 +215,22 @@ and prints the values to replace instead. The README has, in order:
    every environment is resolved with the host's values only ([output
    folders](outputs.md), section 1), "Nothing to replace: this project runs
    on this computer.";
-4. **Values to check**, when the project has any: a row for each value to
+5. **Values to check**, when the project has any: a row for each value to
    check (above), with its place, what it is and where to find it;
-5. **Secrets to create**: each secret's name, where it goes and what it
-   holds; with none, that no connection names a Key Vault secret;
-6. **Deploy**: for each output folder, Data Factory's first, the commands
+6. **Secrets to create**: each secret's name, where it goes and what it
+   holds; with none, that no connection names a Key Vault secret, or, for a
+   project with no connection yet, that none is needed yet and that each
+   `${secret:NAME}` a connection names is a secret to create;
+7. **Deploy**: for each output folder, Data Factory's first, the commands
    that deploy it, written for `<environment>`, what each placeholder is, and
    the deploy-time values its pack's `deployValues` name; Data Factory's
-   steps link to the documentation's full page;
-7. **Ask the platform team**: `ingestron request --env <environment>`, for
+   steps link to the documentation's full page. With no output folder, for a
+   project with no flow yet, that there is nothing to deploy until a flow is
+   added; otherwise, to run `ingestron plan` first, since the definitions have
+   problems to fix;
+8. **Ask the platform team**: `ingestron request --env <environment>`, for
    the last environment;
-8. **Values per environment**: project.yaml's
+9. **Values per environment**: project.yaml's
    `environments.<name>.values`, `${envvar:…}` and `${secret:…}`; on a route
    through Data Factory, that the storage account and Key Vault stay in
    project.yaml (above).
@@ -304,3 +314,72 @@ the folder is a clash, as for every project. Then `init` prints
 `Created <folder> from the kit <id>@<version> (<n> files).`, or, with a
 route, `Created <folder> from the kit <id>@<version> and <connector> via <via> (<n> files).`,
 and the plan.
+
+## Platform-first projects and independent additions
+
+`init --platform <id>` creates a standard and target platform without a source,
+flow, contract or sample dataset. Supported ids are reported by `projectPlatforms`.
+`--standard <file>` preserves that standard's content; it never relaxes fixed
+settings. `init --kit <id@version> --empty` omits the kit's worked source example.
+Existing explicit connection and template options keep their behaviour.
+
+Such a project's `imports` name only what it writes. A pattern that no file
+it writes matches, such as `connections/*.yaml` before there is a connection,
+is left out, so a new project gives no `No files match the import` warning.
+The pattern comes back with the section's first file (below).
+
+The editor's New project asks two questions. The first is where the project
+runs: one of the `projectPlatforms`, or a sample project (a built-in starter,
+as `--template`). The second, for a platform, is which standard: a new one
+(`--platform`, offered first), a published standard whose id starts with that
+platform (`--kit <id@version> --empty`), or a standard file (`--platform` with
+`--standard`). It offers no connection-first start; that stays the CLI's
+`--connector` option, and the created notice offers Add connection instead.
+Environments and target settings are reviewed before a source is added. An
+empty project is ready for configuration, rather than evidence of data
+ingestion.
+
+`connection add <id> --connector <id> --connectivity <reachability>` adds one
+connection. Choices come only from ingestion methods in the project's standard
+packs and configured platform. If more than one method matches, `--method` selects its connection profile. Required settings use provider defaults or explicit
+REPLACE_ME values; secrets use named references. It does not add a flow, import
+metadata, change the standard or contact a source. Existing ids and files are refused.
+
+`flow add <id> --connection <id> --object <name>` adds a flow independently.
+The method must be compatible with the connection, its reachability and the
+project's standard/platform; ambiguity requires `--method`. Imported objects are
+selectable without truncating names containing spaces. Multiple objects may be
+selected in the editor. Existing definitions are preserved. Planning remains the
+full validation of contracts, settings and standard constraints.
+
+#### The new file's import
+
+A connection, flow or contract that one of them adds is loaded through
+`project.yaml`'s `imports`. When no import matches the new file
+(`matchesImport`, configuration specification), the addition also adds one
+entry at the end of `imports`, keeping `project.yaml`'s comments and layout,
+as a source import does (sources specification, section 3):
+
+- the folder's pattern, such as `connections/*.yaml`, when the folder holds no
+  other YAML file;
+- otherwise the file's own path, such as `connections/erp.yaml`, so that no
+  other file already in the folder starts being loaded.
+
+This is the only change to an existing file. The CLI writes the new file and
+`project.yaml` together, so a failure leaves neither written, and says what it
+added: `Added connections/erp.yaml; project.yaml now imports connections/*.yaml.`
+When the imports still leave the new file out once the entry is added, the
+addition refuses:
+`Add <file> or its folder's YAML glob to project.yaml imports, then try again. Nothing written.`
+
+The same holds for a contract that `contract <sample>`, `contract
+--from-metadata` or the editor's Draft contract writes.
+
+In the editor, Add connection, Add flow and Draft contract follow one save
+rule. The new file is written to disk. The changes to existing files, the
+import and Draft contract's `contract:` line, are one undoable edit that
+changes only the lines they add. Each changed file that had no unsaved changes
+is then saved; one that had keeps them, with the change, unsaved, since saving
+it would also save work the action did not make. The notification names the
+new file, the import added and any file left unsaved:
+`Added connections/erp.yaml; project.yaml now imports connections/*.yaml. project.yaml had unsaved changes, so it stays unsaved: save to keep the change.`

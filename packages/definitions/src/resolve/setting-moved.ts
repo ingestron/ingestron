@@ -9,7 +9,8 @@ import { intentPointer, leaves, valueAtIntentPath } from "./intent-values.js";
 
 /** The hint of a `SETTING_MOVED` without a fix. */
 export const settingMovedHint =
-  "Write the intent by hand where it should apply, and remove this setting.";
+  "Write it under `intent` where it should apply: the standard or a layer for many tables, " +
+  "a flow or a table for one. Then remove this setting.";
 
 /** True unless the setting is plainly written: a `${…}` reference cannot become intent. */
 function plainlyWritten(context: Context, alias: AliasStage): boolean {

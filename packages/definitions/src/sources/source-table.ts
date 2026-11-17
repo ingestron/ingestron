@@ -32,4 +32,9 @@ export interface SourceTable {
   names?: { parts: number; caseSensitive: boolean };
   /** The file of the connection's metadata document, when it has one. */
   file?: string;
+  /**
+   * With an `entry`: the columns whose type from the metadata is not the one their logical type
+   * alone gives, by name, such as `{ Freight: "DECIMAL(19,4)" }` for a `money` column on Synapse.
+   */
+  types?: Record<string, string>;
 }

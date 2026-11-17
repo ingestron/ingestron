@@ -1,6 +1,7 @@
 // What a pack declares: its methods, its smart defaults and how it builds files.
 import type { JsonSchema } from "@ingestron/config";
 import type { Intent, IntentUse, SettingAlias } from "../intent/index.js";
+import type { SourceColumnDoc } from "../documents/index.js";
 import type { EnvironmentsBuild } from "./environments.js";
 import type { Column, ResolvedModel, ResolvedTable } from "./model.js";
 
@@ -42,6 +43,8 @@ export interface Method {
   connectors?: string[];
   /** Ingest only: connectivity it supports (`public`, `workspace`, `private`). Default: any. */
   connectivity?: string[];
+  /** Ingest only: true when the method filters source rows by a table's `ingest.filter`. */
+  filters?: boolean;
   /** Transform and store: what the previous action must hand over. */
   accepts?: Handover[];
   produces: Handover;
@@ -212,6 +215,12 @@ export interface Capability {
 export interface PackInfo {
   id: string;
   version: number;
+  /**
+   * A platform type preserving an observed source column's representation. Used only from
+   * the standard's first pack, for metadata-derived columns without a standard type override;
+   * undefined falls back to defaults.types. It must not turn observations into quality rules.
+   */
+  metadataType?(column: SourceColumnDoc): string | undefined;
   defaults: {
     naming: Naming;
     layers: string[];
@@ -286,4 +295,17 @@ export interface Pack extends PackInfo {
   buildEnvironments?(models: Readonly<Record<string, ResolvedModel>>): EnvironmentsBuild;
   /** What the generated files expect of the platform, for `ingestron request`. Nothing here is checked. */
   request?(model: ResolvedModel): RequestSection[];
+  /**
+   * Refuses files written for the first time. Called when an output is planned, with the
+   * output's `files` (path → text), `generatedBefore` (the paths its folder's manifest
+   * already lists) and the current time. Returns a message for each file refused; a
+   * non-empty result stops the plan (specification section 2.1).
+   * @example
+   * checkFirstWrites: (files, before) => before.has("a.json") ? [] : ["a.json is new."]
+   */
+  checkFirstWrites?(
+    files: Readonly<Record<string, string>>,
+    generatedBefore: ReadonlySet<string>,
+    now: Date,
+  ): string[];
 }

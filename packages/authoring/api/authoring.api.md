@@ -51,6 +51,7 @@ export interface GeneratedLens {
 // @public
 export interface HoverOptions {
     docs?: (link: string) => string;
+    now?: Date;
 }
 
 // @public
@@ -111,7 +112,8 @@ export class ProjectSnapshot {
     compare(a: string, b: string): string;
     completionsAt(file: string, text: string, offset: number, environment: string | undefined): Suggestion[];
     // Warning: (ae-forgotten-export) The symbol "Place" needs to be exported by the entry point index.d.ts
-    definitionAt(file: string, offset: number): Place | undefined;
+    definitionAt(file: string, offset: number, environment?: string): Place | undefined;
+    environmentMode(environment: string): "development" | "production" | undefined;
     readonly environments: string[];
     fileMoveEdits(from: string, to: string): Record<string, {
         range: [number, number];
@@ -268,6 +270,7 @@ export interface Suggestion {
     label: string;
     preselect?: boolean;
     replaceFrom?: number;
+    replaceTo?: number;
     retrigger?: boolean;
     snippet?: string;
 }

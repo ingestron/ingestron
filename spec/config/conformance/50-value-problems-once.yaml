@@ -1,0 +1,28 @@
+description: A value's problem is reported once, where it is written, not again at the values and documents that read it; a secret cannot be embedded in text through a value.
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    values:
+      base: ${values.missing}
+      derived: ${values.base}/x
+      password: ${secret:scope/pw}
+      url: jdbc://user:${values.password}@host
+    imports: ["*.pipeline.yaml"]
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    derived: ${values.derived}
+    again: ${values.base}-again
+expect:
+  diagnostics:
+    - code: UNKNOWN_VALUE
+      file: project.yaml
+      line: 3
+      column: 9
+      hint: "Available here: base, derived, password, url."
+    - { code: SECRET_IN_TEXT, file: project.yaml, line: 6, column: 8 }

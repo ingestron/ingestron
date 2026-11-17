@@ -45,13 +45,16 @@ imports: # required; one or more glob patterns
 
 - `id`, `name` and `imports` are read literally; `${…}` in them is not resolved.
 - `values` and each environment's `values` MUST be mappings written in the
-  manifest; the values inside them MAY use references (including `${file:…}`).
-- `values` and each environment's `values` are resolved as in section 4, but
-  they MUST NOT refer to `values` (`VALUES_SELF_REFERENCE`).
+  manifest; the values inside them MAY use references (including `${file:…}`
+  and `${values.…}`).
 - The selected environment's `values` are deep-merged over the top-level
   `values`: mappings merge key by key, and any other value replaces the
   earlier one. Selecting an environment that is not declared is an error
   (`UNKNOWN_ENVIRONMENT`).
+- `values` and the selected environment's `values` are resolved as in
+  section 4. Every `${values.…}`, in the manifest or in a document, reads
+  the merged values (section 4.3.1). The values of an environment that is not
+  selected are not resolved.
 - An environment MAY name `runs-on`, a pack id; the loaded project records it
   for the selected environment, and the definitions say what it changes.
 - Import patterns are relative to the manifest's folder. A pattern is first
@@ -90,17 +93,18 @@ A value's **path** is written as in YAML: keys joined with `.`, list items as
 `[index]` (`ingest.when[0].use`); a key that is not letters, digits, `_` or
 `-` is written `["key"]`. At the root, the path is "The document".
 
-| Failure                       | Message                                                                                                             |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Wrong type, value empty       | `<path> is empty; it must be <expected>.`                                                                           |
-| Wrong type                    | `<path> is <actual>; it must be <expected>.`                                                                        |
-| Missing field                 | `<path> needs "<field>".`                                                                                           |
-| Unknown field                 | `"<field>" is not a field of <path>.`, then ` Did you mean "<field>"?` when a known field is at most two edits away |
-| Not an allowed value          | `<path> is <value>; use one of: <values>.`                                                                          |
-| Not the fixed value           | `<path> must be <value>.`                                                                                           |
-| Pattern                       | `<path> <value> is not in the expected form.`                                                                       |
-| Too short, too few, too small | `<path> must have at least <n> characters` (or `items`, `fields`); `<path> must be at least <n>` (or `at most`)     |
-| Anything else                 | `<path> <validator message>.`                                                                                       |
+| Failure                       | Message                                                                                                                                                                                                                    |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Wrong type, value empty       | `<path> is empty; it must be <expected>.`                                                                                                                                                                                  |
+| Wrong type                    | `<path> is <actual>; it must be <expected>.`                                                                                                                                                                               |
+| Missing field                 | `<path> needs "<field>".`                                                                                                                                                                                                  |
+| Unknown field                 | `"<field>" is not a field of <path>.`, then ` Did you mean "<field>"?` when a known field is at most two edits away                                                                                                        |
+| Unknown here, known below     | `"<field>" is not a field of <path>. Write it under "<parent>".` when no known field is that near and `<field>` is a field of one of this mapping's fields; with several, `Write it under "<a>" or "<b>".` in schema order |
+| Not an allowed value          | `<path> is <value>; use one of: <values>.`                                                                                                                                                                                 |
+| Not the fixed value           | `<path> must be <value>.`                                                                                                                                                                                                  |
+| Pattern                       | `<path> <value> is not in the expected form.`                                                                                                                                                                              |
+| Too short, too few, too small | `<path> must have at least <n> characters` (or `items`, `fields`); `<path> must be at least <n>` (or `at most`)                                                                                                            |
+| Anything else                 | `<path> <validator message>.`                                                                                                                                                                                              |
 
 `<expected>` is `a mapping` (object), `a list` (array), `text` (string),
 `a number`, `a whole number` (integer), `true or false` (boolean), joined with
@@ -185,6 +189,41 @@ extends to the first `}}`, so that the hint shows the whole placeholder.
   `project.id` and `project.name` read the manifest.
 - Each segment selects a mapping key or a list index. A missing step is
   `UNKNOWN_VALUE`, and its hint SHOULD list the keys available at that step.
+
+### 4.3.1 Values that refer to values
+
+A value in the manifest MAY refer to another value, so that settings can be
+built from settings:
+
+```yaml
+values:
+  landing: /Volumes/${values.catalog}/${values.schema}/files
+  catalog: ${project.id}_${environment.name}
+  schema: bronze
+```
+
+- A reference reads the merged values: the result of resolving the
+  top-level `values` and the selected environment's `values` and merging them
+  as in section 2. So a default that refers to `values.catalog` reads the
+  environment's `catalog` when the environment replaces it.
+- The order in which values are written does not matter.
+- Each value is resolved once. Its problems are reported once, where it is
+  written, and not again at each value or document that refers to it. A value
+  that failed gives nothing to the references that read it, and they report
+  no problem of their own for it.
+- Every value is resolved, whether or not anything refers to it.
+- A value MUST NOT lead back to itself (`VALUE_CYCLE`), directly, through
+  other values, or through files read with `${file:…}`. Values are tracked
+  one by one, so a value MAY refer to another value in the same mapping, but
+  not to a mapping or list that contains it. The problem is reported at the
+  reference that closes the cycle, and its message lists the chain, such as
+  `values.a → values.b → values.a`. No value in the chain resolves.
+- An environment's value replaces the default of the same name, so it MUST
+  NOT refer to that name: `catalog: ${values.catalog}_x` in an environment's
+  `values` is a `VALUE_CYCLE`. Give the shared part its own name instead.
+- A whole-value reference keeps its type and an embedded one produces text,
+  as in section 4.2, at every step of a chain. A secret passes through values
+  as a whole value, and MUST NOT be embedded at any step (`SECRET_IN_TEXT`).
 
 ### 4.4 Resolvers
 
@@ -286,7 +325,9 @@ without quoting them. Each entry has:
 - `pointer`: the JSON Pointer of the value it feeds in that document. In the
   manifest it is the pointer in the merged values: a selected environment's
   override at `environments.<name>.values.region` is `/values/region`, as is
-  the default it overrides, never `/environments/…`;
+  the default it overrides, never `/environments/…`. A reference in a value is
+  listed at that value only, not again at the values or documents that read
+  it with `${values.…}`;
 - `line`: the line of the reference, when it is written in `file` itself;
   absent for one in a file read with `${file:…}`;
 - `setIn`: where the variable's value came from (section 4.4): `host` for the
@@ -432,3 +473,11 @@ expect:
       title: Change to "shop"
       files: { a.yaml: "…" } # only the files the fix changes
 ```
+
+### Inspecting a failed load
+
+A failed load never returns a usable project. Its `documents` collection contains
+only imported, schema-valid documents with unique kind/id identities. Their links
+may be unresolved. Editors may use them for independent factual checks, but no
+model or generated file may be built from this collection. A failed manifest
+returns an empty collection. Invalid documents and duplicate identities are excluded.

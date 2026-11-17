@@ -3,6 +3,9 @@
 // A project held open: its generation kept for plan and request, and compare.
 export { Project } from "./project/index.js";
 
+// What each problem with an output folder means, and how to fix it.
+export { problemHelp, type ProblemHelp } from "./generation/index.js";
+
 // The built-in packs.
 export { packs } from "./packs/index.js";
 
@@ -10,6 +13,7 @@ export { packs } from "./packs/index.js";
 export {
   generateAll,
   generatedOutputs,
+  planOutput,
   type Generated,
   type GeneratedOutput,
   type GeneratedOutputs,
@@ -79,3 +83,16 @@ export {
 // The source request: what to ask for each connection's metadata, and how to import it.
 export { sourceRequest, type SourceRequestOptions } from "./sources/index.js";
 export { draftContracts, type ContractDraft, type DraftContractsOptions } from "./sources/index.js";
+
+export { projectPlatforms, type ProjectPlatform } from "./scaffold/index.js";
+export {
+  projectAdditions,
+  draftConnection,
+  draftFlow,
+  type ConnectionChoice,
+  type ProjectAdditions,
+  type AddConnection,
+  type AddFlow,
+  type DefinitionDraft,
+} from "./scaffold/index.js";
+export { definitionImport, writeDefinitionDraft, type AddedImport } from "./scaffold/index.js";

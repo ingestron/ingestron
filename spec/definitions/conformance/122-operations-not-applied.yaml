@@ -53,3 +53,4 @@ expect:
     retries: { count: 2, interval: 5m }
     alerts: { on: [failure] }
     require_tags: []
+    triggers: { types: [schedule, tumbling-window], timezone: UTC }

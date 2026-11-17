@@ -1,4 +1,4 @@
-// The hover on a flow table without a contract: the columns its connection's source metadata
+// The hover on a flow table's source: the columns its connection's source metadata
 // lists for it, with their source types and key, and where they were captured from. Names, types
 // and dates only: no document holds a value from a source's rows, and no environment variable's
 // value decides what is shown.
@@ -12,7 +12,7 @@ const shownColumns = 50;
 
 /**
  * The source columns of the flow table whose key or `object` is at `offset`, as Markdown, when
- * the table names no contract and its metadata has an entry; undefined for anything else. The
+ * its metadata has an entry, including when an explicit contract is also present. The
  * project is resolved as shown, without the host's environment or `.env` files, and an object
  * that still holds a reference then (one to an environment variable) gives none: which entry it
  * would match depends on a value that is not shown.
@@ -30,8 +30,7 @@ export function sourceColumnsText(
   const found = resolvedForDisplay(project, environment).sourceTables?.find(
     (item) => item.flow === flow && item.table === table,
   );
-  if (!found?.entry || found.contract !== undefined || found.object.includes("${"))
-    return undefined;
+  if (!found?.entry || found.object.includes("${")) return undefined;
   return entryText(found.entry);
 }
 
@@ -71,7 +70,8 @@ function entryText({ object, captured, columns }: SourceTableDoc): string {
     "",
     ...(hidden > 0 ? [...lines.slice(0, shownColumns), `- and ${hidden} more`] : lines),
     "",
-    `Captured ${plain(captured.at.slice(0, 10))} from ${plain(captured.from)} (${plain(captured.file)}).`,
+    // `at` is when the file was imported, not when the source was read (spec/cli/sources.md).
+    `Imported ${plain(captured.at.slice(0, 10))} from ${code(captured.file)} (${plain(captured.from)}).`,
   ].join("\n");
 }
 

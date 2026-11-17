@@ -2,3 +2,4 @@
 export type { HoverOptions } from "./explain.js";
 export { hoverAt, shown } from "./hover.js";
 export { type ReplaceMeHelp, replaceMeHelp } from "./replace-me.js";
+export { sourceColumnsText } from "./source-hover.js";

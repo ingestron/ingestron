@@ -4,13 +4,25 @@ import type { OutputFolder } from "../folder/index.js";
 import { manifestFile, pathProblem } from "../folder/index.js";
 import { problem, type Problem } from "../problems/index.js";
 
-/** Path → digest of the content that was generated there. */
+/**
+ * Path → digest of the content that was generated there.
+ * @public
+ */
 export type Manifest = ReadonlyMap<string, string>;
 
-/** The manifest in `folder` (empty when there is none), or why it cannot be used. */
+/**
+ * The manifest in `folder` (empty when there is none), or why it cannot be used.
+ * @public
+ */
 export type ManifestResult = { files: Manifest } | { problem: Problem };
 
-/** Reads and checks the manifest in `folder`. */
+/**
+ * Reads and checks the manifest in `folder`.
+ * @example
+ * const result = readManifest(nodeFolder("build/bundle"));
+ * if ("files" in result) console.log([...result.files.keys()]);
+ * @public
+ */
 export function readManifest(folder: OutputFolder): ManifestResult {
   const entry = folder.read(manifestFile);
   if (entry.kind === "absent") return { files: new Map() };

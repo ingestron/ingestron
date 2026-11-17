@@ -64,8 +64,10 @@ export function composableRecipe(
     values: {},
   });
   delete files["sample.yaml"];
-  const selected = selectSource(files, connector, connectivity, route.method);
-  trimSettings(files, route.method, via, selected.flows);
+  const method = via === "synapse" ? "adf-copy" : route.method;
+  const selected = selectSource(files, connector, connectivity, method);
+  trimSettings(files, method, via, selected.flows);
+  if (via === "synapse") workspaceRoute(files);
   template.name = `${connector} via ${via}`;
   template.title = `${projectSources().find((source) => source.id === connector)!.title}: ${route.title}`;
   template.questions = [];
@@ -82,7 +84,7 @@ export function composableRecipe(
   return { template, files, facts };
 }
 function recipeTemplate(connector: string, via: string): Template {
-  if (!via.startsWith("adf")) {
+  if (!via.startsWith("adf") && via !== "synapse") {
     const example = directExamples[connector];
     if (!example) throw new Error(`No tested project recipe for ${connector} via Databricks.`);
     return readTemplate(join(builtInFolder, example), example);
@@ -95,6 +97,20 @@ function recipeTemplate(connector: string, via: string): Template {
     folder,
     questions: [],
   };
+}
+
+/** Reuse the tested source recipe, with workspace-owned settings and its existing Azure runtime. */
+function workspaceRoute(files: Record<string, Content>): void {
+  for (const path of Object.keys(files).filter((name) => /\.ya?ml$/.test(name)))
+    files[path] = String(files[path]).replaceAll("adf-copy", "synapse-copy");
+  editYaml(files, "platform.yaml", (document) => {
+    document.setIn(
+      ["settings", "synapse-copy", "integration_runtime"],
+      "AutoResolveIntegrationRuntime",
+    );
+    document.setIn(["settings", "synapse-copy", "runtime_kind"], "azure");
+    document.setIn(["settings", "synapse-copy", "paused"], true);
+  });
 }
 function selectSource(
   files: Record<string, Content>,

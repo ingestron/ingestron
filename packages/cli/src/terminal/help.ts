@@ -5,6 +5,15 @@
  * @public
  */
 export const commands = [
+  {
+    name: "connection",
+    summary:
+      "Add an independent source connection: connection add <id> --connector <id> --connectivity public.",
+  },
+  {
+    name: "flow",
+    summary: "Add a flow: flow add <id> --connection <id> --object <name> [--method <id>].",
+  },
   { name: "plan", summary: "Show what would change in each pack's output folder." },
   { name: "apply", summary: "Write the changes. Files edited by hand are never overwritten." },
   { name: "check", summary: "Fail when the output is not up to date (for CI). Writes nothing." },
@@ -43,6 +52,15 @@ export const commands = [
  */
 export const flags = [
   {
+    flag: "--empty",
+    summary: "init --kit: create the target and standard without the worked source example.",
+  },
+  {
+    flag: "--method <id>",
+    summary:
+      "connection add and flow add: choose a standard-supported ingestion method when more than one matches.",
+  },
+  {
     flag: "--connector <id>",
     summary: "init: the source connector; otherwise choose by category.",
   },
@@ -51,7 +69,7 @@ export const flags = [
     summary: "init: private, workspace or public source reachability.",
   },
   {
-    flag: "--via <databricks|adf-databricks|adf-synapse|adf-duckdb|adf-landing>",
+    flag: "--via <databricks|synapse|adf-databricks|adf-synapse|adf-duckdb|adf-landing>",
     summary:
       "init: the route: Databricks directly, or ADF into Databricks, Synapse views, DuckDB tables or the landed files alone.",
   },
@@ -119,7 +137,8 @@ export const flags = [
   },
   {
     flag: "--platform <id>",
-    summary: "standard list: only the standards for this platform, such as duckdb.",
+    summary:
+      "init: source-free target (synapse, databricks, adf-landing or duckdb). standard list: filter standards.",
   },
   { flag: "--help", summary: "Show this text." },
 ] as const;
@@ -129,7 +148,7 @@ const flagWidth = Math.max(...flags.map(({ flag }) => flag.length)) + 2;
 
 /** Usage text for --help and mistakes. */
 export const usage = [
-  "Usage: ingestron <plan|apply|check|compare|contract|request|schemas|init|standard|source|assistant> [options]",
+  "Usage: ingestron <plan|apply|check|compare|contract|request|schemas|init|standard|source|assistant|connection|flow> [options]",
   "",
   ...commands.map(({ name, summary }) => `  ${name.padEnd(10)}${summary}`),
   "",

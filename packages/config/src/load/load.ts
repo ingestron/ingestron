@@ -5,7 +5,12 @@
 import { holdsUnsetEnvvar, uniqueDiagnostics, type LoadContext } from "../resolve/index.js";
 import { hasErrors, type Diagnostic } from "../diagnostics/index.js";
 import { envvarsFor } from "./env-files.js";
-import { checkDuplicateIds, loadDocument, type LoadedDocument } from "../resolve/index.js";
+import {
+  checkDuplicateIds,
+  loadDocument,
+  type LoadedDocument,
+  type DefinitionDocument,
+} from "../resolve/index.js";
 import type { FileSource } from "../files/index.js";
 import type { KindDefinition } from "../kinds/index.js";
 import { defaultLimits, type Limits } from "../files/index.js";
@@ -56,7 +61,14 @@ export interface LoadOptions {
  */
 export type LoadResult =
   | { ok: true; project: Project; diagnostics: Diagnostic[] }
-  | { ok: false; project?: undefined; diagnostics: Diagnostic[] };
+  | {
+      ok: false;
+      project?: undefined;
+      diagnostics: Diagnostic[];
+      /** Imported documents with valid schemas and unique identities, for editor checks only.
+       * Links may be unresolved. This is not a usable project and must never generate files. */
+      documents: readonly DefinitionDocument[];
+    };
 
 /**
  * Loads a project from any {@link FileSource}. Use this in browsers, editors
@@ -80,7 +92,7 @@ export function resolveProject(files: FileSource, options: LoadOptions): LoadRes
     holdsUnsetEnvvar(context, text),
   );
 
-  if (hasErrors(context.diagnostics)) return failure(context);
+  if (hasErrors(context.diagnostics)) return failure(context, loaded);
   const project = createProject(
     manifest.scope,
     loaded.map(({ document }) => document),
@@ -115,6 +127,14 @@ function createLoadContext(files: FileSource, options: LoadOptions): LoadContext
   };
 }
 
-function failure(context: LoadContext): LoadResult {
-  return { ok: false, diagnostics: uniqueDiagnostics(context.diagnostics) };
+function failure(context: LoadContext, loaded: LoadedDocument[] = []): LoadResult {
+  const identities = loaded.map(({ document }) => `${document.kind}:${document.id}`);
+  const documents = loaded
+    .filter(
+      ({ valid }, index) =>
+        valid &&
+        identities.indexOf(identities[index]!) === identities.lastIndexOf(identities[index]!),
+    )
+    .map(({ document }) => document);
+  return { ok: false, diagnostics: uniqueDiagnostics(context.diagnostics), documents };
 }

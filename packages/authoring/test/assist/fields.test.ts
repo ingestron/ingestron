@@ -44,11 +44,12 @@ describe("values of method settings", () => {
     expect(items.map((item) => item.label)).toEqual(["Minute", "Hour", "Month"]);
   });
 
-  it("offers the platform's settings keys for a method, except those written", () => {
+  it("offers the platform's settings keys for a method, except those written or now intent", () => {
     const items = at("platform.yaml", (text) =>
       text.replace("integration_runtime: shir-erp", "integration_runtime: shir-erp\n    |"),
     );
-    expect(items.map((item) => item.label)).toContain("mode");
+    expect(items.map((item) => item.label)).toContain("retries");
+    expect(items.map((item) => item.label)).not.toContain("mode");
     expect(items.map((item) => item.label)).not.toContain("landing");
   });
 });

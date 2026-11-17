@@ -1,4 +1,4 @@
-description: Values cannot refer to other values, unknown values are reported, and environments must exist.
+description: Environments must exist; with none selected, values may still refer to other values.
 environment: test
 kinds:
   - apiVersion: example.dev/v1
@@ -14,5 +14,4 @@ files:
 expect:
   diagnostics:
     - { code: UNKNOWN_ENVIRONMENT, file: project.yaml }
-    - { code: VALUES_SELF_REFERENCE, file: project.yaml, line: 4, column: 10 }
     - { code: NO_MATCH, severity: warning, file: project.yaml }

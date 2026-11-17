@@ -95,10 +95,11 @@ export const loadingCodeHelp: Record<
     fix: "Add it to `values` in `project.yaml`; the hint lists the names that exist.",
     severities: ["error"],
   },
-  VALUES_SELF_REFERENCE: {
+  VALUE_CYCLE: {
     stage: "References",
-    meaning: "A value in `project.yaml` uses `${values.\u2026}`.",
-    fix: "Write the value out; values cannot refer to each other.",
+    meaning:
+      "A value in `project.yaml` leads back to itself through `${values.\u2026}`; the message gives the chain.",
+    fix: "Remove one reference in the chain. An environment's value cannot build on the default it replaces: give the shared part its own name.",
     severities: ["error"],
   },
   BAD_POINTER: {

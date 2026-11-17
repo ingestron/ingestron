@@ -105,3 +105,25 @@ describe("the table at the cursor", () => {
     expect(tableAtCursor(transform, transform.indexOf("inputs"))).toBe("daily");
   });
 });
+
+it("includes only this table's readable Synapse source-query companions", () => {
+  const files = [
+    {
+      path: "build/synapse/queries/dev/pipeline/copy_orders.sql",
+      text: "SELECT [id] FROM [dbo].[Orders];",
+    },
+    {
+      path: "build/synapse/queries/review/pipeline/copy_orders.sql",
+      text: "SELECT [id] FROM [dbo].[Orders];",
+    },
+    {
+      path: "build/synapse/queries/dev/pipeline/copy_customers.sql",
+      text: "SELECT [id] FROM [dbo].[Customers];",
+    },
+    { path: "build/other/copy_orders.sql", text: "SELECT 1;" },
+  ];
+  expect(generatedForTable(files, "orders").map((file) => file.path)).toEqual([
+    files[0]!.path,
+    files[1]!.path,
+  ]);
+});

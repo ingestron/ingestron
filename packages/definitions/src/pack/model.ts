@@ -4,6 +4,7 @@
 import type { NotApplied } from "../diagnostics/index.js";
 import type { GovernanceDoc } from "../documents/index.js";
 import type { FeatureStatus, Intent, LayerDuty, ResolvedOperations } from "../intent/index.js";
+import type { ParameterDef, ResolvedTrigger } from "../triggers/index.js";
 import type { ChosenBy, Origin, Step } from "./step.js";
 import type { TableAccess } from "./access.js";
 import type { TableCleanse } from "./cleanse.js";
@@ -183,6 +184,15 @@ export interface ResolvedTable {
     object: string;
     /** True when the ingest method hands over columns under their contract names. */
     renamed: boolean;
+    /** The triggers the flow writes, in order (section 5.1). Absent when it writes none: the default trigger applies. */
+    triggers?: ResolvedTrigger[];
+    /** The parameters the flow declares, by name. Absent when it declares none. */
+    parameters?: Record<string, ParameterDef>;
+    /**
+     * The table's source row filter as written, with its `{{ parameters.<name> }}` references
+     * unexpanded (section 5.1). Absent when the table writes none.
+     */
+    filter?: string;
   };
   /** Transforms: the code and the full name of each input. */
   transform?: Step & { code: string; inputs: Record<string, string> };

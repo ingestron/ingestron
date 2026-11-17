@@ -6,6 +6,7 @@ import type { ChosenBy, ResolvedTable } from "../pack/index.js";
 import { kinds, type ConnectionDoc, type FlowDoc } from "../documents/index.js";
 import { stepOf, type StepResult } from "./steps.js";
 import { holdsUnsetEnvvar } from "../diagnostics/index.js";
+import type { FlowTriggers } from "./flow-triggers.js";
 
 type Flow = DefinitionDocument<FlowDoc>;
 
@@ -55,6 +56,8 @@ export function tableSteps(
   steps: Partial<FlowSteps>,
   connection: ConnectionDoc,
   object: string,
+  flowTriggers: FlowTriggers,
+  filter?: string,
 ): Pick<ResolvedTable, "ingest" | "store" | "endsAtFiles" | "serve"> {
   return {
     ...(steps.ingest && {
@@ -63,6 +66,11 @@ export function tableSteps(
         connection: connectionInTable(connection),
         object,
         renamed: steps.ingest.renames,
+        ...(flowTriggers.triggers.length > 0 && { triggers: flowTriggers.triggers }),
+        ...(Object.keys(flowTriggers.parameters).length > 0 && {
+          parameters: flowTriggers.parameters,
+        }),
+        ...(filter !== undefined && { filter }),
       },
     }),
     ...(steps.store && { store: stepOf(steps.store) }),

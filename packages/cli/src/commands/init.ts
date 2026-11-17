@@ -5,16 +5,17 @@ import { existsSync, readFileSync } from "node:fs";
 import { basename, join, relative, resolve } from "node:path";
 import { parse } from "yaml";
 import type { Options } from "../terminal/index.js";
+import { checkInitFlags } from "./init-flags.js";
 import { chosenAssistants, writeAssistantFiles } from "./assistant.js";
 import { generate } from "./generate.js";
 import { chooseProject } from "./init-choice.js";
-import { resolvedFiles, type Source } from "@ingestron/core/internal";
+import { platformSource, resolvedFiles, type Source } from "@ingestron/core/internal";
 import { projectReadme } from "@ingestron/core/internal";
 import { stillToReplace } from "@ingestron/core/internal";
 import type { Io } from "../terminal/index.js";
 import { packs } from "@ingestron/core";
 import { environmentReportsText } from "@ingestron/core/internal";
-import { nameProblem, projectId } from "@ingestron/core";
+import { projectId } from "@ingestron/core";
 import {
   ignoredText,
   writeScaffold,
@@ -37,13 +38,16 @@ type Ask = (
 export function init(options: Options, io: Io): number {
   const cleanups: (() => void)[] = [];
   try {
-    checkFlags(options);
+    checkInitFlags(options);
     const target = resolve(io.cwd, options.init.folder);
-    const source: Source = options.init.kit
+    const selected: Source = options.init.kit
       ? kitProject(options, io, cleanups)
       : options.init.template
         ? templateSource(options.init.template, io.cwd)
-        : chooseProject(options.init, asker(options, io));
+        : options.init.platform
+          ? platformSource(options.init.platform)
+          : chooseProject(options.init, asker(options, io));
+    const source = { ...selected, ...(options.init.empty && { empty: true }) };
     cleanups.push(source.done);
     const answers = gather(options, io, source, target, cleanups);
     // Asked last, after every other question.
@@ -178,7 +182,11 @@ function create(
   const plan = { command: "plan" as const, environments: [], diffs: false };
   const where = { definitions: target, out: join(target, "build") };
   const code = generate({ ...options, ...plan, ...where }, io, packs, generated);
-  io.write(stillToReplace(files, generated, kept, source.kit !== undefined));
+  if (!source.empty) io.write(stillToReplace(files, generated, kept, source.kit !== undefined));
+  if (source.empty)
+    io.write(
+      "\nPlatform and standard created. Review target settings, then add a connection and a flow.\n",
+    );
   return code;
 }
 
@@ -189,23 +197,6 @@ function createdFrom(options: Options, source: Source): string {
     return source.facts ? `${kit} and ${source.template.name}` : kit;
   }
   return `${options.init.template ? "the template " : ""}${source.template.name}`;
-}
-
-/** Names given as flags are checked before anything else happens. */
-function checkFlags(options: Options): void {
-  checkSources(options.init);
-  const problem =
-    (options.init.name !== undefined ? nameProblem(options.init.name, "project") : undefined) ??
-    options.environments.map((name) => nameProblem(name, "environment")).find(Boolean);
-  if (problem) throw new Error(problem);
-}
-
-/** One of --kit, --template and --standard at most, and no connection options with --template. */
-function checkSources({ kit, template, standard, connector, via, connectivity }: Options["init"]) {
-  if (kit !== undefined && (template !== undefined || standard !== undefined))
-    throw new Error("Choose --kit, --template or --standard, not two.");
-  if (template && (connector || via || connectivity))
-    throw new Error("Choose connection options or --template, not both.");
 }
 
 /** The environments of the project.yaml in a template's or a kit's folder. */

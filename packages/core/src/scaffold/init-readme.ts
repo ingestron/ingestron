@@ -34,16 +34,21 @@ export function projectReadme(facts: ReadmeFacts): string {
   const { files, generated } = facts;
   const kit = facts.kit !== undefined;
   const factory = throughDataFactory(files);
+  const starting = Boolean(setupChecklist(files));
   return [
     `# ${facts.project}`,
-    introduction(facts),
+    introduction(facts, starting && lastEnvironment(generated)),
+    setupChecklist(files),
+    "## Build and review in VS Code\n\nOpen this folder in VS Code with the Ingestron extension. Use hovers, completions and the Reference panel to configure the YAML. In the Ingestron Project panel, choose Request source metadata, then Import source metadata when you have the catalogue file. Select an environment to review its previews and platform request; use Compare environments to inspect differences, including effective mode. Plan previews the changes, Apply writes local files under build/, and Check confirms they are up to date. These actions do not deploy or run the generated assets. Review the generated files before arranging deployment separately.",
     "## Run it\n\n```sh\ningestron plan     # what would be generated, and what is still REPLACE_ME\ningestron apply    # writes the files under build/\n```",
-    valuesSection(replaceRows(files, generated, kit), local(generated), factory),
+    valuesSection(replaceRows(files, generated, kit), local(generated), factory, starting),
     checkSection(checkRows(files, generated, kit)),
     secretsSection(secretRows(files), files),
-    deploySection(generated.outputs),
+    starting && generated.outputs.length === 0
+      ? "## Deploy\n\nNothing to deploy yet: add a flow, then run `ingestron plan` to see the output folders and how to deploy each."
+      : deploySection(generated.outputs),
     askSection(generated),
-    perEnvironment(factory),
+    perEnvironment(factory, String(files["platform.yaml"]).includes("synapse-copy:")),
   ]
     .filter(Boolean)
     .join("\n\n")
@@ -57,11 +62,22 @@ function throughDataFactory(files: Record<string, Content>): boolean {
   return named.some((ref) => ref.startsWith("adf@"));
 }
 
-function introduction(facts: ReadmeFacts): string {
+/** The environment `ingestron request` is shown for: the last. */
+function lastEnvironment(generated: Generated): string {
+  return generated.environmentReports.at(-1)?.name ?? "dev";
+}
+
+/** The title and what the project is; `starting`, the environment to ask for, for one with no flow. */
+function introduction(facts: ReadmeFacts, starting: string | false): string {
   const examples = exampleNames(facts.files);
   return [
     `${facts.title}. ${facts.summary}`.replace(/\.\. /, ". "),
     `\`ingestron init\` wrote this file on ${facts.today}; it is yours, and Ingestron never rewrites it.`,
+    ...(starting
+      ? [
+          `Its lists show the project as it starts, with no flow. Once you add connections and flows, \`ingestron plan\` shows the values still to replace, and \`ingestron request --env ${starting}\` what the platform needs.`,
+        ]
+      : []),
     ...(facts.kit
       ? [`The standard comes from ${facts.kit}; STANDARD.md explains its choices.`]
       : []),
@@ -91,7 +107,14 @@ function local(generated: Generated): boolean {
   return generated.environmentReports.every((report) => generated.local.includes(report.name));
 }
 
-function valuesSection(rows: ReplaceRow[], onThisComputer: boolean, factory: boolean): string {
+function valuesSection(
+  rows: ReplaceRow[],
+  onThisComputer: boolean,
+  factory: boolean,
+  empty: boolean,
+): string {
+  if (rows.length === 0 && empty)
+    return "## Target settings\n\nReview the platform settings and environments before adding a connection. An empty project does not ingest data.";
   if (rows.length === 0)
     return `## Values to replace before deploying\n\nNothing to replace: ${onThisComputer ? "this project runs on this computer" : "the project runs as written"}.`;
   const lines = rows.map((row) => {
@@ -143,6 +166,9 @@ function cell(text: string): string {
 }
 
 function secretsSection(secrets: SecretRow[], files: Record<string, Content>): string {
+  const connected = Object.keys(files).some((path) => path.startsWith("connections/"));
+  if (secrets.length === 0 && !connected)
+    return "## Secrets to create\n\nNone yet: the project has no connection. Each `${secret:NAME}` a connection names is a Key Vault secret to create.";
   if (secrets.length === 0)
     return "## Secrets to create\n\nNone: no connection here names a Key Vault secret.";
   const vault = projectValues(files).some((value) => value.name === "key_vault")
@@ -157,11 +183,13 @@ function secretsSection(secrets: SecretRow[], files: Record<string, Content>): s
 }
 
 function askSection(generated: Generated): string {
-  const last = generated.environmentReports.at(-1)?.name ?? "dev";
+  const last = lastEnvironment(generated);
   return `## Ask the platform team\n\n\`ingestron request --env ${last} > request-${last}.md\` writes what must exist before deploying, such as\nthe identities' access, as Markdown to send. It lists any value still \`REPLACE_ME\`.`;
 }
 
-function perEnvironment(factory: boolean): string {
+function perEnvironment(factory: boolean, workspacePipelines: boolean): string {
+  if (workspacePipelines)
+    return "## Values per environment\n\nKeep explicit hosts, storage and vault names in `project.yaml`, `environments.<name>.values`, and reference them with `${values.NAME}`. Synapse workspace pipelines do not support `${envvar:NAME}` deploy-time substitutions. `${secret:NAME}` refers to a Key Vault secret name, never the password value.";
   const envvar = factory
     ? "- `${envvar:NAME}`: a deploy-time value that the pipeline deploying `build/` supplies;\n  `ingestron request` names each per platform. Data Factory takes one only as a whole value, so\n  keep the storage account and Key Vault in `project.yaml`."
     : "- `${envvar:NAME}`: a deploy-time value that the pipeline deploying `build/` supplies, such as\n  `BUNDLE_VAR_<name>`; `ingestron request` names each per platform. `.env.<environment>` (kept\n  out of Git) sets it on your computer for DuckDB.";
@@ -169,4 +197,10 @@ function perEnvironment(factory: boolean): string {
     "## Values per environment",
     `- \`project.yaml\`, \`environments.<name>.values\`: names, hosts and paths, reviewed in Git. Start here.\n${envvar}\n- \`\${secret:NAME}\`: a Key Vault secret's name, never its value.`,
   ].join("\n\n");
+}
+
+/** A source-free project starts with target review, then independent connection and flow actions. */
+function setupChecklist(files: Record<string, Content>): string {
+  if (Object.keys(files).some((path) => path.startsWith("flows/"))) return "";
+  return "## Set up this project\n\n1. Review standard.yaml and platform.yaml, then each environment in project.yaml. Replace target placeholders before planning a flow. Keep fixed standard settings.\n2. Run Ingestron: Add connection in VS Code. Configure its named secret references and request or import source metadata. This does not add a flow.\n3. Run Ingestron: Add flow, choose the connection and source objects, then review contracts and ingestion settings.\n4. Run Plan, review generated files, then use local Apply and Check. These actions do not deploy or execute the assets.\n\nCLI equivalents: `ingestron connection add <id> --connector <id> --connectivity public` and `ingestron flow add <id> --connection <id> --object <name>`. An empty project confirms configuration only; it does not ingest data.";
 }

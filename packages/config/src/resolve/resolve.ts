@@ -19,6 +19,7 @@ import { isSafeKey, type DataRecord } from "../internal/index.js";
 import { error } from "../diagnostics/index.js";
 import { appendPointer } from "../internal/index.js";
 import { resolveString } from "./resolve-string.js";
+import { resolveOnce } from "./values.js";
 import type { Walk } from "./scope.js";
 import { locationOf, type YamlFile } from "../files/index.js";
 
@@ -34,6 +35,13 @@ export function resolveNode(
   walk: Walk,
 ): unknown {
   if (!node) return null;
+  const { values } = walk;
+  if (values)
+    return resolveOnce(node, pointer, values, () => resolveNodeNow(node, file, pointer, walk));
+  return resolveNodeNow(node, file, pointer, walk);
+}
+
+function resolveNodeNow(node: Node, file: YamlFile, pointer: string, walk: Walk): unknown {
   walk.sourceMap.set(pointer, locationOf(file, node));
   if (isAlias(node)) return resolveAlias(node, file, pointer, walk);
   if (isMap(node)) return resolveMap(node, file, pointer, walk);

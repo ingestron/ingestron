@@ -1,0 +1,77 @@
+description: A trigger's start or end in the date-time form that Ingestron cannot read, such as month 13 or hour 25, is TRIGGER_OPTION at the value, so the start is never left unchecked against the standard's hours. A schedule's `at` that gives both month_days and occurrences is TRIGGER_OPTION at `at`. Each is an error.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, ops@1]
+    operations:
+      schedule: { per: flow }
+      triggers:
+        hours: { from: "06:00", to: "22:00" }
+  webshop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: webshop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: shop
+    source: webshop
+    ingest:
+      triggers:
+        - name: nightly
+          type: schedule
+          every: { frequency: Day, interval: 1 }
+          start: "2026-13-01T02:30"
+          parameters: { load: full }
+        - name: ending
+          type: schedule
+          every: { frequency: Day, interval: 1 }
+          start: "2026-12-01T08:00:00Z"
+          end: "2027-12-01T25:00:00Z"
+          parameters: { load: full }
+        - name: monthly
+          type: schedule
+          every: { frequency: Month, interval: 1 }
+          start: "2026-12-01T08:00:00Z"
+          at: { month_days: [1], occurrences: [{ day: Monday }] }
+          parameters: { load: full }
+    tables:
+      orders: { object: orders, contract: orders, history: latest }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  diagnostics:
+    - code: TRIGGER_OPTION
+      severity: error
+      file: shop.yaml
+      line: 10
+      message: '"nightly" has a start Ingestron cannot read: "2026-13-01T02:30". Write it as 2026-12-01T02:30:00, with Z or an offset for a fixed instant.'
+    - code: TRIGGER_OPTION
+      severity: error
+      file: shop.yaml
+      line: 16
+      message: '"ending" has an end Ingestron cannot read: "2027-12-01T25:00:00Z". Write it as 2026-12-01T02:30:00, with Z or an offset for a fixed instant.'
+    - code: TRIGGER_OPTION
+      severity: error
+      file: shop.yaml
+      line: 22
+      message: '"monthly" gives both month_days and occurrences; give one of them.'

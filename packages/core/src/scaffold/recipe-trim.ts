@@ -57,6 +57,13 @@ export const routeStandards: Record<
     comment: "Synapse serves the landed files as views; ADF copies them",
     store: "synapse-view",
   },
+  synapse: {
+    summary:
+      "Synapse workspace pipelines copy the source into landing storage, and serverless SQL serves it as views.",
+    packs: ["synapse@2"],
+    comment: "Synapse owns both the ingestion pipelines and serverless views",
+    store: "synapse-view",
+  },
   "adf-duckdb": {
     summary:
       "Data Factory copies the source's tables into landing storage, and DuckDB builds tables from them and publishes Parquet.",
@@ -94,7 +101,7 @@ function trimStandard(
 
 /** Views and DuckDB rebuilds read one file per table, unless a flow copies windows, which must all be kept. */
 function snapshot(via: string, windowed: boolean): boolean {
-  return (via === "adf-synapse" || via === "adf-duckdb") && !windowed;
+  return ["adf-synapse", "adf-duckdb", "synapse"].includes(via) && !windowed;
 }
 
 /** A flow's own landing and runtime move to the platform's method settings. */
@@ -119,7 +126,7 @@ function moveInfrastructure(
 function destination(via: string, adf: Record<string, unknown>): Record<string, unknown> {
   const root = /^abfss:\/\/[^@/]+@[^/]+/.exec(String(adf.landing ?? ""))?.[0];
   if (!root) return {};
-  if (via === "adf-synapse")
+  if (via === "adf-synapse" || via === "synapse")
     return { "synapse-view": { data_source: "landing", data_source_location: root } };
   if (via === "adf-duckdb")
     return {

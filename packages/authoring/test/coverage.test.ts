@@ -82,7 +82,7 @@ describe.each(
     (field) => field.path.length === 1,
   );
 
-  it("offers every setting as a key", () => {
+  it("offers every setting as a key, except those that are now intent", () => {
     const labels = completionsAt(
       project,
       "standard.yaml",
@@ -90,9 +90,11 @@ describe.each(
       head.length,
       project.environments[0],
     ).map((item) => item.label);
-    expect(settings.map((field) => field.name).filter((name) => !labels.includes(name))).toEqual(
-      [],
-    );
+    const moved = (name: string) => Object.hasOwn(method.aliases ?? {}, name);
+    expect(
+      settings.map((field) => field.name).filter((name) => !moved(name) && !labels.includes(name)),
+    ).toEqual([]);
+    expect(labels.filter(moved)).toEqual([]);
   });
 
   it("suggests a value for every setting that is not free text", () => {

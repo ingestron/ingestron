@@ -100,6 +100,9 @@ export function sourceRecipes(files?: FileSource, root?: string): Map<string, So
 const defaultRecipes: Readonly<Record<string, string>> = {
   files: "sample",
   sqlserver: "sqlserver",
+  "azure-sql-database": "sqlserver",
+  "azure-sql-managed-instance": "sqlserver",
+  "amazon-rds-sqlserver": "sqlserver",
   salesforce: "salesforce",
   kafka: "schema-registry",
 };

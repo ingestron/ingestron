@@ -109,7 +109,11 @@ properties:
             $ref: "#/$defs/audit",
             description: "Audit columns for this table only, after the contract's columns.",
           }
-        ingest: { $ref: "#/$defs/with", description: Method settings for this table only. }
+        ingest:
+          {
+            $ref: "#/$defs/tableIngest",
+            description: "How data leaves the source, for this table only.",
+          }
         store: { $ref: "#/$defs/with", description: Method settings for this table only. }
         serve: { $ref: "#/$defs/with", description: Method settings for this table only. }
     examples:
@@ -121,6 +125,241 @@ properties:
   serve:
     { $ref: "#/$defs/serve", description: Where the data is made available after its last step. }
 $defs:
+  duration:
+    type: string
+    pattern: "^[0-9]+(s|m|h|d)$"
+    description: A length of time, a whole number then `s`, `m`, `h` or `d`.
+    examples: [30s, 5m, 2h, 1d]
+  parameter:
+    type: object
+    description: A custom pipeline parameter, named by its key, with its type and the value a run uses when no trigger sets it.
+    additionalProperties: false
+    required: [type]
+    properties:
+      type:
+        enum: [string, int, float, bool, date, datetime]
+        description: The type of the parameter's value.
+        enumDescriptions:
+          - Text.
+          - A whole number.
+          - A number with a fraction.
+          - true or false.
+          - A date written YYYY-MM-DD.
+          - A date and time in ISO 8601, such as 2026-12-01T02:00:00Z.
+      default:
+        type: [string, number, boolean]
+        description: The value a run uses when no trigger sets the parameter. Required; leaving it out is reported with the parameter's name.
+        examples: ["2020-01-01"]
+    examples:
+      - { type: date, default: "2020-01-01" }
+  parameterValue:
+    description: 'A literal, or `{ expression: "..." }` for an expression the pipeline evaluates when the trigger starts it.'
+    oneOf:
+      - type: [string, number, boolean]
+      - type: object
+        additionalProperties: false
+        required: [expression]
+        properties:
+          expression:
+            type: string
+            description: "An expression written as the platform has it, such as `@trigger().scheduledTime`."
+            examples: ["@formatDateTime(addDays(trigger().scheduledTime, -30), 'yyyy-MM-dd')"]
+  weekday:
+    enum: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+    enumDescriptions:
+      - The first day of the week.
+      - The second day of the week.
+      - The third day of the week.
+      - The fourth day of the week.
+      - The fifth day of the week.
+      - The sixth day of the week.
+      - The last day of the week.
+  trigger:
+    type: object
+    additionalProperties: false
+    required: [name, type, every, start]
+    properties:
+      name:
+        type: string
+        pattern: "^[a-z][a-z0-9_-]*$"
+        description: "The trigger's name, unique within the flow: lowercase letters, digits, hyphens and underscores."
+        examples: [hourly]
+      type:
+        enum: [schedule, tumbling-window]
+        description: "What kind of trigger this is."
+        enumDescriptions:
+          - Runs at the times the recurrence gives.
+          - Runs once for each fixed, contiguous window of time, passing the window to the pipeline.
+      every:
+        type: object
+        additionalProperties: false
+        required: [frequency, interval]
+        description: How often the trigger repeats.
+        properties:
+          frequency:
+            enum: [Minute, Hour, Day, Week, Month]
+            description: The unit of the interval.
+            enumDescriptions:
+              - Every so many minutes.
+              - Every so many hours.
+              - Every so many days.
+              - Every so many weeks.
+              - Every so many months.
+          interval:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            description: How many units between runs, from 1 to 1000.
+            examples: [1]
+        examples:
+          - { frequency: Hour, interval: 1 }
+      start:
+        type: string
+        pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}(:[0-9]{2})?(Z|[+-][0-9]{2}(:?[0-9]{2})?)?$"
+        description: "When the trigger may first start, an ISO 8601 date and time: `YYYY-MM-DDTHH:mm`, optional `:ss`, then `Z` or an offset for a fixed instant, or nothing for a time in the trigger's zone."
+        examples: [2026-12-01T00:00:00Z]
+      end:
+        type: string
+        pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}(:[0-9]{2})?(Z|[+-][0-9]{2}(:?[0-9]{2})?)?$"
+        description: "When the trigger stops starting runs, an ISO 8601 date and time written as `start` is. Default: never."
+        examples: [2027-12-01T00:00:00Z]
+      timezone:
+        type: string
+        description: "The IANA zone the trigger's times are in. Default: the standard's `operations.triggers.timezone`, else UTC."
+        examples: [Europe/London]
+      at:
+        type: object
+        additionalProperties: false
+        description: "Schedule only: the times within each repeat that the trigger starts."
+        properties:
+          minutes:
+            type: array
+            items: { type: integer, minimum: 0, maximum: 59 }
+            description: Minutes of the hour.
+            examples: [[0, 30]]
+          hours:
+            type: array
+            items: { type: integer, minimum: 0, maximum: 23 }
+            description: Hours of the day.
+            examples: [[2]]
+          weekdays:
+            type: array
+            items: { $ref: "#/$defs/weekday" }
+            description: Days of the week. Needs a `Week` frequency.
+            examples: [[Sunday]]
+          month_days:
+            type: array
+            items: { type: integer }
+            description: Days of the month; a negative number counts from the end. Needs a `Month` frequency.
+            examples: [[1, -1]]
+          occurrences:
+            type: array
+            description: A weekday of the month, such as the first Monday. Needs a `Month` frequency.
+            items:
+              type: object
+              additionalProperties: false
+              required: [day]
+              properties:
+                day: { $ref: "#/$defs/weekday", description: "The day of the week." }
+                occurrence:
+                  type: integer
+                  description: "Which one in the month; a negative number counts from the end. Default: every one."
+                  examples: [1]
+            examples:
+              - [{ day: Monday, occurrence: 1 }]
+        examples:
+          - { weekdays: [Sunday], hours: [2], minutes: [0] }
+      lookback:
+        {
+          $ref: "#/$defs/duration",
+          description: "Schedule only: how far back each run reads, so runs overlap on purpose.",
+        }
+      delay:
+        {
+          $ref: "#/$defs/duration",
+          description: "Tumbling window only: how long after a window ends its run starts.",
+        }
+      concurrency:
+        type: integer
+        minimum: 1
+        maximum: 50
+        description: "Tumbling window only: how many windows may run at once, from 1 to 50. Default: the standard's `operations.concurrency.max_runs`."
+        examples: [1]
+      retries:
+        type: object
+        additionalProperties: false
+        required: [count, interval]
+        description: "Tumbling window only: how a failed window is tried again. Default: the standard's `operations.retries`."
+        properties:
+          count:
+            type: integer
+            minimum: 0
+            description: How many times to try again.
+            examples: [3]
+          interval: { $ref: "#/$defs/duration", description: "How long to wait between tries." }
+        examples:
+          - { count: 3, interval: 300s }
+      depends_on:
+        type: array
+        description: "Tumbling window only: the windows this trigger waits for."
+        items:
+          oneOf:
+            - type: object
+              additionalProperties: false
+              required: [self, offset]
+              properties:
+                self: { const: true, description: The trigger's own earlier window. }
+                offset:
+                  type: string
+                  pattern: "^-[0-9]+(s|m|h|d)$"
+                  description: How far back the window is, a negative duration.
+                  examples: [-1h]
+                size:
+                  {
+                    $ref: "#/$defs/duration",
+                    description: "How long the window is. Default: the trigger's own.",
+                  }
+            - type: object
+              additionalProperties: false
+              required: [trigger]
+              properties:
+                trigger:
+                  type: string
+                  description: "A tumbling-window trigger of this flow by name, or of another flow as `<flow>/<name>`."
+                  examples: [orders/hourly]
+                offset:
+                  type: string
+                  pattern: "^-?[0-9]+(s|m|h|d)$"
+                  description: "How far the window is from this trigger's. Default: the same window."
+                  examples: [-1h]
+                size:
+                  {
+                    $ref: "#/$defs/duration",
+                    description: "How long the window is. Default: the trigger's own.",
+                  }
+        examples:
+          - [{ self: true, offset: -1h }]
+      backfill:
+        type: boolean
+        description: "Tumbling window only: true to run the windows between `start` and now when the trigger is new to the project."
+        examples: [false]
+      paused:
+        type: boolean
+        description: "True to keep the trigger stopped in every environment."
+        examples: [false]
+      parameters:
+        type: object
+        description: "The values this trigger gives the pipeline's parameters: `load`, `windowStart` and `windowEnd`, and the flow's own."
+        additionalProperties: { $ref: "#/$defs/parameterValue" }
+        examples:
+          - load: full
+    examples:
+      - name: weekly-reload
+        type: schedule
+        every: { frequency: Week, interval: 1 }
+        start: 2026-12-01T00:00:00Z
+        at: { weekdays: [Sunday], hours: [2], minutes: [0] }
+        parameters: { load: full }
   cleanse:
     type: object
     additionalProperties: false
@@ -293,6 +532,22 @@ $defs:
           description: "Settings for the chosen method, over the standard's.",
           examples: [{ format: csv, options: { header: true } }],
         }
+  tableIngest:
+    type: object
+    additionalProperties: false
+    properties:
+      with:
+        {
+          type: object,
+          description: "Settings for the chosen method, over the standard's.",
+          examples: [{ format: csv, options: { header: true } }],
+        }
+      filter:
+        type: string
+        minLength: 1
+        description: "A predicate in the source's SQL dialect that limits the source rows this table reads, for a method that filters. It may hold `{{ parameters.<name> }}`, a parameter the flow declares under `ingest.parameters`, in plain SQL code only: not inside quotes, a quoted name or a comment."
+        examples:
+          - "OrderDate >= {{ parameters.min_date }}"
   expectations:
     type: array
     description: Data quality checks on each row.
@@ -334,6 +589,21 @@ $defs:
       with:
         type: object
         description: Method settings for every table of this flow.
+      parameters:
+        type: object
+        description: "Custom pipeline parameters of this flow, by name: lowercase letters, digits and underscores. A trigger sets each one, and a run that no trigger sets uses the default."
+        additionalProperties: { $ref: "#/$defs/parameter" }
+        examples:
+          - min_date: { type: date, default: "2020-01-01" }
+      triggers:
+        type: array
+        description: "What starts the flow's pipeline, when the standard lets flows write triggers (`operations.schedule.per: flow`). Leave out to keep the pack's default trigger."
+        items: { $ref: "#/$defs/trigger" }
+        examples:
+          - - name: hourly
+              type: tumbling-window
+              every: { frequency: Hour, interval: 1 }
+              start: 2026-12-01T00:00:00Z
   store:
     type: object
     additionalProperties: false

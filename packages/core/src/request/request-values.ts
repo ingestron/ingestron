@@ -47,7 +47,8 @@ function whereFrom(file: string, supplied: Supplied | undefined): string {
     return (
       "These values come from environment variables. The pipeline that deploys the files " +
       "supplies each one for each environment, under the names given; on your own computer, " +
-      `\`${file}\` (kept out of Git) is read only by a pack that reads them when generating, such as DuckDB.`
+      `\`${file}\` (kept out of Git) is read only by packs that take these values when generating, ` +
+      "not by those that take them when deploying."
     );
   return (
     "These values come from environment variables. Set them in the pipeline that runs " +

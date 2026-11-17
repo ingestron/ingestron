@@ -4,6 +4,10 @@ SQL Server: ADF ingestion into Databricks. Data Factory copies the source's tabl
 `ingestron init` wrote this file on 2026-11-04; it is yours, and Ingestron never rewrites it.
 The table `sqlserver_records` and the contract `contracts/records.yaml` are examples: rename the tables and change the contracts' columns to your source's.
 
+## Build and review in VS Code
+
+Open this folder in VS Code with the Ingestron extension. Use hovers, completions and the Reference panel to configure the YAML. In the Ingestron Project panel, choose Request source metadata, then Import source metadata when you have the catalogue file. Select an environment to review its previews and platform request; use Compare environments to inspect differences, including effective mode. Plan previews the changes, Apply writes local files under build/, and Check confirms they are up to date. These actions do not deploy or run the generated assets. Review the generated files before arranging deployment separately.
+
 ## Run it
 
 ```sh
@@ -71,7 +75,7 @@ az deployment group create --resource-group <group> --mode Incremental --templat
 `/subscriptions/<subscription>/resourceGroups/<group>/providers/Microsoft.DataFactory/factories/<factory>`;
 `<group>` and `<factory>` are each environment's resource group and data factory.
 Where a deployment creates a self-hosted integration runtime, register a node with it before
-the copies run. The full steps, with CI: https://docs.ingestron.io/docs/platforms/adf-deploy.
+the copies run. The full steps, with CI: https://docs.ingestron.io/docs/adf/deploy.
 
 ### databricks: `build/databricks` (dev, prod)
 

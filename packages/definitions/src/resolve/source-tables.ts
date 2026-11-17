@@ -4,7 +4,7 @@
 import type { DefinitionDocument } from "@ingestron/config";
 import type { Context } from "../context/index.js";
 import type { FlowDoc } from "../documents/index.js";
-import type { SourceTable, TableMatch } from "../sources/index.js";
+import { metadataTypes, type SourceTable, type TableMatch } from "../sources/index.js";
 import { contractNeeded } from "./contract-needed.js";
 import type { FlowSteps } from "./flow-sources.js";
 
@@ -34,11 +34,11 @@ export function needsOf(
 
 /** The flow table's item of the list (section 12.7). */
 export function sourceTableOf(
+  context: Context,
   { flow, name, match }: ListedTable,
   needs: string | undefined,
 ): SourceTable {
   const doc = flow.value.tables[name]!;
-  const names = match?.document.names;
   return {
     flow: flow.value.id,
     table: name,
@@ -46,8 +46,18 @@ export function sourceTableOf(
     object: doc.object,
     ...(doc.contract !== undefined && { contract: doc.contract }),
     ...(needs !== undefined && { needs }),
-    ...(match?.entry && { entry: match.entry }),
+    ...(match && metadataOf(context, match)),
+  };
+}
+
+/** What the item says of the metadata the table's object matched: its entry, names, file, types. */
+function metadataOf(context: Context, match: TableMatch): Partial<SourceTable> {
+  const names = match.document.names;
+  const types = match.entry && metadataTypes(context, match.entry);
+  return {
+    ...(match.entry && { entry: match.entry }),
     ...(names && { names }),
-    ...(match && { file: match.file }),
+    file: match.file,
+    ...(types && { types }),
   };
 }

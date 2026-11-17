@@ -20,7 +20,7 @@ export function describeFailure(
   if (repeats(failure, all)) return undefined;
   const keys = parsePointer(failure.instancePath) ?? [];
   const path = pathText(keys);
-  const message = messageFor(failure, path, keys.length === 0);
+  const message = messageFor(failure, path, keys.length === 0, root as Schema);
   return { message, ...hintFor(failure, keys, root as Schema) };
 }
 
@@ -59,7 +59,7 @@ export function pathText(keys: readonly string[]): string {
     .join("");
 }
 
-type Phrase = (failure: ErrorObject, path: string, atRoot: boolean) => string;
+type Phrase = (failure: ErrorObject, path: string, atRoot: boolean, root: Schema) => string;
 
 /** One message per kind of failure; anything else falls back to the validator's words. */
 const phrases: Record<string, Phrase> = {
@@ -68,8 +68,13 @@ const phrases: Record<string, Phrase> = {
       ? `${path} is empty; it must be ${expected(String(params.type))}.`
       : `${path} is ${actual(data)}; it must be ${expected(String(params.type))}.`,
   required: ({ params }, path) => `${path} needs "${String(params.missingProperty)}".`,
-  additionalProperties: ({ params, parentSchema }, path, atRoot) =>
-    unknownField(String(params.additionalProperty), atRoot ? "the document" : path, parentSchema),
+  additionalProperties: ({ params, parentSchema }, path, atRoot, root) =>
+    unknownField(
+      String(params.additionalProperty),
+      atRoot ? "the document" : path,
+      parentSchema as Schema | undefined,
+      root,
+    ),
   enum: ({ data, params }, path) =>
     `${path} is ${JSON.stringify(data)}; use one of: ${(params.allowedValues as unknown[]).map(plain).join(", ")}.`,
   const: ({ params }, path) => `${path} must be ${plain(params.allowedValue)}.`,
@@ -78,9 +83,9 @@ const phrases: Record<string, Phrase> = {
   anyOf: (_failure, path) => `${path} does not match any of the forms allowed here.`,
 };
 
-function messageFor(failure: ErrorObject, path: string, atRoot: boolean): string {
+function messageFor(failure: ErrorObject, path: string, atRoot: boolean, root: Schema): string {
   const phrase = phrases[failure.keyword];
-  if (phrase) return phrase(failure, path, atRoot);
+  if (phrase) return phrase(failure, path, atRoot, root);
   return limits(failure, path) ?? `${path} ${failure.message ?? "is not valid"}.`;
 }
 
@@ -124,10 +129,23 @@ function plain(value: unknown): string {
   return typeof value === "string" ? value : JSON.stringify(value);
 }
 
-function unknownField(field: string, where: string, parent: unknown): string {
-  const known = Object.keys((parent as { properties?: object } | undefined)?.properties ?? {});
-  const [near] = nearNames(field, known);
-  return `"${field}" is not a field of ${where}.${near ? ` Did you mean "${near}"?` : ""}`;
+function unknownField(
+  field: string,
+  where: string,
+  parent: Schema | undefined,
+  root: Schema,
+): string {
+  const properties = (parent?.properties ?? {}) as Record<string, Schema>;
+  const [near] = nearNames(field, Object.keys(properties));
+  const text = `"${field}" is not a field of ${where}.`;
+  if (near) return `${text} Did you mean "${near}"?`;
+  const below = Object.keys(properties).filter((key) =>
+    expand(root, properties[key] as Schema).some((schema) =>
+      Object.hasOwn((schema.properties ?? {}) as object, field),
+    ),
+  );
+  if (below.length === 0) return text;
+  return `${text} Write it under ${below.map((key) => `"${key}"`).join(" or ")}.`;
 }
 
 function hintFor(failure: ErrorObject, keys: readonly string[], root: Schema): { hint?: string } {

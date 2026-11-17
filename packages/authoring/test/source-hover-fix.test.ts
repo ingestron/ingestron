@@ -24,6 +24,24 @@ function open(changes: Record<string, string> = {}) {
   return { folder, snapshot: ProjectSnapshot.open(folder) };
 }
 
+describe("feedback during incomplete authoring", () => {
+  it("shows an unknown object with a replacement beside an empty contract and blocks generation", () => {
+    const { snapshot } = open({
+      "contracts/temp.yaml": "",
+      "flows/erp.yaml": files["flows/erp.yaml"]!.replace("ERP.dbo.Customers", "ERP.dbo.Customers2"),
+    });
+    const problems = snapshot.problems("dev");
+    expect(problems.some((problem) => problem.code === "MISSING_HEADER")).toBe(true);
+    expect(problems).toContainEqual(
+      expect.objectContaining({
+        code: "TABLE_NO_COLUMNS",
+        message: expect.stringContaining("Customers2"),
+      }),
+    );
+    expect(Array.isArray(snapshot.generatedFiles("dev"))).toBe(false);
+  });
+});
+
 const withKey = {
   "sources/erp.yaml": files["sources/erp.yaml"]!.replace(
     "      - { name: CustomerID, sourceType: int, logicalType: integer, required: true }\n" +
@@ -53,7 +71,7 @@ describe("the hover on a flow table without a contract", () => {
     "- `Address`: xml",
     "  - `City`: nvarchar(80)",
     "",
-    "Captured 2026-11-12 from catalog (sources/erp.catalog.csv).",
+    "Imported 2026-11-12 from `sources/erp.catalog.csv` (catalog).",
   ].join("\n");
 
   it("lists the source columns on the table's key, the key marked and a nested column indented", () => {
@@ -73,11 +91,12 @@ describe("the hover on a flow table without a contract", () => {
     expect(hover).toContain(expected);
   });
 
-  it("adds nothing for a table with a contract, nor for a table without an entry", () => {
+  it("shows observed source columns beside a contract, and nothing without an entry", () => {
     const { snapshot } = open(withKey);
     const orders = snapshot.hoverAt("flows/erp.yaml", flow, offsetOf(flow, "orders:", 2), "dev");
     expect(orders).toBeDefined();
-    expect(orders).not.toContain("source metadata");
+    expect(orders).toContain("source metadata");
+    expect(orders).toContain("OrderID");
     const returns = snapshot.hoverAt("flows/erp.yaml", flow, offsetOf(flow, "returns:", 2), "dev");
     expect(returns ?? "").not.toContain("source metadata");
     const object = snapshot.hoverAt(
@@ -86,7 +105,7 @@ describe("the hover on a flow table without a contract", () => {
       offsetOf(flow, "ERP.dbo.Orders", 4),
       "dev",
     );
-    expect(object ?? "").not.toContain("source metadata");
+    expect(object).toContain("source metadata");
   });
 
   it("leaves the existing hover on the key as it was", () => {

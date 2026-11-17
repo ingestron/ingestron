@@ -83,12 +83,19 @@ const owners: Record<string, string> = {
 };
 
 /** The flags of `source` that are given to a command they do not belong to, with the flag's name. */
-function misplacedSource(flags: Flags, source: Chosen["source"]): [string, boolean][] {
+function misplacedSource(
+  flags: Flags,
+  source: Chosen["source"],
+  command: string,
+): [string, boolean][] {
   const importing = source?.action === "import";
   return [
     ["--dry-run", flags["dry-run"] && !importing],
-    ["--object", flags.object !== undefined && !importing],
-    ["--connection", flags.connection !== undefined && source?.action !== "request"],
+    ["--object", flags.object !== undefined && !importing && command !== "flow"],
+    [
+      "--connection",
+      flags.connection !== undefined && source?.action !== "request" && command !== "flow",
+    ],
   ];
 }
 
@@ -99,7 +106,7 @@ export function misplacedFlag(
   { source, fromMetadata }: Chosen,
 ): string | undefined {
   const misplaced: [string, boolean][] = [
-    ...misplacedSource(flags, source),
+    ...misplacedSource(flags, source, command),
     ["--from-metadata", flags["from-metadata"] && command !== "contract"],
     ["--needed", flags.needed && !fromMetadata],
     ["--assistant", flags.assistant !== undefined && command !== "init"],
