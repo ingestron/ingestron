@@ -45,9 +45,10 @@ a version 2 pack, or version 1 of a version 3 pack.
 
 Two placeholder forms exist. A `${…}` reference is replaced wherever text is
 written, project.yaml's values included, by the `@ingestron/config` syntax.
-A `{{ … }}` pattern is replaced only in a standard's or platform's `naming`
-and in a transform's `code`, where per-table names such as `table` and
-`layer` exist. A `{{ … }}` anywhere else in project.yaml or a document other
+A `{{ … }}` pattern is replaced only in a standard's or platform's `naming`,
+in a transform's `code`, where per-table names such as `table` and
+`layer` exist, and in a flow table's `ingest.filter`, where it names a
+parameter (section 5.1). A `{{ … }}` anywhere else in project.yaml or a document other
 than a contract stays as written: that is `PLACEHOLDER_NOT_REPLACED`, a
 warning at the text, with a fix to the `${…}` form when there is one:
 `{{ environment }}` (or `env`) is `${environment.name}` and `{{ project }}`
@@ -325,6 +326,14 @@ output folder, each path as the generation specification requires
   environment at once: one artefact that covers them all, such as one
   Databricks bundle with a target per environment. A pack that has it
   **builds environments together**.
+- `checkFirstWrites(files, generatedBefore, now)` is optional. A tool that
+  plans a pack's output calls it with the output's `files` (the paths and
+  texts about to be written), `generatedBefore` (the paths the output
+  folder's manifest already lists, empty when there is no manifest) and the
+  current time `now`. It returns a message for each file the pack refuses to
+  have written for the first time, and none when it accepts them all. The
+  tool refuses the plan while there is a message (CLI output specification,
+  "Refused first writes"). A pack that does not have it accepts every file.
 
 An environment is a **target** of a pack when its model has a step (`ingest`,
 `transform`, `store` or `serve`) whose `pack` is that pack's id. So an
@@ -765,6 +774,232 @@ pack: DuckDB and Synapse select only the contract's columns). A contract column 
 is the same warning: `The query returns no column "<column>", which the
 contract <id> names.` Code that is not SQL, or whose columns cannot be read
 this way, is not compared.
+
+### 5.1 Triggers and parameters
+
+A flow MAY write the triggers that start its pipeline and the pipeline
+parameters they set, under its `ingest`, beside `uses` and `with`:
+
+```yaml
+ingest:
+  parameters:
+    min_date: { type: date, default: "2020-01-01" }
+  triggers:
+    - name: hourly
+      type: tumbling-window
+      every: { frequency: Hour, interval: 1 }
+      start: 2026-12-01T00:00:00Z
+      delay: 5m
+      concurrency: 1
+      retries: { count: 3, interval: 300s }
+      depends_on:
+        - { self: true, offset: -1h }
+    - name: weekly-reload
+      type: schedule
+      every: { frequency: Week, interval: 1 }
+      start: 2026-12-01T00:00:00Z
+      at: { weekdays: [Sunday], hours: [2], minutes: [0] }
+      parameters:
+        load: full
+        min_date:
+          { expression: "@formatDateTime(addDays(trigger().scheduledTime, -30), 'yyyy-MM-dd')" }
+```
+
+**A trigger.** `name`, `type`, `every` (`frequency`, `interval`) and `start` are
+required. `name` matches `^[a-z][a-z0-9_-]*$` and is unique within the flow.
+`type` is `schedule` or `tumbling-window`. `frequency` is `Minute`, `Hour`,
+`Day`, `Week` or `Month`; `interval` is a whole number from 1 to 1000. `start`
+and `end` are ISO 8601 date-times as written, `YYYY-MM-DDTHH:mm` with optional
+`:ss`, and optionally `Z` or an offset (`±HH:MM`, `±HHMM` or `±HH`); the schema
+refuses another form. One whose date or time is not on the calendar or the
+clock (such as month 13 or hour 25) is `TRIGGER_OPTION`, an error at the value:
+`"<name>" has a start Ingestron cannot read: "<value>". Write it as
+2026-12-01T02:30:00, with Z or an offset for a fixed instant.` (for `end`,
+`has an end` in place of `has a start`). `timezone` is an IANA zone name;
+a name not on the list of zones (section 6.3) is `TIMEZONE_NAME`, an error at
+the name. `paused: true` keeps the trigger stopped. `parameters` gives the
+values the trigger passes to the pipeline.
+
+Only a `schedule` trigger MAY write `at` and `lookback`. `at` refines the
+recurrence with `minutes`, `hours`, `weekdays`, `month_days` and `occurrences`
+(each `{ day, occurrence }`); it gives at most one of `month_days` and
+`occurrences`, and both are `TRIGGER_OPTION`, an error at `at`: `"<name>" gives
+both month_days and occurrences; give one of them.` `at` applies only to a schedule by `Day`, `Week`
+or `Month`; on one by `Minute` or `Hour` it is `TRIGGER_OPTION`, an error at
+`at`: ``"<name>" runs every <frequency>; `at` applies only to Day, Week and Month
+schedules. To run at a given minute, start the trigger at that minute.``
+`lookback` is a duration. Only a `tumbling-window`
+trigger MAY write `delay` (a duration), `concurrency` (a whole number from 1
+to 50), `retries` (`count`, `interval`), `depends_on` and `backfill`. A duration is written `^[0-9]+(s|m|h|d)$`;
+a dependency's `offset` MAY start with `-`. A dependency is `{ self: true, offset }`
+or `{ trigger, offset?, size? }`, where `trigger` is the name of a
+tumbling-window trigger of the same flow, or `<flow>/<name>` for one of another
+flow.
+
+**What each table holds.** Every table of the flow has `ingest.triggers`, the
+flow's triggers in the order written, and `ingest.parameters`, the flow's
+declared parameters. Both are absent when the flow writes none, which means the
+pack's default trigger. A resolved trigger has the flow's id as `flow`, the
+trigger's `name` and `type`, `every`, `start`, `end`, `at`, `lookback`, `delay`,
+`concurrency`, `retries`, `depends_on`, `backfill` and `paused` as written (a
+key not written is absent), its `parameters` (`{}` when none) and the place it
+was written. Its `timezone` is the trigger's own, else the model's
+`operations.triggers.timezone` (section 11.6), which is `UTC` when the standard
+gives none.
+
+**Parameters.** `ingest.parameters` declares custom parameters, each with a
+`type` (`string`, `int`, `float`, `bool`, `date` or `datetime`) and a `default`.
+A `date` is written `YYYY-MM-DD` and a `datetime` as an ISO 8601 date-time.
+A trigger's `parameters` give a value for a declared name as a literal of the
+declared type, or as `{ expression: "..." }`, an expression the pack passes on
+as written. These are `TRIGGER_PARAMETER`, errors at the value:
+
+- a trigger sets a name the flow does not declare;
+- a value is not of the declared type;
+- a name is `windowStart`, `windowEnd`, `load` or `tables` where a flow declares
+  it, or `tables` where a trigger sets it;
+- a declared name does not match `^[a-z][a-z0-9_]*$`;
+- a declaration has no `default`, or a `default` not of its type.
+
+A trigger MAY also set the built-in parameters `load`, which is `incremental`
+or `full`, and, on a `schedule` trigger only, `windowStart` and `windowEnd`,
+which MUST be expressions. `windowStart` or `windowEnd` on a `tumbling-window`
+trigger, or as a literal, or any other value of `load`, is `TRIGGER_PARAMETER`.
+
+**A source filter.** A flow table MAY write `ingest.filter`, a string: a
+predicate in the source's SQL dialect that limits the source rows the table
+reads. It MAY hold `{{ parameters.<name> }}`, where `<name>` is a parameter the
+flow declares, or a built-in parameter, which needs no declaration: `windowStart`
+and `windowEnd` are date-times, and `load` is text, `incremental` or `full`
+(spaces inside the braces are allowed). The pack replaces each with the
+parameter's value when it builds the pipeline. The model holds the
+text as written, in the table's `ingest.filter`, with its references
+unexpanded, and absent when the table writes none.
+
+```yaml
+tables:
+  orders:
+    object: orders
+    contract: orders
+    ingest:
+      filter: "OrderDate >= {{ parameters.min_date }}"
+```
+
+These problems are errors at the table's `/tables/<table>/ingest/filter`:
+
+- `FILTER_NOT_SUPPORTED`, when the table's ingest method does not filter source
+  rows (a method says so with `filters: true`). `<method>` is the method's id.
+  Its references are then not checked.
+
+  ```text
+  <method> does not filter source rows; remove `filter`, or use a method that does.
+  ```
+
+- `TRIGGER_PARAMETER`, for each name a reference uses that is neither declared
+  under `ingest.parameters` nor a built-in parameter (`windowStart`, `windowEnd`
+  or `load`; `tables` is not one a filter may use), reported once for each name:
+
+  ```text
+  "{{ parameters.<name> }}" names no parameter of the flow.
+  ```
+
+- `TRIGGER_PARAMETER`, for the text of the filter itself, because a pack puts a
+  parameter's value in as a SQL value and a value typed by hand when a run
+  starts is not trusted. The filter is read with SQL Server's rules: `''`
+  inside a string and `""` inside a quoted name stay inside it, `]]` inside
+  `[…]`, `--` to the end of the line, and `/* */`, which nests as SQL Server reads it: a `/*` inside a comment
+  opens another, and the comment ends only when every one is closed. Each is reported
+  once.
+
+  - A `{{ parameters.<name> }}` MUST stand in plain SQL code, outside
+    `'…'`, `"…"`, `[…]`, `--` comments and `/* */` comments, once for each name:
+
+    ```text
+    "{{ parameters.<name> }}" is inside a quoted text, name or comment of the filter; write it as plain SQL, such as name LIKE '%' + {{ parameters.<name> }} + '%'.
+    ```
+
+  - The filter MUST NOT hold `@{`, or `{` or `}` anywhere except the braces of
+    a reference, which a pack would read or mis-scan:
+
+    ```text
+    A filter cannot contain "@{", "{" or "}" except around {{ parameters.<name> }}.
+    ```
+
+  - The filter's parentheses in plain SQL code, outside `'…'`, `"…"`, `[…]`
+    and comments, MUST balance: each `)` closes a `(` before it, and every
+    `(` is closed. A pack wraps the filter in its own parentheses, which an
+    unbalanced filter would escape:
+
+    ```text
+    The filter's parentheses do not balance.
+    ```
+
+  - The filter MUST NOT be empty or only whitespace (the schema also requires
+    at least one character):
+
+    ```text
+    The filter is empty; remove it, or write a condition.
+    ```
+
+**`TRIGGER_OPTION`**, an error at the trigger: an option on the wrong type
+(`at` or `lookback` on a `tumbling-window`; `delay`, `concurrency`, `retries`,
+`depends_on` or `backfill` on a `schedule`); `at` on a `schedule` by `Minute`
+or `Hour`; `at` with both `month_days` and `occurrences`; a `start` or `end`
+Ingestron cannot read; a `depends_on` that names no
+tumbling-window trigger of the project; a trigger name used twice in the flow.
+
+**`TRIGGER_NOT_ALLOWED`**, an error at the flow's `ingest/triggers` (or, for a
+type, at the trigger's `type`), when the standard does not let the flow write
+the trigger (section 11.6).
+
+**How a trigger loads a table.** The triggers a flow writes are checked against
+each table of the flow, once for each trigger and table, when the table's
+intent is complete. The default trigger of a flow that writes none is never
+checked. A table is _incremental_ when its `load.mode` is `incremental`. A
+trigger that sets the parameter `load: full` reloads the table; a trigger that
+is a tumbling window, or a schedule with a `lookback`, overlaps rows. Both
+errors are at the trigger (`/ingest/triggers/<n>`).
+
+`TRIGGER_LOOKBACK` is for a `schedule` trigger on an incremental table that
+does not set `load: full`. With no `lookback`:
+
+```text
+"<name>" runs an incremental table on a schedule; give it a `lookback`, or `load: full`.
+```
+
+With a `lookback` shorter than the longest gap between the trigger's runs
+(section 11.6 finds the runs):
+
+```text
+"<name>"'s lookback <lookback> is shorter than its longest gap between runs, <gap>.
+```
+
+Here `<lookback>` is as written, and `<gap>` is the gap in the largest unit of
+`d`, `h`, `m` or `s` that holds it exactly. A lookback of exactly the gap is
+allowed. A trigger whose cycle cannot be bounded or read has no gap to check.
+
+`TRIGGER_KEY` is for every trigger on an incremental table, and for every
+trigger that sets `load: full`, when the table has no primary key (from its
+contract, else from source metadata):
+
+```text
+"<name>" reloads or overlaps rows of <table>, which has no primary key; declare one in its contract, or in its source metadata.
+```
+
+or when its store keeps every row as it arrived:
+
+```text
+"<name>" reloads or overlaps rows of <table>, whose store keeps every row as it arrived (`history: none`), so overlapping rows would be duplicated.
+```
+
+A table that ends at the landed files has no store, and counts as
+`history: none`. Only the first of the two is reported for a trigger and table.
+A table that is not incremental, whose ingest setting `layout` is `snapshot`,
+is exempt when its rows are replaced each run rather than appended: when its
+`history` is not `none`, or when it ends at the landed files, whose one file
+each run replaces. A snapshot that feeds a store with `history: none` appends
+each reload, so it keeps `TRIGGER_KEY`, and so does an incremental table
+whatever its layout.
 
 ## 6. Contracts and quality
 
@@ -1934,7 +2169,7 @@ object without a `name` is a load error at the item.
 | `audit`, `rescued`, `retention`, `storage` | The same as a layer's or a table's, for every table.                                                                                                                                                                                                                   |
 | `quality`                                  | `required` and `default`, the actions for failed checks (section 6); `quarantine: true`, to keep rows a `drop` check removes in a table of their own (section 11.7); `results: true`, to keep the results of checks as a table.                                        |
 | `cleanse`                                  | Defaults for the tables' columns (sections 6.1 and 6.3): `text`, with `trim: true` and `empty: null`, for every text column, and `timestamps`, with `to: <zone>`, for every timestamp column.                                                                          |
-| `operations`                               | Policy for runs, below.                                                                                                                                                                                                                                                |
+| `operations`                               | Policy for runs, below: `schedule`, `trigger`, `retries`, `timeout`, `alerts`, `concurrency`, `require_tags` and `triggers`, the trigger types, time zone and hours a project may use (section 11.6).                                                                  |
 | `fixed`                                    | Intent that no layer, flow or transform may change: any of `load`, `history`, `sequence`, `audit`, `rescued`, `retention`, `storage` and `operations`, in the forms below. It is separate from each action's `fixed` settings.                                         |
 
 **Flows and transforms.** A flow and a flow table may give `load`, `history`,
@@ -2191,7 +2426,8 @@ and removes the setting. Elsewhere (the standard's `settings.<method>`, the
 platform, a rule's `with`, a transform's `<action>.with`) there is no fix;
 nor is there one when the setting is written as, or with, a `${…}`
 reference, which intent cannot keep. Without a fix, the hint is
-`Write the intent by hand where it should apply, and remove this setting.`
+``Write it under `intent` where it should apply: the standard or a layer for
+many tables, a flow or a table for one. Then remove this setting.``
 
 The standard's `fixed.<method>` is not `SETTING_MOVED`: it is read as fixed
 intent for that method's tables and keeps its force as it is written.
@@ -2279,6 +2515,9 @@ entry is one of:
   `deduplicate` and `quarantine`: the pack applies it only in a layer whose
   `does` lists that duty, or, for `check`, whose `does` is `raw` (section 5).
   It is read only for the paths of section 11.7.
+  `whereHint`, optional, gives provider-specific recovery guidance appended to
+  the warning hint when the layer lacks that duty. It does not change whether
+  the rule applies.
   `zonesNotApplied`, optional, is read only on the entry for
   `cleanse.timezone`: the zones the pack cannot convert from or to, each with
   its reason, such as `{ Antarctica/Troll: Windows has no zone for
@@ -2370,11 +2609,104 @@ It is `[]` when there are none.
 The model's `operations` is the standard's `operations` (section 11.1) with
 its defaults filled, and `fixed.operations` over it, key by key inside a
 mapping (section 3). Its fields are `schedule`, `trigger`, `retries`,
-`timeout`, `alerts`, `concurrency` and `require_tags`. When the standard says
-nothing, `schedule` is `{ per: project }`, `trigger` is `schedule`, `alerts`
-is `{ on: [failure] }` and `require_tags` is `[]`; `retries`, `timeout` and
-`concurrency` are absent. The model's `qualityResults` is `true` when the
+`timeout`, `alerts`, `concurrency`, `require_tags` and `triggers`. When the
+standard says nothing, `schedule` is `{ per: project }`, `trigger` is
+`schedule`, `alerts` is `{ on: [failure] }`, `require_tags` is `[]` and
+`triggers` is `{ types: [schedule, tumbling-window], timezone: UTC }`;
+`retries`, `timeout` and `concurrency` are absent. The model's `qualityResults` is `true` when the
 standard's `quality.results` is `true`, and `false` otherwise.
+
+**Triggers.** `operations.triggers` is the policy for the triggers a project
+may define (the model's `operations.triggers`). It has four optional keys:
+`types`, a list of `schedule` and `tumbling-window`; `timezone`, an IANA time
+zone name; `hours`, the hours of the day in which a trigger may start, as
+`{ from, to, timezone }` with `from` and `to` written `HH:mm`, `to` exclusive,
+and the window wrapping past midnight when `to` is not after `from` (`22:00`
+to `06:00`); and `environments`, a mapping from an environment name to
+`types`, `timezone` and `hours` for that environment. `hours: any` stands for
+no limit. The model's `triggers` has `types` (default `[schedule,
+tumbling-window]`), `timezone` (default `UTC`) and, only when the policy gives
+hours, `hours` with its `from`, `to` and `timezone`, which is the policy's
+`timezone` when the hours give none. The selected environment's entry replaces
+the common value key by key, and `hours: any` in it removes the common hours.
+`fixed.operations.triggers` is applied last, the same way, and wins over both
+the common values and the environments' entries. A `timezone` that is not on
+the list of zones (section 6.3) is `TIMEZONE_NAME`, an error at the name, where
+the standard wrote it (`/operations/triggers/timezone`, or the `hours`,
+`environments` or `/fixed/operations/triggers` place that holds it). A key of
+`environments`, in either place, that is not an environment `project.yaml`
+declares (`default`, when it declares none) is `TRIGGER_ENVIRONMENT`, a warning
+at the key's entry (`/operations/triggers/environments/<key>`, or the same
+under `/fixed`), since its values would never apply: `"<key>" names no
+environment of this project; environments: <list>.` Here `<list>` is the
+declared environments in the order written, joined with `, `, or `default`.
+
+**Flow triggers.** A flow's triggers (section 5.1) are judged against the
+model's `operations`, once for each flow, in this order. Each refusal is
+`TRIGGER_NOT_ALLOWED`, an error. The first or second stops the checks of the
+flow's triggers; the third does not, and is reported for each trigger it
+refuses:
+
+1. `schedule.per` is `project` (the default): ``The standard keeps one schedule
+for the project (`operations.schedule.per: project`); flows cannot write
+triggers.`` It is at the flow's `/ingest/triggers`. Only with `per: flow` may
+   a flow write triggers; a flow that writes none keeps the pack's default
+   trigger.
+2. `trigger` is not `schedule`: ``The standard's `operations.trigger` is
+<value>, so flows cannot write schedule or tumbling-window triggers.`` at
+   `/ingest/triggers`. A `schedule` or `tumbling-window` trigger is a time-based
+   trigger, so `types` refines `operations.trigger: schedule` only.
+3. A trigger's `type` is not in `triggers.types`: `The standard allows only
+<types> triggers.`, where `<types>` lists the allowed types joined with
+   `and`, at `/ingest/triggers/<n>/type`.
+
+**Allowed hours.** When the model's `operations.triggers` has `hours`, each
+trigger a flow writes is checked against them, once for each flow, after the
+refusals above. A run start whose time in the hours' `timezone` is outside
+`[from, to)` is `TRIGGER_HOURS`, an error at the trigger
+(`/ingest/triggers/<n>`): `"<name>" starts a run at <HH:mm> (<zone>), outside
+the hours the standard allows here: <from>–<to>.` Here `<HH:mm>` is the first
+such start's time in `<zone>`, the hours' zone. The run starts are found
+exactly, never sampled, over one full cycle of the recurrence:
+
+- `start` with `Z` or an offset is an instant; without one, it is a wall-clock
+  time in the trigger's `timezone`.
+- A `schedule` by `Minute` or `Hour` starts every `interval` minutes or hours
+  from `start`, in UTC; daylight saving does not move it. Its cycle is the
+  least common multiple of the interval in minutes and 1440 minutes.
+- A `schedule` by `Day`, `Week` or `Month` starts at wall-clock times in the
+  trigger's `timezone`: each of `at.hours` at each of `at.minutes`, where an
+  hour or minute not given is that of `start` (both not given: the time of
+  `start`). By `Day`, it starts on every `interval`-th day from the date of
+  `start`. By `Week`, on the `at.weekdays` (else the weekday of `start`) of
+  every `interval`-th week, a week being seven days from the date of `start`.
+  By `Month`, on the `at.month_days` of every `interval`-th month from the
+  month of `start`, where a negative day counts from the end; or on its
+  `at.occurrences`, the `occurrence`-th such weekday of the month (negative
+  from the end; every such weekday when `occurrence` is not given); else on the
+  day of `start`. A day the month does not have is skipped. Its
+  cycle is `interval` days, `interval` weeks, or the least common multiple of
+  `interval` and 12, times 4, months, so that it covers a leap year. A time the
+  zone skips when its clocks go forward starts that much later; a time it has
+  twice starts at the first of the two.
+- A `tumbling-window` trigger starts the run of window `k` (from 0) at
+  `start + (k + 1) × interval + delay`, in UTC; by `Month`, `interval` adds
+  calendar months, and a day the month does not have becomes its last day. Its
+  cycle is the least common multiple of the interval in minutes
+  and 1440 minutes, or 12 windows by `Month`.
+- No start is before `start`; `end` and `paused` do not change the check.
+
+A start fixed in UTC (a `schedule` by `Minute` or `Hour`, or a tumbling
+window) is checked under each UTC offset the hours' zone uses in the 366 days
+from `start`, offset by offset in the order they first apply. A wall-clock
+start is checked at each run over those 366 days, and over at least one
+cycle, in the hours' zone at that instant, so a change of clocks in either
+zone is seen from both sides. A cycle of more than 200,000 starts cannot be
+checked: it is `TRIGGER_HOURS` at the trigger, `Ingestron cannot check this
+schedule's start times; write a shorter cycle.` A trigger whose `start`
+Ingestron cannot read is `TRIGGER_OPTION` (section 5.1), and one whose zone is
+not on the list of zones is `TIMEZONE_NAME`; neither is checked against the
+hours.
 
 **Slow alerts.** `alerts.on` with `slow` and no `alerts.slow_after`, in the
 standard or in `fixed.operations`, is a schema error at the `alerts` mapping
@@ -2385,13 +2717,25 @@ not give is `BAD_SETTING`, an error at the Platform's `/tags` (at the document
 root when it has none, and at no place when the project has no Platform
 document): `The standard requires the tag "<tag>" on every platform.`
 
-**Judging `operations`.** The judging pack is the first pack in the standard's
-list whose `intent` (section 11.5) declares `operations`, or a path below it,
-`used`. Each value of the policy other than a default is judged by the entry
-found for its path and value, as section 11.5 finds it in the pack, and
-reported as it says (`NOT_APPLIED`, `PREVIEW_FEATURE`) at the value, where the
-standard wrote it (`/operations/...`, or `/fixed/operations/...` when it fixes
-the value). A pack with no entry reports nothing. The values judged are the
+**Judging `operations`.** Each value of the policy other than a default is
+judged by the first pack in the standard's list whose entry for that value's
+path and value is `used`: a pack that applies the value judges it, whatever
+the packs before it say. A pack's entry for an `operations` value is, as
+section 11.5 finds each: the entry of a method of the pack that a step of the
+project's tables uses, when one such entry is `used`; else the first such
+method's entry, in the order of the tables; else the pack's own. So the
+Synapse pack, whose own entry says serverless views run no jobs, applies a
+schedule per flow when a flow copies with its pipeline method. When no pack's
+entry for the value is `used`, the judging pack is the first pack in the list
+whose `intent` (section 11.5), or the intent of one of its methods that a
+step uses, declares `operations`, or a path below it, `used`, and the value is
+judged by its entry. Either way the outcome is
+reported as section 11.5 says (`NOT_APPLIED`, `PREVIEW_FEATURE`) at the value,
+where the standard wrote it (`/operations/...`, or `/fixed/operations/...` when
+it fixes the value). A judging pack with no entry reports nothing. So with
+`packs: [databricks@2, adf@2]` and `schedule: { per: flow }`, ADF, whose
+entry for `operations.schedule=flow` is `used`, judges the schedule, and
+nothing is reported. The values judged are the
 `schedule` when it is `flow`; a `trigger` other than `schedule`; `retries`,
 `timeout` and `concurrency`, as set; and each alert in `alerts.on` other than
 `failure`. The paths are `operations.schedule` (value `flow`),
@@ -2721,7 +3065,12 @@ columns, their logical types and the primary key:
 - Each column has the entry's `name`, never a `physicalName`, and is always
   nullable, whatever `required` says. Its type is the type for its
   `logicalType`, as for a contract property with no `physicalType`, or none
-  when the packs' `types` give none for it. `sourceType` never sets it. No
+  when the packs' `types` give none for it. The standard's first pack MAY
+  provide `metadataType(column)`, a pure platform type mapping of the observed
+  `SourceColumnDoc`. An explicit standard `types[logicalType]` wins over this
+  mapping; when the mapping returns no type, the logical type's default is
+  used. A mapping MUST validate any source type parameters it uses and MUST
+  NOT copy arbitrary source SQL into a generated type. No
   expectation, check or quarantine is made from the metadata, including from
   `logicalTypeOptions`.
 - The primary key is the columns that have a `primaryKeyPosition`, ordered by
@@ -2750,6 +3099,15 @@ A flow table with neither a contract nor a metadata entry has no columns:
 and the hint is
 `Import the source's metadata (ingestron source request says how), or name a contract.`
 A table that needs a contract (section 12.5) has `CONTRACT_NEEDED` instead.
+
+When a metadata document exists but a known object has no matching entry,
+`TABLE_NO_COLUMNS` is reported at the object's value. Its message identifies
+the object, connection and imported metadata file, rather than claiming no
+metadata was imported. Up to three imported object names within edit distance
+two, compared without case, are offered as complete object-value replacements.
+Names over 256 characters are not compared. The diagnostic does not assert
+that the source table does not exist; refreshing the capture remains a valid
+recovery. Unset references and ambiguous matches keep their existing handling.
 
 A flow table whose `object` is written only as references, as section 12.3
 says (one reference, such as `${envvar:TABLE}`, or only references), of
@@ -2967,7 +3325,14 @@ diagnostics, and never of the model. Each item has:
   `object` matches (section 12.3); none when it matches none, or more than
   one;
 - `names` and `file` (optional): the `names` and the file of the
-  connection's metadata document, when the connection has one.
+  connection's metadata document, when the connection has one;
+- `types` (optional), with an `entry`: for each top-level column of the entry
+  whose type in section 12.4 is not the one the packs' `types` and the
+  standard's `types` give for its `logicalType`, the column's name and that
+  type, in the order of the columns; none when there is no such column. These
+  are the types the standard's first pack's `metadataType` gives, such as
+  `DECIMAL(19,4)` for a `money` column, which a contract keeps only as a
+  `physicalType`.
 
 A table is listed whether or not it resolved: a table with
 `TABLE_NO_COLUMNS` or `CONTRACT_NEEDED` is listed like any other. With the
@@ -3152,3 +3517,14 @@ its landing `format`, and an optional required `runtime`. Packs derive these
 facts from the same source definitions used for validation. Documentation uses
 them to select the applicable method settings; they introduce no YAML fields
 or new extraction behaviour.
+
+### Source feedback after an unrelated load error
+
+A failed project load still checks each valid imported flow against its unique
+valid imported source metadata document, using the normal object-name matching
+rules. The connection must be a valid imported document. Missing metadata, duplicate
+metadata, invalid flows and unresolved object references do not imply a missing
+source object. A metadata-only unknown object reports TABLE_NO_COLUMNS at `object`
+with the same nearby-name fixes. A contracted object absent from a catalogue
+reports SOURCE_TABLE_GONE, respecting the valid platform/standard breaking setting.
+This additional feedback never supplies a model or enables generation.

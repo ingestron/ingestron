@@ -55,7 +55,7 @@ describe("README.md on a route through Data Factory", () => {
       "`az login` (for the deployment):\n\n```powershell\n./arm/PrePostDeploymentScript.ps1",
     );
     expect(deploy).toContain("`<group>` and `<factory>` are each environment's");
-    expect(deploy).toContain("https://docs.ingestron.io/docs/platforms/adf-deploy");
+    expect(deploy).toContain("https://docs.ingestron.io/docs/adf/deploy");
     expect(deploy).toContain("databricks bundle deploy -t <environment>");
     expect(deploy).toContain("sign in to each environment's workspace");
   });

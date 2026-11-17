@@ -54,6 +54,7 @@ describe("packs", () => {
     expect(suggest("standard.yaml", `${head}packs:`)).toEqual([
       " [databricks@2]",
       " [adf@2]",
+      " [synapse@2]",
       " [duckdb@2]",
       " [databricks@2, adf@2]",
       " [synapse@2, adf@2]",

@@ -1,20 +1,13 @@
 // Time zones (specification section 6.3): the names a definition may use, the zone each table's
 // timestamps are in, and which columns a table converts from one zone to another.
-import { zones as zoneList } from "../data/index.js";
 import type { Context } from "../context/index.js";
 import { holdsUnsetEnvvar, type Source } from "../diagnostics/index.js";
 import { kinds, type ConnectionDoc } from "../documents/index.js";
 import type { ResolvedTable } from "../pack/index.js";
+import { isZone, zoneLike } from "../zones/index.js";
 
 /** The zone of timestamps that a connection does not give one for. */
 const defaultZone = "UTC";
-
-const zones: ReadonlySet<string> = new Set(zoneList.names);
-
-/** True when the name is on the list of IANA zones the package ships, written exactly. */
-export function isZone(name: string): boolean {
-  return zones.has(name);
-}
 
 /** The zone a connection writes its timestamps in. */
 export function connectionZone(connection: ConnectionDoc): string {
@@ -38,7 +31,7 @@ export function inputZone({ zones: inputs }: InputZones): string | undefined {
 
 /** `TIMEZONE_NAME` at `at`: the name is not on the list of zones. */
 function reportName(context: Context, name: string, at: Source): void {
-  const like = zoneList.names.find((zone) => zone.toLowerCase() === name.toLowerCase());
+  const like = zoneLike(name);
   context.reporter.error(
     "TIMEZONE_NAME",
     `"${name}" is not a time zone name.`,

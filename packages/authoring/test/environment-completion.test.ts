@@ -65,9 +65,9 @@ describe("the selected environment", () => {
   it("offers the settings of the method chosen in that environment", () => {
     const flow = `${read("flows/shop.yaml").replace(/ {4}store:\n {6}with: \{[^\n]*\}\n/, "")}store:\n  uses: \${values.store}\n  with:\n    |`;
     const at = perEnvironment(flow);
-    expect(labels(at("dev"))).toContain("sequence_by");
-    expect(labels(at("prod"))).toContain("cluster_by");
-    expect(labels(at("prod"))).not.toContain("sequence_by");
+    expect(labels(at("dev"))).toContain("changes_suffix");
+    expect(labels(at("prod"))).toContain("properties");
+    expect(labels(at("prod"))).not.toContain("changes_suffix");
   });
 
   it("marks the value the standard fixes in that environment, resolved from the project's values", () => {

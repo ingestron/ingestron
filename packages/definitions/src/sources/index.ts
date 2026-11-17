@@ -6,4 +6,10 @@ export type { SourceTable } from "./source-table.js";
 export { compareSourceColumns } from "./compare.js";
 export type { SourceBefore, SourceColumnBefore, SourceDifference } from "./compare.js";
 export { compareWithContract } from "./contract-compare.js";
-export { columnsPlace, metadataContract, metadataObject } from "./metadata-contract.js";
+export {
+  columnsPlace,
+  metadataContract,
+  metadataObject,
+  metadataTypes,
+} from "./metadata-contract.js";
+export { unknownObject } from "./unknown-object.js";

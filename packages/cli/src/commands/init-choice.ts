@@ -29,15 +29,7 @@ export function chooseProject(flags: Options["init"], ask: Ask): ChosenProject {
   }
   if (!sources.some((source) => source.id === connector))
     throw new Error(`Unknown connector "${connector}".`);
-  const available = projectRoutes(connector);
-  const networks = [...new Set(available.flatMap((route) => route.connectivity))];
-  const preferred = available.some((route) => route.via === "databricks")
-    ? connector === "sqlserver"
-      ? "workspace"
-      : "public"
-    : "private";
-  const connectivity =
-    flags.connectivity ?? choose("Connectivity", networks, preferred, "--connectivity", ask);
+  const connectivity = chooseConnectivity(connector, flags, ask);
   const routes = projectRoutes(connector, connectivity);
   if (!routes.length)
     throw new Error(`No route for ${connector} with ${connectivity} connectivity.`);
@@ -51,6 +43,29 @@ export function chooseProject(flags: Options["init"], ask: Ask): ChosenProject {
       ask,
     );
   return { ...composableRecipe(connector, via, connectivity), done: () => {} };
+}
+/** Keep the default reachability compatible with an explicitly selected route. */
+function chooseConnectivity(connector: string, flags: Options["init"], ask: Ask): string {
+  const available = projectRoutes(connector);
+  const selected = available.find((route) => route.via === flags.via);
+  const networks = [
+    ...new Set((selected ? [selected] : available).flatMap((route) => route.connectivity)),
+  ];
+  const preferred = available.some((route) => route.via === "databricks")
+    ? connector === "sqlserver"
+      ? "workspace"
+      : "public"
+    : "private";
+  return (
+    flags.connectivity ??
+    choose(
+      "Connectivity",
+      networks,
+      networks.includes(preferred) ? preferred : networks[0]!,
+      "--connectivity",
+      ask,
+    )
+  );
 }
 function choose(title: string, values: string[], fallback: string, flag: string, ask: Ask): string {
   if (values.length === 1) return values[0]!;

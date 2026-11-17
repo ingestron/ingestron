@@ -1,0 +1,43 @@
+description: Each operations value is judged by the first pack in the standard's list whose entry for that value is used, so a pack listed after one that does not apply it still judges it, as with databricks@2 then adf@2 and a schedule for each flow. Here jobs@1 stands for Databricks, which runs one job for the project and sends no slow alert, and ops@1 for ADF, which runs a schedule for each flow and applies every operations value, so neither the schedule nor the slow alert is reported. The retries, which jobs@1 applies, are judged by it.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, jobs@1, ops@1]
+    operations:
+      schedule: { per: flow }
+      retries: { count: 2, interval: 5m }
+      alerts: { on: [failure, slow], slow_after: 1h }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: shop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  sales.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: sales
+    source: shop
+    tables:
+      orders: { object: orders, contract: orders }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  diagnostics: []

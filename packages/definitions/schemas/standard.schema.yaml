@@ -550,7 +550,7 @@ $defs:
             description: "Whether one schedule runs the whole project or each flow has its own."
             enumDescriptions:
               - One schedule for the whole project.
-              - Each flow may set its own schedule.
+              - "Each flow may write its own triggers, under `ingest.triggers` in the flow file. The types, time zone and hours they may use are under `operations.triggers`."
       trigger:
         enum: [schedule, files, upstream, continuous]
         description: "What starts a run."
@@ -616,6 +616,68 @@ $defs:
         uniqueItems: true
         items: { type: string }
         description: "Tags the platform must give a value for, such as `cost_centre`."
+      triggers:
+        type: object
+        additionalProperties: false
+        description: "Which triggers a project may define, and the time zone and hours they use. An environment may replace each value."
+        properties:
+          types: { $ref: "#/$defs/triggerTypes" }
+          timezone: { $ref: "#/$defs/triggerTimezone" }
+          hours: { $ref: "#/$defs/triggerHours" }
+          environments:
+            type: object
+            description: "Values that replace the common ones in one environment, by environment name."
+            examples:
+              - { dev: { hours: any }, prod: { timezone: Europe/London } }
+            additionalProperties:
+              type: object
+              additionalProperties: false
+              description: "The triggers policy for this environment."
+              properties:
+                types: { $ref: "#/$defs/triggerTypes" }
+                timezone: { $ref: "#/$defs/triggerTimezone" }
+                hours: { $ref: "#/$defs/triggerHours" }
+  triggerTypes:
+    type: array
+    minItems: 1
+    uniqueItems: true
+    description: "The trigger types a project may define. Default: schedule and tumbling-window."
+    examples:
+      - [schedule]
+    items:
+      enum: [schedule, tumbling-window]
+      enumDescriptions:
+        - Runs at times given by a recurrence.
+        - Runs for each fixed, contiguous window of time.
+  triggerTimezone:
+    type: string
+    description: "The IANA time zone of trigger times, such as Europe/London. Default: UTC."
+    examples: [Europe/London, UTC]
+  triggerHours:
+    description: "The hours of the day in which a trigger may start, or `any` for no limit. The `to` time is exclusive, and the hours wrap past midnight when `to` is not after `from`."
+    examples:
+      - { from: "22:00", to: "06:00" }
+      - any
+    oneOf:
+      - const: any
+      - type: object
+        additionalProperties: false
+        required: [from, to]
+        properties:
+          from:
+            type: string
+            pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+            description: "The first minute of the hours, as HH:mm."
+            examples: ["22:00"]
+          to:
+            type: string
+            pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+            description: "The time the hours end, as HH:mm. This minute is not part of the hours."
+            examples: ["06:00"]
+          timezone:
+            type: string
+            description: "The IANA time zone of `from` and `to`. Default: the triggers' timezone."
+            examples: [Europe/London]
   layer:
     type: object
     additionalProperties: false

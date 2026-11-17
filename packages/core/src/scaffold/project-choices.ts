@@ -52,7 +52,9 @@ export function projectRoutes(connector: string, connectivity?: string): Project
         const destinations =
           pack.id === "adf"
             ? adfDestinations.filter(([via]) => reads(via!, method, connector))
-            : [["databricks", "Databricks directly"]];
+            : pack.id === "synapse"
+              ? [["synapse", "Synapse pipelines, served as serverless SQL views"]]
+              : [["databricks", "Databricks directly"]];
         return destinations.map(([via, title]) => ({
           via: via!,
           method: source.method,

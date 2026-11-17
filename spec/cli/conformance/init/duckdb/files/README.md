@@ -4,6 +4,10 @@ DuckDB on a laptop. Sample orders loaded into a local DuckDB database, a SQL tra
 `ingestron init` wrote this file on 2026-11-04; it is yours, and Ingestron never rewrites it.
 The table `orders` and the contracts `contracts/customer_totals.yaml`, `contracts/orders.yaml` are examples: rename the tables and change the contracts' columns to your source's.
 
+## Build and review in VS Code
+
+Open this folder in VS Code with the Ingestron extension. Use hovers, completions and the Reference panel to configure the YAML. In the Ingestron Project panel, choose Request source metadata, then Import source metadata when you have the catalogue file. Select an environment to review its previews and platform request; use Compare environments to inspect differences, including effective mode. Plan previews the changes, Apply writes local files under build/, and Check confirms they are up to date. These actions do not deploy or run the generated assets. Review the generated files before arranging deployment separately.
+
 ## Run it
 
 ```sh

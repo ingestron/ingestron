@@ -37,3 +37,14 @@ export {
   templateSchema,
   type Template,
 } from "./templates.js";
+
+export { platformSource, projectPlatforms, type ProjectPlatform } from "./platform-project.js";
+export {
+  projectAdditions,
+  type ConnectionChoice,
+  type ProjectAdditions,
+} from "./addition-choices.js";
+export { draftConnection, type AddConnection, type DefinitionDraft } from "./add-connection.js";
+export { draftFlow, type AddFlow } from "./add-flow.js";
+export { writeDefinitionDraft } from "./write-draft.js";
+export { definitionImport, type AddedImport } from "./definition-import.js";

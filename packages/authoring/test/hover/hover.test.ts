@@ -26,9 +26,12 @@ describe("hover", () => {
 
   it("explains one setting under with: its value and where it was set, then what it is", () => {
     const shown = hover("mode: upsert")!;
-    expect(
-      shown.startsWith("`mode` for `orders`: `upsert`, set by this table (flows/shop.yaml:11)."),
-    ).toBe(true);
+    expect(shown.startsWith("**Now intent:** `mode` is written as `history` under `intent`.")).toBe(
+      true,
+    );
+    expect(shown).toContain(
+      "`mode` for `orders`: `upsert`, set by this table (flows/shop.yaml:11).",
+    );
     expect(shown).toContain("**mode**: How rows are kept.");
   });
 
@@ -104,6 +107,38 @@ describe("hover on a reference", () => {
       },
     );
     expect(shown).toContain("`${values.storage_account}` is `retailprod` in prod.");
+  });
+
+  it("says where a value is set and what it is built from", () => {
+    const manifest = readFileSync(join(retail, "project.yaml"), "utf8").replace(
+      "values:\n",
+      "values:\n  landing: abfss://landing@${values.storage_account}.dfs.core.windows.net\n",
+    );
+    const project = openProject(retail, new Map([[join(retail, "project.yaml"), manifest]]));
+    const text =
+      "apiVersion: ingestron.io/v1\nkind: Connection\nid: x\nsettings: { path: ${values.landing} }\n";
+    const hover = (environment: string, reference = "values.landing") =>
+      hoverAt(project, "connections/x.yaml", text, text.indexOf(reference) + 3, environment, {
+        docs: (path) => path,
+      });
+    expect(hover("prod")).toContain(
+      "`${values.landing}` is `abfss://landing@retailprod.dfs.core.windows.net` in prod. " +
+        "It is set under `values` in project.yaml, built from " +
+        "`abfss://landing@${values.storage_account}.dfs.core.windows.net`.",
+    );
+    const own = hoverAt(
+      project,
+      "project.yaml",
+      manifest,
+      manifest.indexOf("values.storage_account") + 3,
+      "prod",
+      {
+        docs: (path) => path,
+      },
+    );
+    expect(own).toContain(
+      "`${values.storage_account}` is `retailprod` in prod. It is set for prod under `environments.prod.values` in project.yaml.",
+    );
   });
 
   it("never shows a secret", () => {

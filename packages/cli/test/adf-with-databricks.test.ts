@@ -73,6 +73,18 @@ const platform = (lines: string[]) => ({
   ),
 });
 
+describe("operations judged by the pack that applies them", () => {
+  it("lets ADF, listed after Databricks, judge a schedule for each flow", () => {
+    const standard = `${base["standard.yaml"]}operations:\n  schedule: { per: flow }\n`;
+    const result = resolveDefinitions(memoryFiles({ ...base, "standard.yaml": standard }), {
+      packs: [databricks, adf],
+      environment: "dev",
+    });
+    expect(result.diagnostics.filter((item) => item.code === "NOT_APPLIED")).toEqual([]);
+    expect(result.model?.operations.schedule).toEqual({ per: "flow" });
+  });
+});
+
 describe("ADF ingestion stored by Databricks", () => {
   it("stores what ADF copies with a streaming table over the landing folder", () => {
     const { model, bundle } = generate();
@@ -87,7 +99,9 @@ describe("ADF ingestion stored by Databricks", () => {
     const { bundle } = generate({
       "invoices.yaml": contract("{ name: amount, logicalType: number, physicalName: amt }"),
     });
-    expect(bundle["src/erp/bronze/invoices.sql"]).toContain("AS SELECT * FROM STREAM read_files(");
+    expect(bundle["src/erp/bronze/invoices.sql"]).toContain(
+      "AS SELECT\n  *\nFROM STREAM read_files(",
+    );
   });
 
   it("pauses the Databricks job with the platform's schedule", () => {

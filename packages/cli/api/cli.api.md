@@ -6,6 +6,12 @@
 
 // @public
 export const commands: readonly [{
+    readonly name: "connection";
+    readonly summary: "Add an independent source connection: connection add <id> --connector <id> --connectivity public.";
+}, {
+    readonly name: "flow";
+    readonly summary: "Add a flow: flow add <id> --connection <id> --object <name> [--method <id>].";
+}, {
     readonly name: "plan";
     readonly summary: "Show what would change in each pack's output folder.";
 }, {
@@ -42,13 +48,19 @@ export const commands: readonly [{
 
 // @public
 export const flags: readonly [{
+    readonly flag: "--empty";
+    readonly summary: "init --kit: create the target and standard without the worked source example.";
+}, {
+    readonly flag: "--method <id>";
+    readonly summary: "connection add and flow add: choose a standard-supported ingestion method when more than one matches.";
+}, {
     readonly flag: "--connector <id>";
     readonly summary: "init: the source connector; otherwise choose by category.";
 }, {
     readonly flag: "--connectivity <kind>";
     readonly summary: "init: private, workspace or public source reachability.";
 }, {
-    readonly flag: "--via <databricks|adf-databricks|adf-synapse|adf-duckdb|adf-landing>";
+    readonly flag: "--via <databricks|synapse|adf-databricks|adf-synapse|adf-duckdb|adf-landing>";
     readonly summary: "init: the route: Databricks directly, or ADF into Databricks, Synapse views, DuckDB tables or the landed files alone.";
 }, {
     readonly flag: "--env <name>";
@@ -103,7 +115,7 @@ export const flags: readonly [{
     readonly summary: "init: write the project guide for coding assistants, with files for copilot, claude, codex, cursor or agents (comma-separated). Default: none.";
 }, {
     readonly flag: "--platform <id>";
-    readonly summary: "standard list: only the standards for this platform, such as duckdb.";
+    readonly summary: "init: source-free target (synapse, databricks, adf-landing or duckdb). standard list: filter standards.";
 }, {
     readonly flag: "--help";
     readonly summary: "Show this text.";

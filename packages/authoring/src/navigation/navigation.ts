@@ -4,6 +4,7 @@ import { kinds } from "@ingestron/definitions";
 import { dirname, join, normalize } from "node:path";
 import type { Project } from "../project/index.js";
 import { allSpots, type Spot } from "../project/index.js";
+import { sourceDefinition } from "./source-definition.js";
 
 /** A range of text in a project file (offsets). */
 export interface Place {
@@ -28,7 +29,14 @@ const links = Object.values(kinds).flatMap((kind) =>
 /**
  * Where the id or reference at the offset is defined.
  */
-export function definitionAt(project: Project, file: string, offset: number): Place | undefined {
+export function definitionAt(
+  project: Project,
+  file: string,
+  offset: number,
+  environment?: string,
+): Place | undefined {
+  const source = sourceDefinition(project, file, offset, environment);
+  if (source) return source;
   const here = occurrencesAt(project, file, offset);
   const path = here.find((item) => item.symbol.startsWith("file:"))?.symbol.slice("file:".length);
   if (path)

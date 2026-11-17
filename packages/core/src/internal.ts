@@ -64,3 +64,5 @@ export {
   type GuideUpdate,
   type NoGuide,
 } from "./assistant/index.js";
+
+export { platformSource } from "./scaffold/index.js";

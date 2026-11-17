@@ -8,3 +8,4 @@ export { request } from "./request-command.js";
 export { writeSchemas } from "./schemas.js";
 export { source } from "./source-command.js";
 export { standard } from "./standard-command.js";
+export { addition } from "./addition.js";

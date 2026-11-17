@@ -1,12 +1,13 @@
 // The operations policy as the model holds it (specification section 11.6): the standard's
 // `operations` with its defaults, and its `fixed.operations` over it.
 import type { OperationsDoc } from "./sections.js";
+import { resolveTriggers, type ResolvedTriggers } from "./triggers-policy.js";
 
 /**
  * The standard's policy for runs, with defaults filled: one schedule for the project, the
  * schedule as the trigger, an alert on failure and no required tags. Retries, timeout and
  * concurrency are absent unless the standard sets them.
- * @example { schedule: { per: "project" }, trigger: "schedule", alerts: { on: ["failure"] }, require_tags: [] }
+ * @example { schedule: { per: "project" }, trigger: "schedule", alerts: { on: ["failure"] }, require_tags: [], triggers: { types: ["schedule", "tumbling-window"], timezone: "UTC" } }
  * @public
  */
 export interface ResolvedOperations {
@@ -24,16 +25,20 @@ export interface ResolvedOperations {
   concurrency?: { max_runs: number; queue: boolean };
   /** Tags the platform must give a value for. */
   require_tags: string[];
+  /** The trigger types, time zone and hours a project may use. */
+  triggers: ResolvedTriggers;
 }
 
 /**
  * The policy in effect: the defaults, then `operations`, then `fixed`, which wins. Mappings
- * merge key by key, so a fixed `retries.count` leaves the interval the standard gave.
+ * merge key by key, so a fixed `retries.count` leaves the interval the standard gave. The
+ * triggers take the selected `environment`'s entry over the common values, in `fixed` too.
  * @example resolveOperations({ timeout: "2h" }, { retries: { count: 2, interval: "5m" } })
  */
 export function resolveOperations(
   operations: OperationsDoc = {},
   fixed: OperationsDoc = {},
+  environment?: string,
 ): ResolvedOperations {
   const set = withFixed(operations, fixed);
   return {
@@ -44,6 +49,7 @@ export function resolveOperations(
     alerts: set.alerts ?? { on: ["failure"] },
     ...(set.concurrency && { concurrency: set.concurrency }),
     require_tags: set.require_tags ?? [],
+    triggers: resolveTriggers(operations.triggers, fixed.triggers, environment),
   };
 }
 

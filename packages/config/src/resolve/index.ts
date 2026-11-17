@@ -16,3 +16,4 @@ export { createProject, type EnvvarReference, type Project } from "./project.js"
 export { isSecretReference, type SecretReference } from "./resolve-string.js";
 export { resolveNode } from "./resolve.js";
 export type { Scope } from "./scope.js";
+export { valueState } from "./values.js";

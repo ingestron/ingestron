@@ -6,7 +6,7 @@ import { documentReference, referenceKinds, type FieldInfo } from "@ingestron/de
 import { placeAt, type Place } from "../navigation/index.js";
 import { connectorOf, fieldAt, settingsAt } from "../assist/index.js";
 import { methodAt, methodInfo, type MethodInfo } from "../assist/index.js";
-import { shown } from "../hover/index.js";
+import { shown, sourceColumnsText } from "../hover/index.js";
 import type { Project } from "../project/index.js";
 import { contractUses } from "../assist/index.js";
 import { spotAt, type Spot } from "../project/index.js";
@@ -48,9 +48,16 @@ export function referenceAt(
 ): ReferenceEntry | undefined {
   if (!/\.ya?ml$/.test(file)) return undefined;
   const entry = placeEntry(project, file, text, offset, environment);
+  const columns = sourceColumnsText(project, text, offset, environment);
+  const withColumns = columns
+    ? {
+        ...(entry ?? { title: "Source object", subtitle: file }),
+        text: [entry?.text, columns].filter(Boolean).join("\n\n"),
+      }
+    : entry;
   const found = problemsAt(project, file, text, offset, environment);
-  if (!entry && found.length === 0) return undefined;
-  const base = entry ?? { title: "Problems", subtitle: file };
+  if (!withColumns && found.length === 0) return undefined;
+  const base = withColumns ?? { title: "Problems", subtitle: file };
   return found.length > 0 ? { ...base, problems: found } : base;
 }
 

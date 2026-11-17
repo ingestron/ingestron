@@ -10,4 +10,6 @@ export interface ProjectOptions {
   packs?: readonly Pack[];
   /** The values `${envvar:…}` reads, as the host's environment. Default: `process.env`. */
   envvars?: Readonly<Record<string, string | undefined>>;
+  /** The time a pack's `checkFirstWrites` is given. Default: the current time. */
+  now?: Date;
 }

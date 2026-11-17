@@ -4,7 +4,13 @@ import { basename, dirname, join, relative, resolve } from "node:path";
 import type { Options } from "../terminal/index.js";
 import type { Io } from "../terminal/index.js";
 import { nodeFiles } from "@ingestron/config";
-import { contractFromSample, draftContracts, type ContractDraft } from "@ingestron/core";
+import {
+  contractFromSample,
+  definitionImport,
+  draftContracts,
+  type ContractDraft,
+} from "@ingestron/core";
+import { writeStaged } from "./write-staged.js";
 import { objectName } from "@ingestron/core/internal";
 
 /** Writes contracts/<name>.yaml from the sample. Returns the exit code. */
@@ -21,24 +27,47 @@ export function draftContract(options: Options, io: Io): number {
     io.write(`${shown} already exists; nothing written.\n`);
     return 1;
   }
-  mkdirSync(dirname(target), { recursive: true });
-  writeFileSync(target, contractFromSample(readFileSync(sample, "utf8"), basename(sample), name));
+  const definitions = resolve(io.cwd, options.definitions);
+  const text = contractFromSample(readFileSync(sample, "utf8"), basename(sample), name);
+  const added = writeImported(definitions, `contracts/${name}.yaml`, text);
   io.write(`Wrote ${shown}. Review the types, then add keys, required columns and descriptions.\n`);
+  if (added) io.write(`project.yaml now imports ${added}.\n`);
   return 0;
+}
+
+/**
+ * Writes a new contract and, when no import matches it, project.yaml with the import that loads it
+ * (spec/cli/projects.md, "The new file's import"), both together. Returns the entry added.
+ */
+function writeImported(definitions: string, path: string, text: string): string | undefined {
+  const target = join(definitions, path);
+  const imports = definitionImport(nodeFiles(definitions), path);
+  if (!imports) {
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, text, { flag: "wx" });
+    return undefined;
+  }
+  writeStaged([
+    { file: target, text },
+    { file: join(definitions, "project.yaml"), text: imports.project },
+  ]);
+  return imports.added;
 }
 
 /** Writes a draft unless its file exists (never replacing one), and says which. */
 function writeDraft(definitions: string, draft: ContractDraft, io: Io): void {
-  const target = join(definitions, draft.path);
-  mkdirSync(dirname(target), { recursive: true });
+  let added: string | undefined;
   try {
-    writeFileSync(target, draft.text, { flag: "wx" });
+    if (existsSync(join(definitions, draft.path)))
+      throw Object.assign(new Error("exists"), { code: "EEXIST" });
+    added = writeImported(definitions, draft.path, draft.text);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
     io.write(`Skipped ${draft.path}: it already exists.\n`);
     return;
   }
   io.write(`Wrote ${draft.path}.\n`);
+  if (added) io.write(`project.yaml now imports ${added}.\n`);
 }
 
 /**

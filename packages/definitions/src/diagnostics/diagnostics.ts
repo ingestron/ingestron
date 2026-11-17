@@ -1,6 +1,7 @@
 // Diagnostics in the same shape as @ingestron/config's, so one formatter
 // prints problems from loading and from resolving alike.
 import type { AnyDiagnostic, DefinitionDocument, Fix, Severity } from "@ingestron/config";
+import { diagnosticOf } from "./diagnostic-of.js";
 import { keepOnce, subjectOf } from "./keep-once.js";
 import { notAppliedBook, type NotApplied, type NotAppliedDetail } from "./not-applied.js";
 
@@ -59,6 +60,14 @@ export type DefinitionCode =
   | "DEDUPLICATE_MODE"
   | "TIMEZONE_NAME"
   | "TIMEZONE_SOURCE"
+  | "TRIGGER_NOT_ALLOWED"
+  | "TRIGGER_PARAMETER"
+  | "TRIGGER_OPTION"
+  | "TRIGGER_HOURS"
+  | "TRIGGER_LOOKBACK"
+  | "TRIGGER_KEY"
+  | "TRIGGER_ENVIRONMENT"
+  | "FILTER_NOT_SUPPORTED"
   | "ACCEPT_CODE"
   | "ACCEPT_UNUSED"
   | "PRODUCT_CONTRACT_UNUSED"
@@ -120,7 +129,11 @@ export type Diagnostic = AnyDiagnostic & {
   subject?: DiagnosticSubject;
 };
 
-/** Where a value was written: a document and a JSON Pointer into it. */
+/**
+ * Where a value was written: a document and a JSON Pointer into it.
+ * @example { document, pointer: "/ingest/triggers/0" }
+ * @public
+ */
 export interface Source {
   document: DefinitionDocument;
   pointer: string;
@@ -207,9 +220,7 @@ export function createReporter(
     noteNotApplied: (table, feature, detail) => unapplied.record({ table, feature }, detail),
     failed: () => diagnostics.some((diagnostic) => diagnostic.severity === "error"),
     leftOut: () => leftOut,
-    leaveOut: () => {
-      leftOut = true;
-    },
+    leaveOut: () => void (leftOut = true),
   };
 }
 
@@ -232,24 +243,5 @@ export function aboutTable(reporter: Reporter, table: string): Reporter {
     failed: () => reporter.failed(),
     leftOut: () => reporter.leftOut(),
     leaveOut: () => reporter.leaveOut(),
-  };
-}
-
-function diagnosticOf(
-  severity: Severity,
-  code: DefinitionCode,
-  message: string,
-  at?: Source,
-  hint?: string,
-  fixes?: Fix[],
-): AnyDiagnostic {
-  const location = at?.document.locate(at.pointer);
-  return {
-    code,
-    severity,
-    message,
-    ...(hint && { hint }),
-    ...(location && { location }),
-    ...(fixes && fixes.length > 0 && { fixes }),
   };
 }

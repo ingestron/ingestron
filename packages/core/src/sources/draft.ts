@@ -149,7 +149,7 @@ function draftText(table: SourceTable, entry: SourceTableDoc, id: string): strin
     "schema:",
     `  - name: ${yamlText(table.table, "block")}`,
     "    logicalType: object",
-    ...listLines("    properties:", entry.columns, "      ", keyed),
+    ...listLines("    properties:", entry.columns, "      ", keyed, table.types),
   ];
   return `${lines.join("\n")}\n`;
 }
@@ -160,14 +160,23 @@ function listLines(
   columns: readonly SourceColumnDoc[],
   indent: string,
   keyed: boolean,
+  types?: Record<string, string>,
 ): string[] {
   if (columns.length === 0) return [`${key} []`];
-  return [key, ...columns.flatMap((column) => listItem(column, indent, keyed))];
+  return [
+    key,
+    ...columns.flatMap((column) => listItem(column, indent, keyed, types?.[column.name])),
+  ];
 }
 
 /** A column as an item of a list at `indent`, in block style. */
-function listItem(column: SourceColumnDoc, indent: string, keyed: boolean): string[] {
-  const [first = "", ...rest] = blockLines(column, `${indent}  `, keyed);
+function listItem(
+  column: SourceColumnDoc,
+  indent: string,
+  keyed: boolean,
+  physical?: string,
+): string[] {
+  const [first = "", ...rest] = blockLines(column, `${indent}  `, keyed, physical);
   return [`${indent}- ${first.slice(indent.length + 2)}`, ...rest];
 }
 
@@ -184,13 +193,25 @@ function optionsOf(column: SourceColumnDoc): Record<string, unknown> | undefined
   return kept.length > 0 ? Object.fromEntries(kept) : undefined;
 }
 
-/** A column's keys at `indent`, in the order a draft gives them, then its nested columns. */
-function blockLines(column: SourceColumnDoc, indent: string, keyed: boolean): string[] {
+/**
+ * A column's keys at `indent`, in the order a draft gives them, then its nested columns.
+ * `physical` is the platform type the metadata gave a top-level column, kept so that linking the
+ * draft changes no generated type (spec/cli/sources.md, section 5).
+ */
+function blockLines(
+  column: SourceColumnDoc,
+  indent: string,
+  keyed: boolean,
+  physical?: string,
+): string[] {
   const key = keyed && column.primaryKeyPosition !== undefined;
   const options = optionsOf(column);
   const fields: [string, string][] = [
     ["name", yamlText(column.name, "block")],
     ["logicalType", yamlText(column.logicalType, "block")],
+    ...(physical === undefined
+      ? []
+      : ([["physicalType", yamlText(physical, "block")]] as [string, string][])),
     ...(options === undefined
       ? []
       : ([["logicalTypeOptions", yamlValue(options, "block")]] as [string, string][])),

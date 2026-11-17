@@ -5,10 +5,11 @@ import type { LoadContext } from "./context.js";
 import { isRecord, isSafeKey } from "../internal/index.js";
 import { error, type Location } from "../diagnostics/index.js";
 import type { Expression } from "./references.js";
+import { lookupValue, type ValueState } from "./values.js";
 
 /** The data that references can read. */
 export interface Scope {
-  /** Merged project values; `undefined` while the values themselves are resolved. */
+  /** Merged project values; `undefined` while the values themselves are resolved (`Walk.values`). */
   values?: unknown;
   /** The selected environment, when there is one. */
   environment?: { name: string };
@@ -24,6 +25,8 @@ export interface Walk {
   sourceMap: Map<string, Location>;
   /** The `file#pointer` includes currently being resolved, outermost first. */
   includeStack: string[];
+  /** Set while the manifest's values are resolved, so that they can read each other. */
+  values?: ValueState;
 }
 
 type PathExpression = Extract<Expression, { type: "path" }>;
@@ -38,6 +41,8 @@ export function lookupPath(
   location: Location,
   walk: Walk,
 ): unknown {
+  if (expression.root === "values" && walk.values)
+    return lookupValue(expression.path, source, location, walk, walk.values);
   let current = rootValue(expression, source, location, walk);
   if (current === undefined) return undefined;
   for (const key of expression.path) {
@@ -59,17 +64,6 @@ export function lookupPath(
 
 function rootValue(expression: PathExpression, source: string, location: Location, walk: Walk) {
   const { scope, context } = walk;
-  if (expression.root === "values" && scope.values === undefined) {
-    context.diagnostics.push(
-      error(
-        "VALUES_SELF_REFERENCE",
-        `"${source}" refers to values, but values cannot refer to other values.`,
-        location,
-        "Write the value out in full, or build the combined text in the document that uses it.",
-      ),
-    );
-    return undefined;
-  }
   if (expression.root === "environment" && scope.environment === undefined) {
     context.diagnostics.push(
       error(

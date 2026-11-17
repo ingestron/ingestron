@@ -10,14 +10,13 @@ import {
   packLoadProblem,
   resolveDefinitions,
   type EnvironmentsBuild,
-  type Method,
-  type Pack,
   type PackInfo,
   type ResolvedModel,
 } from "../src/index.js";
 import { checkReference, type ReferenceCase } from "./reference-cases.js";
 import { checkAccepted, checkSeverities, flattened } from "./accepted-expectations.js";
 import { checkOperations, checkTables } from "./table-expectations.js";
+import { dataPacks } from "./data-packs.js";
 
 interface Case {
   description: string;
@@ -61,48 +60,7 @@ interface Case {
 }
 
 const folder = join(import.meta.dirname, "../../../spec/definitions/conformance");
-/** A pack file: a pack's information, with stand-ins for what is code. */
-type DataPack = PackInfo & { buildEnvironments?: true; checks?: string[] };
-
-const packs = [
-  "pack.yaml",
-  "pack-bridge.yaml",
-  "pack-local.yaml",
-  "pack-fold.yaml",
-  "pack-checked.yaml",
-  "pack-plain.yaml",
-  "pack-three.yaml",
-  "pack-intent.yaml",
-  "pack-ops.yaml",
-  "pack-databricks.yaml",
-  "pack-rule.yaml",
-  "pack-quality.yaml",
-  "pack-zones.yaml",
-  "pack-dedupe.yaml",
-  "pack-views.yaml",
-].map((file) =>
-  packOf(
-    parse(readFileSync(join(folder, file), "utf8")) as PackInfo & { buildEnvironments?: true },
-  ),
-);
-
-/**
- * A data-only pack. `buildEnvironments: true` stands for a pack that builds environments
- * together; `checks` on the pack or a method, for a `check` that returns those messages.
- */
-function packOf(data: DataPack): PackInfo | Pack {
-  const methods = Object.fromEntries(
-    Object.entries(data.methods).map(([id, method]) => {
-      const { checks, ...rest } = method as Method & { checks?: string[] };
-      return [id, checks ? { ...rest, check: () => checks } : rest];
-    }),
-  );
-  const { checks, buildEnvironments: together, ...info } = data;
-  const pack: PackInfo = { ...info, methods, ...(checks && { check: () => checks }) };
-  if (!together) return pack;
-  const buildEnvironments = () => ({ files: {}, deployValues: [], problems: [] });
-  return { ...pack, build: () => ({}), buildEnvironments };
-}
+const packs = dataPacks(folder);
 
 function checkProducts(model: ResolvedModel, expected: Record<string, unknown>[]): void {
   expect(model.products).toHaveLength(expected.length);

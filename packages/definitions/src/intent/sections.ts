@@ -1,10 +1,50 @@
 // The intent sections of a standard as written (specification section 11.1):
 // the shapes of its `audit`, `operations` and object layers.
+import type { TriggerType } from "../triggers/index.js";
 import type { LayerDuty } from "./coverage.js";
 import type { AuditValue, DeleteMode, History, Intent, LoadMode } from "./vocabulary.js";
 
 /** Audit columns as written: a value, or a value with the column's name. */
 export type AuditDoc = (AuditValue | { value: AuditValue; as: string })[];
+
+/**
+ * The hours of the day in which a trigger may start: `HH:mm` times, `to` exclusive, wrapping
+ * past midnight when `to` is not after `from`.
+ * @example { from: "22:00", to: "06:00", timezone: "Europe/London" }
+ * @public
+ */
+export interface HoursDoc {
+  /** The first minute of the hours, as `HH:mm`. */
+  from: string;
+  /** The time the hours end, as `HH:mm`; this minute is not part of the hours. */
+  to: string;
+  /** The zone of `from` and `to`; the triggers' time zone when left out. */
+  timezone?: string;
+}
+
+/**
+ * The values of the triggers policy that an environment may replace.
+ * @example { types: ["schedule"], timezone: "Europe/London", hours: "any" }
+ * @public
+ */
+export interface TriggersValuesDoc {
+  /** The trigger types a project may define. */
+  types?: TriggerType[];
+  /** The zone trigger times are in. */
+  timezone?: string;
+  /** The hours a trigger may start in, or `any` for no limit. */
+  hours?: HoursDoc | "any";
+}
+
+/**
+ * The standard's policy for triggers (specification section 11.6), and each environment's own.
+ * @example { timezone: "Europe/London", environments: { dev: { hours: "any" } } }
+ * @public
+ */
+export interface TriggersPolicyDoc extends TriggersValuesDoc {
+  /** The values that replace the common ones in an environment, by its name. */
+  environments?: Record<string, TriggersValuesDoc>;
+}
 
 /** The standard's operations policy (specification section 11.1). */
 export interface OperationsDoc {
@@ -15,6 +55,7 @@ export interface OperationsDoc {
   alerts?: { on: ("failure" | "slow")[]; slow_after?: string };
   concurrency?: { max_runs: number; queue: boolean };
   require_tags?: string[];
+  triggers?: TriggersPolicyDoc;
 }
 
 /** A layer written as an object: its name, and the intent every table in it starts from. */

@@ -19,6 +19,10 @@ import { tableIntent } from "./complete.js";
 import { checkTableIntent, flowChecks } from "./intent-checks.js";
 import { checksIn } from "./layer-duties.js";
 import { connectionOf, sourceNotKnown, tableSteps, type FlowSteps } from "./flow-sources.js";
+import { checkFilter } from "./trigger-filter.js";
+import { checkLoads } from "./trigger-loads.js";
+import { resolveFlowTriggers, type FlowTriggers } from "./flow-triggers.js";
+import { operationsOf } from "./operations.js";
 
 type Flow = DefinitionDocument<FlowDoc>;
 
@@ -35,18 +39,24 @@ export function flowTables(
 ): ResolvedTable[] {
   const seen = new Set<string>();
   checkSourceMetadata(context);
-  return context.project.all(kinds.flow).flatMap((flow) =>
-    Object.keys(flow.value.tables).flatMap((name) => {
+  const operations = operationsOf(context);
+  return context.project.all(kinds.flow).flatMap((flow) => {
+    const triggers = resolveFlowTriggers(context, flow, operations);
+    return Object.keys(flow.value.tables).flatMap((name) => {
       if (seen.has(name)) {
         reportDuplicate(context, flow, name);
         return [];
       }
       seen.add(name);
       const match = matchTable(aboutOne(context, name), flow, name, flow.value.source);
-      const table = flowTable(aboutOne(context, name), flow, name, namer, match, listed);
+      const table = flowTable(aboutOne(context, name), flow, name, namer, {
+        match,
+        listed,
+        triggers,
+      });
       return table ? [table] : [];
-    }),
-  );
+    });
+  });
 }
 
 /** Table names declared by flows, whether or not they resolve. */
@@ -63,20 +73,27 @@ function reportDuplicate(context: Context, flow: Flow, name: string): void {
   );
 }
 
+/** What `flowTable` is given about the table beside its flow, name and namer. */
+interface FlowTableOptions {
+  match: TableMatch | undefined;
+  listed: SourceTable[] | undefined;
+  /** The triggers and parameters of the table's flow. */
+  triggers: FlowTriggers;
+}
+
 function flowTable(
   context: Context,
   flow: Flow,
   name: string,
   namer: TableNamer,
-  match: TableMatch | undefined,
-  listed: SourceTable[] | undefined,
+  { match, listed, triggers }: FlowTableOptions,
 ): ResolvedTable | undefined {
   const layer = namer.layerOf(flow.value.layer, 0, { document: flow, pointer: "/layer" });
   const connection = connectionOf(context, flow.value.source);
   const about = { flow, name, layer, match };
   const listWithNeeds = (steps: Partial<FlowSteps> | undefined) => {
     const needs = needsOf(context, about, steps);
-    listed?.push(sourceTableOf(about, needs));
+    listed?.push(sourceTableOf(context, about, needs));
     return needs;
   };
   if (!layer || !connection) return void listWithNeeds(undefined);
@@ -93,6 +110,7 @@ function flowTable(
     steps,
     declared,
     match,
+    triggers,
     needs: listWithNeeds(steps),
   });
 }
@@ -104,6 +122,8 @@ interface FoundTable {
   steps: Partial<FlowSteps> | undefined;
   declared: DeclaredIntent;
   match: TableMatch | undefined;
+  /** The triggers and parameters of the table's flow. */
+  triggers: FlowTriggers;
   /** Why the table needs a contract, if it does (section 12.5). */
   needs: string | undefined;
 }
@@ -114,7 +134,7 @@ function finishTable(
   flow: Flow,
   name: string,
   namer: TableNamer,
-  { layer, connection, steps, declared, match, needs }: FoundTable,
+  { layer, connection, steps, declared, match, triggers, needs }: FoundTable,
 ): ResolvedTable | undefined {
   const doc = flow.value.tables[name]!;
   const { places, ...intent } = tableIntent(context, declared, steps);
@@ -130,9 +150,11 @@ function finishTable(
     contract,
     ...checksIn(context, layer, contract, doc.expectations),
     ...intent,
-    ...tableSteps(steps, connection, doc.object),
+    ...tableSteps(steps, connection, doc.object, triggers, doc.ingest?.filter),
     ...sourceNotKnown(context, flow),
   };
   checkTableIntent(context, table, places, flowChecks(flow, name, connection));
+  checkLoads(context, table);
+  checkFilter(context, flow, table);
   return table;
 }

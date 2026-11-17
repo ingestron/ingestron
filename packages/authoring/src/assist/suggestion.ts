@@ -24,6 +24,12 @@ export interface Suggestion {
    * values that may hold them, such as `ERP.dbo.Customers`.
    */
   replaceFrom?: number;
+  /**
+   * Where the replaced text ends, as an offset in the file's text, after the cursor: the rest of
+   * a name the cursor is inside, so `${values.|stage}` does not become `${values.stagestage}`.
+   * Without it the replacement ends at the cursor.
+   */
+  replaceTo?: number;
   /** Offered straight after a list's `-`: insert after it rather than replace it. */
   afterDash?: boolean;
   /** Ask for suggestions again once inserted, such as the keys on a new line. */

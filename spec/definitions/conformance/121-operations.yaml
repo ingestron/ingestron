@@ -53,4 +53,5 @@ expect:
     alerts: { on: [failure] }
     concurrency: { max_runs: 1, queue: true }
     require_tags: [cost_centre]
+    triggers: { types: [schedule, tumbling-window], timezone: UTC }
   qualityResults: true

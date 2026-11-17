@@ -6,7 +6,7 @@ import { error, warning } from "../diagnostics/index.js";
 import { parsePointer } from "../internal/index.js";
 import type { JsonSchema } from "../kinds/index.js";
 import { importMatcher } from "../internal/index.js";
-import { resolveNode } from "../resolve/index.js";
+import { resolveNode, valueState } from "../resolve/index.js";
 import type { Scope } from "../resolve/index.js";
 import { createSchemaChecker } from "../validate/index.js";
 import { locationOf, nodeAtKeys, type YamlFile } from "../files/index.js";
@@ -39,7 +39,7 @@ export const manifestSchema: JsonSchema = {
     values: {
       type: "object",
       description:
-        "Values that documents read with `${values.…}`. Entries may use references, but not `${values.…}`.",
+        "Values that documents read with `${values.…}`. Entries may use references, including `${values.…}` for another value.",
     },
     environments: {
       type: "object",
@@ -169,14 +169,20 @@ function selectEnvironment(
   return undefined;
 }
 
-/** Top-level values, with the selected environment's values merged over them. */
+/**
+ * Top-level values, with the selected environment's values merged over them. A value may read
+ * another with `${values.…}`, which sees the merged values (spec §4.3.1).
+ */
 function resolveValues(context: LoadContext, file: YamlFile, scope: Scope): unknown {
-  const walk = { context, scope, sourceMap: new Map(), includeStack: [`${file.path}#`] };
-  const base = resolveNode(nodeAtKeys(file, ["values"]), file, "/values", walk);
-  if (!scope.environment) return base ?? {};
-  const keys = ["environments", scope.environment.name, "values"];
-  const override = resolveNode(nodeAtKeys(file, keys), file, "/values", walk);
-  return mergeValues(base ?? {}, override ?? {});
+  const base = nodeAtKeys(file, ["values"]);
+  const override = scope.environment
+    ? nodeAtKeys(file, ["environments", scope.environment.name, "values"])
+    : undefined;
+  const values = valueState(file, base, override);
+  const walk = { context, scope, sourceMap: new Map(), includeStack: [`${file.path}#`], values };
+  const resolved = resolveNode(base, file, "/values", walk) ?? {};
+  if (!scope.environment) return resolved;
+  return mergeValues(resolved, resolveNode(override, file, "/values", walk) ?? {});
 }
 
 /** The project files matched by the manifest's imports, in path order. */

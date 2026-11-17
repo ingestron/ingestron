@@ -10,6 +10,7 @@ import {
   metadataContract,
   objectNotKnown,
   objectPointer,
+  unknownObject,
   type TableMatch,
 } from "../sources/index.js";
 import type { FlowSteps } from "./flow-sources.js";
@@ -95,6 +96,10 @@ function fromMetadata(
   match: TableMatch | undefined,
 ): Contract | undefined {
   if (match?.entry) return metadataContract(context, flow.value.source, match.entry);
+  if (match && !match.notKnown && !match.ambiguous) {
+    unknownObject(context.reporter, flow, name, match);
+    return undefined;
+  }
   context.reporter.error(
     "TABLE_NO_COLUMNS",
     `"${name}" has no contract and no source metadata, so it has no columns.`,

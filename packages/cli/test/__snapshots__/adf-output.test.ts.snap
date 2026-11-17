@@ -450,7 +450,7 @@ exports[`keeps the ADF files generated for private-sql-server 1`] = `
 					"source": {
 						"type": "SqlSource",
 						"sqlReaderQuery": {
-							"value": "SELECT [customer_id], [name], [country], [modified_at] FROM [dbo].[Customers] WHERE [modified_at] >= '@{formatDateTime(pipeline().parameters.windowStart, 'yyyy-MM-dd HH:mm:ss')}' AND [modified_at] < '@{formatDateTime(pipeline().parameters.windowEnd, 'yyyy-MM-dd HH:mm:ss')}'",
+							"value": "SELECT\\n  [customer_id],\\n  [name],\\n  [country],\\n  [modified_at]\\nFROM [dbo].[Customers]\\nWHERE [modified_at] >= '@{formatDateTime(pipeline().parameters.windowStart, 'yyyy-MM-dd HH:mm:ss')}'\\n  AND [modified_at] < '@{formatDateTime(pipeline().parameters.windowEnd, 'yyyy-MM-dd HH:mm:ss')}'",
 							"type": "Expression"
 						}
 					},
@@ -489,7 +489,7 @@ exports[`keeps the ADF files generated for private-sql-server 1`] = `
 					"source": {
 						"type": "SqlSource",
 						"sqlReaderQuery": {
-							"value": "SELECT [invoice_id], [customer_id], [amount], [status], [updated_at] FROM [dbo].[Invoices] WHERE [updated_at] >= '@{formatDateTime(pipeline().parameters.windowStart, 'yyyy-MM-dd HH:mm:ss')}' AND [updated_at] < '@{formatDateTime(pipeline().parameters.windowEnd, 'yyyy-MM-dd HH:mm:ss')}'",
+							"value": "SELECT\\n  [invoice_id],\\n  [customer_id],\\n  [amount],\\n  [status],\\n  [updated_at]\\nFROM [dbo].[Invoices]\\nWHERE [updated_at] >= '@{formatDateTime(pipeline().parameters.windowStart, 'yyyy-MM-dd HH:mm:ss')}'\\n  AND [updated_at] < '@{formatDateTime(pipeline().parameters.windowEnd, 'yyyy-MM-dd HH:mm:ss')}'",
 							"type": "Expression"
 						}
 					},

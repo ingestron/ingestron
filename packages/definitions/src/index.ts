@@ -91,6 +91,7 @@ export {
   type DeleteMode,
   type FeatureStatus,
   type History,
+  type HoursDoc,
   type Intent,
   type IntentCoverage,
   type IntentFragment,
@@ -98,9 +99,36 @@ export {
   type LayerDuty,
   type LoadMode,
   type ResolvedOperations,
+  type ResolvedTriggers,
   type SettingAlias,
   type StorageFeature,
+  type TriggersPolicyDoc,
+  type TriggersValuesDoc,
 } from "./intent/index.js";
+
+// Triggers: the types a standard's policy may allow, and the triggers and parameters of a flow.
+export type {
+  Frequency,
+  ParameterDef,
+  ParameterDoc,
+  ParameterValue,
+  ResolvedTrigger,
+  ScheduleAt,
+  TriggerDependency,
+  TriggerDoc,
+  TriggerType,
+  Weekday,
+} from "./triggers/index.js";
+export {
+  clockOf,
+  clockTime,
+  cycleStarts,
+  longestGap,
+  outsideHours,
+  parameterReferences,
+  readStart,
+  type Clock,
+} from "./triggers/index.js";
 
 // Choosing methods: the store choice that keeps landed files as they are.
 export { NO_STORE } from "./choose/index.js";
@@ -135,6 +163,7 @@ export {
   type DiagnosticSubject,
   type LoadingStage,
   type NotApplied,
+  type Source,
   type SourceCode,
 } from "./diagnostics/index.js";
 

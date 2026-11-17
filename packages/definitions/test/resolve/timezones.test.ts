@@ -3,7 +3,8 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { zones as zoneData } from "../../src/data/index.js";
-import { isZone, zoneAfter } from "../../src/resolve/timezones.js";
+import { zoneAfter } from "../../src/resolve/timezones.js";
+import { isZone } from "../../src/zones/index.js";
 import type { Contract } from "../../src/index.js";
 
 describe("the shipped zone list", () => {

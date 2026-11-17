@@ -1,0 +1,198 @@
+description: A `{{ parameters.<name> }}` in a flow table's `filter` must stand in plain SQL code, outside quoted text, quoted names and comments (SQL Server's rules, with doubled quotes and brackets), or it is TRIGGER_PARAMETER at the filter. A filter with `@{`, or a `{` or `}` that is not a reference's own, or an empty one, is also TRIGGER_PARAMETER. A block comment nests, as SQL Server reads it, so a reference after an inner `*/` is still inside the outer comment. A filter whose parentheses in plain code do not balance, which would escape the pack's own, is TRIGGER_PARAMETER; parentheses inside quotes, names and comments do not count. A reference in plain code, around quotes and comments that hold none, is fine.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1]
+  webshop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: webshop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: shop
+    source: webshop
+    ingest:
+      uses: copy
+      with: { landing: /landing }
+      parameters:
+        p: { type: string, default: a }
+    tables:
+      quoted:
+        object: quoted
+        contract: orders
+        ingest:
+          filter: "name = '{{ parameters.p }}'"
+      like:
+        object: like
+        contract: orders
+        ingest:
+          filter: "name LIKE '%{{ parameters.p }}%'"
+      name:
+        object: name
+        contract: orders
+        ingest:
+          filter: "[{{ parameters.p }}] = 1"
+      dquote:
+        object: dquote
+        contract: orders
+        ingest:
+          filter: "\"{{ parameters.p }}\" = 1"
+      line:
+        object: line
+        contract: orders
+        ingest:
+          filter: "a = 1 -- {{ parameters.p }}"
+      block:
+        object: block
+        contract: orders
+        ingest:
+          filter: "a = 1 /* {{ parameters.p }} */"
+      doubled:
+        object: doubled
+        contract: orders
+        ingest:
+          filter: "a = 'it''s {{ parameters.p }}'"
+      plain:
+        object: plain
+        contract: orders
+        ingest:
+          filter: "name LIKE '%' + {{ parameters.p }} + '%' AND note = 'a -- b' AND [odd]]name] = {{parameters.p}} /* x */"
+      nested:
+        object: nested
+        contract: orders
+        ingest:
+          filter: "a = 1 /* b = 2 /* why */ AND c = {{ parameters.p }} */ AND d = 1"
+      unclosed:
+        object: unclosed
+        contract: orders
+        ingest:
+          filter: "/* /* */ a = {{ parameters.p }}"
+      closed:
+        object: closed
+        contract: orders
+        ingest:
+          filter: "/* /* */ */ a = {{ parameters.p }}"
+      at:
+        object: at
+        contract: orders
+        ingest:
+          filter: "a = '@{x}'"
+      brace:
+        object: brace
+        contract: orders
+        ingest:
+          filter: "a = { 1 }"
+      blank:
+        object: blank
+        contract: orders
+        ingest:
+          filter: "   "
+      unbalanced:
+        object: unbalanced
+        contract: orders
+        ingest:
+          filter: "1=1) OR (1=1"
+      unclosedparen:
+        object: unclosedparen
+        contract: orders
+        ingest:
+          filter: "(a = 1"
+      quotedparen:
+        object: quotedparen
+        contract: orders
+        ingest:
+          filter: "a = ')' AND [b(] = 1 /* ( */ AND (c = 1) -- )"
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+expect:
+  diagnostics:
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 15
+      message: '"{{ parameters.p }}" is inside a quoted text, name or comment of the filter; write it as plain SQL, such as name LIKE ''%'' + {{ parameters.p }} + ''%''.'
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 20
+      message: '"{{ parameters.p }}" is inside a quoted text, name or comment of the filter; write it as plain SQL, such as name LIKE ''%'' + {{ parameters.p }} + ''%''.'
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 25
+      message: '"{{ parameters.p }}" is inside a quoted text, name or comment of the filter; write it as plain SQL, such as name LIKE ''%'' + {{ parameters.p }} + ''%''.'
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 30
+      message: '"{{ parameters.p }}" is inside a quoted text, name or comment of the filter; write it as plain SQL, such as name LIKE ''%'' + {{ parameters.p }} + ''%''.'
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 35
+      message: '"{{ parameters.p }}" is inside a quoted text, name or comment of the filter; write it as plain SQL, such as name LIKE ''%'' + {{ parameters.p }} + ''%''.'
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 40
+      message: '"{{ parameters.p }}" is inside a quoted text, name or comment of the filter; write it as plain SQL, such as name LIKE ''%'' + {{ parameters.p }} + ''%''.'
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 45
+      message: '"{{ parameters.p }}" is inside a quoted text, name or comment of the filter; write it as plain SQL, such as name LIKE ''%'' + {{ parameters.p }} + ''%''.'
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 55
+      message: '"{{ parameters.p }}" is inside a quoted text, name or comment of the filter; write it as plain SQL, such as name LIKE ''%'' + {{ parameters.p }} + ''%''.'
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 60
+      message: '"{{ parameters.p }}" is inside a quoted text, name or comment of the filter; write it as plain SQL, such as name LIKE ''%'' + {{ parameters.p }} + ''%''.'
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 70
+      message: 'A filter cannot contain "@{", "{" or "}" except around {{ parameters.<name> }}.'
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 75
+      message: 'A filter cannot contain "@{", "{" or "}" except around {{ parameters.<name> }}.'
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 80
+      message: "The filter is empty; remove it, or write a condition."
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 85
+      message: "The filter's parentheses do not balance."
+    - code: TRIGGER_PARAMETER
+      severity: error
+      file: shop.yaml
+      line: 90
+      message: "The filter's parentheses do not balance."

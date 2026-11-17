@@ -190,7 +190,7 @@ describe("adf-files with physical names", () => {
       path.endsWith("orders.sql"),
     )?.[1];
     expect(sql).toContain(
-      "AS SELECT * EXCEPT (`order_no`), `order_no` AS `id` FROM STREAM read_files(",
+      "AS SELECT\n  * EXCEPT (`order_no`),\n  `order_no` AS `id`\nFROM STREAM read_files(",
     );
   });
 });

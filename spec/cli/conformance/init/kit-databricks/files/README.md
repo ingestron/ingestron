@@ -5,6 +5,10 @@ Streaming lakehouse on Databricks. Streaming tables that read each new file once
 The standard comes from databricks/lakehouse-streaming@2026-11-10; STANDARD.md explains its choices.
 The tables `customers`, `orders` and the contracts `contracts/customers.yaml`, `contracts/daily_sales.yaml`, `contracts/orders.yaml` are examples: rename the tables and change the contracts' columns to your source's.
 
+## Build and review in VS Code
+
+Open this folder in VS Code with the Ingestron extension. Use hovers, completions and the Reference panel to configure the YAML. In the Ingestron Project panel, choose Request source metadata, then Import source metadata when you have the catalogue file. Select an environment to review its previews and platform request; use Compare environments to inspect differences, including effective mode. Plan previews the changes, Apply writes local files under build/, and Check confirms they are up to date. These actions do not deploy or run the generated assets. Review the generated files before arranging deployment separately.
+
 ## Run it
 
 ```sh

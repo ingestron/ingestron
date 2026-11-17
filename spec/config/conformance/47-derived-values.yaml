@@ -1,0 +1,52 @@
+description: Values may refer to other values in any order. References read the merged values, so a default built from a value reads the selected environment's replacement. Whole-value references keep their type, values in one mapping may refer to each other, a file read into values may refer to values, and an environment that is not selected is not resolved.
+environment: prod
+kinds:
+  - apiVersion: example.dev/v1
+    kind: Pipeline
+    schema: { type: object }
+files:
+  project.yaml: |
+    id: sales
+    values:
+      landing: /Volumes/${values.catalog}/${values.schema}/${values.volume}
+      catalog: ${project.id}_${environment.name}
+      schema: bronze
+      volume: landing
+      cluster: { workers: 2, size: small, label: "${values.cluster.size}-${values.cluster.workers}" }
+      sizes: ${values.limits}
+      limits: [1, 2]
+      first: ${values.limits.0}
+      settings: ${file:settings.yaml}
+    environments:
+      prod:
+        values:
+          schema: raw
+          cluster: { workers: 8 }
+      test:
+        values:
+          broken: ${values.nothing}
+    imports: ["*.pipeline.yaml"]
+  settings.yaml: |
+    path: ${values.landing}/settings
+  a.pipeline.yaml: |
+    apiVersion: example.dev/v1
+    kind: Pipeline
+    id: a
+    landing: ${values.landing}
+    cluster: ${values.cluster}
+    sizes: ${values.sizes}
+    first: ${values.first}
+    settings: ${values.settings}
+expect:
+  documents:
+    - kind: Pipeline
+      id: a
+      value:
+        apiVersion: example.dev/v1
+        kind: Pipeline
+        id: a
+        landing: /Volumes/sales_prod/raw/landing
+        cluster: { workers: 8, size: small, label: small-8 }
+        sizes: [1, 2]
+        first: 1
+        settings: { path: /Volumes/sales_prod/raw/landing/settings }

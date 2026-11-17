@@ -1,6 +1,7 @@
 // A new project's files before they are written: the template's, composed with REPLACE_ME,
 // the defaults and the secret names, and the --set answers; resolved until it resolves
 // (spec/cli/projects.md).
+import { withoutExample } from "./platform-project.js";
 import { memoryFiles } from "@ingestron/config";
 import { isMap, isScalar, parse } from "yaml";
 import { generateAll } from "../generation/index.js";
@@ -26,6 +27,8 @@ export interface Source {
   files?: Record<string, Content>;
   facts?: RecipeFacts;
   kit?: Kit;
+  /** Omit worked source definitions and samples. */
+  empty?: boolean;
 }
 
 /** What `init` writes, and how: the day, whether README.md is kept, the options to keep. */
@@ -43,6 +46,7 @@ function projectFiles(
   writing: Writing,
 ) {
   let files = scaffoldFiles(source.template, answers, source.files);
+  const suppliedStandard = answers.standard && files["standard.yaml"];
   let leftOut: string[] = [];
   if (source.facts) {
     const { today, keep, kept } = writing;
@@ -63,7 +67,9 @@ function projectFiles(
       });
     }
   }
-  startToday(files, writing.today, source.kit !== undefined);
+  if (suppliedStandard) files["standard.yaml"] = suppliedStandard;
+  startToday(files, writing.today, source.kit !== undefined || Boolean(suppliedStandard));
+  if (source.empty) withoutExample(files);
   ignoreExport(files);
   const asked = source.template.questions.map((question) => question.value);
   applySet(files, set, answers.environments, asked);

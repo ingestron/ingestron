@@ -79,5 +79,5 @@ expect:
       file: standard.yaml
       line: 7
       message: '"mode" is now written as intent: history: none.'
-      hint: Write the intent by hand where it should apply, and remove this setting.
+      hint: "Write it under `intent` where it should apply: the standard or a layer for many tables, a flow or a table for one. Then remove this setting."
       fixes: []

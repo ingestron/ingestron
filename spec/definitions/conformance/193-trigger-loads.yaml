@@ -1,0 +1,119 @@
+description: A flow's triggers are checked against how each table loads. On an incremental table a schedule needs a lookback, or load full, and the lookback must cover the longest gap between runs (here an hourly schedule with no lookback, and one with 30m). A trigger on an incremental table needs a primary key and a store that merges by it, so a table with no key and one kept with history none are TRIGGER_KEY. A schedule with a lookback of two hours, and a full reload of a table kept by key, are fine. All are errors at the trigger.
+environment: dev
+files:
+  project.yaml: |
+    id: retail
+    environments: { dev: {}, test: {}, prod: {} }
+    imports: ["*.yaml"]
+  standard.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Standard
+    id: acme
+    packs: [test@1, ops@1]
+    operations:
+      schedule: { per: flow }
+  webshop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Connection
+    id: webshop
+    connector: files
+    connectivity: public
+    settings: { path: /data/shop }
+  shop.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: shop
+    source: webshop
+    ingest:
+      triggers:
+        - name: no-lookback
+          type: schedule
+          every: { frequency: Hour, interval: 1 }
+          start: 2026-12-01T00:00:00Z
+        - name: short-lookback
+          type: schedule
+          every: { frequency: Hour, interval: 1 }
+          start: 2026-12-01T00:00:00Z
+          lookback: 30m
+        - name: enough-lookback
+          type: schedule
+          every: { frequency: Hour, interval: 1 }
+          start: 2026-12-01T00:00:00Z
+          lookback: 2h
+        - name: weekly-reload
+          type: schedule
+          every: { frequency: Week, interval: 1 }
+          start: 2026-12-01T00:00:00Z
+          parameters: { load: full }
+    tables:
+      orders: { object: orders, contract: orders, load: { mode: incremental }, history: latest }
+  audit.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: audit
+    source: webshop
+    ingest:
+      triggers:
+        - name: windows
+          type: tumbling-window
+          every: { frequency: Hour, interval: 1 }
+          start: 2026-12-01T00:00:00Z
+    tables:
+      events: { object: events, contract: events, load: { mode: incremental }, history: latest }
+  log.yaml: |
+    apiVersion: ingestron.io/v1
+    kind: Flow
+    id: log
+    source: webshop
+    ingest:
+      triggers:
+        - name: windows
+          type: tumbling-window
+          every: { frequency: Hour, interval: 1 }
+          start: 2026-12-01T00:00:00Z
+    tables:
+      entries: { object: entries, contract: orders, load: { mode: incremental }, history: none }
+  orders.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: orders
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: orders
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true, primaryKey: true }
+  events.odcs.yaml: |
+    apiVersion: v3.1.0
+    kind: DataContract
+    id: events
+    version: 1.0.0
+    status: draft
+    schema:
+      - name: events
+        logicalType: object
+        properties:
+          - { name: id, logicalType: integer, required: true }
+expect:
+  diagnostics:
+    - code: TRIGGER_KEY
+      severity: error
+      file: audit.yaml
+      line: 7
+      message: '"windows" reloads or overlaps rows of events, which has no primary key; declare one in its contract, or in its source metadata.'
+    - code: TRIGGER_KEY
+      severity: error
+      file: log.yaml
+      line: 7
+      message: '"windows" reloads or overlaps rows of entries, whose store keeps every row as it arrived (`history: none`), so overlapping rows would be duplicated.'
+    - code: TRIGGER_LOOKBACK
+      severity: error
+      file: shop.yaml
+      line: 7
+      message: '"no-lookback" runs an incremental table on a schedule; give it a `lookback`, or `load: full`.'
+    - code: TRIGGER_LOOKBACK
+      severity: error
+      file: shop.yaml
+      line: 11
+      message: '"short-lookback"''s lookback 30m is shorter than its longest gap between runs, 1h.'
